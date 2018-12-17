@@ -1,5 +1,6 @@
 import tornado.ioloop
 import tornado.web
+import adapters.postgres
 
 from views.api import ApiHandler
 from views.main import MainHandler

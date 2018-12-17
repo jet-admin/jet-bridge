@@ -1,10 +1,7 @@
-import json
-
-import sqlalchemy
-from sqlalchemy import create_engine, text
-from sqlalchemy.exc import ProgrammingError, DatabaseError
+from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
+from adapters.base import registered_adapters
 from serializers.model_description import ModelDescriptionSerializer
 from views import APIView, ListAPIViewMixin
 
@@ -17,40 +14,26 @@ class ModelDescriptionsHandler(ListAPIViewMixin, APIView):
 
     def get_queryset(self):
         session = Session()
+        Adapter = registered_adapters.get('postgres')
 
-        # try:
-        # result = session.execute('select * from table where id=:id', {'id': 7})
-        result = session.execute(text('SELECT * FROM pg_catalog.pg_tables WHERE schemaname = :schema'), {'schema': 'public'})
-        # except DatabaseError:
-        #     pass
+        if not Adapter:
+            return []
 
-        # print(result.keys())
+        adapter = Adapter(engine, session)
 
-        def serialize_row(row):
-            md = sqlalchemy.MetaData()
-            table = sqlalchemy.Table(row[1], md, autoload=True, autoload_with=engine)
-            columns = table.c
-
+        def map_column(column):
             return {
-                # 'app_label': 'admin',
-                'db_table': row[1],
-                'model': row[1],
-                'fields': list(map(lambda c: {
-                    'db_column': c.name,
-                    # 'editable': False,
-                    'field': str(c.type),
-                    # 'filterable': True,
-                    # 'is_relation': False,
-                    'name': c.name,
-                    # 'params': {related_model: null}
-                    # 'verbose_name': 'action time',
-                }, columns)),
-                # 'flex_fields': [],
-                'hidden': False,
-                'relations': [],
-                # 'actions': [],
-                # 'verbose_name': 'log entry',
-                # 'verbose_name_plural': 'log entries'
+                'name': column.name,
+                'db_column': column.name,
+                'date_type': column.data_type
             }
 
-        return list(map(lambda x: serialize_row(x), result))
+        def map_table(table):
+            return {
+                'name': table.name,
+                'db_table': table.name,
+                'fields': list(map(map_column, table.columns)),
+                'hidden': False
+            }
+
+        return list(map(map_table, adapter.get_tables()))
