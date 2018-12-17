@@ -4,6 +4,7 @@ import adapters.postgres
 
 from views.api import ApiHandler
 from views.main import MainHandler
+from views.model import ModelHandler
 from views.model_description import ModelDescriptionsHandler
 
 
@@ -12,6 +13,7 @@ def make_app():
         (r'/', MainHandler),
         (r'/api/', ApiHandler),
         (r'/api/model_descriptions/', ModelDescriptionsHandler),
+        (r'/api/models/(?P<model>[^/]+)/', ModelHandler),
     ], debug=True)
 
 if __name__ == '__main__':

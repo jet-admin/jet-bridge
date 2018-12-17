@@ -5,6 +5,8 @@ from responses import Response
 
 class APIView(tornado.web.RequestHandler):
     serializer_class = None
+    args = []
+    kwargs = {}
 
     def get_queryset(self):
         pass
@@ -60,6 +62,9 @@ class CreateAPIViewMixin(object):
 class ListAPIViewMixin(object):
 
     def get(self, *args, **kwargs):
+        self.args = args
+        self.kwargs = kwargs
+
         queryset = self.filter_queryset(self.get_queryset())
 
         page = self.paginate_queryset(queryset)

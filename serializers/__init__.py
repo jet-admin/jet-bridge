@@ -1,4 +1,4 @@
-from collections import OrderedDict
+from collections import OrderedDict, Mapping
 
 import six
 
@@ -84,13 +84,21 @@ class Serializer(Field):
         if not self.meta:
             return
         fields = []
-        for field_name in self.meta.fields:
-            assert hasattr(self, field_name), (
-                'No such field %s for serializer %s' % (field_name, self.__class__.__name__)
-            )
-            field = getattr(self, field_name)
-            field.field_name = field_name
-            fields.append(field)
+
+        if hasattr(self.meta, 'fields'):
+            for field_name in self.meta.fields:
+                assert hasattr(self, field_name), (
+                    'No such field %s for serializer %s' % (field_name, self.__class__.__name__)
+                )
+                field = getattr(self, field_name)
+                field.field_name = field_name
+                fields.append(field)
+
+        if hasattr(self.meta, 'dynamic_fields'):
+            for field_name, field in self.meta.dynamic_fields.items():
+                field.field_name = field_name
+                fields.append(field)
+
         self.fields = fields
 
     @property
@@ -123,7 +131,10 @@ class Serializer(Field):
         errors = OrderedDict()
 
         for field in self.writable_fields:
-            field_value = value[field.field_name]
+            if isinstance(value, Mapping):
+                field_value = value[field.field_name]
+            else:
+                field_value = getattr(value, field.field_name)
 
             try:
                 validated_value = field.run_validation(field_value)
@@ -140,7 +151,11 @@ class Serializer(Field):
         result = OrderedDict()
 
         for field in self.readable_fields:
-            field_value = value[field.field_name]
+            if isinstance(value, Mapping):
+                field_value = value[field.field_name]
+            else:
+                field_value = getattr(value, field.field_name)
+
             result[field.field_name] = field.to_representation(field_value)
 
         return result
