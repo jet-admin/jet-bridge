@@ -3,7 +3,8 @@ from sqlalchemy.orm import sessionmaker
 
 from adapters.base import registered_adapters
 from serializers.model_description import ModelDescriptionSerializer
-from views import APIView, ListAPIViewMixin
+from views.base.api import APIView
+from views.mixins.list import ListAPIViewMixin
 
 engine = create_engine('postgresql://postgres:password@localhost:5432/jetty')
 Session = sessionmaker(bind=engine)
