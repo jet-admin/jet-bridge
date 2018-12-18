@@ -14,14 +14,6 @@ Session = sessionmaker(bind=engine)
 class ModelHandler(ListAPIViewMixin, APIView):
     serializer_class = ModelDescriptionSerializer
 
-    def map_data_type(self, value):
-        for rule in self.data_types:
-            if rule['operator'] == 'equals' and value == rule['query']:
-                return rule['date_type']
-            elif rule['operator'] == 'startswith' and value[:len(rule['query'])] == rule['query']:
-                return rule['date_type']
-        return self.default_data_type
-
     def get_serializer_class(self):
         Model = self.get_model()
         return get_model_serializer(Model)
