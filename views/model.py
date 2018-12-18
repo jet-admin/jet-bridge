@@ -60,4 +60,4 @@ class ModelHandler(ListAPIViewMixin, APIView):
         session = Session()
         Model = self.get_model()
 
-        return session.query(Model).all()
+        return session.query(Model)

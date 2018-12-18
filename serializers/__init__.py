@@ -168,9 +168,9 @@ class Serializer(Field):
 
     @property
     def representation_data(self):
-        if self.validated_data:
+        if self.validated_data is not None:
             return self.to_representation(self.validated_data)
-        elif self.instance:
+        elif self.instance is not None:
             return self.to_representation(self.instance)
 
     def save(self):

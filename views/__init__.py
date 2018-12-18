@@ -1,24 +1,36 @@
 import tornado.web
 
+from paginators.page_number import PageNumberPagination
 from responses import Response
 
 
 class APIView(tornado.web.RequestHandler):
     serializer_class = None
+    pagination_class = PageNumberPagination
+    _paginator = None
     args = []
     kwargs = {}
 
     def get_queryset(self):
-        pass
+        raise NotImplementedError
 
     def filter_queryset(self, queryset):
         return queryset
 
+    @property
+    def paginator(self):
+        if not self._paginator:
+            if self.pagination_class is None:
+                self._paginator = None
+            else:
+                self._paginator = self.pagination_class()
+        return self._paginator
+
     def paginate_queryset(self, queryset):
-        return queryset
+        return self.paginator.paginate_queryset(queryset, self)
 
     def get_paginated_response(self, data):
-        return Response(data)
+        return self.paginator.get_paginated_response(data)
 
     def get_serializer(self, *args, **kwargs):
         serializer_class = self.get_serializer_class()
