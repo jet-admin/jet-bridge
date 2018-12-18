@@ -12,6 +12,7 @@ Session = sessionmaker(bind=engine)
 
 class ModelDescriptionsHandler(ListAPIViewMixin, APIView):
     serializer_class = ModelDescriptionSerializer
+    pagination_class = None
 
     def get_queryset(self):
         session = Session()

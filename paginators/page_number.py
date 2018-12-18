@@ -3,8 +3,8 @@ from collections import OrderedDict
 import math
 import tornado.web
 
-from responses import Response
 from paginators.pagination import Pagination
+from responses.base import Response
 
 
 class PageNumberPagination(Pagination):

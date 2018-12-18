@@ -1,8 +1,8 @@
-from sqlalchemy import create_engine, MetaData, inspect
+from sqlalchemy import create_engine, MetaData
 from sqlalchemy.ext.automap import automap_base
 from sqlalchemy.orm import sessionmaker
 
-from serializers import Serializer, CharField, BooleanField
+from serializers.model import get_model_serializer
 from serializers.model_description import ModelDescriptionSerializer
 from views.base.api import APIView
 from views.mixins.list import ListAPIViewMixin
@@ -13,17 +13,6 @@ Session = sessionmaker(bind=engine)
 
 class ModelHandler(ListAPIViewMixin, APIView):
     serializer_class = ModelDescriptionSerializer
-    data_types = [
-        {'query': 'VARCHAR', 'operator': 'startswith', 'date_type': CharField},
-        {'query': 'TEXT', 'operator': 'equals', 'date_type': CharField},
-        {'query': 'BOOLEAN', 'operator': 'equals', 'date_type': BooleanField},
-        {'query': 'INTEGER', 'operator': 'equals', 'date_type': CharField},
-        {'query': 'SMALLINT', 'operator': 'equals', 'date_type': CharField},
-        {'query': 'NUMERIC', 'operator': 'startswith', 'date_type': CharField},
-        {'query': 'VARCHAR', 'operator': 'startswith', 'date_type': CharField},
-        {'query': 'TIMESTAMP', 'operator': 'startswith', 'date_type': CharField},
-    ]
-    default_data_type = CharField
 
     def map_data_type(self, value):
         for rule in self.data_types:
@@ -35,17 +24,7 @@ class ModelHandler(ListAPIViewMixin, APIView):
 
     def get_serializer_class(self):
         Model = self.get_model()
-        mapper = inspect(Model)
-
-        def map_column(column):
-            date_type = self.map_data_type(str(column.type))
-            return (column.key, date_type())
-
-        class ModelSerializer(Serializer):
-            class Meta:
-                dynamic_fields = dict(map(map_column, mapper.columns))
-
-        return ModelSerializer
+        return get_model_serializer(Model)
 
     def get_model(self):
         metadata = MetaData()

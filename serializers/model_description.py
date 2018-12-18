@@ -1,10 +1,11 @@
-from serializers import Serializer, CharField, BooleanField
+import fields
+from serializers.serializer import Serializer
 
 
 class ModelDescriptionFieldSerializer(Serializer):
-    name = CharField()
-    date_type = CharField()
-    db_column = CharField()
+    name = fields.CharField()
+    date_type = fields.CharField()
+    db_column = fields.CharField()
 
     class Meta:
         fields = (
@@ -15,9 +16,9 @@ class ModelDescriptionFieldSerializer(Serializer):
 
 
 class ModelDescriptionSerializer(Serializer):
-    name = CharField()
-    db_table = CharField()
-    hidden = BooleanField()
+    name = fields.CharField()
+    db_table = fields.CharField()
+    hidden = fields.BooleanField()
     fields = ModelDescriptionFieldSerializer(many=True)
 
     class Meta:
