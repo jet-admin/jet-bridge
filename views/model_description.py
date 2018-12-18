@@ -1,13 +1,9 @@
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
-
 from adapters.base import registered_adapters
+from db import Session, engine
 from serializers.model_description import ModelDescriptionSerializer
+from utils.backend import register_token
 from views.base.api import APIView
 from views.mixins.list import ListAPIViewMixin
-
-engine = create_engine('postgresql://postgres:password@localhost:5432/jetty')
-Session = sessionmaker(bind=engine)
 
 
 class ModelDescriptionsHandler(ListAPIViewMixin, APIView):
