@@ -7,6 +7,7 @@ from views.main import MainHandler
 from views.model import ModelHandler
 from views.model_description import ModelDescriptionsHandler
 from views.register import RegisterHandler
+from views.sql import SqlHandler
 
 
 def make_app():
@@ -16,6 +17,7 @@ def make_app():
         (r'/api/', ApiHandler),
         (r'/api/model_descriptions/', ModelDescriptionsHandler),
         (r'/api/models/(?P<model>[^/]+)/', ModelHandler),
+        (r'/api/sql/', SqlHandler),
     ], debug=True)
 
 if __name__ == '__main__':

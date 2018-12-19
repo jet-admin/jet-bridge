@@ -72,8 +72,18 @@ class Serializer(Field):
             else:
                 field_value = getattr(value, field.field_name)
 
+            if not getattr(field, 'many', False) and isinstance(field_value, list):
+                field_value = field_value[0]
+
+            if isinstance(field_value, bytes):
+                field_value = field_value.decode('utf8')
+
+            validate_method = getattr(self, 'validate_' + field.field_name, None)
+
             try:
                 validated_value = field.run_validation(field_value)
+                if validate_method is not None:
+                    validated_value = validate_method(validated_value)
                 result[field.field_name] = validated_value
             except Exception as e:
                 errors[field.field_name] = str(e)
