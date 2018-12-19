@@ -1,5 +1,6 @@
 from collections import OrderedDict, Mapping
 
+from exceptions.validation_error import ValidationError
 from fields.field import Field
 
 
@@ -53,12 +54,12 @@ class Serializer(Field):
         try:
             self.validated_data = self.run_validation(self.data)
             self.errors = None
-        except Exception as e:
+        except ValidationError as e:
             self.validated_data = None
-            self.errors = e
+            self.errors = e.detail
 
         if self.errors and raise_exception:
-            raise Exception(self.errors)
+            raise ValidationError(self.errors)
 
         return not bool(self.errors)
 
@@ -85,11 +86,11 @@ class Serializer(Field):
                 if validate_method is not None:
                     validated_value = validate_method(validated_value)
                 result[field.field_name] = validated_value
-            except Exception as e:
-                errors[field.field_name] = str(e)
+            except ValidationError as e:
+                errors[field.field_name] = e.detail
 
         if errors:
-            raise Exception(errors)
+            raise ValidationError(errors)
 
         return result
 
