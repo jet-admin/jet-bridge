@@ -5,6 +5,7 @@ from paginators.page_number import PageNumberPagination
 
 class APIView(tornado.web.RequestHandler):
     serializer_class = None
+    filter_class = None
     pagination_class = PageNumberPagination
     _paginator = None
     args = []
@@ -13,7 +14,26 @@ class APIView(tornado.web.RequestHandler):
     def get_queryset(self):
         raise NotImplementedError
 
+    def get_filter(self, *args, **kwargs):
+        filter_class = self.get_filter_class()
+        if not filter_class:
+            return
+        kwargs['context'] = self.filter_context()
+        return filter_class(*args, **kwargs)
+
+    def get_filter_class(self):
+        return self.filter_class
+
+    def filter_context(self):
+        return {
+            'request': self.request,
+            'handler': self
+        }
+
     def filter_queryset(self, queryset):
+        filter_instance = self.get_filter()
+        if filter_instance:
+            queryset = filter_instance.filter_queryset(queryset)
         return queryset
 
     @property

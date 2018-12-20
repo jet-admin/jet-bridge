@@ -13,7 +13,7 @@ class Serializer(Field):
         self.instance = kwargs.pop('instance', None)
         self.data = kwargs.pop('data', None)
         self.many = kwargs.pop('many', False)
-        self.meta = getattr(self, 'Meta')
+        self.meta = getattr(self, 'Meta', None)
         self.update_fields()
         super().__init__(*args, **kwargs)
 
