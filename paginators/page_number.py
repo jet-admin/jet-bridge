@@ -5,13 +5,16 @@ import tornado.web
 
 from paginators.pagination import Pagination
 from responses.base import Response
+from utils.http import replace_query_param, remove_query_param
 
 
 class PageNumberPagination(Pagination):
+    page_number = None
     page_size = 20
     page_query_param = 'page'
     page_size_query_param = None
     max_page_size = None
+    handler = None
 
     def paginate_queryset(self, queryset, handler):
         page_number = self.get_page_number(handler)
@@ -23,14 +26,16 @@ class PageNumberPagination(Pagination):
             return None
 
         self.count = queryset.count()
+        self.page_number = page_number
         self.page_size = page_size
+        self.handler = handler
 
         queryset = queryset.offset((page_number - 1) * page_size).limit(page_size)
 
         return list(queryset)
 
     def get_pages_count(self):
-        return math.ceil(self.count / self.page_size)
+        return int(math.ceil(self.count / self.page_size))
 
     def get_paginated_response(self, data):
         return Response(OrderedDict([
@@ -64,20 +69,30 @@ class PageNumberPagination(Pagination):
 
         return self.page_size
 
+    def has_next(self):
+        return self.page_number < self.get_pages_count()
+
+    def has_previous(self):
+        return self.page_number > 1
+
+    def next_page_number(self):
+        return self.page_number + 1
+
+    def previous_page_number(self):
+        return self.page_number - 1
+
     def get_next_link(self):
-        pass
-        # if not self.page.has_next():
-        #     return None
-        # url = self.request.build_absolute_uri()
-        # page_number = self.page.next_page_number()
-        # return replace_query_param(url, self.page_query_param, page_number)
+        if not self.has_next():
+            return None
+        url = self.handler.request.full_url()
+        page_number = self.next_page_number()
+        return replace_query_param(url, self.page_query_param, page_number)
 
     def get_previous_link(self):
-        pass
-        # if not self.page.has_previous():
-        #     return None
-        # url = self.request.build_absolute_uri()
-        # page_number = self.page.previous_page_number()
-        # if page_number == 1:
-        #     return remove_query_param(url, self.page_query_param)
-        # return replace_query_param(url, self.page_query_param, page_number)
+        if not self.has_previous():
+            return None
+        url = self.handler.request.full_url()
+        page_number = self.previous_page_number()
+        if page_number == 1:
+            return remove_query_param(url, self.page_query_param)
+        return replace_query_param(url, self.page_query_param, page_number)
