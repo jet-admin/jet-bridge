@@ -2,6 +2,8 @@ import json
 
 import tornado.web
 
+from version import VERSION
+
 
 class ApiHandler(tornado.web.RequestHandler):
     def set_default_headers(self):
@@ -9,5 +11,5 @@ class ApiHandler(tornado.web.RequestHandler):
     
     def get(self):
         self.write(json.dumps({
-            'version': '0.0.1'
+            'version': VERSION
         }))
