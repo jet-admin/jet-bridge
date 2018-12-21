@@ -22,12 +22,12 @@ class ModelDescriptionsHandler(ListAPIViewMixin, APIView):
             return {
                 'name': column.name,
                 'db_column': column.name,
-                'date_type': column.data_type
+                'field': column.data_type,
             }
 
         def map_table(table):
             return {
-                'name': table.name,
+                'model': table.name,
                 'db_table': table.name,
                 'fields': list(map(map_column, table.columns)),
                 'hidden': False
