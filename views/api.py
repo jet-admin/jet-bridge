@@ -1,15 +1,12 @@
-import json
-
-import tornado.web
-
+from responses.base import Response
 from version import VERSION
+from views.base.api import APIView
 
 
-class ApiHandler(tornado.web.RequestHandler):
-    def set_default_headers(self):
-        self.set_header('Content-Type', 'application/json')
-    
+class ApiHandler(APIView):
+
     def get(self):
-        self.write(json.dumps({
+        response = Response({
             'version': VERSION
-        }))
+        })
+        self.write_response(response)

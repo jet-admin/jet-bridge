@@ -1,7 +1,7 @@
-import tornado.web
+from views.base.api import APIView
 
 
-class NotFoundHandler(tornado.web.RequestHandler):
+class NotFoundHandler(APIView):
 
     def write_error(self, status_code, **kwargs):
         self.set_status(404)

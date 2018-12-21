@@ -1,6 +1,7 @@
-import tornado.web
+from views.base.api import APIView
 
 
-class MainHandler(tornado.web.RequestHandler):
+class MainHandler(APIView):
+
     def get(self):
         self.redirect('/api/')

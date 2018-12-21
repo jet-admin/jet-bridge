@@ -1,12 +1,11 @@
 from urllib.parse import quote
 
-import tornado.web
-
 import settings
 from utils.backend import register_token
+from views.base.api import APIView
 
 
-class RegisterHandler(tornado.web.RequestHandler):
+class RegisterHandler(APIView):
 
     def get(self, *args, **kwargs):
         token, created = register_token()
