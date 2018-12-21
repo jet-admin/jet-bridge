@@ -81,7 +81,7 @@ class APIView(tornado.web.RequestHandler):
             'view': self
         }
 
-    def options(self):
+    def options(self, *args, **kwargs):
         self.set_status(204)
         self.finish()
 
