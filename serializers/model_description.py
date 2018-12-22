@@ -6,12 +6,16 @@ class ModelDescriptionFieldSerializer(Serializer):
     name = fields.CharField()
     field = fields.CharField()
     db_column = fields.CharField()
+    filterable = fields.BooleanField()
+    editable = fields.BooleanField()
 
     class Meta:
         fields = (
             'name',
             'db_column',
             'field',
+            'filterable',
+            'editable',
         )
 
 

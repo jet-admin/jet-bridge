@@ -17,12 +17,15 @@ class ModelDescriptionsHandler(ListAPIViewMixin, APIView):
             return []
 
         adapter = Adapter(engine, session)
+        hidden = ['__jet__token']
 
         def map_column(column):
             return {
                 'name': column.name,
                 'db_column': column.name,
                 'field': column.data_type,
+                'filterable': True,
+                'editable': True
             }
 
         def map_table(table):
@@ -30,7 +33,7 @@ class ModelDescriptionsHandler(ListAPIViewMixin, APIView):
                 'model': table.name,
                 'db_table': table.name,
                 'fields': list(map(map_column, table.columns)),
-                'hidden': False
+                'hidden': table.name in hidden
             }
 
         return list(map(map_table, adapter.get_tables()))
