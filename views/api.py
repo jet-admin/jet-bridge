@@ -7,6 +7,7 @@ class ApiHandler(APIView):
 
     def get(self):
         response = Response({
-            'version': VERSION
+            'version': VERSION,
+            'type': 'jet_bridge'
         })
         self.write_response(response)
