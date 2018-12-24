@@ -1,13 +1,12 @@
 from adapters.base import registered_adapters
 from db import Session, engine
+from responses.base import Response
 from serializers.model_description import ModelDescriptionSerializer
 from views.base.api import APIView
-from views.mixins.list import ListAPIViewMixin
 
 
-class ModelDescriptionsHandler(ListAPIViewMixin, APIView):
+class ModelDescriptionsHandler(APIView):
     serializer_class = ModelDescriptionSerializer
-    pagination_class = None
 
     def get_queryset(self):
         session = Session()
@@ -37,3 +36,9 @@ class ModelDescriptionsHandler(ListAPIViewMixin, APIView):
             }
 
         return list(map(map_table, adapter.get_tables()))
+
+    def get(self, *args, **kwargs):
+        queryset = self.get_queryset()
+        serializer = self.serializer_class(instance=queryset, many=True)
+        response = Response(serializer.representation_data)
+        self.write_response(response)

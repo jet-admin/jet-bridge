@@ -5,14 +5,15 @@ from sqlalchemy.orm import sessionmaker
 from filters.model import get_model_filter_class
 from serializers.model import get_model_serializer
 from serializers.model_description import ModelDescriptionSerializer
-from views.base.api import APIView
+from views.base.generic_api import GenericAPIView
 from views.mixins.list import ListAPIViewMixin
+from views.mixins.retrieve import RetrieveAPIViewMixin
 
 engine = create_engine('postgresql://postgres:password@localhost:5432/jetty')
 Session = sessionmaker(bind=engine)
 
 
-class ModelHandler(ListAPIViewMixin, APIView):
+class ModelHandler(ListAPIViewMixin, RetrieveAPIViewMixin, GenericAPIView):
     model = None
     serializer_class = ModelDescriptionSerializer
 
