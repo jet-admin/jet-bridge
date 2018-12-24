@@ -3,10 +3,7 @@ from responses.base import Response
 
 class ListAPIViewMixin(object):
 
-    def get(self, *args, **kwargs):
-        self.args = args
-        self.kwargs = kwargs
-
+    def list(self, *args, **kwargs):
         queryset = self.filter_queryset(self.get_queryset())
 
         page = self.paginate_queryset(queryset)

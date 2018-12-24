@@ -25,7 +25,7 @@ class ModelHandler(ListAPIViewMixin, APIView):
         Base = automap_base(metadata=metadata)
 
         Base.prepare()
-        self.model = Base.classes[self.kwargs['model']]
+        self.model = Base.classes[self.path_kwargs['model']]
 
         return self.model
 
