@@ -68,17 +68,7 @@ class Serializer(Field):
         errors = OrderedDict()
 
         for field in self.writable_fields:
-            if isinstance(value, Mapping):
-                field_value = value[field.field_name]
-            else:
-                field_value = getattr(value, field.field_name)
-
-            if not getattr(field, 'many', False) and isinstance(field_value, list):
-                field_value = field_value[0]
-
-            if isinstance(field_value, bytes):
-                field_value = field_value.decode('utf8')
-
+            field_value = field.get_value(value)
             validate_method = getattr(self, 'validate_' + field.field_name, None)
 
             try:
