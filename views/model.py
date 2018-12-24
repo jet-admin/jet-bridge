@@ -5,13 +5,13 @@ from filters.model import get_model_filter_class
 from serializers.model import get_model_serializer
 from serializers.model_description import ModelDescriptionSerializer
 from views.base.generic_api import GenericAPIView
+from views.mixins.destroy import DestroyAPIViewMixin
 from views.mixins.list import ListAPIViewMixin
 from views.mixins.retrieve import RetrieveAPIViewMixin
 from db import engine, Session
 
 
-
-class ModelHandler(ListAPIViewMixin, RetrieveAPIViewMixin, GenericAPIView):
+class ModelHandler(ListAPIViewMixin, RetrieveAPIViewMixin, DestroyAPIViewMixin, GenericAPIView):
     model = None
     serializer_class = ModelDescriptionSerializer
 

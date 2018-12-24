@@ -1,3 +1,4 @@
+import status
 from responses.base import Response
 
 
@@ -9,4 +10,5 @@ class DestroyAPIViewMixin(object):
         self.write_response(Response(status=status.HTTP_204_NO_CONTENT))
 
     def perform_destroy(self, instance):
-        instance.delete()
+        self.session.delete(instance)
+        self.session.commit()
