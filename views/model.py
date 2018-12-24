@@ -36,7 +36,6 @@ class ModelHandler(ListAPIViewMixin, RetrieveAPIViewMixin, GenericAPIView):
         return get_model_filter_class(self.get_model())
 
     def get_queryset(self):
-        session = Session()
         Model = self.get_model()
 
-        return session.query(Model)
+        return self.session.query(Model)

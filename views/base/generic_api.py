@@ -1,3 +1,4 @@
+from db import Session
 from paginators.page_number import PageNumberPagination
 from views.base.api import APIView
 
@@ -9,6 +10,7 @@ class GenericAPIView(APIView):
     _paginator = None
     lookup_field = 'id'
     lookup_url_kwarg = None
+    session = Session()
 
     def get_model(self):
         raise NotImplementedError

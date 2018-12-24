@@ -7,15 +7,15 @@ from views.base.api import APIView
 
 class ModelDescriptionsHandler(APIView):
     serializer_class = ModelDescriptionSerializer
+    session = Session()
 
     def get_queryset(self):
-        session = Session()
         Adapter = registered_adapters.get('postgres')
 
         if not Adapter:
             return []
 
-        adapter = Adapter(engine, session)
+        adapter = Adapter(engine, self.session)
         hidden = ['__jet__token']
 
         def map_column(column):
