@@ -1,7 +1,16 @@
 import tornado.web
+from tornado.escape import json_decode
 
 
 class APIView(tornado.web.RequestHandler):
+
+    @property
+    def data(self):
+        content_type = self.request.headers.get('Content-Type', '')
+        if content_type.startswith('application/json'):
+            return json_decode(self.request.body)
+        else:
+            return self.request.body_arguments
 
     def set_default_headers(self):
         ACCESS_CONTROL_ALLOW_ORIGIN = 'Access-Control-Allow-Origin'

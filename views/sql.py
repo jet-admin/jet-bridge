@@ -6,7 +6,7 @@ from views.base.api import APIView
 class SqlHandler(APIView):
 
     def post(self):
-        serializer = SqlSerializer(data=self.request.body_arguments)
+        serializer = SqlSerializer(data=self.data)
         serializer.is_valid(raise_exception=True)
 
         response = Response(serializer.execute())
