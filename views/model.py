@@ -1,6 +1,5 @@
-from sqlalchemy import create_engine, MetaData
+from sqlalchemy import MetaData
 from sqlalchemy.ext.automap import automap_base
-from sqlalchemy.orm import sessionmaker
 
 from filters.model import get_model_filter_class
 from serializers.model import get_model_serializer
@@ -8,9 +7,8 @@ from serializers.model_description import ModelDescriptionSerializer
 from views.base.generic_api import GenericAPIView
 from views.mixins.list import ListAPIViewMixin
 from views.mixins.retrieve import RetrieveAPIViewMixin
+from db import engine, Session
 
-engine = create_engine('postgresql://postgres:password@localhost:5432/jetty')
-Session = sessionmaker(bind=engine)
 
 
 class ModelHandler(ListAPIViewMixin, RetrieveAPIViewMixin, GenericAPIView):
