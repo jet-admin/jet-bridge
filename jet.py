@@ -25,6 +25,7 @@ def make_app():
         (r'/', MainHandler),
         (r'/register/', RegisterHandler),
         (r'/api/', ApiHandler),
+        (r'/api/register/', RegisterHandler),
         (r'/api/model_descriptions/', ModelDescriptionsHandler),
         (r'/api/sql/', SqlHandler),
     ] + router.urls, debug=True, default_handler_class=NotFoundHandler)
