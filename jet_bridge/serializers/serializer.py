@@ -12,7 +12,6 @@ class Serializer(Field):
     def __init__(self, *args, **kwargs):
         self.instance = kwargs.pop('instance', None)
         self.data = kwargs.pop('data', None)
-        self.many = kwargs.pop('many', False)
         self.meta = getattr(self, 'Meta', None)
         self.update_fields()
         super().__init__(*args, **kwargs)
@@ -63,7 +62,7 @@ class Serializer(Field):
 
         return not bool(self.errors)
 
-    def to_internal_value(self, value):
+    def to_internal_value_item(self, value):
         result = OrderedDict()
         errors = OrderedDict()
 
@@ -97,11 +96,6 @@ class Serializer(Field):
 
         return result
 
-    def to_representation(self, value):
-        if self.many:
-            return list(map(lambda x: self.to_representation_item(x), value))
-        else:
-            return self.to_representation_item(value)
 
     @property
     def representation_data(self):

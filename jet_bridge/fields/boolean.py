@@ -19,12 +19,12 @@ class BooleanField(Field):
         False
     }
 
-    def to_internal_value(self, value):
+    def to_internal_value_item(self, value):
         if value in self.TRUE_VALUES:
             return True
         elif value in self.FALSE_VALUES:
             return False
         return bool(value)
 
-    def to_representation(self, value):
+    def to_representation_item(self, value):
         return value

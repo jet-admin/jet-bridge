@@ -9,9 +9,13 @@ class CharField(Field):
         self.trim_whitespace = kwargs.pop('trim_whitespace', True)
         super().__init__(*args, **kwargs)
 
-    def to_internal_value(self, value):
+    def to_internal_value_item(self, value):
+        if value is None:
+            return
         value = six.text_type(value)
         return value.strip() if self.trim_whitespace else value
 
-    def to_representation(self, value):
+    def to_representation_item(self, value):
+        if value is None:
+            return
         return six.text_type(value)

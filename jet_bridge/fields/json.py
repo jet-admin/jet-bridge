@@ -8,8 +8,8 @@ class JSONField(Field):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-    def to_internal_value(self, value):
+    def to_internal_value_item(self, value):
         return json.loads(value)
 
-    def to_representation(self, value):
+    def to_representation_item(self, value):
         return value
