@@ -8,7 +8,7 @@ from jet_bridge.views.base.generic_api import GenericAPIView
 from jet_bridge.views.mixins.destroy import DestroyAPIViewMixin
 from jet_bridge.views.mixins.list import ListAPIViewMixin
 from jet_bridge.views.mixins.retrieve import RetrieveAPIViewMixin
-from jet_bridge.db import engine, Session
+from jet_bridge.db import engine
 
 
 class ModelHandler(ListAPIViewMixin, RetrieveAPIViewMixin, DestroyAPIViewMixin, GenericAPIView):
