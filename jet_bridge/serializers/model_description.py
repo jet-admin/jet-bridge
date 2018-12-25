@@ -8,6 +8,7 @@ class ModelDescriptionFieldSerializer(Serializer):
     db_column = fields.CharField()
     filterable = fields.BooleanField()
     editable = fields.BooleanField()
+    params = fields.JSONField()
 
     class Meta:
         fields = (
@@ -16,6 +17,7 @@ class ModelDescriptionFieldSerializer(Serializer):
             'field',
             'filterable',
             'editable',
+            'params',
         )
 
 
