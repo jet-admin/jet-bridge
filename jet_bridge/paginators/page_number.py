@@ -12,8 +12,8 @@ class PageNumberPagination(Pagination):
     page_number = None
     page_size = 20
     page_query_param = 'page'
-    page_size_query_param = None
-    max_page_size = None
+    page_size_query_param = '_per_page'
+    max_page_size = 10000
     handler = None
 
     def paginate_queryset(self, queryset, handler):
