@@ -1,8 +1,11 @@
+from datetime import datetime
+
 import tornado.ioloop
 import tornado.web
 import adapters.postgres
 import settings
 from router import Router
+from version import VERSION
 
 from views.api import ApiHandler
 from views.main import MainHandler
@@ -29,4 +32,10 @@ def make_app():
 if __name__ == '__main__':
     app = make_app()
     server = app.listen(settings.PORT, settings.ADDRESS)
+
+    print(datetime.now().strftime('%B %d, %Y - %H:%M:%S %Z'))
+    print('Jet Bridge version {}'.format(VERSION))
+    print('Starting server at http://{}:{}/'.format(settings.ADDRESS, settings.PORT))
+    print('Quit the server with CONTROL-C.')
+
     tornado.ioloop.IOLoop.current().start()
