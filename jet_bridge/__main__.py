@@ -8,6 +8,7 @@ from jet_bridge import settings, VERSION
 from jet_bridge.router import Router
 from jet_bridge.views.api import ApiHandler
 from jet_bridge.views.main import MainHandler
+from jet_bridge.views.message import MessageHandler
 from jet_bridge.views.model import ModelHandler
 from jet_bridge.views.model_description import ModelDescriptionsHandler
 from jet_bridge.views.not_found import NotFoundHandler
@@ -27,6 +28,7 @@ def make_app():
         (r'/api/register/', RegisterHandler),
         (r'/api/model_descriptions/', ModelDescriptionsHandler),
         (r'/api/sql/', SqlHandler),
+        (r'/api/messages/', MessageHandler),
     ] + router.urls, debug=True, default_handler_class=NotFoundHandler)
 
 
