@@ -1,10 +1,7 @@
-from sqlalchemy import MetaData
-from sqlalchemy.ext.automap import automap_base
-
 from jet_bridge.filters.model import get_model_filter_class
 from jet_bridge.serializers.model import get_model_serializer
 from jet_bridge.views.mixins.model import ModelAPIViewMixin
-from jet_bridge.db import engine
+from jet_bridge.db import MappedBase
 
 
 class ModelHandler(ModelAPIViewMixin):
@@ -14,12 +11,7 @@ class ModelHandler(ModelAPIViewMixin):
         if self.model:
             return self.model
 
-        metadata = MetaData()
-        metadata.reflect(engine)
-        Base = automap_base(metadata=metadata)
-
-        Base.prepare()
-        self.model = Base.classes[self.path_kwargs['model']]
+        self.model = MappedBase.classes[self.path_kwargs['model']]
 
         return self.model
 

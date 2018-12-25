@@ -1,4 +1,5 @@
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, MetaData
+from sqlalchemy.ext.automap import automap_base
 from sqlalchemy.orm import sessionmaker
 
 from jet_bridge import settings
@@ -41,3 +42,8 @@ Session = sessionmaker(bind=engine)
 print('Connected to database engine "{}" with name "{}"'.format(settings.DATABASE_ENGINE, settings.DATABASE_NAME))
 
 Base.metadata.create_all(engine)
+
+metadata = MetaData()
+metadata.reflect(engine)
+MappedBase = automap_base(metadata=metadata)
+MappedBase.prepare()
