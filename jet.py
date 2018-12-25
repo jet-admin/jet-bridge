@@ -1,6 +1,7 @@
 import tornado.ioloop
 import tornado.web
 import adapters.postgres
+import settings
 from router import Router
 
 from views.api import ApiHandler
@@ -27,5 +28,5 @@ def make_app():
 
 if __name__ == '__main__':
     app = make_app()
-    app.listen(8888)
+    server = app.listen(settings.PORT, settings.ADDRESS)
     tornado.ioloop.IOLoop.current().start()

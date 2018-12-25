@@ -6,7 +6,7 @@ from models.token import Token
 
 
 def api_method_url(method):
-    return '{}/{}'.format(settings.JET_BACKEND_API_BASE_URL, method)
+    return '{}/{}'.format(settings.API_BASE_URL, method)
 
 
 def register_token():
