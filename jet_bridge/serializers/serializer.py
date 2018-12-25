@@ -105,10 +105,36 @@ class Serializer(Field):
 
     @property
     def representation_data(self):
-        if self.validated_data is not None:
-            return self.to_representation(self.validated_data)
-        elif self.instance is not None:
+        if self.instance is not None:
             return self.to_representation(self.instance)
+        elif self.validated_data is not None:
+            return self.to_representation(self.validated_data)
 
-    def save(self):
-        pass
+    def update(self, instance, validated_data):
+        raise NotImplementedError('`update()` must be implemented.')
+
+    def create(self, validated_data):
+        raise NotImplementedError('`create()` must be implemented.')
+
+    def save(self, **kwargs):
+        assert not self.errors, (
+            'You cannot call `.save()` on a serializer with invalid data.'
+        )
+
+        validated_data = dict(
+            list(self.validated_data.items()) +
+            list(kwargs.items())
+        )
+
+        if self.instance is not None:
+            self.instance = self.update(self.instance, validated_data)
+            assert self.instance is not None, (
+                '`update()` did not return an object instance.'
+            )
+        else:
+            self.instance = self.create(validated_data)
+            assert self.instance is not None, (
+                '`create()` did not return an object instance.'
+            )
+
+        return self.instance

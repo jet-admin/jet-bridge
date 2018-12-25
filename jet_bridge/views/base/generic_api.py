@@ -80,5 +80,6 @@ class GenericAPIView(APIView):
     def get_serializer_context(self):
         return {
             'request': self.request,
-            'view': self
+            'view': self,
+            'session': self.session
         }

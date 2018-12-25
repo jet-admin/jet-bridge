@@ -1,8 +1,7 @@
 from sqlalchemy import inspect
 
 from jet_bridge import fields
-from jet_bridge.serializers.serializer import Serializer
-
+from jet_bridge.serializers.model_serializer import ModelSerializer
 
 data_types = [
     {'query': 'VARCHAR', 'operator': 'startswith', 'date_type': fields.CharField},
@@ -17,25 +16,32 @@ data_types = [
 default_data_type = fields.CharField
 
 
-def map_data_type(value):
+def get_column_data_type(column):
+    data_type = str(column.type)
+
     for rule in data_types:
-        if rule['operator'] == 'equals' and value == rule['query']:
+        if rule['operator'] == 'equals' and data_type == rule['query']:
             return rule['date_type']
-        elif rule['operator'] == 'startswith' and value[:len(rule['query'])] == rule['query']:
+        elif rule['operator'] == 'startswith' and data_type[:len(rule['query'])] == rule['query']:
             return rule['date_type']
+
     return default_data_type
 
 
 def map_column(column):
-    date_type = map_data_type(str(column.type))
-    return (column.key, date_type())
+    date_type = get_column_data_type(column)
+    kwargs = {}
+    if column.primary_key:
+        kwargs['read_only'] = True
+    return (column.key, date_type(**kwargs))
 
 
 def get_model_serializer(Model):
     mapper = inspect(Model)
 
-    class ModelSerializer(Serializer):
+    class CustomModelSerializer(ModelSerializer):
         class Meta:
+            model = Model
             dynamic_fields = dict(map(map_column, mapper.columns))
 
-    return ModelSerializer
+    return CustomModelSerializer

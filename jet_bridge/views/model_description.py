@@ -16,6 +16,7 @@ class ModelDescriptionsHandler(APIView):
             return []
 
         adapter = Adapter(engine, self.session)
+        non_editable = ['id']
         hidden = ['__jet__token']
 
         def map_column(column):
@@ -24,7 +25,7 @@ class ModelDescriptionsHandler(APIView):
                 'db_column': column.name,
                 'field': column.data_type,
                 'filterable': True,
-                'editable': True
+                'editable': column.name not in non_editable
             }
 
         def map_table(table):
