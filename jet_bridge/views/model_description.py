@@ -1,4 +1,5 @@
 from sqlalchemy import inspect
+from sqlalchemy.orm.base import ONETOMANY
 
 from jet_bridge.db import Session, MappedBase
 from jet_bridge.models import data_types
@@ -36,6 +37,23 @@ class ModelDescriptionsHandler(APIView):
                 'params': params
             }
 
+        def map_relation(relation):
+            field = None
+            through = None
+
+            if relation.direction == ONETOMANY:
+                field = 'ManyToOneRel'
+
+            return {
+                'name': relation.key,
+                'related_model': {
+                    'model': relation.table.name
+                },
+                'field': field,
+                'related_model_field': relation.primaryjoin.right.name,
+                'through': through
+            }
+
         def map_table(cls):
             mapper = inspect(cls)
             name = mapper.selectable.name
@@ -43,7 +61,8 @@ class ModelDescriptionsHandler(APIView):
                 'model': name,
                 'db_table': name,
                 'fields': list(map(map_column, mapper.columns)),
-                'hidden': name in hidden
+                'hidden': name in hidden,
+                'relations': list(map(map_relation, filter(lambda x: x.direction == ONETOMANY, mapper.relationships)))
             }
 
         return list(map(map_table, MappedBase.classes))
