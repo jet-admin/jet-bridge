@@ -3,17 +3,11 @@ from sqlalchemy.ext.automap import automap_base
 
 from jet_bridge.filters.model import get_model_filter_class
 from jet_bridge.serializers.model import get_model_serializer
-from jet_bridge.serializers.model_description import ModelDescriptionSerializer
-from jet_bridge.views.base.generic_api import GenericAPIView
-from jet_bridge.views.mixins.create import CreateAPIViewMixin
-from jet_bridge.views.mixins.destroy import DestroyAPIViewMixin
-from jet_bridge.views.mixins.list import ListAPIViewMixin
-from jet_bridge.views.mixins.retrieve import RetrieveAPIViewMixin
+from jet_bridge.views.mixins.model import ModelAPIViewMixin
 from jet_bridge.db import engine
-from jet_bridge.views.mixins.update import UpdateAPIViewMixin
 
 
-class ModelHandler(ListAPIViewMixin, RetrieveAPIViewMixin, DestroyAPIViewMixin, CreateAPIViewMixin, UpdateAPIViewMixin, GenericAPIView):
+class ModelHandler(ModelAPIViewMixin):
     model = None
 
     def get_model(self):
