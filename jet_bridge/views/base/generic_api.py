@@ -11,6 +11,7 @@ class GenericAPIView(APIView):
     lookup_field = 'id'
     lookup_url_kwarg = None
     session = Session()
+    action = None
 
     def get_model(self):
         raise NotImplementedError
@@ -26,6 +27,8 @@ class GenericAPIView(APIView):
 
         model_field = getattr(self.get_model(), self.lookup_field)
         obj = queryset.filter(getattr(model_field, '__eq__')(self.path_kwargs[lookup_url_kwarg])).first()
+
+        self.check_object_permissions(obj)
 
         return obj
 

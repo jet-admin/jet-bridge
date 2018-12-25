@@ -3,6 +3,7 @@ from tornado.escape import json_decode
 
 
 class APIView(tornado.web.RequestHandler):
+    permission_classes = []
 
     @property
     def data(self):
@@ -11,6 +12,10 @@ class APIView(tornado.web.RequestHandler):
             return json_decode(self.request.body)
         else:
             return self.request.body_arguments
+
+    def prepare(self):
+        if self.request.method != 'OPTIONS':
+            self.check_permissions()
 
     def set_default_headers(self):
         ACCESS_CONTROL_ALLOW_ORIGIN = 'Access-Control-Allow-Origin'
@@ -24,6 +29,19 @@ class APIView(tornado.web.RequestHandler):
         self.set_header(ACCESS_CONTROL_ALLOW_HEADERS, 'Authorization,DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,X-Application-Warning')
         self.set_header(ACCESS_CONTROL_EXPOSE_HEADERS, 'Content-Length,Content-Range,X-Application-Warning')
         self.set_header(ACCESS_CONTROL_ALLOW_CREDENTIALS, 'true')
+
+    def get_permissions(self):
+        return [permission() for permission in self.permission_classes]
+
+    def check_permissions(self):
+        for permission in self.get_permissions():
+            if not permission.has_permission(self):
+                raise Exception(getattr(permission, 'message', None))
+
+    def check_object_permissions(self, obj):
+        for permission in self.get_permissions():
+            if not permission.has_object_permission(self, obj):
+                raise Exception(getattr(permission, 'message', None))
 
     def options(self, *args, **kwargs):
         self.set_status(204)

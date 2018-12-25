@@ -14,6 +14,7 @@ define('address', default='0.0.0.0', help='server address')
 define('port', default=8888, help='server port', type=int)
 define('config', default=DEFAULT_CONFIG_PATH, help='config file path')
 define('debug', default=False, help='debug mode', type=bool)
+define('read_only', default=False, help='read only', type=bool)
 
 define('web_base_url', default='https://app.jetadmin.io', help='Jet Admin frontend application base URL')
 define('api_base_url', default='https://api.jetadmin.io/api', help='Jet Admin API base URL')
@@ -54,6 +55,7 @@ for option in required_options:
 ADDRESS = options.address
 PORT = options.port
 DEBUG = options.debug
+READ_ONLY = options.read_only
 
 WEB_BASE_URL = options.web_base_url
 API_BASE_URL = options.api_base_url

@@ -34,6 +34,7 @@ class Router(object):
             for method, method_action in actions.items():
                 def create_action_method(action):
                     def action_method(inner_self, *args, **kwargs):
+                        inner_self.action = action
                         return getattr(inner_self, action)(*args, **kwargs)
                     return action_method
 
