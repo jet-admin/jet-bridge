@@ -6,6 +6,7 @@ import jet_bridge.adapters.postgres
 
 from jet_bridge import settings, VERSION
 from jet_bridge.router import Router
+from jet_bridge.utils.backend import is_token_activated
 from jet_bridge.views.api import ApiHandler
 from jet_bridge.views.main import MainHandler
 from jet_bridge.views.message import MessageHandler
@@ -35,11 +36,17 @@ def make_app():
 def main():
     app = make_app()
     app.listen(settings.PORT, settings.ADDRESS)
+    address = 'localhost' if settings.ADDRESS == '0.0.0.0' else settings.ADDRESS
+    url = 'http://{}:{}/'.format(address, settings.PORT)
 
     print(datetime.now().strftime('%B %d, %Y - %H:%M:%S %Z'))
     print('Jet Bridge version {}'.format(VERSION))
-    print('Starting server at http://{}:{}/'.format(settings.ADDRESS, settings.PORT))
-    print('Quit the server with CONTROL-C.')
+    print('Starting server at {}'.format(url))
+    print('Quit the server with CONTROL-C')
+
+    if not is_token_activated():
+        print('[!] Your server token is not activated')
+        print('[!] Go to {}register/ to activate'.format(url))
 
     tornado.ioloop.IOLoop.current().start()
 

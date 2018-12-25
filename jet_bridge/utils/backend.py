@@ -37,6 +37,29 @@ def register_token():
     return token, True
 
 
+def is_token_activated():
+    session = Session()
+    token = session.query(Token).first()
+
+    if not token:
+        return False
+
+    url = api_method_url('project_tokens/{}/'.format(token.token))
+    headers = {
+        'User-Agent': 'Jet Django'
+    }
+
+    r = requests.request('GET', url, headers=headers)
+    success = 200 <= r.status_code < 300
+
+    if not success:
+        return False
+
+    result = r.json()
+
+    return bool(result.get('activated'))
+
+
 def reset_token():
     session = Session()
     session.query(Token).delete()
