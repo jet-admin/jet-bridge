@@ -29,7 +29,7 @@ class FilterClass(object):
 
                 for column in columns:
                     item = FILTER_FOR_DBFIELD.get(column.type, FILTER_FOR_DBFIELD_DEFAULT)
-                    for lookup in ['exact', 'icontains']:
+                    for lookup in [lookups.EXACT, lookups.ICONTAINS, lookups.IN]:
                         instance = item['filter_class'](field_name=column.key, model=Model, lookup=lookup)
                         filters.append(instance)
 
