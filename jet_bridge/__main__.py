@@ -29,9 +29,10 @@ def make_app():
         (r'/api/sql/', SqlHandler),
     ] + router.urls, debug=True, default_handler_class=NotFoundHandler)
 
-if __name__ == '__main__':
+
+def main():
     app = make_app()
-    server = app.listen(settings.PORT, settings.ADDRESS)
+    app.listen(settings.PORT, settings.ADDRESS)
 
     print(datetime.now().strftime('%B %d, %Y - %H:%M:%S %Z'))
     print('Jet Bridge version {}'.format(VERSION))
@@ -39,3 +40,6 @@ if __name__ == '__main__':
     print('Quit the server with CONTROL-C.')
 
     tornado.ioloop.IOLoop.current().start()
+
+if __name__ == '__main__':
+    main()
