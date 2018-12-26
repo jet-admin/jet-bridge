@@ -33,7 +33,7 @@ setup(
     long_description=read('README.rst'),
     author='Denis Kildishev',
     author_email='support@jetadmin.io',
-    url='https://github.com/jet-admin/jet_bridge',
+    url='https://github.com/jet-admin/jet-bridge',
     packages=find_packages(),
     license='MIT',
     classifiers=[
