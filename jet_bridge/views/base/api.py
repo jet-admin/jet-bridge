@@ -51,3 +51,7 @@ class APIView(tornado.web.RequestHandler):
         for name, value in response.header_items():
             self.set_header(name, value)
         self.write(response.render())
+
+    def write_error(self, status_code, **kwargs):
+        print(kwargs.get('exc_info'))
+        self.write('Error %s' % status_code)
