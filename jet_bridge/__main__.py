@@ -30,7 +30,7 @@ def make_app():
         (r'/api/model_descriptions/', ModelDescriptionsHandler),
         (r'/api/sql/', SqlHandler),
         (r'/api/messages/', MessageHandler),
-    ] + router.urls, debug=True, default_handler_class=NotFoundHandler)
+    ] + router.urls, debug=settings.DEBUG, default_handler_class=NotFoundHandler)
 
 
 def main():
@@ -42,6 +42,10 @@ def main():
     print(datetime.now().strftime('%B %d, %Y - %H:%M:%S %Z'))
     print('Jet Bridge version {}'.format(VERSION))
     print('Starting server at {}'.format(url))
+
+    if settings.DEBUG:
+        print('Server is running in DEBUG mode')
+
     print('Quit the server with CONTROL-C')
 
     if not is_token_activated():
