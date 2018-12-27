@@ -1,5 +1,5 @@
 import sqlalchemy
-from sqlalchemy import inspect, or_, sql
+from sqlalchemy import inspect, or_, sql, desc
 
 from jet_bridge.filters.char_filter import CharFilter
 from jet_bridge.filters.filter import EMPTY_VALUES
@@ -75,11 +75,35 @@ def get_model_m2m_filter(Model):
     return M2MFilter
 
 
+class OrderFilter(CharFilter):
+
+    def filter(self, qs, value):
+        if value in EMPTY_VALUES:
+            return qs
+
+        if len(value) < 2:
+            return qs.filter(sql.false())
+
+        descending = value[0:1] == '-'
+        value = value[1:] if descending else value
+        entity = qs._primary_entity.entity_zero_or_selectable.entity
+        column = getattr(entity, value, None)
+
+        if column is None:
+            return qs.filter(sql.false())
+
+        if descending:
+            column = desc(column)
+
+        return qs.order_by(column)
+
+
 def get_model_filter_class(Model):
     search_filter = get_model_search_filter(Model)
     model_m2m_filter = get_model_m2m_filter(Model)
 
     class ModelFilterClass(FilterClass):
+        _order_by = OrderFilter()
         _search = search_filter()
         _m2m = model_m2m_filter()
 
