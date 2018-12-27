@@ -1,6 +1,11 @@
 from jet_bridge.filters.model import get_model_filter_class
+from jet_bridge.filters.model_aggregate import ModelAggregateFilter
+from jet_bridge.filters.model_group import ModelGroupFilter
 from jet_bridge.permissions import HasProjectPermissions, ModifyNotInDemo
+from jet_bridge.responses.base import Response
+from jet_bridge.router import action
 from jet_bridge.serializers.model import get_model_serializer
+from jet_bridge.serializers.model_group import ModelGroupSerializer
 from jet_bridge.views.mixins.model import ModelAPIViewMixin
 from jet_bridge.db import MappedBase
 
@@ -47,3 +52,59 @@ class ModelHandler(ModelAPIViewMixin):
         Model = self.get_model()
 
         return self.session.query(Model)
+
+    @action(methods=['get'], detail=False)
+    def aggregate(self, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset())
+
+        y_func = self.get_argument('_y_func').lower()
+        y_column = self.get_argument('_y_column', 'id')
+
+        model_serializer = self.get_serializer()
+
+        y_serializers = list(filter(lambda x: x.field_name == y_column, model_serializer.fields))
+        y_serializer = y_serializers[0]
+
+        queryset = ModelAggregateFilter().filter(queryset, {
+            'y_func': y_func,
+            'y_column': y_column
+        })
+
+        result = y_serializer.to_representation(queryset[0])  # TODO: Refactor serializer
+
+        self.write_response(Response({
+            'y_func': result
+        }))
+
+    @action(methods=['get'], detail=False)
+    def group(self, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset())
+
+        x_column = self.get_argument('_x_column')
+        x_lookup_name = self.get_argument('_x_lookup')
+        y_func = self.get_argument('_y_func').lower()
+        y_column = self.get_argument('_y_column', 'id')
+
+        model_serializer = self.get_serializer()
+
+        x_serializers = list(filter(lambda x: x.field_name == x_column, model_serializer.fields))
+        x_serializer = x_serializers[0]
+
+        y_serializers = list(filter(lambda x: x.field_name == y_column, model_serializer.fields))
+        y_serializer = y_serializers[0]
+
+        queryset = ModelGroupFilter().filter(queryset, {
+            'x_column': x_column,
+            'x_lookup': x_lookup_name,
+            'y_func': y_func,
+            'y_column': y_column
+        })
+        serializer = ModelGroupSerializer(
+            instance=queryset,
+            many=True,
+            # TODO: Refactor serializer
+            # group_serializer=x_serializer,
+            # y_func_serializer=y_serializer
+        )
+
+        self.write_response(Response(serializer.representation_data))

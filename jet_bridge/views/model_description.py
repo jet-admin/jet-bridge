@@ -1,5 +1,6 @@
 from sqlalchemy import inspect
 from sqlalchemy.orm.base import ONETOMANY
+from sqlalchemy.util import ImmutableProperties
 
 from jet_bridge.db import Session, MappedBase
 from jet_bridge.models import data_types
@@ -41,7 +42,6 @@ class ModelDescriptionsHandler(APIView):
 
         def map_relation(relation):
             field = None
-            through = None
 
             if relation.direction == ONETOMANY:
                 field = 'ManyToOneRel'
@@ -53,18 +53,55 @@ class ModelDescriptionsHandler(APIView):
                 },
                 'field': field,
                 'related_model_field': relation.primaryjoin.right.name,
-                'through': through
+                'through': None
             }
+
+        def table_relations(mapper):
+            return list(map(map_relation, filter(lambda x: x.direction == ONETOMANY, mapper.relationships)))
+
+        def table_m2m_relations(mapper):
+            result = []
+            name = mapper.selectable.name
+
+            for relation in mapper.relationships:
+                if relation.direction != ONETOMANY:
+                    continue
+
+                m2m_relationships = relation.mapper.relationships.values()
+
+                if len(m2m_relationships) != 2:
+                    continue
+
+                if len(relation.table.columns) > 5:
+                    continue
+
+                self_relationship = m2m_relationships[1] if m2m_relationships[1].table.name == name else \
+                m2m_relationships[0]
+                other_relationship = m2m_relationships[0] if self_relationship == m2m_relationships[1] else \
+                m2m_relationships[1]
+
+                result.append({
+                    'name': 'M2M {} {}'.format(self_relationship.table.name, other_relationship.table.name),
+                    'related_model': {
+                        'model': other_relationship.table.name
+                    },
+                    'field': 'ManyToManyField',
+                    'related_model_field': self_relationship.table.name,
+                    'through': {'model': relation.table.name}
+                })
+
+            return result
 
         def map_table(cls):
             mapper = inspect(cls)
             name = mapper.selectable.name
+
             return {
                 'model': name,
                 'db_table': name,
                 'fields': list(map(map_column, mapper.columns)),
                 'hidden': name in hidden,
-                'relations': list(map(map_relation, filter(lambda x: x.direction == ONETOMANY, mapper.relationships)))
+                'relations': table_relations(mapper) + table_m2m_relations(mapper)
             }
 
         return list(map(map_table, MappedBase.classes))
