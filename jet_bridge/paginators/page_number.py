@@ -10,7 +10,7 @@ from jet_bridge.utils.http import replace_query_param, remove_query_param
 
 class PageNumberPagination(Pagination):
     page_number = None
-    page_size = 20
+    page_size = 25
     page_query_param = 'page'
     page_size_query_param = '_per_page'
     max_page_size = 10000
