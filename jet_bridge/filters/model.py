@@ -8,10 +8,8 @@ from jet_bridge.filters.filter_class import FilterClass
 
 def filter_search_field(field):
     allowed_fields = [
-        sqlalchemy.VARCHAR,
-        sqlalchemy.TEXT,
-        sqlalchemy.CHAR,
-        sqlalchemy.JSON
+        sqlalchemy.String,
+        sqlalchemy.JSON,
     ]
 
     return isinstance(field.type, tuple(allowed_fields))
