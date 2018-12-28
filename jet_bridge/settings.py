@@ -2,7 +2,7 @@ import os
 from tornado.options import define, options
 
 from jet_bridge.media import MEDIA_STORAGE_DEFAULT
-from jet_bridge.utils.settings import parse_environment
+from jet_bridge.utils.settings import parse_environment, parse_config_file
 
 # Constants
 
@@ -44,7 +44,7 @@ options.parse_command_line(final=False)
 
 if options.config:
     try:
-        options.parse_config_file(options.config, final=False)
+        parse_config_file(options, options.config, 'JET', final=False)
     except FileNotFoundError as e:
         if options.config != DEFAULT_CONFIG_PATH:
             raise e
