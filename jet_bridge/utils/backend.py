@@ -1,3 +1,5 @@
+from datetime import datetime
+
 import requests
 
 from jet_bridge import settings
@@ -30,7 +32,11 @@ def register_token():
 
     result = r.json()
 
-    token = Token(token=result['token'].replace('-', ''), date_add=result['date_add'])
+    # TODO: add serializer
+    token = result['token'].replace('-', '')
+    date_add = datetime.strptime(result['date_add'][:-6], '%Y-%m-%dT%H:%M:%S.%f')
+
+    token = Token(token=token, date_add=date_add)
     session.add(token)
     session.commit()
 

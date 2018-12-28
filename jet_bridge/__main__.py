@@ -4,10 +4,11 @@ import tornado.ioloop
 import tornado.web
 import jet_bridge.adapters.postgres
 
-from jet_bridge import settings, VERSION
+from jet_bridge import settings, VERSION, media
 from jet_bridge.router import Router
 from jet_bridge.utils.backend import is_token_activated
 from jet_bridge.views.api import ApiHandler
+from jet_bridge.views.media_file_upload import MediaFileUploadHandler
 from jet_bridge.views.main import MainHandler
 from jet_bridge.views.message import MessageHandler
 from jet_bridge.views.model import ModelHandler
@@ -22,7 +23,7 @@ def make_app():
 
     router.register('/api/models/(?P<model>[^/]+)/', ModelHandler)
 
-    return tornado.web.Application([
+    urls = [
         (r'/', MainHandler),
         (r'/register/', RegisterHandler),
         (r'/api/', ApiHandler),
@@ -30,7 +31,15 @@ def make_app():
         (r'/api/model_descriptions/', ModelDescriptionsHandler),
         (r'/api/sql/', SqlHandler),
         (r'/api/messages/', MessageHandler),
-    ] + router.urls, debug=settings.DEBUG, default_handler_class=NotFoundHandler)
+        (r'/api/file_upload/', MediaFileUploadHandler),
+        (r'/media/(.*)', tornado.web.StaticFileHandler, {'path': settings.MEDIA_ROOT}),
+    ]
+    urls += router.urls
+
+    if settings.MEDIA_STORAGE == media.MEDIA_STORAGE_DEFAULT:
+        urls.append((r'/media/(.*)', tornado.web.StaticFileHandler, {'path': settings.MEDIA_ROOT}))
+
+    return tornado.web.Application(urls, debug=settings.DEBUG, default_handler_class=NotFoundHandler)
 
 
 def main():
