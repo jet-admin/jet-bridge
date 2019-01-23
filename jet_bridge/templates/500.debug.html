@@ -1,0 +1,2666 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+  <meta name="robots" content="NONE,NOARCHIVE">
+  <title>{{ exception_type }} at {{ path }}</title>
+  <style type="text/css">
+    html * { padding:0; margin:0; }
+    body * { padding:10px 20px; }
+    body * * { padding:0; }
+    body { font:small sans-serif; }
+    body>div { border-bottom:1px solid #ddd; }
+    h1 { font-weight:normal; }
+    h2 { margin-bottom:.8em; }
+    h2 span { font-size:80%; color:#666; font-weight:normal; }
+    h3 { margin:1em 0 .5em 0; }
+    h4 { margin:0 0 .5em 0; font-weight: normal; }
+    code, pre { font-size: 100%; white-space: pre-wrap; }
+    table { border:1px solid #ccc; border-collapse: collapse; width:100%; background:white; }
+    tbody td, tbody th { vertical-align:top; padding:2px 3px; }
+    thead th {
+      padding:1px 6px 1px 3px; background:#fefefe; text-align:left;
+      font-weight:normal; font-size:11px; border:1px solid #ddd;
+    }
+    tbody th { width:12em; text-align:right; color:#666; padding-right:.5em; }
+    table.vars { margin:5px 0 2px 40px; }
+    table.vars td, table.req td { font-family:monospace; }
+    table td.code { width:100%; }
+    table td.code pre { overflow:hidden; }
+    table.source th { color:#666; }
+    table.source td { font-family:monospace; white-space:pre; border-bottom:1px solid #eee; }
+    ul.traceback { list-style-type:none; color: #222; }
+    ul.traceback li.frame { padding-bottom:1em; color:#666; }
+    ul.traceback li.user { background-color:#e0e0e0; color:#000 }
+    div.context { padding:10px 0; overflow:hidden; }
+    div.context ol { padding-left:30px; margin:0 10px; list-style-position: inside; }
+    div.context ol li { font-family:monospace; white-space:pre; color:#777; cursor:pointer; padding-left: 2px; }
+    div.context ol li pre { display:inline; }
+    div.context ol.context-line li { color:#505050; background-color:#dfdfdf; padding: 3px 2px; }
+    div.context ol.context-line li span { position:absolute; right:32px; }
+    .user div.context ol.context-line li { background-color:#bbb; color:#000; }
+    .user div.context ol li { color:#666; }
+    div.commands { margin-left: 40px; }
+    div.commands a { color:#555; text-decoration:none; }
+    .user div.commands a { color: black; }
+    #summary { background: #fcc; }
+    #summary h2 { font-weight: normal; color: #666; }
+    #explanation { background:#eee; }
+    #template, #template-not-exist { background:#f6f6f6; }
+    #template-not-exist ul { margin: 0 0 10px 20px; }
+    #template-not-exist .postmortem-section { margin-bottom: 3px; }
+    #unicode-hint { background:#eee; }
+    #traceback { background:#eee; }
+    #requestinfo { background:#f6f6f6; padding-left:120px; }
+    #summary table { border:none; background:transparent; }
+    #requestinfo h2, #requestinfo h3 { position:relative; margin-left:-100px; }
+    #requestinfo h3 { margin-bottom:-1em; }
+    .error { background: #fcc; }
+    .specific { color:#cc3300; font-weight:bold; }
+    h2 span.commands { font-size:.7em;}
+    span.commands a:link {color:#5E5694;}
+    pre.exception_value { font-family: sans-serif; color: #666; font-size: 1.5em; margin: 10px 0 10px 0; }
+    .append-bottom { margin-bottom: 10px; }
+  </style>
+
+  <script type="text/javascript">
+  //<!--
+    function getElementsByClassName(oElm, strTagName, strClassName){
+        // Written by Jonathan Snook, http://www.snook.ca/jon; Add-ons by Robert Nyman, http://www.robertnyman.com
+        var arrElements = (strTagName == "*" && document.all)? document.all :
+        oElm.getElementsByTagName(strTagName);
+        var arrReturnElements = new Array();
+        strClassName = strClassName.replace(/\-/g, "\\-");
+        var oRegExp = new RegExp("(^|\\s)" + strClassName + "(\\s|$)");
+        var oElement;
+        for(var i=0; i<arrElements.length; i++){
+            oElement = arrElements[i];
+            if(oRegExp.test(oElement.className)){
+                arrReturnElements.push(oElement);
+            }
+        }
+        return (arrReturnElements)
+    }
+    function hideAll(elems) {
+      for (var e = 0; e < elems.length; e++) {
+        elems[e].style.display = 'none';
+      }
+    }
+    window.onload = function() {
+      hideAll(getElementsByClassName(document, 'table', 'vars'));
+      hideAll(getElementsByClassName(document, 'ol', 'pre-context'));
+      hideAll(getElementsByClassName(document, 'ol', 'post-context'));
+      hideAll(getElementsByClassName(document, 'div', 'pastebin'));
+    }
+    function toggle() {
+      for (var i = 0; i < arguments.length; i++) {
+        var e = document.getElementById(arguments[i]);
+        if (e) {
+          e.style.display = e.style.display == 'none' ? 'block': 'none';
+        }
+      }
+      return false;
+    }
+    function varToggle(link, id) {
+      toggle('v' + id);
+      var s = link.getElementsByTagName('span')[0];
+      var uarr = String.fromCharCode(0x25b6);
+      var darr = String.fromCharCode(0x25bc);
+      s.textContent = s.textContent == uarr ? darr : uarr;
+      return false;
+    }
+    function switchPastebinFriendly(link) {
+      s1 = "Switch to copy-and-paste view";
+      s2 = "Switch back to interactive view";
+      link.textContent = link.textContent.trim() == s1 ? s2: s1;
+      toggle('browserTraceback', 'pastebinTraceback');
+      return false;
+    }
+    //-->
+  </script>
+
+</head>
+<body>
+<div id="summary">
+  {% if exception_type %}
+      <h1>{{ exception_type }} at {{ path }}</h1>
+      <pre class="exception_value">{{ exception_value }}</pre>
+  {% end %}
+  <table class="meta">
+    <tr>
+      <th>Request Method:</th>
+      <td>{{ method }}</td>
+    </tr>
+    <tr>
+      <th>Request URL:</th>
+      <td>{{ full_path }}</td>
+    </tr>
+    <tr>
+      <th>Jet Bridge Version:</th>
+      <td>{{ version }}</td>
+    </tr>
+    {% if exception_type %}
+        <tr>
+          <th>Exception Type:</th>
+          <td>{{ exception_type }}</td>
+        </tr>
+        <tr>
+          <th>Exception Value:</th>
+          <td><pre>{{ exception_value }}</pre></td>
+        </tr>
+        <tr>
+          <th>Exception Location:</th>
+          <td>{{ exception_last_traceback_name }}, line {{ exception_last_traceback_line }}</td>
+        </tr>
+    {% end %}
+    <tr>
+      <th>Python Executable:</th>
+      <td>{{ python_executable }}</td>
+    </tr>
+    <tr>
+      <th>Python Version:</th>
+      <td>{{ python_version }}</td>
+    </tr>
+    <tr>
+      <th>Python Path:</th>
+      <td><pre>{{ python_path }}</pre></td>
+    </tr>
+    <tr>
+      <th>Server time:</th>
+      <td>{{ current_datetime }}</td>
+    </tr>
+  </table>
+</div>
+
+
+
+{% if False %}
+<div id="traceback">
+  <h2>Traceback <span class="commands"><a href="#" onclick="return switchPastebinFriendly(this);">
+    Switch to copy-and-paste view</a></span>
+  </h2>
+
+  <div id="browserTraceback">
+    <ul class="traceback">
+
+
+        <li class="frame django">
+          <code>/Users/f1nal/Dropbox/python/blowfire-backend/env/lib/python3.6/site-packages/django/core/handlers/exception.py</code> in <code>inner</code>
+
+
+            <div class="context" id="c4414318664">
+
+                <ol start="34" class="pre-context" id="pre4414318664">
+
+                  <li onclick="toggle('pre4414318664', 'post4414318664')"><pre>    This decorator is automatically applied to all middleware to ensure that</pre></li>
+
+                  <li onclick="toggle('pre4414318664', 'post4414318664')"><pre>    no middleware leaks an exception and that the next middleware in the stack</pre></li>
+
+                  <li onclick="toggle('pre4414318664', 'post4414318664')"><pre>    can rely on getting a response instead of an exception.</pre></li>
+
+                  <li onclick="toggle('pre4414318664', 'post4414318664')"><pre>    &quot;&quot;&quot;</pre></li>
+
+                  <li onclick="toggle('pre4414318664', 'post4414318664')"><pre>    @wraps(get_response, assigned=available_attrs(get_response))</pre></li>
+
+                  <li onclick="toggle('pre4414318664', 'post4414318664')"><pre>    def inner(request):</pre></li>
+
+                  <li onclick="toggle('pre4414318664', 'post4414318664')"><pre>        try:</pre></li>
+
+                </ol>
+
+              <ol start="41" class="context-line">
+                <li onclick="toggle('pre4414318664', 'post4414318664')"><pre>
+            response = get_response(request)</pre> <span>...</span></li></ol>
+
+                <ol start='42' class="post-context" id="post4414318664">
+
+                  <li onclick="toggle('pre4414318664', 'post4414318664')"><pre>        except Exception as exc:</pre></li>
+
+                  <li onclick="toggle('pre4414318664', 'post4414318664')"><pre>            response = response_for_exception(request, exc)</pre></li>
+
+                  <li onclick="toggle('pre4414318664', 'post4414318664')"><pre>        return response</pre></li>
+
+                  <li onclick="toggle('pre4414318664', 'post4414318664')"><pre>    return inner</pre></li>
+
+                  <li onclick="toggle('pre4414318664', 'post4414318664')"><pre></pre></li>
+
+                  <li onclick="toggle('pre4414318664', 'post4414318664')"><pre></pre></li>
+
+              </ol>
+
+            </div>
+
+
+
+            <div class="commands">
+
+                    <a href="#" onclick="return varToggle(this, '4414318664')"><span>&#x25b6;</span> Local vars</a>
+
+            </div>
+            <table class="vars" id="v4414318664">
+              <thead>
+                <tr>
+                  <th>Variable</th>
+                  <th>Value</th>
+                </tr>
+              </thead>
+              <tbody>
+
+                  <tr>
+                    <td>exc</td>
+                    <td class="code"><pre>ZeroDivisionError(&#39;division by zero&#39;,)</pre></td>
+                  </tr>
+
+                  <tr>
+                    <td>get_response</td>
+                    <td class="code"><pre>&lt;bound method BaseHandler._get_response of &lt;django.core.handlers.wsgi.WSGIHandler object at 0x1070f0e80&gt;&gt;</pre></td>
+                  </tr>
+
+                  <tr>
+                    <td>request</td>
+                    <td class="code"><pre>&lt;WSGIRequest: GET &#39;/api/careers/position/&#39;&gt;</pre></td>
+                  </tr>
+
+              </tbody>
+            </table>
+
+        </li>
+
+
+        <li class="frame django">
+          <code>/Users/f1nal/Dropbox/python/blowfire-backend/env/lib/python3.6/site-packages/django/core/handlers/base.py</code> in <code>_get_response</code>
+
+
+            <div class="context" id="c4414318024">
+
+                <ol start="180" class="pre-context" id="pre4414318024">
+
+                  <li onclick="toggle('pre4414318024', 'post4414318024')"><pre>                break</pre></li>
+
+                  <li onclick="toggle('pre4414318024', 'post4414318024')"><pre></pre></li>
+
+                  <li onclick="toggle('pre4414318024', 'post4414318024')"><pre>        if response is None:</pre></li>
+
+                  <li onclick="toggle('pre4414318024', 'post4414318024')"><pre>            wrapped_callback = self.make_view_atomic(callback)</pre></li>
+
+                  <li onclick="toggle('pre4414318024', 'post4414318024')"><pre>            try:</pre></li>
+
+                  <li onclick="toggle('pre4414318024', 'post4414318024')"><pre>                response = wrapped_callback(request, *callback_args, **callback_kwargs)</pre></li>
+
+                  <li onclick="toggle('pre4414318024', 'post4414318024')"><pre>            except Exception as e:</pre></li>
+
+                </ol>
+
+              <ol start="187" class="context-line">
+                <li onclick="toggle('pre4414318024', 'post4414318024')"><pre>
+                response = self.process_exception_by_middleware(e, request)</pre> <span>...</span></li></ol>
+
+                <ol start='188' class="post-context" id="post4414318024">
+
+                  <li onclick="toggle('pre4414318024', 'post4414318024')"><pre></pre></li>
+
+                  <li onclick="toggle('pre4414318024', 'post4414318024')"><pre>        # Complain if the view returned None (a common error).</pre></li>
+
+                  <li onclick="toggle('pre4414318024', 'post4414318024')"><pre>        if response is None:</pre></li>
+
+                  <li onclick="toggle('pre4414318024', 'post4414318024')"><pre>            if isinstance(callback, types.FunctionType):    # FBV</pre></li>
+
+                  <li onclick="toggle('pre4414318024', 'post4414318024')"><pre>                view_name = callback.__name__</pre></li>
+
+                  <li onclick="toggle('pre4414318024', 'post4414318024')"><pre>            else:                                           # CBV</pre></li>
+
+              </ol>
+
+            </div>
+
+
+
+            <div class="commands">
+
+                    <a href="#" onclick="return varToggle(this, '4414318024')"><span>&#x25b6;</span> Local vars</a>
+
+            </div>
+            <table class="vars" id="v4414318024">
+              <thead>
+                <tr>
+                  <th>Variable</th>
+                  <th>Value</th>
+                </tr>
+              </thead>
+              <tbody>
+
+                  <tr>
+                    <td>callback</td>
+                    <td class="code"><pre>&lt;function PositionViewSet at 0x106f85268&gt;</pre></td>
+                  </tr>
+
+                  <tr>
+                    <td>callback_args</td>
+                    <td class="code"><pre>()</pre></td>
+                  </tr>
+
+                  <tr>
+                    <td>callback_kwargs</td>
+                    <td class="code"><pre>{}</pre></td>
+                  </tr>
+
+                  <tr>
+                    <td>middleware_method</td>
+                    <td class="code"><pre>&lt;bound method CsrfViewMiddleware.process_view of &lt;django.middleware.csrf.CsrfViewMiddleware object at 0x106f23a58&gt;&gt;</pre></td>
+                  </tr>
+
+                  <tr>
+                    <td>request</td>
+                    <td class="code"><pre>&lt;WSGIRequest: GET &#39;/api/careers/position/&#39;&gt;</pre></td>
+                  </tr>
+
+                  <tr>
+                    <td>resolver</td>
+                    <td class="code"><pre>&lt;RegexURLResolver &#39;application.urls&#39; (None:None) ^/&gt;</pre></td>
+                  </tr>
+
+                  <tr>
+                    <td>resolver_match</td>
+                    <td class="code"><pre>ResolverMatch(func=careers.views.position.PositionViewSet, args=(), kwargs={}, url_name=position-list, app_names=[], namespaces=[&#39;core&#39;])</pre></td>
+                  </tr>
+
+                  <tr>
+                    <td>response</td>
+                    <td class="code"><pre>None</pre></td>
+                  </tr>
+
+                  <tr>
+                    <td>self</td>
+                    <td class="code"><pre>&lt;django.core.handlers.wsgi.WSGIHandler object at 0x1070f0e80&gt;</pre></td>
+                  </tr>
+
+                  <tr>
+                    <td>wrapped_callback</td>
+                    <td class="code"><pre>&lt;function PositionViewSet at 0x106f85268&gt;</pre></td>
+                  </tr>
+
+              </tbody>
+            </table>
+
+        </li>
+
+
+        <li class="frame django">
+          <code>/Users/f1nal/Dropbox/python/blowfire-backend/env/lib/python3.6/site-packages/django/core/handlers/base.py</code> in <code>_get_response</code>
+
+
+            <div class="context" id="c4414318536">
+
+                <ol start="178" class="pre-context" id="pre4414318536">
+
+                  <li onclick="toggle('pre4414318536', 'post4414318536')"><pre>            response = middleware_method(request, callback, callback_args, callback_kwargs)</pre></li>
+
+                  <li onclick="toggle('pre4414318536', 'post4414318536')"><pre>            if response:</pre></li>
+
+                  <li onclick="toggle('pre4414318536', 'post4414318536')"><pre>                break</pre></li>
+
+                  <li onclick="toggle('pre4414318536', 'post4414318536')"><pre></pre></li>
+
+                  <li onclick="toggle('pre4414318536', 'post4414318536')"><pre>        if response is None:</pre></li>
+
+                  <li onclick="toggle('pre4414318536', 'post4414318536')"><pre>            wrapped_callback = self.make_view_atomic(callback)</pre></li>
+
+                  <li onclick="toggle('pre4414318536', 'post4414318536')"><pre>            try:</pre></li>
+
+                </ol>
+
+              <ol start="185" class="context-line">
+                <li onclick="toggle('pre4414318536', 'post4414318536')"><pre>
+                response = wrapped_callback(request, *callback_args, **callback_kwargs)</pre> <span>...</span></li></ol>
+
+                <ol start='186' class="post-context" id="post4414318536">
+
+                  <li onclick="toggle('pre4414318536', 'post4414318536')"><pre>            except Exception as e:</pre></li>
+
+                  <li onclick="toggle('pre4414318536', 'post4414318536')"><pre>                response = self.process_exception_by_middleware(e, request)</pre></li>
+
+                  <li onclick="toggle('pre4414318536', 'post4414318536')"><pre></pre></li>
+
+                  <li onclick="toggle('pre4414318536', 'post4414318536')"><pre>        # Complain if the view returned None (a common error).</pre></li>
+
+                  <li onclick="toggle('pre4414318536', 'post4414318536')"><pre>        if response is None:</pre></li>
+
+                  <li onclick="toggle('pre4414318536', 'post4414318536')"><pre>            if isinstance(callback, types.FunctionType):    # FBV</pre></li>
+
+              </ol>
+
+            </div>
+
+
+
+            <div class="commands">
+
+                    <a href="#" onclick="return varToggle(this, '4414318536')"><span>&#x25b6;</span> Local vars</a>
+
+            </div>
+            <table class="vars" id="v4414318536">
+              <thead>
+                <tr>
+                  <th>Variable</th>
+                  <th>Value</th>
+                </tr>
+              </thead>
+              <tbody>
+
+                  <tr>
+                    <td>callback</td>
+                    <td class="code"><pre>&lt;function PositionViewSet at 0x106f85268&gt;</pre></td>
+                  </tr>
+
+                  <tr>
+                    <td>callback_args</td>
+                    <td class="code"><pre>()</pre></td>
+                  </tr>
+
+                  <tr>
+                    <td>callback_kwargs</td>
+                    <td class="code"><pre>{}</pre></td>
+                  </tr>
+
+                  <tr>
+                    <td>middleware_method</td>
+                    <td class="code"><pre>&lt;bound method CsrfViewMiddleware.process_view of &lt;django.middleware.csrf.CsrfViewMiddleware object at 0x106f23a58&gt;&gt;</pre></td>
+                  </tr>
+
+                  <tr>
+                    <td>request</td>
+                    <td class="code"><pre>&lt;WSGIRequest: GET &#39;/api/careers/position/&#39;&gt;</pre></td>
+                  </tr>
+
+                  <tr>
+                    <td>resolver</td>
+                    <td class="code"><pre>&lt;RegexURLResolver &#39;application.urls&#39; (None:None) ^/&gt;</pre></td>
+                  </tr>
+
+                  <tr>
+                    <td>resolver_match</td>
+                    <td class="code"><pre>ResolverMatch(func=careers.views.position.PositionViewSet, args=(), kwargs={}, url_name=position-list, app_names=[], namespaces=[&#39;core&#39;])</pre></td>
+                  </tr>
+
+                  <tr>
+                    <td>response</td>
+                    <td class="code"><pre>None</pre></td>
+                  </tr>
+
+                  <tr>
+                    <td>self</td>
+                    <td class="code"><pre>&lt;django.core.handlers.wsgi.WSGIHandler object at 0x1070f0e80&gt;</pre></td>
+                  </tr>
+
+                  <tr>
+                    <td>wrapped_callback</td>
+                    <td class="code"><pre>&lt;function PositionViewSet at 0x106f85268&gt;</pre></td>
+                  </tr>
+
+              </tbody>
+            </table>
+
+        </li>
+
+
+        <li class="frame django">
+          <code>/Users/f1nal/Dropbox/python/blowfire-backend/env/lib/python3.6/site-packages/django/views/decorators/csrf.py</code> in <code>wrapped_view</code>
+
+
+            <div class="context" id="c4414317320">
+
+                <ol start="51" class="pre-context" id="pre4414317320">
+
+                  <li onclick="toggle('pre4414317320', 'post4414317320')"><pre>    &quot;&quot;&quot;</pre></li>
+
+                  <li onclick="toggle('pre4414317320', 'post4414317320')"><pre>    Marks a view function as being exempt from the CSRF view protection.</pre></li>
+
+                  <li onclick="toggle('pre4414317320', 'post4414317320')"><pre>    &quot;&quot;&quot;</pre></li>
+
+                  <li onclick="toggle('pre4414317320', 'post4414317320')"><pre>    # We could just do view_func.csrf_exempt = True, but decorators</pre></li>
+
+                  <li onclick="toggle('pre4414317320', 'post4414317320')"><pre>    # are nicer if they don&#39;t have side-effects, so we return a new</pre></li>
+
+                  <li onclick="toggle('pre4414317320', 'post4414317320')"><pre>    # function.</pre></li>
+
+                  <li onclick="toggle('pre4414317320', 'post4414317320')"><pre>    def wrapped_view(*args, **kwargs):</pre></li>
+
+                </ol>
+
+              <ol start="58" class="context-line">
+                <li onclick="toggle('pre4414317320', 'post4414317320')"><pre>
+        return view_func(*args, **kwargs)</pre> <span>...</span></li></ol>
+
+                <ol start='59' class="post-context" id="post4414317320">
+
+                  <li onclick="toggle('pre4414317320', 'post4414317320')"><pre>    wrapped_view.csrf_exempt = True</pre></li>
+
+                  <li onclick="toggle('pre4414317320', 'post4414317320')"><pre>    return wraps(view_func, assigned=available_attrs(view_func))(wrapped_view)</pre></li>
+
+              </ol>
+
+            </div>
+
+
+
+            <div class="commands">
+
+                    <a href="#" onclick="return varToggle(this, '4414317320')"><span>&#x25b6;</span> Local vars</a>
+
+            </div>
+            <table class="vars" id="v4414317320">
+              <thead>
+                <tr>
+                  <th>Variable</th>
+                  <th>Value</th>
+                </tr>
+              </thead>
+              <tbody>
+
+                  <tr>
+                    <td>args</td>
+                    <td class="code"><pre>(&lt;WSGIRequest: GET &#39;/api/careers/position/&#39;&gt;,)</pre></td>
+                  </tr>
+
+                  <tr>
+                    <td>kwargs</td>
+                    <td class="code"><pre>{}</pre></td>
+                  </tr>
+
+                  <tr>
+                    <td>view_func</td>
+                    <td class="code"><pre>&lt;function PositionViewSet at 0x106e30598&gt;</pre></td>
+                  </tr>
+
+              </tbody>
+            </table>
+
+        </li>
+
+
+        <li class="frame user">
+          <code>/Users/f1nal/Dropbox/python/blowfire-backend/env/lib/python3.6/site-packages/rest_framework/viewsets.py</code> in <code>view</code>
+
+
+            <div class="context" id="c4414318472">
+
+                <ol start="76" class="pre-context" id="pre4414318472">
+
+                  <li onclick="toggle('pre4414318472', 'post4414318472')"><pre>            # Bind methods to actions</pre></li>
+
+                  <li onclick="toggle('pre4414318472', 'post4414318472')"><pre>            # This is the bit that&#39;s different to a standard view</pre></li>
+
+                  <li onclick="toggle('pre4414318472', 'post4414318472')"><pre>            for method, action in actions.items():</pre></li>
+
+                  <li onclick="toggle('pre4414318472', 'post4414318472')"><pre>                handler = getattr(self, action)</pre></li>
+
+                  <li onclick="toggle('pre4414318472', 'post4414318472')"><pre>                setattr(self, method, handler)</pre></li>
+
+                  <li onclick="toggle('pre4414318472', 'post4414318472')"><pre></pre></li>
+
+                  <li onclick="toggle('pre4414318472', 'post4414318472')"><pre>            # And continue as usual</pre></li>
+
+                </ol>
+
+              <ol start="83" class="context-line">
+                <li onclick="toggle('pre4414318472', 'post4414318472')"><pre>
+            return self.dispatch(request, *args, **kwargs)</pre> <span>...</span></li></ol>
+
+                <ol start='84' class="post-context" id="post4414318472">
+
+                  <li onclick="toggle('pre4414318472', 'post4414318472')"><pre></pre></li>
+
+                  <li onclick="toggle('pre4414318472', 'post4414318472')"><pre>        # take name and docstring from class</pre></li>
+
+                  <li onclick="toggle('pre4414318472', 'post4414318472')"><pre>        update_wrapper(view, cls, updated=())</pre></li>
+
+                  <li onclick="toggle('pre4414318472', 'post4414318472')"><pre></pre></li>
+
+                  <li onclick="toggle('pre4414318472', 'post4414318472')"><pre>        # and possible attributes set by decorators</pre></li>
+
+                  <li onclick="toggle('pre4414318472', 'post4414318472')"><pre>        # like csrf_exempt from dispatch</pre></li>
+
+              </ol>
+
+            </div>
+
+
+
+            <div class="commands">
+
+                    <a href="#" onclick="return varToggle(this, '4414318472')"><span>&#x25b6;</span> Local vars</a>
+
+            </div>
+            <table class="vars" id="v4414318472">
+              <thead>
+                <tr>
+                  <th>Variable</th>
+                  <th>Value</th>
+                </tr>
+              </thead>
+              <tbody>
+
+                  <tr>
+                    <td>action</td>
+                    <td class="code"><pre>&#39;list&#39;</pre></td>
+                  </tr>
+
+                  <tr>
+                    <td>actions</td>
+                    <td class="code"><pre>{&#39;get&#39;: &#39;list&#39;}</pre></td>
+                  </tr>
+
+                  <tr>
+                    <td>args</td>
+                    <td class="code"><pre>()</pre></td>
+                  </tr>
+
+                  <tr>
+                    <td>cls</td>
+                    <td class="code"><pre>&lt;class &#39;careers.views.position.PositionViewSet&#39;&gt;</pre></td>
+                  </tr>
+
+                  <tr>
+                    <td>handler</td>
+                    <td class="code"><pre>&lt;bound method PositionViewSet.list of &lt;careers.views.position.PositionViewSet object at 0x1070d5cf8&gt;&gt;</pre></td>
+                  </tr>
+
+                  <tr>
+                    <td>initkwargs</td>
+                    <td class="code"><pre>{&#39;suffix&#39;: &#39;List&#39;}</pre></td>
+                  </tr>
+
+                  <tr>
+                    <td>kwargs</td>
+                    <td class="code"><pre>{}</pre></td>
+                  </tr>
+
+                  <tr>
+                    <td>method</td>
+                    <td class="code"><pre>&#39;get&#39;</pre></td>
+                  </tr>
+
+                  <tr>
+                    <td>request</td>
+                    <td class="code"><pre>&lt;WSGIRequest: GET &#39;/api/careers/position/&#39;&gt;</pre></td>
+                  </tr>
+
+                  <tr>
+                    <td>self</td>
+                    <td class="code"><pre>&lt;careers.views.position.PositionViewSet object at 0x1070d5cf8&gt;</pre></td>
+                  </tr>
+
+              </tbody>
+            </table>
+
+        </li>
+
+
+        <li class="frame user">
+          <code>/Users/f1nal/Dropbox/python/blowfire-backend/env/lib/python3.6/site-packages/rest_framework/views.py</code> in <code>dispatch</code>
+
+
+            <div class="context" id="c4414318280">
+
+                <ol start="476" class="pre-context" id="pre4414318280">
+
+                  <li onclick="toggle('pre4414318280', 'post4414318280')"><pre>                                  self.http_method_not_allowed)</pre></li>
+
+                  <li onclick="toggle('pre4414318280', 'post4414318280')"><pre>            else:</pre></li>
+
+                  <li onclick="toggle('pre4414318280', 'post4414318280')"><pre>                handler = self.http_method_not_allowed</pre></li>
+
+                  <li onclick="toggle('pre4414318280', 'post4414318280')"><pre></pre></li>
+
+                  <li onclick="toggle('pre4414318280', 'post4414318280')"><pre>            response = handler(request, *args, **kwargs)</pre></li>
+
+                  <li onclick="toggle('pre4414318280', 'post4414318280')"><pre></pre></li>
+
+                  <li onclick="toggle('pre4414318280', 'post4414318280')"><pre>        except Exception as exc:</pre></li>
+
+                </ol>
+
+              <ol start="483" class="context-line">
+                <li onclick="toggle('pre4414318280', 'post4414318280')"><pre>
+            response = self.handle_exception(exc)</pre> <span>...</span></li></ol>
+
+                <ol start='484' class="post-context" id="post4414318280">
+
+                  <li onclick="toggle('pre4414318280', 'post4414318280')"><pre></pre></li>
+
+                  <li onclick="toggle('pre4414318280', 'post4414318280')"><pre>        self.response = self.finalize_response(request, response, *args, **kwargs)</pre></li>
+
+                  <li onclick="toggle('pre4414318280', 'post4414318280')"><pre>        return self.response</pre></li>
+
+                  <li onclick="toggle('pre4414318280', 'post4414318280')"><pre></pre></li>
+
+                  <li onclick="toggle('pre4414318280', 'post4414318280')"><pre>    def options(self, request, *args, **kwargs):</pre></li>
+
+                  <li onclick="toggle('pre4414318280', 'post4414318280')"><pre>        &quot;&quot;&quot;</pre></li>
+
+              </ol>
+
+            </div>
+
+
+
+            <div class="commands">
+
+                    <a href="#" onclick="return varToggle(this, '4414318280')"><span>&#x25b6;</span> Local vars</a>
+
+            </div>
+            <table class="vars" id="v4414318280">
+              <thead>
+                <tr>
+                  <th>Variable</th>
+                  <th>Value</th>
+                </tr>
+              </thead>
+              <tbody>
+
+                  <tr>
+                    <td>args</td>
+                    <td class="code"><pre>()</pre></td>
+                  </tr>
+
+                  <tr>
+                    <td>handler</td>
+                    <td class="code"><pre>&lt;bound method PositionViewSet.list of &lt;careers.views.position.PositionViewSet object at 0x1070d5cf8&gt;&gt;</pre></td>
+                  </tr>
+
+                  <tr>
+                    <td>kwargs</td>
+                    <td class="code"><pre>{}</pre></td>
+                  </tr>
+
+                  <tr>
+                    <td>request</td>
+                    <td class="code"><pre>&lt;rest_framework.request.Request object at 0x107174710&gt;</pre></td>
+                  </tr>
+
+                  <tr>
+                    <td>self</td>
+                    <td class="code"><pre>&lt;careers.views.position.PositionViewSet object at 0x1070d5cf8&gt;</pre></td>
+                  </tr>
+
+              </tbody>
+            </table>
+
+        </li>
+
+
+        <li class="frame user">
+          <code>/Users/f1nal/Dropbox/python/blowfire-backend/env/lib/python3.6/site-packages/rest_framework/views.py</code> in <code>handle_exception</code>
+
+
+            <div class="context" id="c4414317960">
+
+                <ol start="436" class="pre-context" id="pre4414317960">
+
+                  <li onclick="toggle('pre4414317960', 'post4414317960')"><pre></pre></li>
+
+                  <li onclick="toggle('pre4414317960', 'post4414317960')"><pre>        exception_handler = self.get_exception_handler()</pre></li>
+
+                  <li onclick="toggle('pre4414317960', 'post4414317960')"><pre></pre></li>
+
+                  <li onclick="toggle('pre4414317960', 'post4414317960')"><pre>        context = self.get_exception_handler_context()</pre></li>
+
+                  <li onclick="toggle('pre4414317960', 'post4414317960')"><pre>        response = exception_handler(exc, context)</pre></li>
+
+                  <li onclick="toggle('pre4414317960', 'post4414317960')"><pre></pre></li>
+
+                  <li onclick="toggle('pre4414317960', 'post4414317960')"><pre>        if response is None:</pre></li>
+
+                </ol>
+
+              <ol start="443" class="context-line">
+                <li onclick="toggle('pre4414317960', 'post4414317960')"><pre>
+            self.raise_uncaught_exception(exc)</pre> <span>...</span></li></ol>
+
+                <ol start='444' class="post-context" id="post4414317960">
+
+                  <li onclick="toggle('pre4414317960', 'post4414317960')"><pre></pre></li>
+
+                  <li onclick="toggle('pre4414317960', 'post4414317960')"><pre>        response.exception = True</pre></li>
+
+                  <li onclick="toggle('pre4414317960', 'post4414317960')"><pre>        return response</pre></li>
+
+                  <li onclick="toggle('pre4414317960', 'post4414317960')"><pre></pre></li>
+
+                  <li onclick="toggle('pre4414317960', 'post4414317960')"><pre>    def raise_uncaught_exception(self, exc):</pre></li>
+
+                  <li onclick="toggle('pre4414317960', 'post4414317960')"><pre>        if settings.DEBUG:</pre></li>
+
+              </ol>
+
+            </div>
+
+
+
+            <div class="commands">
+
+                    <a href="#" onclick="return varToggle(this, '4414317960')"><span>&#x25b6;</span> Local vars</a>
+
+            </div>
+            <table class="vars" id="v4414317960">
+              <thead>
+                <tr>
+                  <th>Variable</th>
+                  <th>Value</th>
+                </tr>
+              </thead>
+              <tbody>
+
+                  <tr>
+                    <td>context</td>
+                    <td class="code"><pre>{&#39;args&#39;: (),
+ &#39;kwargs&#39;: {},
+ &#39;request&#39;: &lt;rest_framework.request.Request object at 0x107174710&gt;,
+ &#39;view&#39;: &lt;careers.views.position.PositionViewSet object at 0x1070d5cf8&gt;}</pre></td>
+                  </tr>
+
+                  <tr>
+                    <td>exc</td>
+                    <td class="code"><pre>ZeroDivisionError(&#39;division by zero&#39;,)</pre></td>
+                  </tr>
+
+                  <tr>
+                    <td>exception_handler</td>
+                    <td class="code"><pre>&lt;function exception_handler at 0x106f1f840&gt;</pre></td>
+                  </tr>
+
+                  <tr>
+                    <td>response</td>
+                    <td class="code"><pre>None</pre></td>
+                  </tr>
+
+                  <tr>
+                    <td>self</td>
+                    <td class="code"><pre>&lt;careers.views.position.PositionViewSet object at 0x1070d5cf8&gt;</pre></td>
+                  </tr>
+
+              </tbody>
+            </table>
+
+        </li>
+
+
+        <li class="frame user">
+          <code>/Users/f1nal/Dropbox/python/blowfire-backend/env/lib/python3.6/site-packages/rest_framework/views.py</code> in <code>dispatch</code>
+
+
+            <div class="context" id="c4414578120">
+
+                <ol start="473" class="pre-context" id="pre4414578120">
+
+                  <li onclick="toggle('pre4414578120', 'post4414578120')"><pre>            # Get the appropriate handler method</pre></li>
+
+                  <li onclick="toggle('pre4414578120', 'post4414578120')"><pre>            if request.method.lower() in self.http_method_names:</pre></li>
+
+                  <li onclick="toggle('pre4414578120', 'post4414578120')"><pre>                handler = getattr(self, request.method.lower(),</pre></li>
+
+                  <li onclick="toggle('pre4414578120', 'post4414578120')"><pre>                                  self.http_method_not_allowed)</pre></li>
+
+                  <li onclick="toggle('pre4414578120', 'post4414578120')"><pre>            else:</pre></li>
+
+                  <li onclick="toggle('pre4414578120', 'post4414578120')"><pre>                handler = self.http_method_not_allowed</pre></li>
+
+                  <li onclick="toggle('pre4414578120', 'post4414578120')"><pre></pre></li>
+
+                </ol>
+
+              <ol start="480" class="context-line">
+                <li onclick="toggle('pre4414578120', 'post4414578120')"><pre>
+            response = handler(request, *args, **kwargs)</pre> <span>...</span></li></ol>
+
+                <ol start='481' class="post-context" id="post4414578120">
+
+                  <li onclick="toggle('pre4414578120', 'post4414578120')"><pre></pre></li>
+
+                  <li onclick="toggle('pre4414578120', 'post4414578120')"><pre>        except Exception as exc:</pre></li>
+
+                  <li onclick="toggle('pre4414578120', 'post4414578120')"><pre>            response = self.handle_exception(exc)</pre></li>
+
+                  <li onclick="toggle('pre4414578120', 'post4414578120')"><pre></pre></li>
+
+                  <li onclick="toggle('pre4414578120', 'post4414578120')"><pre>        self.response = self.finalize_response(request, response, *args, **kwargs)</pre></li>
+
+                  <li onclick="toggle('pre4414578120', 'post4414578120')"><pre>        return self.response</pre></li>
+
+              </ol>
+
+            </div>
+
+
+
+            <div class="commands">
+
+                    <a href="#" onclick="return varToggle(this, '4414578120')"><span>&#x25b6;</span> Local vars</a>
+
+            </div>
+            <table class="vars" id="v4414578120">
+              <thead>
+                <tr>
+                  <th>Variable</th>
+                  <th>Value</th>
+                </tr>
+              </thead>
+              <tbody>
+
+                  <tr>
+                    <td>args</td>
+                    <td class="code"><pre>()</pre></td>
+                  </tr>
+
+                  <tr>
+                    <td>handler</td>
+                    <td class="code"><pre>&lt;bound method PositionViewSet.list of &lt;careers.views.position.PositionViewSet object at 0x1070d5cf8&gt;&gt;</pre></td>
+                  </tr>
+
+                  <tr>
+                    <td>kwargs</td>
+                    <td class="code"><pre>{}</pre></td>
+                  </tr>
+
+                  <tr>
+                    <td>request</td>
+                    <td class="code"><pre>&lt;rest_framework.request.Request object at 0x107174710&gt;</pre></td>
+                  </tr>
+
+                  <tr>
+                    <td>self</td>
+                    <td class="code"><pre>&lt;careers.views.position.PositionViewSet object at 0x1070d5cf8&gt;</pre></td>
+                  </tr>
+
+              </tbody>
+            </table>
+
+        </li>
+
+
+        <li class="frame user">
+          <code>/Users/f1nal/Dropbox/python/blowfire-backend/src/careers/views/position.py</code> in <code>list</code>
+
+
+            <div class="context" id="c4414578056">
+
+                <ol start="8" class="pre-context" id="pre4414578056">
+
+                  <li onclick="toggle('pre4414578056', 'post4414578056')"><pre>    model = Position</pre></li>
+
+                  <li onclick="toggle('pre4414578056', 'post4414578056')"><pre>    queryset = Position.objects.filter(visible=True).all()</pre></li>
+
+                  <li onclick="toggle('pre4414578056', 'post4414578056')"><pre>    serializer_class = PositionSerializer</pre></li>
+
+                  <li onclick="toggle('pre4414578056', 'post4414578056')"><pre>    pagination_class = None</pre></li>
+
+                  <li onclick="toggle('pre4414578056', 'post4414578056')"><pre>    lookup_field = &#39;unique_name&#39;</pre></li>
+
+                  <li onclick="toggle('pre4414578056', 'post4414578056')"><pre></pre></li>
+
+                  <li onclick="toggle('pre4414578056', 'post4414578056')"><pre>    def list(self, *args, **kwargs):</pre></li>
+
+                </ol>
+
+              <ol start="15" class="context-line">
+                <li onclick="toggle('pre4414578056', 'post4414578056')"><pre>
+        print(1 / 0)</pre> <span>...</span></li></ol>
+
+                <ol start='16' class="post-context" id="post4414578056">
+
+                  <li onclick="toggle('pre4414578056', 'post4414578056')"><pre>        return super().list(*args, **kwargs)</pre></li>
+
+              </ol>
+
+            </div>
+
+
+
+            <div class="commands">
+
+                    <a href="#" onclick="return varToggle(this, '4414578056')"><span>&#x25b6;</span> Local vars</a>
+
+            </div>
+            <table class="vars" id="v4414578056">
+              <thead>
+                <tr>
+                  <th>Variable</th>
+                  <th>Value</th>
+                </tr>
+              </thead>
+              <tbody>
+
+                  <tr>
+                    <td>__class__</td>
+                    <td class="code"><pre>&lt;class &#39;careers.views.position.PositionViewSet&#39;&gt;</pre></td>
+                  </tr>
+
+                  <tr>
+                    <td>args</td>
+                    <td class="code"><pre>(&lt;rest_framework.request.Request object at 0x107174710&gt;,)</pre></td>
+                  </tr>
+
+                  <tr>
+                    <td>kwargs</td>
+                    <td class="code"><pre>{}</pre></td>
+                  </tr>
+
+                  <tr>
+                    <td>self</td>
+                    <td class="code"><pre>&lt;careers.views.position.PositionViewSet object at 0x1070d5cf8&gt;</pre></td>
+                  </tr>
+
+              </tbody>
+            </table>
+
+        </li>
+
+    </ul>
+  </div>
+
+  <form action="http://dpaste.com/" name="pasteform" id="pasteform" method="post">
+
+  <div id="pastebinTraceback" class="pastebin">
+    <input type="hidden" name="language" value="PythonConsole">
+    <input type="hidden" name="title"
+      value="ZeroDivisionError at /api/careers/position/">
+    <input type="hidden" name="source" value="Django Dpaste Agent">
+    <input type="hidden" name="poster" value="Django">
+    <textarea name="content" id="traceback_area" cols="140" rows="25">
+Environment:
+
+
+Request Method: GET
+Request URL: http://localhost:8000/api/careers/position/
+
+Django Version: 1.11
+Python Version: 3.6.5
+Installed Applications:
+(&#39;django.contrib.admin&#39;,
+ &#39;django.contrib.auth&#39;,
+ &#39;django.contrib.contenttypes&#39;,
+ &#39;django.contrib.sessions&#39;,
+ &#39;django.contrib.messages&#39;,
+ &#39;django.contrib.staticfiles&#39;,
+ &#39;django.contrib.humanize&#39;,
+ &#39;rest_framework&#39;,
+ &#39;rest_framework.authtoken&#39;,
+ &#39;sorl.thumbnail&#39;,
+ &#39;debug_toolbar&#39;,
+ &#39;jet_django&#39;,
+ &#39;post_office&#39;,
+ &#39;core.apps.CoreConfig&#39;,
+ &#39;careers.apps.CareersConfig&#39;,
+ &#39;content.apps.ContentConfig&#39;,
+ &#39;galleries.apps.GalleriesConfig&#39;,
+ &#39;games.apps.GamesConfig&#39;,
+ &#39;menu.apps.MenuConfig&#39;,
+ &#39;contact.apps.ContactConfig&#39;)
+Installed Middleware:
+(&#39;debug_toolbar.middleware.DebugToolbarMiddleware&#39;,
+ &#39;django.contrib.sessions.middleware.SessionMiddleware&#39;,
+ &#39;django.middleware.common.CommonMiddleware&#39;,
+ &#39;django.middleware.csrf.CsrfViewMiddleware&#39;,
+ &#39;django.contrib.auth.middleware.AuthenticationMiddleware&#39;,
+ &#39;django.contrib.auth.middleware.SessionAuthenticationMiddleware&#39;,
+ &#39;django.contrib.messages.middleware.MessageMiddleware&#39;,
+ &#39;django.middleware.clickjacking.XFrameOptionsMiddleware&#39;,
+ &#39;django.middleware.security.SecurityMiddleware&#39;)
+
+
+
+Traceback:
+
+File "/Users/f1nal/Dropbox/python/blowfire-backend/env/lib/python3.6/site-packages/django/core/handlers/exception.py" in inner
+  41.             response = get_response(request)
+
+File "/Users/f1nal/Dropbox/python/blowfire-backend/env/lib/python3.6/site-packages/django/core/handlers/base.py" in _get_response
+  187.                 response = self.process_exception_by_middleware(e, request)
+
+File "/Users/f1nal/Dropbox/python/blowfire-backend/env/lib/python3.6/site-packages/django/core/handlers/base.py" in _get_response
+  185.                 response = wrapped_callback(request, *callback_args, **callback_kwargs)
+
+File "/Users/f1nal/Dropbox/python/blowfire-backend/env/lib/python3.6/site-packages/django/views/decorators/csrf.py" in wrapped_view
+  58.         return view_func(*args, **kwargs)
+
+File "/Users/f1nal/Dropbox/python/blowfire-backend/env/lib/python3.6/site-packages/rest_framework/viewsets.py" in view
+  83.             return self.dispatch(request, *args, **kwargs)
+
+File "/Users/f1nal/Dropbox/python/blowfire-backend/env/lib/python3.6/site-packages/rest_framework/views.py" in dispatch
+  483.             response = self.handle_exception(exc)
+
+File "/Users/f1nal/Dropbox/python/blowfire-backend/env/lib/python3.6/site-packages/rest_framework/views.py" in handle_exception
+  443.             self.raise_uncaught_exception(exc)
+
+File "/Users/f1nal/Dropbox/python/blowfire-backend/env/lib/python3.6/site-packages/rest_framework/views.py" in dispatch
+  480.             response = handler(request, *args, **kwargs)
+
+File "/Users/f1nal/Dropbox/python/blowfire-backend/src/careers/views/position.py" in list
+  15.         print(1 / 0)
+
+Exception Type: ZeroDivisionError at /api/careers/position/
+Exception Value: division by zero
+</textarea>
+  <br><br>
+  <input type="submit" value="Share this traceback on a public website">
+  </div>
+</form>
+</div>
+{% end %}
+
+{% if False %}
+<div id="requestinfo">
+  <h2>Request information</h2>
+
+
+
+    <h3 id="user-info">USER</h3>
+    <p>AnonymousUser</p>
+
+
+  <h3 id="get-info">GET</h3>
+
+    <p>No GET data</p>
+
+
+  <h3 id="post-info">POST</h3>
+
+    <table class="req">
+      <thead>
+        <tr>
+          <th>Variable</th>
+          <th>Value</th>
+        </tr>
+      </thead>
+      <tbody>
+
+      </tbody>
+    </table>
+
+  <h3 id="files-info">FILES</h3>
+
+    <p>No FILES data</p>
+
+
+
+  <h3 id="cookie-info">COOKIES</h3>
+
+    <table class="req">
+      <thead>
+        <tr>
+          <th>Variable</th>
+          <th>Value</th>
+        </tr>
+      </thead>
+      <tbody>
+
+          <tr>
+            <td>_ga</td>
+            <td class="code"><pre>&#39;GA1.1.527953586.1532596188&#39;</pre></td>
+          </tr>
+
+          <tr>
+            <td>_ok</td>
+            <td class="code"><pre>&#39;8886-163-10-3932&#39;</pre></td>
+          </tr>
+
+          <tr>
+            <td>_okac</td>
+            <td class="code"><pre>&#39;bd4292ebd35ab56cb678b69083f10f92&#39;</pre></td>
+          </tr>
+
+          <tr>
+            <td>_okbk</td>
+            <td class="code"><pre>&#39;cd5%3Davailable%2Ccd4%3Dtrue%2Cvi5%3D0%2Cvi4%3D1532014614415%2Cvi3%3Dactive%2Cvi2%3Dfalse%2Cvi1%3Dfalse%2Ccd8%3Dchat%2Ccd6%3D0%2Ccd3%3Dfalse%2Ccd2%3D0%2Ccd1%3D0%2C&#39;</pre></td>
+          </tr>
+
+          <tr>
+            <td>_okdetect</td>
+            <td class="code"><pre>&#39;%7B%22token%22%3A%2215301812406930%22%2C%22proto%22%3A%22http%3A%22%2C%22host%22%3A%22localhost%3A8087%22%7D&#39;</pre></td>
+          </tr>
+
+          <tr>
+            <td>_okla</td>
+            <td class="code"><pre>&#39;1&#39;</pre></td>
+          </tr>
+
+          <tr>
+            <td>_oklv</td>
+            <td class="code"><pre>&#39;1532016330887%2CTYCYmZgTrETGs2VN2V3VG0M3baXd3CA5&#39;</pre></td>
+          </tr>
+
+          <tr>
+            <td>_ym_d</td>
+            <td class="code"><pre>&#39;1533715470&#39;</pre></td>
+          </tr>
+
+          <tr>
+            <td>_ym_uid</td>
+            <td class="code"><pre>&#39;1533715470658585703&#39;</pre></td>
+          </tr>
+
+          <tr>
+            <td>ClientId</td>
+            <td class="code"><pre>&#39;GA1.1.527953586.1532596188&#39;</pre></td>
+          </tr>
+
+          <tr>
+            <td>hblid</td>
+            <td class="code"><pre>&#39;f0Wa7AGic7czWp442V3VG0M67TE6Ba4Z&#39;</pre></td>
+          </tr>
+
+          <tr>
+            <td>last_order_slug</td>
+            <td class="code"><pre>&#39;1806-527&#39;</pre></td>
+          </tr>
+
+          <tr>
+            <td>olfsk</td>
+            <td class="code"><pre>&#39;olfsk6694791739837578&#39;</pre></td>
+          </tr>
+
+          <tr>
+            <td>paddlejs_checkout</td>
+            <td class="code"><pre>&#39;eyJhY3RvciI6IjcyNDQ4NjkiLCJoYXNBY3Rpb24iOnRydWUsImlzQW5vbiI6ZmFsc2UsImFjdGlvbkdsb2JhbCI6eyIkZGV2aWNlX2FnZW50IjoiTW96aWxsYS81LjAgKE1hY2ludG9zaDsgSW50ZWwgTWFjIE9TIFggMTBfMTJfNikgQXBwbGVXZWJLaXQvNTM3LjM2IChLSFRNTCwgbGlrZSBHZWNrbykgQ2hyb21lLzcwLjAuMzUzOC43NyBTYWZhcmkvNTM3LjM2IiwiJGRldmljZV9yZXNvbHV0aW9uIjoiMTQ0MHg5MDAifX0=&#39;</pre></td>
+          </tr>
+
+          <tr>
+            <td>tabstyle</td>
+            <td class="code"><pre>&#39;html-tab&#39;</pre></td>
+          </tr>
+
+          <tr>
+            <td>wcsid</td>
+            <td class="code"><pre>&#39;TYCYmZgTrETGs2VN2V3VG0M3baXd3CA5&#39;</pre></td>
+          </tr>
+
+          <tr>
+            <td>Webstorm-c854d3e</td>
+            <td class="code"><pre>&#39;01912c9e-4ad4-4b10-93b0-61c2e67ce41a&#39;</pre></td>
+          </tr>
+
+          <tr>
+            <td>csrftoken</td>
+            <td class="code"><pre>&#39;EypnEm4htIV9B8KKQQeGm21dH7xx6pJ95rehlm9NBgpJrCF4nrWOpC9CllCnWn1u&#39;</pre></td>
+          </tr>
+
+          <tr>
+            <td>intro_shown</td>
+            <td class="code"><pre>&#39;true&#39;</pre></td>
+          </tr>
+
+          <tr>
+            <td>banner_visibility</td>
+            <td class="code"><pre>&#39;false&#39;</pre></td>
+          </tr>
+
+          <tr>
+            <td>theme</td>
+            <td class="code"><pre>&#39;default&#39;</pre></td>
+          </tr>
+
+          <tr>
+            <td>_gid</td>
+            <td class="code"><pre>&#39;GA1.1.2049075796.1547969048&#39;</pre></td>
+          </tr>
+
+          <tr>
+            <td>io</td>
+            <td class="code"><pre>&#39;chLDmWk6l9krWRnNAAAC&#39;</pre></td>
+          </tr>
+
+          <tr>
+            <td>_ym_isad</td>
+            <td class="code"><pre>&#39;1&#39;</pre></td>
+          </tr>
+
+          <tr>
+            <td>token</td>
+            <td class="code"><pre>&#39;219d5e329bc1ff0b7915f59f8af2383a2e455fef&#39;</pre></td>
+          </tr>
+
+          <tr>
+            <td>_ym_visorc_49958668</td>
+            <td class="code"><pre>&#39;w&#39;</pre></td>
+          </tr>
+
+          <tr>
+            <td>amplitude_id_ed099a1e1a6035e82a7a8845eef625dc</td>
+            <td class="code"><pre>&#39;eyJkZXZpY2VJZCI6ImFmZDQwYzE5LTBmZDktNGMxNC1iNDEyLTkwNWNjYzdlNDQ1OVIiLCJ1c2VySWQiOm51bGwsIm9wdE91dCI6ZmFsc2UsInNlc3Npb25JZCI6MTU0ODI1NjI0MjMyMCwibGFzdEV2ZW50VGltZSI6MTU0ODI1NzEwMDkxNSwiZXZlbnRJZCI6OCwiaWRlbnRpZnlJZCI6MCwic2VxdWVuY2VOdW1iZXIiOjh9&#39;</pre></td>
+          </tr>
+
+          <tr>
+            <td>tmr_detect</td>
+            <td class="code"><pre>&#39;1%7C1548257100917&#39;</pre></td>
+          </tr>
+
+          <tr>
+            <td>projects_last_used</td>
+            <td class="code"><pre>&#39;%7B%22jet%22%3A%222019-01-23T15%3A21%3A03.859Z%22%2C%22foodberry_demo%22%3A%222019-01-23T12%3A56%3A11.949Z%22%2C%22geex_board%22%3A%222019-01-22T21%3A28%3A55.024Z%22%2C%22geex_local%22%3A%222018-10-18T08%3A58%3A29.408Z%22%2C%22bwin%22%3A%222018-10-24T16%3A34%3A47.096Z%22%2C%22valuebet%22%3A%222019-01-23T15%3A15%3A15.307Z%22%2C%22vivart%22%3A%222018-11-06T21%3A20%3A59.760Z%22%2C%22bwin_3%22%3A%222018-10-22T11%3A52%3A30.321Z%22%2C%22foodberry_demo_11%22%3A%222018-10-22T11%3A53%3A26.651Z%22%2C%22bwin_2%22%3A%222018-10-22T11%3A53%3A32.759Z%22%2C%22foodberry_demo_437%22%3A%222018-10-24T17%3A46%3A26.674Z%22%2C%22vivart_dev%22%3A%222019-01-22T10%3A51%3A43.963Z%22%2C%22blowfire_dev%22%3A%222018-12-23T11%3A10%3A29.989Z%22%2C%22jet_local%22%3A%222019-01-22T14%3A27%3A57.112Z%22%2C%22jetty_bridge%22%3A%222019-01-23T15%3A25%3A01.281Z%22%2C%22blowfire%22%3A%222019-01-22T14%3A28%3A46.529Z%22%2C%22foodberry_demo_1734%22%3A%222019-01-23T10%3A09%3A24.709Z%22%2C%22foodberry_demo_1735%22%3A%222019-01-23T10%3A09%3A35.773Z%22%2C%22foodberry_demo_1736%22%3A%222019-01-23T10%3A09%3A46.278Z%22%2C%22foodberry_demo_1765%22%3A%222019-01-23T12%3A42%3A17.159Z%22%7D&#39;</pre></td>
+          </tr>
+
+          <tr>
+            <td>djdt</td>
+            <td class="code"><pre>&#39;show&#39;</pre></td>
+          </tr>
+
+      </tbody>
+    </table>
+
+
+  <h3 id="meta-info">META</h3>
+  <table class="req">
+    <thead>
+      <tr>
+        <th>Variable</th>
+        <th>Value</th>
+      </tr>
+    </thead>
+    <tbody>
+
+        <tr>
+          <td>Apple_PubSub_Socket_Render</td>
+          <td class="code"><pre>&#39;/private/tmp/com.apple.launchd.BqJwp2JWzU/Render&#39;</pre></td>
+        </tr>
+
+        <tr>
+          <td>COMMON_DEBUG</td>
+          <td class="code"><pre>&#39;1&#39;</pre></td>
+        </tr>
+
+        <tr>
+          <td>COMMON_SECRET_KEY</td>
+          <td class="code"><pre>&#39;rAnDoM_sEcReT_kEy&#39;</pre></td>
+        </tr>
+
+        <tr>
+          <td>COMMON_SITE_URL</td>
+          <td class="code"><pre>&#39;http://localhost&#39;</pre></td>
+        </tr>
+
+        <tr>
+          <td>CONTENT_LENGTH</td>
+          <td class="code"><pre>&#39;&#39;</pre></td>
+        </tr>
+
+        <tr>
+          <td>CONTENT_TYPE</td>
+          <td class="code"><pre>&#39;text/plain&#39;</pre></td>
+        </tr>
+
+        <tr>
+          <td>CSRF_COOKIE</td>
+          <td class="code"><pre>&#39;EypnEm4htIV9B8KKQQeGm21dH7xx6pJ95rehlm9NBgpJrCF4nrWOpC9CllCnWn1u&#39;</pre></td>
+        </tr>
+
+        <tr>
+          <td>DATABASE_ENGINE</td>
+          <td class="code"><pre>&#39;django.db.backends.postgresql_psycopg2&#39;</pre></td>
+        </tr>
+
+        <tr>
+          <td>DATABASE_HOST</td>
+          <td class="code"><pre>&#39;localhost&#39;</pre></td>
+        </tr>
+
+        <tr>
+          <td>DATABASE_NAME</td>
+          <td class="code"><pre>&#39;blowfire&#39;</pre></td>
+        </tr>
+
+        <tr>
+          <td>DATABASE_PASSWORD</td>
+          <td class="code"><pre>&#39;password&#39;</pre></td>
+        </tr>
+
+        <tr>
+          <td>DATABASE_PORT</td>
+          <td class="code"><pre>&#39;5432&#39;</pre></td>
+        </tr>
+
+        <tr>
+          <td>DATABASE_USER</td>
+          <td class="code"><pre>&#39;postgres&#39;</pre></td>
+        </tr>
+
+        <tr>
+          <td>DJANGO_SETTINGS_MODULE</td>
+          <td class="code"><pre>&#39;application.settings&#39;</pre></td>
+        </tr>
+
+        <tr>
+          <td>EMAIL_ADMIN</td>
+          <td class="code"><pre>&#39;&#39;</pre></td>
+        </tr>
+
+        <tr>
+          <td>EMAIL_FROM</td>
+          <td class="code"><pre>&#39;&#39;</pre></td>
+        </tr>
+
+        <tr>
+          <td>EMAIL_HOST</td>
+          <td class="code"><pre>&#39;&#39;</pre></td>
+        </tr>
+
+        <tr>
+          <td>EMAIL_PASSWORD</td>
+          <td class="code"><pre>&#39;&#39;</pre></td>
+        </tr>
+
+        <tr>
+          <td>EMAIL_PORT</td>
+          <td class="code"><pre>&#39;&#39;</pre></td>
+        </tr>
+
+        <tr>
+          <td>EMAIL_TLS</td>
+          <td class="code"><pre>&#39;1&#39;</pre></td>
+        </tr>
+
+        <tr>
+          <td>EMAIL_USER</td>
+          <td class="code"><pre>&#39;&#39;</pre></td>
+        </tr>
+
+        <tr>
+          <td>GATEWAY_INTERFACE</td>
+          <td class="code"><pre>&#39;CGI/1.1&#39;</pre></td>
+        </tr>
+
+        <tr>
+          <td>HOME</td>
+          <td class="code"><pre>&#39;/Users/f1nal&#39;</pre></td>
+        </tr>
+
+        <tr>
+          <td>HTTP_ACCEPT</td>
+          <td class="code"><pre>&#39;text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8&#39;</pre></td>
+        </tr>
+
+        <tr>
+          <td>HTTP_ACCEPT_ENCODING</td>
+          <td class="code"><pre>&#39;gzip, deflate, br&#39;</pre></td>
+        </tr>
+
+        <tr>
+          <td>HTTP_ACCEPT_LANGUAGE</td>
+          <td class="code"><pre>&#39;ru,en-US;q=0.9,en;q=0.8&#39;</pre></td>
+        </tr>
+
+        <tr>
+          <td>HTTP_CACHE_CONTROL</td>
+          <td class="code"><pre>&#39;max-age=0&#39;</pre></td>
+        </tr>
+
+        <tr>
+          <td>HTTP_CONNECTION</td>
+          <td class="code"><pre>&#39;keep-alive&#39;</pre></td>
+        </tr>
+
+        <tr>
+          <td>HTTP_COOKIE</td>
+          <td class="code"><pre>(&#39;_ga=GA1.1.527953586.1532596188; _ok=8886-163-10-3932; &#39;
+ &#39;_okac=bd4292ebd35ab56cb678b69083f10f92; &#39;
+ &#39;_okbk=cd5%3Davailable%2Ccd4%3Dtrue%2Cvi5%3D0%2Cvi4%3D1532014614415%2Cvi3%3Dactive%2Cvi2%3Dfalse%2Cvi1%3Dfalse%2Ccd8%3Dchat%2Ccd6%3D0%2Ccd3%3Dfalse%2Ccd2%3D0%2Ccd1%3D0%2C; &#39;
+ &#39;_okdetect=%7B%22token%22%3A%2215301812406930%22%2C%22proto%22%3A%22http%3A%22%2C%22host%22%3A%22localhost%3A8087%22%7D; &#39;
+ &#39;_okla=1; _oklv=1532016330887%2CTYCYmZgTrETGs2VN2V3VG0M3baXd3CA5; &#39;
+ &#39;_ym_d=1533715470; _ym_uid=1533715470658585703; &#39;
+ &#39;ClientId=GA1.1.527953586.1532596188; hblid=f0Wa7AGic7czWp442V3VG0M67TE6Ba4Z; &#39;
+ &#39;last_order_slug=1806-527; olfsk=olfsk6694791739837578; &#39;
+ &#39;paddlejs_checkout=eyJhY3RvciI6IjcyNDQ4NjkiLCJoYXNBY3Rpb24iOnRydWUsImlzQW5vbiI6ZmFsc2UsImFjdGlvbkdsb2JhbCI6eyIkZGV2aWNlX2FnZW50IjoiTW96aWxsYS81LjAgKE1hY2ludG9zaDsgSW50ZWwgTWFjIE9TIFggMTBfMTJfNikgQXBwbGVXZWJLaXQvNTM3LjM2IChLSFRNTCwgbGlrZSBHZWNrbykgQ2hyb21lLzcwLjAuMzUzOC43NyBTYWZhcmkvNTM3LjM2IiwiJGRldmljZV9yZXNvbHV0aW9uIjoiMTQ0MHg5MDAifX0=; &#39;
+ &#39;tabstyle=html-tab; wcsid=TYCYmZgTrETGs2VN2V3VG0M3baXd3CA5; &#39;
+ &#39;Webstorm-c854d3e=01912c9e-4ad4-4b10-93b0-61c2e67ce41a; &#39;
+ &#39;csrftoken=EypnEm4htIV9B8KKQQeGm21dH7xx6pJ95rehlm9NBgpJrCF4nrWOpC9CllCnWn1u; &#39;
+ &#39;intro_shown=true; banner_visibility=false; theme=default; &#39;
+ &#39;_gid=GA1.1.2049075796.1547969048; io=chLDmWk6l9krWRnNAAAC; _ym_isad=1; &#39;
+ &#39;token=219d5e329bc1ff0b7915f59f8af2383a2e455fef; _ym_visorc_49958668=w; &#39;
+ &#39;amplitude_id_ed099a1e1a6035e82a7a8845eef625dc=eyJkZXZpY2VJZCI6ImFmZDQwYzE5LTBmZDktNGMxNC1iNDEyLTkwNWNjYzdlNDQ1OVIiLCJ1c2VySWQiOm51bGwsIm9wdE91dCI6ZmFsc2UsInNlc3Npb25JZCI6MTU0ODI1NjI0MjMyMCwibGFzdEV2ZW50VGltZSI6MTU0ODI1NzEwMDkxNSwiZXZlbnRJZCI6OCwiaWRlbnRpZnlJZCI6MCwic2VxdWVuY2VOdW1iZXIiOjh9; &#39;
+ &#39;tmr_detect=1%7C1548257100917; &#39;
+ &#39;projects_last_used=%7B%22jet%22%3A%222019-01-23T15%3A21%3A03.859Z%22%2C%22foodberry_demo%22%3A%222019-01-23T12%3A56%3A11.949Z%22%2C%22geex_board%22%3A%222019-01-22T21%3A28%3A55.024Z%22%2C%22geex_local%22%3A%222018-10-18T08%3A58%3A29.408Z%22%2C%22bwin%22%3A%222018-10-24T16%3A34%3A47.096Z%22%2C%22valuebet%22%3A%222019-01-23T15%3A15%3A15.307Z%22%2C%22vivart%22%3A%222018-11-06T21%3A20%3A59.760Z%22%2C%22bwin_3%22%3A%222018-10-22T11%3A52%3A30.321Z%22%2C%22foodberry_demo_11%22%3A%222018-10-22T11%3A53%3A26.651Z%22%2C%22bwin_2%22%3A%222018-10-22T11%3A53%3A32.759Z%22%2C%22foodberry_demo_437%22%3A%222018-10-24T17%3A46%3A26.674Z%22%2C%22vivart_dev%22%3A%222019-01-22T10%3A51%3A43.963Z%22%2C%22blowfire_dev%22%3A%222018-12-23T11%3A10%3A29.989Z%22%2C%22jet_local%22%3A%222019-01-22T14%3A27%3A57.112Z%22%2C%22jetty_bridge%22%3A%222019-01-23T15%3A25%3A01.281Z%22%2C%22blowfire%22%3A%222019-01-22T14%3A28%3A46.529Z%22%2C%22foodberry_demo_1734%22%3A%222019-01-23T10%3A09%3A24.709Z%22%2C%22foodberry_demo_1735%22%3A%222019-01-23T10%3A09%3A35.773Z%22%2C%22foodberry_demo_1736%22%3A%222019-01-23T10%3A09%3A46.278Z%22%2C%22foodberry_demo_1765%22%3A%222019-01-23T12%3A42%3A17.159Z%22%7D; &#39;
+ &#39;djdt=show&#39;)</pre></td>
+        </tr>
+
+        <tr>
+          <td>HTTP_HOST</td>
+          <td class="code"><pre>&#39;localhost:8000&#39;</pre></td>
+        </tr>
+
+        <tr>
+          <td>HTTP_UPGRADE_INSECURE_REQUESTS</td>
+          <td class="code"><pre>&#39;1&#39;</pre></td>
+        </tr>
+
+        <tr>
+          <td>HTTP_USER_AGENT</td>
+          <td class="code"><pre>(&#39;Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_6) AppleWebKit/537.36 (KHTML, &#39;
+ &#39;like Gecko) Chrome/71.0.3578.98 Safari/537.36&#39;)</pre></td>
+        </tr>
+
+        <tr>
+          <td>LC_CTYPE</td>
+          <td class="code"><pre>&#39;ru_RU.UTF-8&#39;</pre></td>
+        </tr>
+
+        <tr>
+          <td>LOGNAME</td>
+          <td class="code"><pre>&#39;f1nal&#39;</pre></td>
+        </tr>
+
+        <tr>
+          <td>PATH</td>
+          <td class="code"><pre>&#39;/Users/f1nal/Dropbox/python/blowfire-backend/env/bin:/usr/bin:/bin:/usr/sbin:/sbin&#39;</pre></td>
+        </tr>
+
+        <tr>
+          <td>PATH_INFO</td>
+          <td class="code"><pre>&#39;/api/careers/position/&#39;</pre></td>
+        </tr>
+
+        <tr>
+          <td>PS1</td>
+          <td class="code"><pre>&#39;(env) &#39;</pre></td>
+        </tr>
+
+        <tr>
+          <td>PWD</td>
+          <td class="code"><pre>&#39;/Users/f1nal/Dropbox/python/blowfire-backend/src&#39;</pre></td>
+        </tr>
+
+        <tr>
+          <td>PYCHARM_HOSTED</td>
+          <td class="code"><pre>&#39;1&#39;</pre></td>
+        </tr>
+
+        <tr>
+          <td>PYTHONIOENCODING</td>
+          <td class="code"><pre>&#39;UTF-8&#39;</pre></td>
+        </tr>
+
+        <tr>
+          <td>PYTHONPATH</td>
+          <td class="code"><pre>&#39;/Users/f1nal/Dropbox/python/blowfire-backend/src&#39;</pre></td>
+        </tr>
+
+        <tr>
+          <td>PYTHONUNBUFFERED</td>
+          <td class="code"><pre>&#39;1&#39;</pre></td>
+        </tr>
+
+        <tr>
+          <td>QUERY_STRING</td>
+          <td class="code"><pre>&#39;&#39;</pre></td>
+        </tr>
+
+        <tr>
+          <td>REMOTE_ADDR</td>
+          <td class="code"><pre>&#39;127.0.0.1&#39;</pre></td>
+        </tr>
+
+        <tr>
+          <td>REMOTE_HOST</td>
+          <td class="code"><pre>&#39;&#39;</pre></td>
+        </tr>
+
+        <tr>
+          <td>REQUEST_METHOD</td>
+          <td class="code"><pre>&#39;GET&#39;</pre></td>
+        </tr>
+
+        <tr>
+          <td>RUN_MAIN</td>
+          <td class="code"><pre>&#39;true&#39;</pre></td>
+        </tr>
+
+        <tr>
+          <td>SCRIPT_NAME</td>
+          <td class="code"><pre>&#39;&#39;</pre></td>
+        </tr>
+
+        <tr>
+          <td>SERVER_NAME</td>
+          <td class="code"><pre>&#39;1.0.0.127.in-addr.arpa&#39;</pre></td>
+        </tr>
+
+        <tr>
+          <td>SERVER_PORT</td>
+          <td class="code"><pre>&#39;8000&#39;</pre></td>
+        </tr>
+
+        <tr>
+          <td>SERVER_PROTOCOL</td>
+          <td class="code"><pre>&#39;HTTP/1.1&#39;</pre></td>
+        </tr>
+
+        <tr>
+          <td>SERVER_SOFTWARE</td>
+          <td class="code"><pre>&#39;WSGIServer/0.2&#39;</pre></td>
+        </tr>
+
+        <tr>
+          <td>SHELL</td>
+          <td class="code"><pre>&#39;/bin/bash&#39;</pre></td>
+        </tr>
+
+        <tr>
+          <td>SSH_AUTH_SOCK</td>
+          <td class="code"><pre>&#39;/private/tmp/com.apple.launchd.LZOBoskYwm/Listeners&#39;</pre></td>
+        </tr>
+
+        <tr>
+          <td>TMPDIR</td>
+          <td class="code"><pre>&#39;/var/folders/14/74yt97sx6p1_v928y1w1d8s80000gn/T/&#39;</pre></td>
+        </tr>
+
+        <tr>
+          <td>TZ</td>
+          <td class="code"><pre>&#39;Europe/Moscow&#39;</pre></td>
+        </tr>
+
+        <tr>
+          <td>USER</td>
+          <td class="code"><pre>&#39;f1nal&#39;</pre></td>
+        </tr>
+
+        <tr>
+          <td>VIRTUAL_ENV</td>
+          <td class="code"><pre>&#39;/Users/f1nal/Dropbox/python/blowfire-backend/env&#39;</pre></td>
+        </tr>
+
+        <tr>
+          <td>XPC_FLAGS</td>
+          <td class="code"><pre>&#39;0x0&#39;</pre></td>
+        </tr>
+
+        <tr>
+          <td>XPC_SERVICE_NAME</td>
+          <td class="code"><pre>&#39;com.jetbrains.pycharm.21412&#39;</pre></td>
+        </tr>
+
+        <tr>
+          <td>__CF_USER_TEXT_ENCODING</td>
+          <td class="code"><pre>&#39;0x1F5:0x7:0x31&#39;</pre></td>
+        </tr>
+
+        <tr>
+          <td>wsgi.errors</td>
+          <td class="code"><pre>&lt;_io.TextIOWrapper name=&#39;&lt;stderr&gt;&#39; mode=&#39;w&#39; encoding=&#39;UTF-8&#39;&gt;</pre></td>
+        </tr>
+
+        <tr>
+          <td>wsgi.file_wrapper</td>
+          <td class="code"><pre>&#39;&#39;</pre></td>
+        </tr>
+
+        <tr>
+          <td>wsgi.input</td>
+          <td class="code"><pre>&lt;_io.BufferedReader name=7&gt;</pre></td>
+        </tr>
+
+        <tr>
+          <td>wsgi.multiprocess</td>
+          <td class="code"><pre>False</pre></td>
+        </tr>
+
+        <tr>
+          <td>wsgi.multithread</td>
+          <td class="code"><pre>True</pre></td>
+        </tr>
+
+        <tr>
+          <td>wsgi.run_once</td>
+          <td class="code"><pre>False</pre></td>
+        </tr>
+
+        <tr>
+          <td>wsgi.url_scheme</td>
+          <td class="code"><pre>&#39;http&#39;</pre></td>
+        </tr>
+
+        <tr>
+          <td>wsgi.version</td>
+          <td class="code"><pre>(1, 0)</pre></td>
+        </tr>
+
+    </tbody>
+  </table>
+
+
+  <h3 id="settings-info">Settings</h3>
+  <h4>Using settings module <code>application.settings</code></h4>
+  <table class="req">
+    <thead>
+      <tr>
+        <th>Setting</th>
+        <th>Value</th>
+      </tr>
+    </thead>
+    <tbody>
+
+        <tr>
+          <td>ABSOLUTE_URL_OVERRIDES</td>
+          <td class="code"><pre>{}</pre></td>
+        </tr>
+
+        <tr>
+          <td>ADMINS</td>
+          <td class="code"><pre>[]</pre></td>
+        </tr>
+
+        <tr>
+          <td>ALLOWED_HOSTS</td>
+          <td class="code"><pre>[&#39;*&#39;]</pre></td>
+        </tr>
+
+        <tr>
+          <td>APPEND_SLASH</td>
+          <td class="code"><pre>True</pre></td>
+        </tr>
+
+        <tr>
+          <td>AUTHENTICATION_BACKENDS</td>
+          <td class="code"><pre>[&#39;django.contrib.auth.backends.ModelBackend&#39;]</pre></td>
+        </tr>
+
+        <tr>
+          <td>AUTH_PASSWORD_VALIDATORS</td>
+          <td class="code"><pre>&#39;********************&#39;</pre></td>
+        </tr>
+
+        <tr>
+          <td>AUTH_USER_MODEL</td>
+          <td class="code"><pre>&#39;auth.User&#39;</pre></td>
+        </tr>
+
+        <tr>
+          <td>BASE_DIR</td>
+          <td class="code"><pre>&#39;/Users/f1nal/Dropbox/python/blowfire-backend/src&#39;</pre></td>
+        </tr>
+
+        <tr>
+          <td>CACHES</td>
+          <td class="code"><pre>{&#39;default&#39;: {&#39;BACKEND&#39;: &#39;django.core.cache.backends.locmem.LocMemCache&#39;}}</pre></td>
+        </tr>
+
+        <tr>
+          <td>CACHE_MIDDLEWARE_ALIAS</td>
+          <td class="code"><pre>&#39;default&#39;</pre></td>
+        </tr>
+
+        <tr>
+          <td>CACHE_MIDDLEWARE_KEY_PREFIX</td>
+          <td class="code"><pre>&#39;********************&#39;</pre></td>
+        </tr>
+
+        <tr>
+          <td>CACHE_MIDDLEWARE_SECONDS</td>
+          <td class="code"><pre>600</pre></td>
+        </tr>
+
+        <tr>
+          <td>CSRF_COOKIE_AGE</td>
+          <td class="code"><pre>31449600</pre></td>
+        </tr>
+
+        <tr>
+          <td>CSRF_COOKIE_DOMAIN</td>
+          <td class="code"><pre>None</pre></td>
+        </tr>
+
+        <tr>
+          <td>CSRF_COOKIE_HTTPONLY</td>
+          <td class="code"><pre>False</pre></td>
+        </tr>
+
+        <tr>
+          <td>CSRF_COOKIE_NAME</td>
+          <td class="code"><pre>&#39;csrftoken&#39;</pre></td>
+        </tr>
+
+        <tr>
+          <td>CSRF_COOKIE_PATH</td>
+          <td class="code"><pre>&#39;/&#39;</pre></td>
+        </tr>
+
+        <tr>
+          <td>CSRF_COOKIE_SECURE</td>
+          <td class="code"><pre>False</pre></td>
+        </tr>
+
+        <tr>
+          <td>CSRF_FAILURE_VIEW</td>
+          <td class="code"><pre>&#39;django.views.csrf.csrf_failure&#39;</pre></td>
+        </tr>
+
+        <tr>
+          <td>CSRF_HEADER_NAME</td>
+          <td class="code"><pre>&#39;HTTP_X_CSRFTOKEN&#39;</pre></td>
+        </tr>
+
+        <tr>
+          <td>CSRF_TRUSTED_ORIGINS</td>
+          <td class="code"><pre>[]</pre></td>
+        </tr>
+
+        <tr>
+          <td>CSRF_USE_SESSIONS</td>
+          <td class="code"><pre>False</pre></td>
+        </tr>
+
+        <tr>
+          <td>DATABASES</td>
+          <td class="code"><pre>{&#39;default&#39;: {&#39;ATOMIC_REQUESTS&#39;: False,
+             &#39;AUTOCOMMIT&#39;: True,
+             &#39;CONN_MAX_AGE&#39;: 0,
+             &#39;ENGINE&#39;: &#39;django.db.backends.postgresql_psycopg2&#39;,
+             &#39;HOST&#39;: &#39;localhost&#39;,
+             &#39;NAME&#39;: &#39;blowfire&#39;,
+             &#39;OPTIONS&#39;: {},
+             &#39;PASSWORD&#39;: &#39;********************&#39;,
+             &#39;PORT&#39;: &#39;5432&#39;,
+             &#39;TEST&#39;: {&#39;CHARSET&#39;: None,
+                      &#39;COLLATION&#39;: None,
+                      &#39;MIRROR&#39;: None,
+                      &#39;NAME&#39;: None},
+             &#39;TIME_ZONE&#39;: None,
+             &#39;USER&#39;: &#39;postgres&#39;}}</pre></td>
+        </tr>
+
+        <tr>
+          <td>DATABASE_ROUTERS</td>
+          <td class="code"><pre>[]</pre></td>
+        </tr>
+
+        <tr>
+          <td>DATA_UPLOAD_MAX_MEMORY_SIZE</td>
+          <td class="code"><pre>2621440</pre></td>
+        </tr>
+
+        <tr>
+          <td>DATA_UPLOAD_MAX_NUMBER_FIELDS</td>
+          <td class="code"><pre>1000</pre></td>
+        </tr>
+
+        <tr>
+          <td>DATETIME_FORMAT</td>
+          <td class="code"><pre>&#39;N j, Y, P&#39;</pre></td>
+        </tr>
+
+        <tr>
+          <td>DATETIME_INPUT_FORMATS</td>
+          <td class="code"><pre>[&#39;%Y-%m-%d %H:%M:%S&#39;,
+ &#39;%Y-%m-%d %H:%M:%S.%f&#39;,
+ &#39;%Y-%m-%d %H:%M&#39;,
+ &#39;%Y-%m-%d&#39;,
+ &#39;%m/%d/%Y %H:%M:%S&#39;,
+ &#39;%m/%d/%Y %H:%M:%S.%f&#39;,
+ &#39;%m/%d/%Y %H:%M&#39;,
+ &#39;%m/%d/%Y&#39;,
+ &#39;%m/%d/%y %H:%M:%S&#39;,
+ &#39;%m/%d/%y %H:%M:%S.%f&#39;,
+ &#39;%m/%d/%y %H:%M&#39;,
+ &#39;%m/%d/%y&#39;]</pre></td>
+        </tr>
+
+        <tr>
+          <td>DATE_FORMAT</td>
+          <td class="code"><pre>&#39;N j, Y&#39;</pre></td>
+        </tr>
+
+        <tr>
+          <td>DATE_INPUT_FORMATS</td>
+          <td class="code"><pre>[&#39;%Y-%m-%d&#39;,
+ &#39;%m/%d/%Y&#39;,
+ &#39;%m/%d/%y&#39;,
+ &#39;%b %d %Y&#39;,
+ &#39;%b %d, %Y&#39;,
+ &#39;%d %b %Y&#39;,
+ &#39;%d %b, %Y&#39;,
+ &#39;%B %d %Y&#39;,
+ &#39;%B %d, %Y&#39;,
+ &#39;%d %B %Y&#39;,
+ &#39;%d %B, %Y&#39;]</pre></td>
+        </tr>
+
+        <tr>
+          <td>DEBUG</td>
+          <td class="code"><pre>True</pre></td>
+        </tr>
+
+        <tr>
+          <td>DEBUG_PROPAGATE_EXCEPTIONS</td>
+          <td class="code"><pre>False</pre></td>
+        </tr>
+
+        <tr>
+          <td>DEBUG_TOOLBAR_CONFIG</td>
+          <td class="code"><pre>{&#39;SHOW_TOOLBAR_CALLBACK&#39;: &lt;function &lt;lambda&gt; at 0x1051be840&gt;}</pre></td>
+        </tr>
+
+        <tr>
+          <td>DECIMAL_SEPARATOR</td>
+          <td class="code"><pre>&#39;.&#39;</pre></td>
+        </tr>
+
+        <tr>
+          <td>DEFAULT_CHARSET</td>
+          <td class="code"><pre>&#39;utf-8&#39;</pre></td>
+        </tr>
+
+        <tr>
+          <td>DEFAULT_CONTENT_TYPE</td>
+          <td class="code"><pre>&#39;text/html&#39;</pre></td>
+        </tr>
+
+        <tr>
+          <td>DEFAULT_EXCEPTION_REPORTER_FILTER</td>
+          <td class="code"><pre>&#39;django.views.debug.SafeExceptionReporterFilter&#39;</pre></td>
+        </tr>
+
+        <tr>
+          <td>DEFAULT_FILE_STORAGE</td>
+          <td class="code"><pre>&#39;django.core.files.storage.FileSystemStorage&#39;</pre></td>
+        </tr>
+
+        <tr>
+          <td>DEFAULT_FROM_EMAIL</td>
+          <td class="code"><pre>&#39;&#39;</pre></td>
+        </tr>
+
+        <tr>
+          <td>DEFAULT_INDEX_TABLESPACE</td>
+          <td class="code"><pre>&#39;&#39;</pre></td>
+        </tr>
+
+        <tr>
+          <td>DEFAULT_TABLESPACE</td>
+          <td class="code"><pre>&#39;&#39;</pre></td>
+        </tr>
+
+        <tr>
+          <td>DISALLOWED_USER_AGENTS</td>
+          <td class="code"><pre>[]</pre></td>
+        </tr>
+
+        <tr>
+          <td>EMAIL_BACKEND</td>
+          <td class="code"><pre>&#39;django_smtp_ssl.SSLEmailBackend&#39;</pre></td>
+        </tr>
+
+        <tr>
+          <td>EMAIL_HOST</td>
+          <td class="code"><pre>&#39;&#39;</pre></td>
+        </tr>
+
+        <tr>
+          <td>EMAIL_HOST_PASSWORD</td>
+          <td class="code"><pre>&#39;********************&#39;</pre></td>
+        </tr>
+
+        <tr>
+          <td>EMAIL_HOST_USER</td>
+          <td class="code"><pre>&#39;&#39;</pre></td>
+        </tr>
+
+        <tr>
+          <td>EMAIL_PORT</td>
+          <td class="code"><pre>&#39;&#39;</pre></td>
+        </tr>
+
+        <tr>
+          <td>EMAIL_SSL_CERTFILE</td>
+          <td class="code"><pre>None</pre></td>
+        </tr>
+
+        <tr>
+          <td>EMAIL_SSL_KEYFILE</td>
+          <td class="code"><pre>&#39;********************&#39;</pre></td>
+        </tr>
+
+        <tr>
+          <td>EMAIL_SUBJECT_PREFIX</td>
+          <td class="code"><pre>&#39;[Django] &#39;</pre></td>
+        </tr>
+
+        <tr>
+          <td>EMAIL_TIMEOUT</td>
+          <td class="code"><pre>None</pre></td>
+        </tr>
+
+        <tr>
+          <td>EMAIL_USE_LOCALTIME</td>
+          <td class="code"><pre>False</pre></td>
+        </tr>
+
+        <tr>
+          <td>EMAIL_USE_SSL</td>
+          <td class="code"><pre>False</pre></td>
+        </tr>
+
+        <tr>
+          <td>EMAIL_USE_TLS</td>
+          <td class="code"><pre>True</pre></td>
+        </tr>
+
+        <tr>
+          <td>FILE_CHARSET</td>
+          <td class="code"><pre>&#39;utf-8&#39;</pre></td>
+        </tr>
+
+        <tr>
+          <td>FILE_UPLOAD_DIRECTORY_PERMISSIONS</td>
+          <td class="code"><pre>None</pre></td>
+        </tr>
+
+        <tr>
+          <td>FILE_UPLOAD_HANDLERS</td>
+          <td class="code"><pre>[&#39;django.core.files.uploadhandler.MemoryFileUploadHandler&#39;,
+ &#39;django.core.files.uploadhandler.TemporaryFileUploadHandler&#39;]</pre></td>
+        </tr>
+
+        <tr>
+          <td>FILE_UPLOAD_MAX_MEMORY_SIZE</td>
+          <td class="code"><pre>2621440</pre></td>
+        </tr>
+
+        <tr>
+          <td>FILE_UPLOAD_PERMISSIONS</td>
+          <td class="code"><pre>None</pre></td>
+        </tr>
+
+        <tr>
+          <td>FILE_UPLOAD_TEMP_DIR</td>
+          <td class="code"><pre>None</pre></td>
+        </tr>
+
+        <tr>
+          <td>FIRST_DAY_OF_WEEK</td>
+          <td class="code"><pre>0</pre></td>
+        </tr>
+
+        <tr>
+          <td>FIXTURE_DIRS</td>
+          <td class="code"><pre>[]</pre></td>
+        </tr>
+
+        <tr>
+          <td>FORCE_SCRIPT_NAME</td>
+          <td class="code"><pre>None</pre></td>
+        </tr>
+
+        <tr>
+          <td>FORMAT_MODULE_PATH</td>
+          <td class="code"><pre>None</pre></td>
+        </tr>
+
+        <tr>
+          <td>FORM_RENDERER</td>
+          <td class="code"><pre>&#39;django.forms.renderers.DjangoTemplates&#39;</pre></td>
+        </tr>
+
+        <tr>
+          <td>IGNORABLE_404_URLS</td>
+          <td class="code"><pre>[]</pre></td>
+        </tr>
+
+        <tr>
+          <td>INSTALLED_APPS</td>
+          <td class="code"><pre>(&#39;django.contrib.admin&#39;,
+ &#39;django.contrib.auth&#39;,
+ &#39;django.contrib.contenttypes&#39;,
+ &#39;django.contrib.sessions&#39;,
+ &#39;django.contrib.messages&#39;,
+ &#39;django.contrib.staticfiles&#39;,
+ &#39;django.contrib.humanize&#39;,
+ &#39;rest_framework&#39;,
+ &#39;rest_framework.authtoken&#39;,
+ &#39;sorl.thumbnail&#39;,
+ &#39;debug_toolbar&#39;,
+ &#39;jet_django&#39;,
+ &#39;post_office&#39;,
+ &#39;core.apps.CoreConfig&#39;,
+ &#39;careers.apps.CareersConfig&#39;,
+ &#39;content.apps.ContentConfig&#39;,
+ &#39;galleries.apps.GalleriesConfig&#39;,
+ &#39;games.apps.GamesConfig&#39;,
+ &#39;menu.apps.MenuConfig&#39;,
+ &#39;contact.apps.ContactConfig&#39;)</pre></td>
+        </tr>
+
+        <tr>
+          <td>INTERNAL_IPS</td>
+          <td class="code"><pre>[]</pre></td>
+        </tr>
+
+        <tr>
+          <td>LANGUAGES</td>
+          <td class="code"><pre>[(&#39;af&#39;, &#39;Afrikaans&#39;),
+ (&#39;ar&#39;, &#39;Arabic&#39;),
+ (&#39;ast&#39;, &#39;Asturian&#39;),
+ (&#39;az&#39;, &#39;Azerbaijani&#39;),
+ (&#39;bg&#39;, &#39;Bulgarian&#39;),
+ (&#39;be&#39;, &#39;Belarusian&#39;),
+ (&#39;bn&#39;, &#39;Bengali&#39;),
+ (&#39;br&#39;, &#39;Breton&#39;),
+ (&#39;bs&#39;, &#39;Bosnian&#39;),
+ (&#39;ca&#39;, &#39;Catalan&#39;),
+ (&#39;cs&#39;, &#39;Czech&#39;),
+ (&#39;cy&#39;, &#39;Welsh&#39;),
+ (&#39;da&#39;, &#39;Danish&#39;),
+ (&#39;de&#39;, &#39;German&#39;),
+ (&#39;dsb&#39;, &#39;Lower Sorbian&#39;),
+ (&#39;el&#39;, &#39;Greek&#39;),
+ (&#39;en&#39;, &#39;English&#39;),
+ (&#39;en-au&#39;, &#39;Australian English&#39;),
+ (&#39;en-gb&#39;, &#39;British English&#39;),
+ (&#39;eo&#39;, &#39;Esperanto&#39;),
+ (&#39;es&#39;, &#39;Spanish&#39;),
+ (&#39;es-ar&#39;, &#39;Argentinian Spanish&#39;),
+ (&#39;es-co&#39;, &#39;Colombian Spanish&#39;),
+ (&#39;es-mx&#39;, &#39;Mexican Spanish&#39;),
+ (&#39;es-ni&#39;, &#39;Nicaraguan Spanish&#39;),
+ (&#39;es-ve&#39;, &#39;Venezuelan Spanish&#39;),
+ (&#39;et&#39;, &#39;Estonian&#39;),
+ (&#39;eu&#39;, &#39;Basque&#39;),
+ (&#39;fa&#39;, &#39;Persian&#39;),
+ (&#39;fi&#39;, &#39;Finnish&#39;),
+ (&#39;fr&#39;, &#39;French&#39;),
+ (&#39;fy&#39;, &#39;Frisian&#39;),
+ (&#39;ga&#39;, &#39;Irish&#39;),
+ (&#39;gd&#39;, &#39;Scottish Gaelic&#39;),
+ (&#39;gl&#39;, &#39;Galician&#39;),
+ (&#39;he&#39;, &#39;Hebrew&#39;),
+ (&#39;hi&#39;, &#39;Hindi&#39;),
+ (&#39;hr&#39;, &#39;Croatian&#39;),
+ (&#39;hsb&#39;, &#39;Upper Sorbian&#39;),
+ (&#39;hu&#39;, &#39;Hungarian&#39;),
+ (&#39;ia&#39;, &#39;Interlingua&#39;),
+ (&#39;id&#39;, &#39;Indonesian&#39;),
+ (&#39;io&#39;, &#39;Ido&#39;),
+ (&#39;is&#39;, &#39;Icelandic&#39;),
+ (&#39;it&#39;, &#39;Italian&#39;),
+ (&#39;ja&#39;, &#39;Japanese&#39;),
+ (&#39;ka&#39;, &#39;Georgian&#39;),
+ (&#39;kk&#39;, &#39;Kazakh&#39;),
+ (&#39;km&#39;, &#39;Khmer&#39;),
+ (&#39;kn&#39;, &#39;Kannada&#39;),
+ (&#39;ko&#39;, &#39;Korean&#39;),
+ (&#39;lb&#39;, &#39;Luxembourgish&#39;),
+ (&#39;lt&#39;, &#39;Lithuanian&#39;),
+ (&#39;lv&#39;, &#39;Latvian&#39;),
+ (&#39;mk&#39;, &#39;Macedonian&#39;),
+ (&#39;ml&#39;, &#39;Malayalam&#39;),
+ (&#39;mn&#39;, &#39;Mongolian&#39;),
+ (&#39;mr&#39;, &#39;Marathi&#39;),
+ (&#39;my&#39;, &#39;Burmese&#39;),
+ (&#39;nb&#39;, &#39;Norwegian Bokmål&#39;),
+ (&#39;ne&#39;, &#39;Nepali&#39;),
+ (&#39;nl&#39;, &#39;Dutch&#39;),
+ (&#39;nn&#39;, &#39;Norwegian Nynorsk&#39;),
+ (&#39;os&#39;, &#39;Ossetic&#39;),
+ (&#39;pa&#39;, &#39;Punjabi&#39;),
+ (&#39;pl&#39;, &#39;Polish&#39;),
+ (&#39;pt&#39;, &#39;Portuguese&#39;),
+ (&#39;pt-br&#39;, &#39;Brazilian Portuguese&#39;),
+ (&#39;ro&#39;, &#39;Romanian&#39;),
+ (&#39;ru&#39;, &#39;Russian&#39;),
+ (&#39;sk&#39;, &#39;Slovak&#39;),
+ (&#39;sl&#39;, &#39;Slovenian&#39;),
+ (&#39;sq&#39;, &#39;Albanian&#39;),
+ (&#39;sr&#39;, &#39;Serbian&#39;),
+ (&#39;sr-latn&#39;, &#39;Serbian Latin&#39;),
+ (&#39;sv&#39;, &#39;Swedish&#39;),
+ (&#39;sw&#39;, &#39;Swahili&#39;),
+ (&#39;ta&#39;, &#39;Tamil&#39;),
+ (&#39;te&#39;, &#39;Telugu&#39;),
+ (&#39;th&#39;, &#39;Thai&#39;),
+ (&#39;tr&#39;, &#39;Turkish&#39;),
+ (&#39;tt&#39;, &#39;Tatar&#39;),
+ (&#39;udm&#39;, &#39;Udmurt&#39;),
+ (&#39;uk&#39;, &#39;Ukrainian&#39;),
+ (&#39;ur&#39;, &#39;Urdu&#39;),
+ (&#39;vi&#39;, &#39;Vietnamese&#39;),
+ (&#39;zh-hans&#39;, &#39;Simplified Chinese&#39;),
+ (&#39;zh-hant&#39;, &#39;Traditional Chinese&#39;)]</pre></td>
+        </tr>
+
+        <tr>
+          <td>LANGUAGES_BIDI</td>
+          <td class="code"><pre>[&#39;he&#39;, &#39;ar&#39;, &#39;fa&#39;, &#39;ur&#39;]</pre></td>
+        </tr>
+
+        <tr>
+          <td>LANGUAGE_CODE</td>
+          <td class="code"><pre>&#39;en-us&#39;</pre></td>
+        </tr>
+
+        <tr>
+          <td>LANGUAGE_COOKIE_AGE</td>
+          <td class="code"><pre>None</pre></td>
+        </tr>
+
+        <tr>
+          <td>LANGUAGE_COOKIE_DOMAIN</td>
+          <td class="code"><pre>None</pre></td>
+        </tr>
+
+        <tr>
+          <td>LANGUAGE_COOKIE_NAME</td>
+          <td class="code"><pre>&#39;django_language&#39;</pre></td>
+        </tr>
+
+        <tr>
+          <td>LANGUAGE_COOKIE_PATH</td>
+          <td class="code"><pre>&#39;/&#39;</pre></td>
+        </tr>
+
+        <tr>
+          <td>LOCALE_PATHS</td>
+          <td class="code"><pre>[]</pre></td>
+        </tr>
+
+        <tr>
+          <td>LOGGING</td>
+          <td class="code"><pre>{&#39;disable_existing_loggers&#39;: False,
+ &#39;handlers&#39;: {&#39;console&#39;: {&#39;class&#39;: &#39;logging.StreamHandler&#39;}},
+ &#39;loggers&#39;: {&#39;django&#39;: {&#39;handlers&#39;: [&#39;console&#39;], &#39;propagate&#39;: True}},
+ &#39;version&#39;: 1}</pre></td>
+        </tr>
+
+        <tr>
+          <td>LOGGING_CONFIG</td>
+          <td class="code"><pre>&#39;logging.config.dictConfig&#39;</pre></td>
+        </tr>
+
+        <tr>
+          <td>LOGIN_REDIRECT_URL</td>
+          <td class="code"><pre>&#39;/accounts/profile/&#39;</pre></td>
+        </tr>
+
+        <tr>
+          <td>LOGIN_URL</td>
+          <td class="code"><pre>&#39;/accounts/login/&#39;</pre></td>
+        </tr>
+
+        <tr>
+          <td>LOGOUT_REDIRECT_URL</td>
+          <td class="code"><pre>None</pre></td>
+        </tr>
+
+        <tr>
+          <td>MANAGERS</td>
+          <td class="code"><pre>[]</pre></td>
+        </tr>
+
+        <tr>
+          <td>MEDIA_ROOT</td>
+          <td class="code"><pre>&#39;/Users/f1nal/Dropbox/python/blowfire-backend/media&#39;</pre></td>
+        </tr>
+
+        <tr>
+          <td>MEDIA_URL</td>
+          <td class="code"><pre>&#39;/media/&#39;</pre></td>
+        </tr>
+
+        <tr>
+          <td>MESSAGE_STORAGE</td>
+          <td class="code"><pre>&#39;django.contrib.messages.storage.fallback.FallbackStorage&#39;</pre></td>
+        </tr>
+
+        <tr>
+          <td>MIDDLEWARE</td>
+          <td class="code"><pre>(&#39;debug_toolbar.middleware.DebugToolbarMiddleware&#39;,
+ &#39;django.contrib.sessions.middleware.SessionMiddleware&#39;,
+ &#39;django.middleware.common.CommonMiddleware&#39;,
+ &#39;django.middleware.csrf.CsrfViewMiddleware&#39;,
+ &#39;django.contrib.auth.middleware.AuthenticationMiddleware&#39;,
+ &#39;django.contrib.auth.middleware.SessionAuthenticationMiddleware&#39;,
+ &#39;django.contrib.messages.middleware.MessageMiddleware&#39;,
+ &#39;django.middleware.clickjacking.XFrameOptionsMiddleware&#39;,
+ &#39;django.middleware.security.SecurityMiddleware&#39;)</pre></td>
+        </tr>
+
+        <tr>
+          <td>MIDDLEWARE_CLASSES</td>
+          <td class="code"><pre>[&#39;django.middleware.common.CommonMiddleware&#39;,
+ &#39;django.middleware.csrf.CsrfViewMiddleware&#39;]</pre></td>
+        </tr>
+
+        <tr>
+          <td>MIGRATION_MODULES</td>
+          <td class="code"><pre>{}</pre></td>
+        </tr>
+
+        <tr>
+          <td>MONTH_DAY_FORMAT</td>
+          <td class="code"><pre>&#39;F j&#39;</pre></td>
+        </tr>
+
+        <tr>
+          <td>NUMBER_GROUPING</td>
+          <td class="code"><pre>0</pre></td>
+        </tr>
+
+        <tr>
+          <td>PASSWORD_HASHERS</td>
+          <td class="code"><pre>&#39;********************&#39;</pre></td>
+        </tr>
+
+        <tr>
+          <td>PASSWORD_RESET_TIMEOUT_DAYS</td>
+          <td class="code"><pre>&#39;********************&#39;</pre></td>
+        </tr>
+
+        <tr>
+          <td>PREPEND_WWW</td>
+          <td class="code"><pre>False</pre></td>
+        </tr>
+
+        <tr>
+          <td>PROJECT_DIR</td>
+          <td class="code"><pre>&#39;/Users/f1nal/Dropbox/python/blowfire-backend&#39;</pre></td>
+        </tr>
+
+        <tr>
+          <td>REST_FRAMEWORK</td>
+          <td class="code"><pre>{&#39;DEFAULT_AUTHENTICATION_CLASSES&#39;: (&#39;rest_framework.authentication.TokenAuthentication&#39;,
+                                    &#39;rest_framework.authentication.SessionAuthentication&#39;),
+ &#39;DEFAULT_FILTER_BACKENDS&#39;: (&#39;rest_framework.filters.DjangoFilterBackend&#39;,
+                             &#39;rest_framework.filters.OrderingFilter&#39;),
+ &#39;DEFAULT_THROTTLE_CLASSES&#39;: (&#39;rest_framework.throttling.AnonRateThrottle&#39;,
+                              &#39;rest_framework.throttling.UserRateThrottle&#39;),
+ &#39;DEFAULT_THROTTLE_RATES&#39;: {&#39;anon&#39;: &#39;120/minute&#39;, &#39;user&#39;: &#39;240/minute&#39;},
+ &#39;PAGINATE_BY&#39;: 25}</pre></td>
+        </tr>
+
+        <tr>
+          <td>ROOT_URLCONF</td>
+          <td class="code"><pre>&#39;application.urls&#39;</pre></td>
+        </tr>
+
+        <tr>
+          <td>SECRET_KEY</td>
+          <td class="code"><pre>&#39;********************&#39;</pre></td>
+        </tr>
+
+        <tr>
+          <td>SECURE_BROWSER_XSS_FILTER</td>
+          <td class="code"><pre>False</pre></td>
+        </tr>
+
+        <tr>
+          <td>SECURE_CONTENT_TYPE_NOSNIFF</td>
+          <td class="code"><pre>False</pre></td>
+        </tr>
+
+        <tr>
+          <td>SECURE_HSTS_INCLUDE_SUBDOMAINS</td>
+          <td class="code"><pre>False</pre></td>
+        </tr>
+
+        <tr>
+          <td>SECURE_HSTS_PRELOAD</td>
+          <td class="code"><pre>False</pre></td>
+        </tr>
+
+        <tr>
+          <td>SECURE_HSTS_SECONDS</td>
+          <td class="code"><pre>0</pre></td>
+        </tr>
+
+        <tr>
+          <td>SECURE_PROXY_SSL_HEADER</td>
+          <td class="code"><pre>None</pre></td>
+        </tr>
+
+        <tr>
+          <td>SECURE_REDIRECT_EXEMPT</td>
+          <td class="code"><pre>[]</pre></td>
+        </tr>
+
+        <tr>
+          <td>SECURE_SSL_HOST</td>
+          <td class="code"><pre>None</pre></td>
+        </tr>
+
+        <tr>
+          <td>SECURE_SSL_REDIRECT</td>
+          <td class="code"><pre>False</pre></td>
+        </tr>
+
+        <tr>
+          <td>SERVER_EMAIL</td>
+          <td class="code"><pre>&#39;&#39;</pre></td>
+        </tr>
+
+        <tr>
+          <td>SESSION_CACHE_ALIAS</td>
+          <td class="code"><pre>&#39;default&#39;</pre></td>
+        </tr>
+
+        <tr>
+          <td>SESSION_COOKIE_AGE</td>
+          <td class="code"><pre>1209600</pre></td>
+        </tr>
+
+        <tr>
+          <td>SESSION_COOKIE_DOMAIN</td>
+          <td class="code"><pre>None</pre></td>
+        </tr>
+
+        <tr>
+          <td>SESSION_COOKIE_HTTPONLY</td>
+          <td class="code"><pre>True</pre></td>
+        </tr>
+
+        <tr>
+          <td>SESSION_COOKIE_NAME</td>
+          <td class="code"><pre>&#39;sessionid&#39;</pre></td>
+        </tr>
+
+        <tr>
+          <td>SESSION_COOKIE_PATH</td>
+          <td class="code"><pre>&#39;/&#39;</pre></td>
+        </tr>
+
+        <tr>
+          <td>SESSION_COOKIE_SECURE</td>
+          <td class="code"><pre>False</pre></td>
+        </tr>
+
+        <tr>
+          <td>SESSION_ENGINE</td>
+          <td class="code"><pre>&#39;django.contrib.sessions.backends.db&#39;</pre></td>
+        </tr>
+
+        <tr>
+          <td>SESSION_EXPIRE_AT_BROWSER_CLOSE</td>
+          <td class="code"><pre>False</pre></td>
+        </tr>
+
+        <tr>
+          <td>SESSION_FILE_PATH</td>
+          <td class="code"><pre>None</pre></td>
+        </tr>
+
+        <tr>
+          <td>SESSION_SAVE_EVERY_REQUEST</td>
+          <td class="code"><pre>False</pre></td>
+        </tr>
+
+        <tr>
+          <td>SESSION_SERIALIZER</td>
+          <td class="code"><pre>&#39;django.contrib.sessions.serializers.JSONSerializer&#39;</pre></td>
+        </tr>
+
+        <tr>
+          <td>SETTINGS_MODULE</td>
+          <td class="code"><pre>&#39;application.settings&#39;</pre></td>
+        </tr>
+
+        <tr>
+          <td>SHORT_DATETIME_FORMAT</td>
+          <td class="code"><pre>&#39;m/d/Y P&#39;</pre></td>
+        </tr>
+
+        <tr>
+          <td>SHORT_DATE_FORMAT</td>
+          <td class="code"><pre>&#39;m/d/Y&#39;</pre></td>
+        </tr>
+
+        <tr>
+          <td>SIGNING_BACKEND</td>
+          <td class="code"><pre>&#39;django.core.signing.TimestampSigner&#39;</pre></td>
+        </tr>
+
+        <tr>
+          <td>SILENCED_SYSTEM_CHECKS</td>
+          <td class="code"><pre>[]</pre></td>
+        </tr>
+
+        <tr>
+          <td>SITE_URL</td>
+          <td class="code"><pre>&#39;http://localhost&#39;</pre></td>
+        </tr>
+
+        <tr>
+          <td>STATICFILES_DIRS</td>
+          <td class="code"><pre>[]</pre></td>
+        </tr>
+
+        <tr>
+          <td>STATICFILES_FINDERS</td>
+          <td class="code"><pre>[&#39;django.contrib.staticfiles.finders.FileSystemFinder&#39;,
+ &#39;django.contrib.staticfiles.finders.AppDirectoriesFinder&#39;]</pre></td>
+        </tr>
+
+        <tr>
+          <td>STATICFILES_STORAGE</td>
+          <td class="code"><pre>&#39;django.contrib.staticfiles.storage.StaticFilesStorage&#39;</pre></td>
+        </tr>
+
+        <tr>
+          <td>STATIC_ROOT</td>
+          <td class="code"><pre>&#39;/Users/f1nal/Dropbox/python/blowfire-backend/static&#39;</pre></td>
+        </tr>
+
+        <tr>
+          <td>STATIC_URL</td>
+          <td class="code"><pre>&#39;/static/&#39;</pre></td>
+        </tr>
+
+        <tr>
+          <td>TEMPLATES</td>
+          <td class="code"><pre>[{&#39;BACKEND&#39;: &#39;django.template.backends.django.DjangoTemplates&#39;,
+  &#39;DIRS&#39;: [&#39;/Users/f1nal/Dropbox/python/blowfire-backend/src/templates&#39;],
+  &#39;OPTIONS&#39;: {&#39;context_processors&#39;: [&#39;django.template.context_processors.debug&#39;,
+                                     &#39;django.template.context_processors.request&#39;,
+                                     &#39;django.contrib.auth.context_processors.auth&#39;,
+                                     &#39;django.contrib.messages.context_processors.messages&#39;,
+                                     &#39;django.template.context_processors.request&#39;],
+              &#39;loaders&#39;: [(&#39;django.template.loaders.cached.Loader&#39;,
+                           [&#39;django.template.loaders.filesystem.Loader&#39;,
+                            &#39;django.template.loaders.app_directories.Loader&#39;])]}}]</pre></td>
+        </tr>
+
+        <tr>
+          <td>TEST_NON_SERIALIZED_APPS</td>
+          <td class="code"><pre>[]</pre></td>
+        </tr>
+
+        <tr>
+          <td>TEST_RUNNER</td>
+          <td class="code"><pre>&#39;django.test.runner.DiscoverRunner&#39;</pre></td>
+        </tr>
+
+        <tr>
+          <td>THOUSAND_SEPARATOR</td>
+          <td class="code"><pre>&#39;,&#39;</pre></td>
+        </tr>
+
+        <tr>
+          <td>THUMBNAIL_ALTERNATIVE_RESOLUTIONS</td>
+          <td class="code"><pre>(2,)</pre></td>
+        </tr>
+
+        <tr>
+          <td>TIME_FORMAT</td>
+          <td class="code"><pre>&#39;P&#39;</pre></td>
+        </tr>
+
+        <tr>
+          <td>TIME_INPUT_FORMATS</td>
+          <td class="code"><pre>[&#39;%H:%M:%S&#39;, &#39;%H:%M:%S.%f&#39;, &#39;%H:%M&#39;]</pre></td>
+        </tr>
+
+        <tr>
+          <td>TIME_ZONE</td>
+          <td class="code"><pre>&#39;Europe/Moscow&#39;</pre></td>
+        </tr>
+
+        <tr>
+          <td>USE_ETAGS</td>
+          <td class="code"><pre>False</pre></td>
+        </tr>
+
+        <tr>
+          <td>USE_I18N</td>
+          <td class="code"><pre>True</pre></td>
+        </tr>
+
+        <tr>
+          <td>USE_L10N</td>
+          <td class="code"><pre>True</pre></td>
+        </tr>
+
+        <tr>
+          <td>USE_THOUSAND_SEPARATOR</td>
+          <td class="code"><pre>False</pre></td>
+        </tr>
+
+        <tr>
+          <td>USE_TZ</td>
+          <td class="code"><pre>True</pre></td>
+        </tr>
+
+        <tr>
+          <td>USE_X_FORWARDED_HOST</td>
+          <td class="code"><pre>False</pre></td>
+        </tr>
+
+        <tr>
+          <td>USE_X_FORWARDED_PORT</td>
+          <td class="code"><pre>False</pre></td>
+        </tr>
+
+        <tr>
+          <td>WSGI_APPLICATION</td>
+          <td class="code"><pre>&#39;application.wsgi.application&#39;</pre></td>
+        </tr>
+
+        <tr>
+          <td>X_FRAME_OPTIONS</td>
+          <td class="code"><pre>&#39;SAMEORIGIN&#39;</pre></td>
+        </tr>
+
+        <tr>
+          <td>YEAR_MONTH_FORMAT</td>
+          <td class="code"><pre>&#39;F Y&#39;</pre></td>
+        </tr>
+
+    </tbody>
+  </table>
+
+</div>
+{% end %}
+
+<div id="explanation">
+<p>
+  You're seeing this error because you have <code>DEBUG = 1</code> in your
+  Jet Bridge settings. Change that to <code>0</code>, and Jet Bridge will
+  display a standard page generated by the handler for this status code.
+</p>
+</div>
+
+</body>
+</html>

@@ -1,5 +1,12 @@
+import os
+from datetime import datetime
+
+import sys
+import platform
 import tornado.web
 from tornado.escape import json_decode
+
+from jet_bridge import settings, VERSION
 
 
 class APIView(tornado.web.RequestHandler):
@@ -53,5 +60,33 @@ class APIView(tornado.web.RequestHandler):
         self.write(response.render())
 
     def write_error(self, status_code, **kwargs):
-        print(kwargs.get('exc_info'))
-        self.write('Error %s' % status_code)
+        if settings.DEBUG:
+            ctx = {
+                'path': self.request.path,
+                'full_path':  self.request.protocol + "://" + self.request.host + self.request.path,
+                'method': self.request.method,
+                'version': VERSION,
+                'current_datetime': datetime.now().strftime('%c'),
+                'python_version': platform.python_version(),
+                'python_executable': sys.executable,
+                'python_path': sys.path
+            }
+
+            if kwargs.get('exc_info'):
+                exc_type, exc, traceback = kwargs['exc_info']
+
+                last_traceback = traceback
+
+                while last_traceback.tb_next:
+                    last_traceback = last_traceback.tb_next
+
+                ctx.update({
+                    'exception_type': exc_type.__name__,
+                    'exception_value': str(exc),
+                    'exception_last_traceback_line': last_traceback.tb_lineno,
+                    'exception_last_traceback_name': last_traceback.tb_frame
+                })
+
+            self.render('500.debug.html', **ctx)
+        else:
+            self.render('500.html')
