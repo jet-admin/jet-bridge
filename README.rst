@@ -4,10 +4,10 @@ Jet Bridge
 
 **Universal admin panel for Django**
 
-.. image:: https://s3.us-west-2.amazonaws.com/secure.notion-static.com/079701bd-ea68-4848-a885-d19518cfa746/main.gif?AWSAccessKeyId=AKIAJLJXUMP5IHUZAPFQ&Expires=1539710956&Signature=zSY1L770Uu0gCtG72%2FAGE8rm9G0%3D
+.. image:: https://raw.githubusercontent.com/jet-admin/jet-bridge/master/static/overview.gif
     :alt: Preview
     :align: center
-    :target: https://s3.us-west-2.amazonaws.com/secure.notion-static.com/079701bd-ea68-4848-a885-d19518cfa746/main.gif?AWSAccessKeyId=AKIAJLJXUMP5IHUZAPFQ&Expires=1539710956&Signature=zSY1L770Uu0gCtG72%2FAGE8rm9G0%3D
+    :target: https://raw.githubusercontent.com/jet-admin/jet-bridge/master/static/overview.gif
 
 Description
 ===========
