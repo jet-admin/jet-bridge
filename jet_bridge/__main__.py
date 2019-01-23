@@ -1,3 +1,4 @@
+import os
 from datetime import datetime
 
 import tornado.ioloop
@@ -39,7 +40,12 @@ def make_app():
     if settings.MEDIA_STORAGE == media.MEDIA_STORAGE_DEFAULT:
         urls.append((r'/media/(.*)', tornado.web.StaticFileHandler, {'path': settings.MEDIA_ROOT}))
 
-    return tornado.web.Application(urls, debug=settings.DEBUG, default_handler_class=NotFoundHandler)
+    return tornado.web.Application(
+        handlers=urls,
+        debug=settings.DEBUG,
+        default_handler_class=NotFoundHandler,
+        template_path=os.path.join(settings.BASE_DIR, 'templates')
+    )
 
 
 def main():

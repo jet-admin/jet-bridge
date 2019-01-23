@@ -86,3 +86,7 @@ class GenericAPIView(APIView):
             'view': self,
             'session': self.session
         }
+
+    def write_error(self, status_code, **kwargs):
+        self.session.rollback()
+        super().write_error(status_code, **kwargs)
