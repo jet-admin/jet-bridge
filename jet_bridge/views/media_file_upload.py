@@ -19,9 +19,6 @@ class MediaFileUploadHandler(APIView):
 
         return name
 
-    def build_absolute_uri(self, url):
-        return self.request.protocol + "://" + self.request.host + url
-
     def post(self):
         # TODO: Move to serializer
         file = self.request.files.get('file', [])[0]

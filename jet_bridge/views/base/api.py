@@ -55,6 +55,9 @@ class APIView(tornado.web.RequestHandler):
         self.set_status(204)
         self.finish()
 
+    def build_absolute_uri(self, url):
+        return self.request.protocol + "://" + self.request.host + url
+
     def write_response(self, response):
         for name, value in response.header_items():
             self.set_header(name, value)
