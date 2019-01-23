@@ -3,6 +3,8 @@ from datetime import datetime
 
 import tornado.ioloop
 import tornado.web
+from requests import RequestException
+
 import jet_bridge.adapters.postgres
 
 from jet_bridge import settings, VERSION, media
@@ -63,9 +65,13 @@ def main():
 
     print('Quit the server with CONTROL-C')
 
-    if not is_token_activated():
-        print('[!] Your server token is not activated')
-        print('[!] Go to {}register/ to activate'.format(url))
+    try:
+        if not is_token_activated():
+            print('[!] Your server token is not activated')
+            print('[!] Go to {}register/ to activate'.format(url))
+    except RequestException:
+        print('[!] Can\'t connect to Jet Admin API')
+        print('[!] Token verification failed')
 
     tornado.ioloop.IOLoop.current().start()
 
