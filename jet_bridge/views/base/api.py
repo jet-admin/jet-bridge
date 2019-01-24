@@ -1,4 +1,3 @@
-import os
 from datetime import datetime
 
 import sys
@@ -6,7 +5,9 @@ import platform
 import tornado.web
 from tornado.escape import json_decode
 
-from jet_bridge import settings, VERSION
+from jet_bridge import settings, VERSION, status
+from jet_bridge.exceptions.api import APIException
+from jet_bridge.exceptions.permission_denied import PermissionDenied
 
 
 class APIView(tornado.web.RequestHandler):
@@ -43,16 +44,19 @@ class APIView(tornado.web.RequestHandler):
     def check_permissions(self):
         for permission in self.get_permissions():
             if not permission.has_permission(self):
-                raise Exception(getattr(permission, 'message', None))
+                raise PermissionDenied(getattr(permission, 'message', 'forbidden'))
 
     def check_object_permissions(self, obj):
         for permission in self.get_permissions():
             if not permission.has_object_permission(self, obj):
-                raise Exception(getattr(permission, 'message', None))
+                raise PermissionDenied(getattr(permission, 'message', 'forbidden'))
 
     def options(self, *args, **kwargs):
         self.set_status(204)
         self.finish()
+
+    def build_absolute_uri(self, url):
+        return self.request.protocol + "://" + self.request.host + url
 
     def write_response(self, response):
         for name, value in response.header_items():
@@ -60,33 +64,44 @@ class APIView(tornado.web.RequestHandler):
         self.write(response.render())
 
     def write_error(self, status_code, **kwargs):
-        if settings.DEBUG:
-            ctx = {
+        exc_type = exc = traceback = None
+
+        if kwargs.get('exc_info'):
+            exc_type, exc, traceback = kwargs['exc_info']
+
+            if isinstance(exc, APIException):
+                status_code = exc.status_code
+
+        if status_code == status.HTTP_403_FORBIDDEN:
+            self.render('403.html', **{
                 'path': self.request.path,
-                'full_path':  self.request.protocol + "://" + self.request.host + self.request.path,
-                'method': self.request.method,
-                'version': VERSION,
-                'current_datetime': datetime.now().strftime('%c'),
-                'python_version': platform.python_version(),
-                'python_executable': sys.executable,
-                'python_path': sys.path
-            }
-
-            if kwargs.get('exc_info'):
-                exc_type, exc, traceback = kwargs['exc_info']
-
-                last_traceback = traceback
-
-                while last_traceback.tb_next:
-                    last_traceback = last_traceback.tb_next
-
-                ctx.update({
-                    'exception_type': exc_type.__name__,
-                    'exception_value': str(exc),
-                    'exception_last_traceback_line': last_traceback.tb_lineno,
-                    'exception_last_traceback_name': last_traceback.tb_frame
-                })
-
-            self.render('500.debug.html', **ctx)
+            })
         else:
-            self.render('500.html')
+            if settings.DEBUG:
+                ctx = {
+                    'path': self.request.path,
+                    'full_path':  self.request.protocol + "://" + self.request.host + self.request.path,
+                    'method': self.request.method,
+                    'version': VERSION,
+                    'current_datetime': datetime.now().strftime('%c'),
+                    'python_version': platform.python_version(),
+                    'python_executable': sys.executable,
+                    'python_path': sys.path
+                }
+
+                if exc:
+                    last_traceback = traceback
+
+                    while last_traceback.tb_next:
+                        last_traceback = last_traceback.tb_next
+
+                    ctx.update({
+                        'exception_type': exc_type.__name__,
+                        'exception_value': str(exc),
+                        'exception_last_traceback_line': last_traceback.tb_lineno,
+                        'exception_last_traceback_name': last_traceback.tb_frame
+                    })
+
+                self.render('500.debug.html', **ctx)
+            else:
+                self.render('500.html')

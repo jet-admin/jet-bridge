@@ -3,12 +3,15 @@ from datetime import datetime
 
 import tornado.ioloop
 import tornado.web
+from requests import RequestException
+
 import jet_bridge.adapters.postgres
 
 from jet_bridge import settings, VERSION, media
 from jet_bridge.router import Router
 from jet_bridge.utils.backend import is_token_activated
 from jet_bridge.views.api import ApiHandler
+from jet_bridge.views.image_resize import ImageResizeHandler
 from jet_bridge.views.media_file_upload import MediaFileUploadHandler
 from jet_bridge.views.main import MainHandler
 from jet_bridge.views.message import MessageHandler
@@ -33,6 +36,7 @@ def make_app():
         (r'/api/sql/', SqlHandler),
         (r'/api/messages/', MessageHandler),
         (r'/api/file_upload/', MediaFileUploadHandler),
+        (r'/api/image_resize/', ImageResizeHandler),
         (r'/media/(.*)', tornado.web.StaticFileHandler, {'path': settings.MEDIA_ROOT}),
     ]
     urls += router.urls
@@ -63,9 +67,13 @@ def main():
 
     print('Quit the server with CONTROL-C')
 
-    if not is_token_activated():
-        print('[!] Your server token is not activated')
-        print('[!] Go to {}register/ to activate'.format(url))
+    try:
+        if not is_token_activated():
+            print('[!] Your server token is not activated')
+            print('[!] Go to {}register/ to activate'.format(url))
+    except RequestException:
+        print('[!] Can\'t connect to Jet Admin API')
+        print('[!] Token verification failed')
 
     tornado.ioloop.IOLoop.current().start()
 

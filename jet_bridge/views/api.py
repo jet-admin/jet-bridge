@@ -8,6 +8,7 @@ class ApiHandler(APIView):
     def get(self):
         response = Response({
             'version': VERSION,
-            'type': 'jet_bridge'
+            'type': 'jet_bridge',
+            'media_url_template': self.build_absolute_uri('/media/{}')
         })
         self.write_response(response)

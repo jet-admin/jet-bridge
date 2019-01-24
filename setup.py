@@ -17,6 +17,7 @@ def get_install_requires():
         'sqlalchemy',
         'six',
         'requests',
+        'Pillow',
     ]
 
     try:

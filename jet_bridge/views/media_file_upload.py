@@ -19,17 +19,11 @@ class MediaFileUploadHandler(APIView):
 
         return name
 
-    def build_absolute_uri(self, url):
-        return self.request.protocol + "://" + self.request.host + url
-
     def post(self):
         # TODO: Move to serializer
         file = self.request.files.get('file', [])[0]
         path = self.get_body_argument('path')
-        filename = self.get_body_argument('filename', None)
-
-        if filename is None:
-            filename = file.filename
+        filename = self.get_body_argument('filename', file.filename)
 
         upload_path = os.path.join(settings.MEDIA_ROOT, path, filename)
         upload_path = self.get_available_name(upload_path)
@@ -48,7 +42,7 @@ class MediaFileUploadHandler(APIView):
             f.write(file['body'])
 
         response = Response({
-            'uploaded_path': upload_path,
+            'uploaded_path': relative_upload_path,
             'uploaded_url': self.build_absolute_uri('/media/{}'.format(relative_upload_path))
         })
         self.write_response(response)
