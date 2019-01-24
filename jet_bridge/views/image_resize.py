@@ -21,8 +21,7 @@ class ImageResizeHandler(APIView):
             except OSError:
                 raise
 
-        img = img.convert('RGB')
-        img.save(thumbnail_path, 'JPEG', quality=85)
+        img.save(thumbnail_path, format=img.format, quality=85)  # TODO: determine real extension from format
 
     def get(self):
         # TODO: Move to serializer
@@ -42,7 +41,7 @@ class ImageResizeHandler(APIView):
                 self.create_thumbnail(image_full_path, thumbnail_full_path, max_width, max_height)
                 cache.add_file(thumbnail_full_path)
 
-            self.set_header('Content-Type', 'image/jpg')
+            self.set_header('Content-Type', 'image/{}'.format(os.path.splitext(thumbnail_full_path)[1][1:]))
 
             with open(thumbnail_full_path, 'rb') as f:
                 data = f.read()
