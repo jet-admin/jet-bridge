@@ -4,12 +4,10 @@ from PIL import Image
 from jet_bridge import settings
 from jet_bridge.exceptions.not_found import NotFound
 from jet_bridge.media_cache import cache
-from jet_bridge.permissions import HasProjectPermissions
 from jet_bridge.views.base.api import APIView
 
 
 class ImageResizeHandler(APIView):
-    permission_classes = (HasProjectPermissions,)
 
     def create_thumbnail(self, path, thumbnail_path, max_width, max_height):
         img = Image.open(path)
