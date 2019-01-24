@@ -42,6 +42,7 @@ class ModelDescriptionSerializer(Serializer):
     model = fields.CharField()
     db_table = fields.CharField()
     hidden = fields.BooleanField()
+    primary_key_field = fields.CharField()
     fields = ModelDescriptionFieldSerializer(many=True)
     relations = ModelDescriptionRelationSerializer(many=True)
 
@@ -52,4 +53,5 @@ class ModelDescriptionSerializer(Serializer):
             'hidden',
             'fields',
             'relations',
+            'primary_key_field',
         )

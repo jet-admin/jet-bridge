@@ -1,3 +1,5 @@
+from sqlalchemy import inspect
+
 from jet_bridge.filters.model import get_model_filter_class
 from jet_bridge.filters.model_aggregate import ModelAggregateFilter
 from jet_bridge.filters.model_group import ModelGroupFilter
@@ -13,6 +15,10 @@ from jet_bridge.db import MappedBase
 class ModelHandler(ModelAPIViewMixin):
     model = None
     permission_classes = (HasProjectPermissions, ModifyNotInDemo)
+
+    def prepare(self):
+        mapper = inspect(self.get_model())
+        self.lookup_field = mapper.primary_key[0].name
 
     @property
     def required_project_permission(self):
@@ -58,7 +64,7 @@ class ModelHandler(ModelAPIViewMixin):
         queryset = self.filter_queryset(self.get_queryset())
 
         y_func = self.get_argument('_y_func').lower()
-        y_column = self.get_argument('_y_column', 'id')
+        y_column = self.get_argument('_y_column', self.lookup_field)
 
         model_serializer = self.get_serializer()
 
@@ -83,7 +89,7 @@ class ModelHandler(ModelAPIViewMixin):
         x_column = self.get_argument('_x_column')
         x_lookup_name = self.get_argument('_x_lookup')
         y_func = self.get_argument('_y_func').lower()
-        y_column = self.get_argument('_y_column', 'id')
+        y_column = self.get_argument('_y_column', self.lookup_field)
 
         model_serializer = self.get_serializer()
 

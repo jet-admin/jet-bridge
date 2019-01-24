@@ -20,7 +20,7 @@ class Router(object):
             'detail': False
         },
         {
-            'path': '(?P<id>[^/]+)/',
+            'path': '(?P<pk>[^/]+)/',
             'method_mapping': {
                 'get': 'retrieve',
                 'put': 'update',

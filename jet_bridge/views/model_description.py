@@ -101,7 +101,8 @@ class ModelDescriptionsHandler(APIView):
                 'db_table': name,
                 'fields': list(map(map_column, mapper.columns)),
                 'hidden': name in hidden,
-                'relations': table_relations(mapper) + table_m2m_relations(mapper)
+                'relations': table_relations(mapper) + table_m2m_relations(mapper),
+                'primary_key_field': mapper.primary_key[0].name
             }
 
         return list(map(map_table, MappedBase.classes))
