@@ -21,7 +21,7 @@ class GenericAPIView(APIView):
 
     def get_object(self):
         queryset = self.filter_queryset(self.get_queryset())
-        lookup_url_kwarg = self.lookup_url_kwarg or self.lookup_field
+        lookup_url_kwarg = self.lookup_url_kwarg or 'pk'
 
         assert lookup_url_kwarg in self.path_kwargs
 
