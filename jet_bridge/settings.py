@@ -45,7 +45,7 @@ options.parse_command_line(final=False)
 if options.config:
     try:
         parse_config_file(options, options.config, 'JET', final=False)
-    except FileNotFoundError as e:
+    except IOError as e:
         if options.config != DEFAULT_CONFIG_PATH:
             raise e
 

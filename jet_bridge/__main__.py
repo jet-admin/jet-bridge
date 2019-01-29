@@ -1,5 +1,6 @@
 import os
 from datetime import datetime
+import webbrowser
 
 import tornado.ioloop
 import tornado.web
@@ -69,8 +70,13 @@ def main():
 
     try:
         if not is_token_activated():
+            register_url = '{}register/'.format(url)
             print('[!] Your server token is not activated')
-            print('[!] Go to {}register/ to activate'.format(url))
+
+            if webbrowser.open(register_url):
+                print('[!] Activation page was opened in your browser – {}'.format(register_url))
+            else:
+                print('[!] Go to {} to activate'.format(register_url))
     except RequestException:
         print('[!] Can\'t connect to Jet Admin API')
         print('[!] Token verification failed')
