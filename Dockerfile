@@ -5,7 +5,7 @@ RUN \
  apk add --no-cache --virtual .build-deps gcc musl-dev postgresql-dev
 
 RUN addgroup -S jet && adduser -S -G jet jet
-RUN pip install jet_bridge==0.0.2
+RUN pip install jet_bridge==0.0.9
 RUN pip install psycopg2
 RUN apk --purge del .build-deps
 
