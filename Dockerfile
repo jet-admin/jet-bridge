@@ -1,7 +1,7 @@
 FROM python:3.7.2-alpine
 
 RUN \
- apk add --no-cache postgresql-libs mariadb-dev && \
+ apk add --no-cache postgresql-libs mariadb-dev jpeg-dev zlib-dev && \
  apk add --no-cache --virtual .build-deps gcc musl-dev postgresql-dev
 
 RUN addgroup -S jet && adduser -S -G jet jet
