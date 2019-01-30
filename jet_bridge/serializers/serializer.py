@@ -14,7 +14,7 @@ class Serializer(Field):
         self.data = kwargs.pop('data', None)
         self.meta = getattr(self, 'Meta', None)
         self.update_fields()
-        super().__init__(*args, **kwargs)
+        super(Serializer, self).__init__(*args, **kwargs)
 
     def update_fields(self):
         if not self.meta:

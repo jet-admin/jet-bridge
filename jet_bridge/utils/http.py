@@ -1,4 +1,4 @@
-from urllib import parse
+from six.moves.urllib import parse
 
 
 def replace_query_param(url, key, val):

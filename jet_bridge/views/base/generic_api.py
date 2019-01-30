@@ -89,4 +89,4 @@ class GenericAPIView(APIView):
 
     def write_error(self, status_code, **kwargs):
         self.session.rollback()
-        super().write_error(status_code, **kwargs)
+        super(GenericAPIView, self).write_error(status_code, **kwargs)

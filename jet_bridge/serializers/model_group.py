@@ -13,7 +13,7 @@ class ModelGroupSerializer(Serializer):
         if 'y_func_serializer' in kwargs:
             self.fields['y_func'] = kwargs.pop('y_func_serializer')
 
-        super().__init__(*args, **kwargs)
+        super(ModelGroupSerializer, self).__init__(*args, **kwargs)
 
     class Meta:
         fields = (

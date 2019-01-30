@@ -1,4 +1,4 @@
-from urllib.parse import quote
+from six.moves.urllib_parse import quote
 
 from jet_bridge import settings
 from jet_bridge.utils.backend import register_token

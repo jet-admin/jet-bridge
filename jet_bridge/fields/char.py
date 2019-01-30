@@ -7,7 +7,7 @@ class CharField(Field):
 
     def __init__(self, *args, **kwargs):
         self.trim_whitespace = kwargs.pop('trim_whitespace', True)
-        super().__init__(*args, **kwargs)
+        super(CharField, self).__init__(*args, **kwargs)
 
     def to_internal_value_item(self, value):
         if value is None:
