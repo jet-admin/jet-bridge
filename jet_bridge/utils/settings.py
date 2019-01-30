@@ -1,5 +1,5 @@
 import os
-import configparser
+from six.moves import configparser
 
 from tornado.options import Error
 

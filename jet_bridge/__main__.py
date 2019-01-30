@@ -74,7 +74,7 @@ def main():
             print('[!] Your server token is not activated')
 
             if webbrowser.open(register_url):
-                print('[!] Activation page was opened in your browser – {}'.format(register_url))
+                print('[!] Activation page was opened in your browser - {}'.format(register_url))
             else:
                 print('[!] Go to {} to activate'.format(register_url))
     except RequestException:

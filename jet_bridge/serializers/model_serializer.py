@@ -5,7 +5,7 @@ class ModelSerializer(Serializer):
 
     def __init__(self, *args, **kwargs):
         self.session = kwargs.get('context', {}).get('session', None)
-        super().__init__(*args, **kwargs)
+        super(ModelSerializer, self).__init__(*args, **kwargs)
 
     def create(self, validated_data):
         ModelClass = self.meta.model
