@@ -18,6 +18,7 @@ def get_install_requires():
         'six',
         'requests',
         'Pillow',
+        'dateparser',
     ]
 
     try:
