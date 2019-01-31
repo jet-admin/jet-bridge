@@ -2,7 +2,7 @@ from sqlalchemy import inspect
 
 from jet_bridge.filters import lookups
 from jet_bridge.filters.filter import Filter
-from jet_bridge.filters.filter_for_dbfield import FILTER_FOR_DBFIELD, FILTER_FOR_DBFIELD_DEFAULT
+from jet_bridge.filters.filter_for_dbfield import filter_for_data_type
 
 
 class FilterClass(object):
@@ -28,8 +28,8 @@ class FilterClass(object):
                     columns = filter(lambda x: x.name in self.meta.fields, columns)
 
                 for column in columns:
-                    item = FILTER_FOR_DBFIELD.get(column.type, FILTER_FOR_DBFIELD_DEFAULT)
-                    for lookup in [lookups.EXACT, lookups.ICONTAINS, lookups.IN]:
+                    item = filter_for_data_type(column.type)
+                    for lookup in item['lookups']:
                         instance = item['filter_class'](field_name=column.key, model=Model, lookup=lookup)
                         filters.append(instance)
 

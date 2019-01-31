@@ -1,11 +1,57 @@
-import sqlalchemy
+from sqlalchemy.sql import sqltypes
 
+from jet_bridge.filters import lookups
+from jet_bridge.filters.boolean_filter import BooleanFilter
 from jet_bridge.filters.char_filter import CharFilter
+from jet_bridge.filters.datetime_filter import DateTimeFilter
+from jet_bridge.filters.integer_filter import IntegerFilter
 
+number_lookups = [
+    lookups.EXACT,
+    lookups.GT,
+    lookups.GTE,
+    lookups.LT,
+    lookups.LTE,
+    lookups.ICONTAINS,
+    lookups.IN,
+    lookups.IS_NULL,
+]
+
+datetime_lookups = [
+    lookups.EXACT,
+    lookups.GT,
+    lookups.GTE,
+    lookups.LT,
+    lookups.LTE,
+    lookups.ICONTAINS,
+    lookups.IN,
+    lookups.IS_NULL,
+]
+
+text_lookups = [
+    lookups.EXACT,
+    lookups.ICONTAINS,
+    lookups.IN,
+    lookups.STARTS_WITH,
+    lookups.ENDS_WITH,
+    lookups.IS_NULL,
+]
+
+boolean_lookups = [
+    lookups.EXACT,
+    lookups.IN,
+    lookups.IS_NULL,
+]
 
 FILTER_FOR_DBFIELD = {
-    # sqlalchemy.AutoField:                   {'filter_class': NumberFilter},
-    sqlalchemy.VARCHAR: {'filter_class': CharFilter},
+    sqltypes.VARCHAR: {'filter_class': CharFilter, 'lookups': text_lookups},
+    sqltypes.TEXT: {'filter_class': CharFilter, 'lookups': text_lookups},
+    sqltypes.BOOLEAN: {'filter_class': BooleanFilter, 'lookups': boolean_lookups},
+    sqltypes.INTEGER: {'filter_class': IntegerFilter, 'lookups': number_lookups},
+    sqltypes.SMALLINT: {'filter_class': IntegerFilter, 'lookups': number_lookups},
+    sqltypes.NUMERIC: {'filter_class': IntegerFilter, 'lookups': number_lookups},
+    sqltypes.DATETIME: {'filter_class': DateTimeFilter, 'lookups': datetime_lookups},
+    sqltypes.TIMESTAMP: {'filter_class': DateTimeFilter, 'lookups': datetime_lookups},
     # sqlalchemy.TextField:                   {'filter_class': CharFilter},
     # sqlalchemy.BOOLEAN:                {'filter_class': BooleanFilter},
     # sqlalchemy.DateField:                   {'filter_class': DateFilter},
@@ -27,4 +73,10 @@ FILTER_FOR_DBFIELD = {
     # sqlalchemy.CommaSeparatedIntegerField:  {'filter_class': CharFilter},
     # sqlalchemy.UUIDField:                   {'filter_class': UUIDFilter}
 }
-FILTER_FOR_DBFIELD_DEFAULT = {'filter_class': CharFilter}
+FILTER_FOR_DBFIELD_DEFAULT = FILTER_FOR_DBFIELD[sqltypes.VARCHAR]
+
+def filter_for_data_type(value):
+    for date_type, filter_data in FILTER_FOR_DBFIELD.items():
+        if isinstance(value, date_type):
+            return filter_data
+    return FILTER_FOR_DBFIELD_DEFAULT

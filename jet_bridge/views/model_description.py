@@ -22,7 +22,7 @@ class ModelDescriptionsHandler(APIView):
 
         def map_column(column):
             params = {}
-            data_type = map_data_type(str(column.type))
+            data_type = map_data_type(column.type)
 
             if len(column.foreign_keys):
                 foreign_key = next(iter(column.foreign_keys))
