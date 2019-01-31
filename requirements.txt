@@ -1,5 +1,6 @@
-tornado==5.1.1
-sqlalchemy==1.2.15
-six==1.12.0
-requests==2.21.0
-Pillow==5.4.1
+tornado
+sqlalchemy
+six
+requests
+Pillow
+dateparser
