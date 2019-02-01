@@ -1,5 +1,6 @@
 from datetime import datetime
 
+import logging
 import requests
 
 from jet_bridge import settings
@@ -27,7 +28,7 @@ def register_token():
     success = 200 <= r.status_code < 300
 
     if not success:
-        print('Register Token request error', r.status_code, r.reason)
+        logging.error('Register Token request error', r.status_code, r.reason)
         return None, False
 
     result = r.json()
@@ -99,7 +100,7 @@ def project_auth(token, permission=None):
     success = 200 <= r.status_code < 300
 
     if not success:
-        print('Project Auth request error', r.status_code, r.reason)
+        logging.error('Project Auth request error', r.status_code, r.reason)
         return {
             'result': False
         }

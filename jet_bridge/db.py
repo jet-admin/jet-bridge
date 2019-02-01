@@ -1,3 +1,4 @@
+import logging
 from sqlalchemy import create_engine, MetaData
 from sqlalchemy.ext.automap import automap_base
 from sqlalchemy.orm import sessionmaker
@@ -39,7 +40,7 @@ engine_url = build_engine_url()
 engine = create_engine(engine_url)
 Session = sessionmaker(bind=engine)
 
-print('Connected to database engine "{}" with name "{}"'.format(settings.DATABASE_ENGINE, settings.DATABASE_NAME))
+logging.info('Connected to database engine "{}" with name "{}"'.format(settings.DATABASE_ENGINE, settings.DATABASE_NAME))
 
 Base.metadata.create_all(engine)
 
