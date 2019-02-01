@@ -2,6 +2,7 @@ import os
 from datetime import datetime
 import webbrowser
 
+import logging
 import tornado.ioloop
 import tornado.web
 from requests import RequestException
@@ -21,6 +22,8 @@ from jet_bridge.views.model_description import ModelDescriptionsHandler
 from jet_bridge.views.not_found import NotFoundHandler
 from jet_bridge.views.register import RegisterHandler
 from jet_bridge.views.sql import SqlHandler
+
+logging.getLogger().setLevel(logging.INFO)
 
 
 def make_app():
@@ -59,27 +62,27 @@ def main():
     address = 'localhost' if settings.ADDRESS == '0.0.0.0' else settings.ADDRESS
     url = 'http://{}:{}/'.format(address, settings.PORT)
 
-    print(datetime.now().strftime('%B %d, %Y - %H:%M:%S %Z'))
-    print('Jet Bridge version {}'.format(VERSION))
-    print('Starting server at {}'.format(url))
+    logging.info(datetime.now().strftime('%B %d, %Y - %H:%M:%S %Z'))
+    logging.info('Jet Bridge version {}'.format(VERSION))
+    logging.info('Starting server at {}'.format(url))
 
     if settings.DEBUG:
-        print('Server is running in DEBUG mode')
+        logging.warning('Server is running in DEBUG mode')
 
-    print('Quit the server with CONTROL-C')
+    logging.info('Quit the server with CONTROL-C')
 
     try:
         if not is_token_activated():
             register_url = '{}register/'.format(url)
-            print('[!] Your server token is not activated')
+            logging.warning('[!] Your server token is not activated')
 
             if webbrowser.open(register_url):
-                print('[!] Activation page was opened in your browser - {}'.format(register_url))
+                logging.warning('[!] Activation page was opened in your browser - {}'.format(register_url))
             else:
-                print('[!] Go to {} to activate'.format(register_url))
+                logging.warning('[!] Go to {} to activate'.format(register_url))
     except RequestException:
-        print('[!] Can\'t connect to Jet Admin API')
-        print('[!] Token verification failed')
+        logging.error('[!] Can\'t connect to Jet Admin API')
+        logging.error('[!] Token verification failed')
 
     tornado.ioloop.IOLoop.current().start()
 
