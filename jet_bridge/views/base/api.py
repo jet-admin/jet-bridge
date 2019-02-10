@@ -22,6 +22,10 @@ class APIView(tornado.web.RequestHandler):
             return self.request.body_arguments
 
     def prepare(self):
+        method_override = self.request.headers.get('X-Http-Method-Override')
+        if method_override is not None:
+            self.request.method = method_override
+
         if self.request.method != 'OPTIONS':
             self.check_permissions()
 
@@ -34,7 +38,7 @@ class APIView(tornado.web.RequestHandler):
 
         self.set_header(ACCESS_CONTROL_ALLOW_ORIGIN, '*')
         self.set_header(ACCESS_CONTROL_ALLOW_METHODS, 'GET, POST, PUT, PATCH, DELETE, OPTIONS')
-        self.set_header(ACCESS_CONTROL_ALLOW_HEADERS, 'Authorization,DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,X-Application-Warning')
+        self.set_header(ACCESS_CONTROL_ALLOW_HEADERS, 'Authorization,DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,X-Application-Warning,X-HTTP-Method-Override')
         self.set_header(ACCESS_CONTROL_EXPOSE_HEADERS, 'Content-Length,Content-Range,X-Application-Warning')
         self.set_header(ACCESS_CONTROL_ALLOW_CREDENTIALS, 'true')
 
