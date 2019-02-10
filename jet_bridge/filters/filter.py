@@ -19,11 +19,13 @@ class Filter(object):
         lookups.IS_NULL: {'operator': lambda x: ('__eq__', None) if x else ('isnot', None), 'field_class': BooleanField}
     }
 
-    def __init__(self, field_name=None, model=None, lookup=lookups.DEFAULT_LOOKUP):
+    def __init__(self, field_name=None, model=None, lookup=lookups.DEFAULT_LOOKUP, request=None, handler=None):
         self.field_name = field_name
         self.name = field_name
         self.model = model
         self.lookup = lookup
+        self.request = request
+        self.handler = handler
 
     def clean_value(self, value):
         return value

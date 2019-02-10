@@ -30,13 +30,21 @@ class FilterClass(object):
                 for column in columns:
                     item = filter_for_data_type(column.type)
                     for lookup in item['lookups']:
-                        instance = item['filter_class'](field_name=column.key, model=Model, lookup=lookup)
+                        instance = item['filter_class'](
+                            field_name=column.key,
+                            model=Model,
+                            lookup=lookup,
+                            request=self.request,
+                            handler=self.handler
+                        )
                         filters.append(instance)
 
         declared_filters = filter(lambda x: isinstance(x[1], Filter), map(lambda x: (x, getattr(self, x)), dir(self)))
 
         for filter_name, filter_item in declared_filters:
             filter_item.name = filter_name
+            filter_item.request = self.request
+            filter_item.handler = self.handler
             filters.append(filter_item)
 
         self.filters = filters

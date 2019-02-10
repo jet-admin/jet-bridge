@@ -17,6 +17,7 @@ class ModelHandler(ModelAPIViewMixin):
     permission_classes = (HasProjectPermissions, ModifyNotInDemo)
 
     def prepare(self):
+        super(ModelHandler, self).prepare()
         mapper = inspect(self.get_model())
         self.lookup_field = mapper.primary_key[0].name
 
