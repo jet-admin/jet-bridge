@@ -43,6 +43,11 @@ boolean_lookups = [
     lookups.IS_NULL,
 ]
 
+json_lookups = [
+    lookups.JSON_ICONTAINS,
+    lookups.IS_NULL,
+]
+
 FILTER_FOR_DBFIELD = {
     sqltypes.VARCHAR: {'filter_class': CharFilter, 'lookups': text_lookups},
     sqltypes.TEXT: {'filter_class': CharFilter, 'lookups': text_lookups},
@@ -52,6 +57,7 @@ FILTER_FOR_DBFIELD = {
     sqltypes.NUMERIC: {'filter_class': IntegerFilter, 'lookups': number_lookups},
     sqltypes.DATETIME: {'filter_class': DateTimeFilter, 'lookups': datetime_lookups},
     sqltypes.TIMESTAMP: {'filter_class': DateTimeFilter, 'lookups': datetime_lookups},
+    sqltypes.JSON: {'filter_class': CharFilter, 'lookups': json_lookups},
     # sqlalchemy.TextField:                   {'filter_class': CharFilter},
     # sqlalchemy.BOOLEAN:                {'filter_class': BooleanFilter},
     # sqlalchemy.DateField:                   {'filter_class': DateFilter},
@@ -74,6 +80,7 @@ FILTER_FOR_DBFIELD = {
     # sqlalchemy.UUIDField:                   {'filter_class': UUIDFilter}
 }
 FILTER_FOR_DBFIELD_DEFAULT = FILTER_FOR_DBFIELD[sqltypes.VARCHAR]
+
 
 def filter_for_data_type(value):
     for date_type, filter_data in FILTER_FOR_DBFIELD.items():

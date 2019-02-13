@@ -1,7 +1,20 @@
+from sqlalchemy import Unicode
+from sqlalchemy.dialects.postgresql import JSONB
+
 from jet_bridge.fields import field, CharField, BooleanField
 from jet_bridge.filters import lookups
 
 EMPTY_VALUES = ([], (), {}, '', None)
+
+
+def json_icontains(qs, model, field_name, value):
+    model_field = getattr(model, field_name)
+    field_type = model_field.property.columns[0].type
+
+    if isinstance(field_type, JSONB):
+        return qs.filter(model_field.cast(Unicode).ilike('%{}%'.format(value)))
+    else:
+        return qs.filter(model_field.astext.ilike('%{}%'.format(value)))
 
 
 class Filter(object):
@@ -16,7 +29,8 @@ class Filter(object):
         lookups.IN: {'operator': 'in_', 'field_class': CharField, 'field_kwargs': {'many': True}, 'pre_process': lambda x: x.split(',')},
         lookups.STARTS_WITH: {'operator': 'ilike', 'post_process': lambda x: '{}%'.format(x)},
         lookups.ENDS_WITH: {'operator': 'ilike', 'post_process': lambda x: '%{}'.format(x)},
-        lookups.IS_NULL: {'operator': lambda x: ('__eq__', None) if x else ('isnot', None), 'field_class': BooleanField}
+        lookups.IS_NULL: {'operator': lambda x: ('__eq__', None) if x else ('isnot', None), 'field_class': BooleanField},
+        lookups.JSON_ICONTAINS: {'operator': False, 'func': json_icontains}
     }
 
     def __init__(self, field_name=None, model=None, lookup=lookups.DEFAULT_LOOKUP, request=None, handler=None):
@@ -38,6 +52,7 @@ class Filter(object):
         post_process = lookup_operator.get('post_process')
         field_class = lookup_operator.get('field_class')
         field_kwargs = lookup_operator.get('field_kwargs', {})
+        func = lookup_operator.get('func')
 
         if pre_process:
             value = pre_process(value)
@@ -48,7 +63,9 @@ class Filter(object):
         if post_process:
             value = post_process(value)
 
-        if callable(operator):
+        if func:
+            return func(qs, self.model, self.field_name, value)
+        elif callable(operator):
             op = operator(value)
             return qs.filter(getattr(model_field, op[0])(op[1]))
         else:

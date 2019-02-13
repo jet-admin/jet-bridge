@@ -11,6 +11,7 @@ map_data_types = [
     {'query': sqltypes.NUMERIC, 'date_type': data_types.FLOAT},
     {'query': sqltypes.DATETIME, 'date_type': data_types.DATE_TIME},
     {'query': sqltypes.TIMESTAMP, 'date_type': data_types.DATE_TIME},
+    {'query': sqltypes.JSON, 'date_type': data_types.JSON},
 ]
 default_data_type = data_types.TEXT
 
