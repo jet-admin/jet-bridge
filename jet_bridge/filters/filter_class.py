@@ -43,6 +43,7 @@ class FilterClass(object):
 
         for filter_name, filter_item in declared_filters:
             filter_item.name = filter_name
+            filter_item.model = Model
             filter_item.request = self.request
             filter_item.handler = self.handler
             filters.append(filter_item)

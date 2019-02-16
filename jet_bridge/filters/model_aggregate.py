@@ -10,8 +10,7 @@ class ModelAggregateFilter(CharFilter):
         if value in EMPTY_VALUES:
             return qs
 
-        entity = qs._primary_entity.entity_zero_or_selectable.entity
-        y_column = getattr(entity, value['y_column'])
+        y_column = getattr(self.model, value['y_column'])
 
         if value['y_func'] == 'count':
             y_func = func.count(y_column)
