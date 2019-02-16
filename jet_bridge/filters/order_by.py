@@ -13,15 +13,19 @@ class OrderFilter(CharFilter):
         if len(value) < 2:
             return qs.filter(sql.false())
 
-        descending = value[0:1] == '-'
-        value = value[1:] if descending else value
-        entity = qs._primary_entity.entity_zero_or_selectable.entity
-        column = getattr(entity, value, None)
+        ordering = value.split(',')
 
-        if column is None:
-            return qs.filter(sql.false())
+        def map_field(name):
+            descending = False
+            if name.startswith('-'):
+                name = name[1:]
+                descending = True
+            field = getattr(self.model, name)
+            if descending:
+                field = desc(field)
+            return field
 
-        if descending:
-            column = desc(column)
+        if len(ordering):
+            qs = qs.order_by(*map(lambda x: map_field(x), ordering))
 
-        return qs.order_by(column)
+        return qs
