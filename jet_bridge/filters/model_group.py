@@ -26,8 +26,11 @@ class ModelGroupFilter(CharFilter):
         else:
             return qs.filter(sql.false())
 
-        x_lookup = getattr(func, value['x_lookup'])
-        x_func = x_lookup(x_column)
+        if value['x_lookup']:
+            x_lookup = getattr(func, value['x_lookup'])
+            x_func = x_lookup(x_column)
+        else:
+            x_func = x_column
 
         qs = qs.session.query(x_func.label('group'), y_func.label('y_func')).group_by('group').order_by('group').all()
 

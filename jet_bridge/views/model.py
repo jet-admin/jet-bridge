@@ -88,7 +88,7 @@ class ModelHandler(ModelAPIViewMixin):
         queryset = self.filter_queryset(self.get_queryset())
 
         x_column = self.get_argument('_x_column')
-        x_lookup_name = self.get_argument('_x_lookup')
+        x_lookup_name = self.get_argument('_x_lookup', None)
         y_func = self.get_argument('_y_func').lower()
         y_column = self.get_argument('_y_column', self.lookup_field)
 
