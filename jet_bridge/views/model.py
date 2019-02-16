@@ -8,6 +8,8 @@ from jet_bridge.responses.base import Response
 from jet_bridge.router import action
 from jet_bridge.serializers.model import get_model_serializer
 from jet_bridge.serializers.model_group import ModelGroupSerializer
+from jet_bridge.serializers.reorder import get_reorder_serializer
+from jet_bridge.serializers.reset_order import get_reset_order_serializer
 from jet_bridge.views.mixins.model import ModelAPIViewMixin
 from jet_bridge.db import MappedBase
 
@@ -113,5 +115,27 @@ class ModelHandler(ModelAPIViewMixin):
             # group_serializer=x_serializer,
             # y_func_serializer=y_serializer
         )
+
+        self.write_response(Response(serializer.representation_data))
+
+    @action(methods=['post'], detail=False)
+    def reorder(self, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset())
+        ReorderSerializer = get_reorder_serializer(self.get_model(), queryset, self.session)
+
+        serializer = ReorderSerializer(data=self.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+
+        self.write_response(Response(serializer.representation_data))
+
+    @action(methods=['post'], detail=False)
+    def reset_order(self, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset())
+        ResetOrderSerializer = get_reset_order_serializer(self.get_model(), queryset, self.session)
+
+        serializer = ResetOrderSerializer(data=self.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
 
         self.write_response(Response(serializer.representation_data))
