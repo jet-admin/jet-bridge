@@ -2,6 +2,7 @@ from collections import OrderedDict, Mapping, Iterable
 
 from jet_bridge.exceptions.validation_error import ValidationError
 from jet_bridge.fields.field import Field
+from jet_bridge.filters.filter import EMPTY_VALUES
 
 
 class Serializer(Field):
@@ -13,6 +14,7 @@ class Serializer(Field):
         self.instance = kwargs.pop('instance', None)
         self.data = kwargs.pop('data', None)
         self.meta = getattr(self, 'Meta', None)
+        self.partial = kwargs.pop('partial', False)
         super(Serializer, self).__init__(*args, **kwargs)
         self.update_fields()
 
@@ -79,6 +81,10 @@ class Serializer(Field):
 
         for field in self.writable_fields:
             field_value = field.get_value(value)
+
+            if field.field_name not in self.data.keys() and self.partial:
+                continue
+
             validate_method = getattr(self, 'validate_' + field.field_name, None)
 
             try:
@@ -106,7 +112,6 @@ class Serializer(Field):
             result[field.field_name] = field.to_representation(field_value)
 
         return result
-
 
     @property
     def representation_data(self):
