@@ -8,6 +8,8 @@ from jet_bridge.responses.base import Response
 from jet_bridge.router import action
 from jet_bridge.serializers.model import get_model_serializer
 from jet_bridge.serializers.model_group import ModelGroupSerializer
+from jet_bridge.serializers.reorder import get_reorder_serializer
+from jet_bridge.serializers.reset_order import get_reset_order_serializer
 from jet_bridge.views.mixins.model import ModelAPIViewMixin
 from jet_bridge.db import MappedBase
 
@@ -72,7 +74,9 @@ class ModelHandler(ModelAPIViewMixin):
         y_serializers = list(filter(lambda x: x.field_name == y_column, model_serializer.fields))
         y_serializer = y_serializers[0]
 
-        queryset = ModelAggregateFilter().filter(queryset, {
+        filter_instance = ModelAggregateFilter()
+        filter_instance.model = self.model
+        queryset = filter_instance.filter(queryset, {
             'y_func': y_func,
             'y_column': y_column
         })
@@ -88,7 +92,7 @@ class ModelHandler(ModelAPIViewMixin):
         queryset = self.filter_queryset(self.get_queryset())
 
         x_column = self.get_argument('_x_column')
-        x_lookup_name = self.get_argument('_x_lookup')
+        x_lookup_name = self.get_argument('_x_lookup', None)
         y_func = self.get_argument('_y_func').lower()
         y_column = self.get_argument('_y_column', self.lookup_field)
 
@@ -100,7 +104,9 @@ class ModelHandler(ModelAPIViewMixin):
         y_serializers = list(filter(lambda x: x.field_name == y_column, model_serializer.fields))
         y_serializer = y_serializers[0]
 
-        queryset = ModelGroupFilter().filter(queryset, {
+        filter_instance = ModelGroupFilter()
+        filter_instance.model = self.model
+        queryset = filter_instance.filter(queryset, {
             'x_column': x_column,
             'x_lookup': x_lookup_name,
             'y_func': y_func,
@@ -113,5 +119,27 @@ class ModelHandler(ModelAPIViewMixin):
             # group_serializer=x_serializer,
             # y_func_serializer=y_serializer
         )
+
+        self.write_response(Response(serializer.representation_data))
+
+    @action(methods=['post'], detail=False)
+    def reorder(self, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset())
+        ReorderSerializer = get_reorder_serializer(self.get_model(), queryset, self.session)
+
+        serializer = ReorderSerializer(data=self.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+
+        self.write_response(Response(serializer.representation_data))
+
+    @action(methods=['post'], detail=False)
+    def reset_order(self, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset())
+        ResetOrderSerializer = get_reset_order_serializer(self.get_model(), queryset, self.session)
+
+        serializer = ResetOrderSerializer(data=self.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
 
         self.write_response(Response(serializer.representation_data))

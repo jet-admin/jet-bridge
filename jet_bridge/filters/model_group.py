@@ -10,9 +10,8 @@ class ModelGroupFilter(CharFilter):
         if value in EMPTY_VALUES:
             return qs
 
-        entity = qs._primary_entity.entity_zero_or_selectable.entity
-        x_column = getattr(entity, value['x_column'])
-        y_column = getattr(entity, value['y_column'])
+        x_column = getattr(self.model, value['x_column'])
+        y_column = getattr(self.model, value['y_column'])
 
         if value['y_func'] == 'count':
             y_func = func.count(y_column)
@@ -27,8 +26,11 @@ class ModelGroupFilter(CharFilter):
         else:
             return qs.filter(sql.false())
 
-        x_lookup = getattr(func, value['x_lookup'])
-        x_func = x_lookup(x_column)
+        if value['x_lookup']:
+            x_lookup = getattr(func, value['x_lookup'])
+            x_func = x_lookup(x_column)
+        else:
+            x_func = x_column
 
         qs = qs.session.query(x_func.label('group'), y_func.label('y_func')).group_by('group').order_by('group').all()
 
