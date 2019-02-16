@@ -74,7 +74,9 @@ class ModelHandler(ModelAPIViewMixin):
         y_serializers = list(filter(lambda x: x.field_name == y_column, model_serializer.fields))
         y_serializer = y_serializers[0]
 
-        queryset = ModelAggregateFilter().filter(queryset, {
+        filter_instance = ModelAggregateFilter()
+        filter_instance.model = self.model
+        queryset = filter_instance.filter(queryset, {
             'y_func': y_func,
             'y_column': y_column
         })
@@ -102,7 +104,9 @@ class ModelHandler(ModelAPIViewMixin):
         y_serializers = list(filter(lambda x: x.field_name == y_column, model_serializer.fields))
         y_serializer = y_serializers[0]
 
-        queryset = ModelGroupFilter().filter(queryset, {
+        filter_instance = ModelGroupFilter()
+        filter_instance.model = self.model
+        queryset = filter_instance.filter(queryset, {
             'x_column': x_column,
             'x_lookup': x_lookup_name,
             'y_func': y_func,
