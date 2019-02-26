@@ -24,8 +24,8 @@ This project has been designed to fit requirements of small startups and mature 
 
 This is a complete remake of our popular [Django Jet](https://github.com/geex-arts/django-jet) admin interface.
 
-Features
-========
+Built-in Features
+=================
 
 - **CRUD (create, read, update, delete)**
 
@@ -44,18 +44,18 @@ Features
   Segments allow you to save applied set of filters as a Segment or create it from SQL query for quick use in future. 
   
   <img width="300px" src="https://raw.githubusercontent.com/jet-admin/jet-bridge/dev/static/segment.png" alt="Segments">
+
+- **WYSIWYG Interface Customization**
+
+  You can customize almost every part of interface visually – navigation menu, collection list views, record create/update forms.
   
+  <img width="300px" src="https://raw.githubusercontent.com/jet-admin/jet-bridge/dev/static/customize.png" alt="WYSIWYG Interface Customization">
+
 - **List View layout**
 
   A number of out-of-the-box list layouts except default Table View like Kanban Board and Map with markers.
   
   <img width="300px" src="https://raw.githubusercontent.com/jet-admin/jet-bridge/dev/static/kanban.png" alt="List View layout">
-  
-- **Export**
-
-  You can export all collection data or part of it into the most common formats like CSV or Excel.
-  
-  <img width="300px" src="https://raw.githubusercontent.com/jet-admin/jet-bridge/dev/static/export.png" alt="Export">
 
 - **Dashboards**
 
@@ -68,16 +68,21 @@ Features
   Invite users to collaborate on a project and assign access rights based on their team.
   
   <img width="300px" src="https://raw.githubusercontent.com/jet-admin/jet-bridge/dev/static/users.png" alt="Teams and Permissions">
+  
+- **Export**
+
+  You can export all collection data or part of it into the most common formats like CSV or Excel.
+  
+  <img width="300px" src="https://raw.githubusercontent.com/jet-admin/jet-bridge/dev/static/export.png" alt="Export">
 
 - **Responsive Layout**
 
   The interface is optimized for any device from phones to tablets to desktops.
   
-- **WYSIWYG Interface Customization**
+Extendability
+=============
 
-  You can customize almost every part of interface visually – navigation menu, collection list views, record create/update forms.
-  
-  <img width="300px" src="https://raw.githubusercontent.com/jet-admin/jet-bridge/dev/static/customize.png" alt="WYSIWYG Interface Customization">
+While we are trying to include most of important features out of the box sometimes its not enough. For any specific cases we offer Flex features to implement functionality not available with standard features:
 
 - **Custom Views**
   
