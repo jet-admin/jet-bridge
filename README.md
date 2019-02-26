@@ -35,6 +35,10 @@ Features
 
   Segments allow you to save applied set of filters as a Segment or create it from SQL query for quick use in future. 
   
+- **List View layout**
+
+  A number of out-of-the-box list layouts except default Table View like Kanban Board and Map with markers.
+  
 - **Export**
 
   You can export all collection data or part of it into the most common formats like CSV or Excel.
