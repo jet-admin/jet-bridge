@@ -1,4 +1,6 @@
-# [Jet Bridge – Universal admin panel for your application](https://app.jetadmin.io/demo) &nbsp; [![Tweet](https://img.shields.io/twitter/url/http/shields.io.svg?style=social)](https://twitter.com/intent/tweet?text=Language%20agnostic%20Bridge%20for%20Jet%20%E2%80%93%20Back%20office%20totally%20ready%20to%20run%20your%20service&url=https://github.com/jet-admin/jet-bridge/&via=Jet_Admin&hashtags=admin,interface,backoffice,developers,jetadmin)
+# [Jet Bridge](https://app.jetadmin.io/demo) &nbsp; [![Tweet](https://img.shields.io/twitter/url/http/shields.io.svg?style=social)](https://twitter.com/intent/tweet?text=Language%20agnostic%20Bridge%20for%20Jet%20%E2%80%93%20Back%20office%20totally%20ready%20to%20run%20your%20service&url=https://github.com/jet-admin/jet-bridge/&via=Jet_Admin&hashtags=admin,interface,backoffice,developers,jetadmin)
+
+for Jet Admin – Universal admin panel for your application
 
 ![Preview](https://raw.githubusercontent.com/jet-admin/jet-bridge/master/static/overview.gif)
 
@@ -10,14 +12,15 @@ Description
 * Documentation: https://docs.jetadmin.io/
 * Support: support@jetadmin.io
 
-**Jet Admin** is a SaaS service that automatically generates extendable back office for your application. To communicate with your database it uses **Jet Bridge** standalone application which generates REST API. This project has been designed to fit requirements of small startups and mature companies.
-
-This is a complete remake of our popular [Django Jet](https://github.com/geex-arts/django-jet) admin interface.
+**Jet Admin** is a SaaS service that automatically generates extendable back office for your application. **Jet Bridge** is a standalone application which generates REST API thought which your SQL database is connected to **Jet Admin**. This project has been designed to fit requirements of small startups and mature companies.
 
 - **Secure**. Jet does not access your data: its transferred directly from browser to your application.
-- **Customizable**. With WYSIWYG interface customization and Flex Features you can solve your specific business tasks when standard functionality is not enough.
+- **Customizable**. With WYSIWYG interface customization your can change almost every part of interface.
+- **Extendable**. Flex Features allows you to create your custom Actions, Views, Fields and other.
 - **Works with any technology**. The interface is generated automatically based on an analysis of the data and data structure of your applications.
 - **Quick installation**. All you need is to install Jet Bridge and connect it to your database.
+
+This is a complete remake of our popular [Django Jet](https://github.com/geex-arts/django-jet) admin interface.
 
 Features
 ========
