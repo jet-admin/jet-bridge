@@ -23,21 +23,6 @@ Description
 
 This is a complete remake of popular [Django Jet](https://github.com/geex-arts/django-jet) admin interface.
 
-Features
-========
-
-- **CRUD (create, read, update, delete):**
-
-  Create, view, update and delete data. Display it in an easy format, and then search and filter your data.
-
-- **Dashboard:**
-
-  Create reports and visualize KPIs. Monitor new data like new orders, comments, etc.
-
-- **Works with any technology:**
-
-  The interface is generated automatically based on an analysis of the data and data structure of your applications.
-
 - **Visual editor:**
 
   Customize the admin area to make it easy for any manager to use. Allow managers to modify the interface, configure features, and set up analytics widgets without using any developers — just like WIX, Squarespace….
@@ -45,10 +30,10 @@ Features
 - **Secure:**
 
   Your data is safe. We do not have access to your information. We simply plug your information in to an easy-to-use interface for you to interact with it better.
+  
+  - **Works with any technology:**
 
-- **Works on any device:**
-
-  The interface is optimized for any device from phones to tablets to desktops.
+  The interface is generated automatically based on an analysis of the data and data structure of your applications.
 
 - **Quick installation:**
 
@@ -58,13 +43,75 @@ Features
 
   Use it around the clock and don’t worry about updates — we take care of that.
 
-- **Manage users:**
+Features
+========
 
-  Assign access rights to any data from within the panel.
+- **CRUD (create, read, update, delete):**
 
-- **Activity log:**
+  All common operations to view, create, update or delete data. 
 
-  Track the history of all changes and know who made them.
+- **Search and Filter:**
+
+  Filter data easily by any field with most common lookups and search them by text occurrence. For some specific cases you can create SQL Segment to filter with.
+  
+- **Segments:**
+
+  Segments allow you to save applied set of filters as a Segment or create it from SQL query for quick use in future. 
+  
+- **Export:**
+
+  You can export all collection data or part of it into the most common formats like CSV or Excel.
+
+- **Dashboards:**
+
+  Create different types of charts, tables and other widgets to visualize your KPIs or monitor data without programming – inside your visual interface. Complex data queries can be created with SQL.
+
+- **Teams and Permissions:**
+
+  Invite users to collaborate on a project and assign access rights based on their team.
+
+- **Responsive Layout:**
+
+  The interface is optimized for any device from phones to tablets to desktops.
+  
+- **WYSIWYG Interface Customization**
+
+  You can customize almost every part of interface visually – navigation menu, collection list views, record create/update forms.
+
+- **Custom Views**
+  
+  For very specific pages you can create your own custom FlexView based on React, Angular or any other framework and integrate it in Jet Admin interface. Writing your own custom JS/CSS/HTML has no limits in implementing any page you need.
+
+- **Custom Actions**
+
+  If need to run some operations on records or any other business logic inside your Backend you can create FlexActions and run them directly from Jet Admin interface. Passing some additional parameters to your Backend is supported.
+
+- **Custom Fields**
+
+  Sometimes using existing fields is not enough and you need to create custom which can be a combination of multiple fields, use fields from related collections and be result of some calculation. In this case you can use FlexField and write your custom JavaScript function which can format fields data any way you want.
+
+How It Works
+============
+
+Integrating Jet Admin with your project requires installing only one component - Jet Bridge.
+
+![Jet Admin architecture](https://blobscdn.gitbook.com/v0/b/gitbook-28427.appspot.com/o/assets%2F-LQ08RFAKZvFADEiXKFy%2F-LWGeA3oSBVFoNy8gVVi%2F-LWGozY2Zrbc4W3JmrIg%2Fimage.png?alt=media&token=d09de1b5-b56f-4d0e-aece-8c578752bac8)
+
+**Your app**
+
+Any of your applications which works with database. Jet Admin does not interact with it.
+
+**Database**
+
+Your database Jet has no access to.
+
+**Jet Bridge**
+
+An open source application installed on your server's side and connected to your database. Used for automatically API generation based on your data structure. It is needed for Jet Admin to operate with your data. 
+
+**Jet Interface**
+
+Web application accessible from any browser. Maintaining and updating this web application is on Jet Admin team side. Your data is transmitted directly from Jet Bridge to Jet Interface which works in your browser and remain invisible for the Jet service.
 
 Requirements
 ============
