@@ -49,7 +49,7 @@ Built-in Features
 
   You can customize almost every part of interface visually – navigation menu, collection list views, record create/update forms.
   
-  <img width="300px" src="https://raw.githubusercontent.com/jet-admin/jet-bridge/dev/static/customize.jpeg" alt="WYSIWYG Interface Customization">
+  <img width="300px" src="https://raw.githubusercontent.com/jet-admin/jet-bridge/dev/static/customize.jpg" alt="WYSIWYG Interface Customization">
 
 - **List View layout**
 
