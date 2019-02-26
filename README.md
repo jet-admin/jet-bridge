@@ -31,7 +31,7 @@ Built-in Features
 
   All common operations to view, create, update or delete data. 
   
-  <img width="300px" src="https://raw.githubusercontent.com/jet-admin/jet-bridge/dev/static/customize.jpeg" alt="CRUD (create, read, update, delete)">
+  <img width="300px" src="https://raw.githubusercontent.com/jet-admin/jet-bridge/dev/static/list.jpeg" alt="CRUD (create, read, update, delete)">
 
 - **Search and Filter**
 
