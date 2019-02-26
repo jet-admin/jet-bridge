@@ -24,8 +24,8 @@ This project has been designed to fit requirements of small startups and mature 
 
 This is a complete remake of our popular [Django Jet](https://github.com/geex-arts/django-jet) admin interface.
 
-Built-in Features
-=================
+Features
+========
 
 - **CRUD (create, read, update, delete)**
 
