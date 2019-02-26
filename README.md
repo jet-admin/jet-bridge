@@ -94,25 +94,25 @@ Features
 How It Works
 ============
 
-Integrating Jet Admin with your project requires installing only one component - Jet Bridge. Here how it should look like after installation.
+**Jet Admin** is a SaaS frontend application that works in your browser. It connects to your project SQL database through open source **Jet Bridge** backend application which you install on your side. So Integrating **Jet Admin** with your project requires installing only one component - Jet Bridge. Here how it should look like after installation:
 
-![Jet Admin architecture](https://blobscdn.gitbook.com/v0/b/gitbook-28427.appspot.com/o/assets%2F-LQ08RFAKZvFADEiXKFy%2F-LWGeA3oSBVFoNy8gVVi%2F-LWGozY2Zrbc4W3JmrIg%2Fimage.png?alt=media&token=d09de1b5-b56f-4d0e-aece-8c578752bac8)
+![Jet Admin architecture](https://static.tildacdn.com/tild6231-6534-4665-b036-396339366266/Artboard.png)
 
-**Your app**
+**Your App**
 
-Any of your applications which works with database. Jet Admin does not interact with it.
+Any of your applications which works with your **Database**. **Jet Admin** does not interact with it directly.
 
 **Database**
 
-Your database Jet has no access to.
+Your database **Jet Admin** has no direct access to.
 
 **Jet Bridge**
 
-An open source application installed on your server's side and connected to your database. Used for automatically API generation based on your data structure. It is needed for Jet Admin to operate with your data. 
+An open source application installed on your server's side and connected to your database. It automatically generates REST API based on your database structure. **Jet Admin** works with database throught this application.
 
 **Jet Interface**
 
-Web application accessible from any browser. Maintaining and updating this web application is on Jet Admin team side. Your data is transmitted directly from Jet Bridge to Jet Interface which works in your browser and remain invisible for the Jet service.
+Web application accessible from any browser. Maintaining and updating of this web application is on **Jet Admin** team side. Your application data is transmitted directly from **Jet Bridge** to **Jet Interface** in your browser and remain invisible for the **Jet Admin** service.
 
 Requirements
 ============
