@@ -1,7 +1,5 @@
-Jet Bridge
-==========
-
-**Universal admin panel for Django**
+Jet Bridge – Universal admin panel for your application
+=======================================================
 
 ![Preview](https://raw.githubusercontent.com/jet-admin/jet-bridge/master/static/overview.gif)
 
@@ -13,18 +11,14 @@ Description
 * Documentation: https://docs.jetadmin.io/
 * Support: support@jetadmin.io
 
-**Jet Admin** is a SaaS service that automatically generates extendable back office for your application. In order to communicate with your database it uses this repository **Jet Bridge** standalone application which generates REST API. This project has been designed to fit requirements of small startups to mature companies.
+**Jet Admin** is a SaaS service that automatically generates extendable back office for your application. To communicate with your database it uses **Jet Bridge** standalone application which generates REST API. This project has been designed to fit requirements of small startups and mature companies.
 
-This is a complete remake of popular [Django Jet](https://github.com/geex-arts/django-jet) admin interface.
+This is a complete remake of our popular [Django Jet](https://github.com/geex-arts/django-jet) admin interface.
 
-– **Secure**. Jet does not access your data: its transferred directly from browser to your application.
-
-– **Customizable**. With WYSIWYG interface customization and Flex Features you can solve your specific business tasks when standard functionality is not enough.
-  
+- **Secure**. Jet does not access your data: its transferred directly from browser to your application.
+- **Customizable**. With WYSIWYG interface customization and Flex Features you can solve your specific business tasks when standard functionality is not enough.
 - **Works with any technology**. The interface is generated automatically based on an analysis of the data and data structure of your applications.
-
 - **Quick installation**. All you need is to install Jet Bridge and connect it to your database.
-
 
 Features
 ========
