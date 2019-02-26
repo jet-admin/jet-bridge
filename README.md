@@ -14,10 +14,10 @@ Description
 
 **Jet Admin** is a SaaS service that automatically generates extendable back office for your application. **Jet Bridge** is a standalone application which generates REST API thought which your SQL database is connected to **Jet Admin**. This project has been designed to fit requirements of small startups and mature companies.
 
-- **Secure**. Jet does not access your data: its transferred directly from browser to your application.
-- **Customizable**. With WYSIWYG interface customization your can change almost every part of interface.
+- **Data Privacy**. Jet does not access your data: its transferred directly from browser to your application.
+- **Customizable Interface**. With WYSIWYG interface customization your can change almost every part of interface.
 - **Extendable**. Flex Features allows you to create your custom Actions, Views, Fields and other.
-- **Works with any technology**. The interface is generated automatically based on an analysis of the data and data structure of your applications.
+- **Works with any technology**. The interface is generated automatically based on an analysis of the data and data structure of your database.
 - **Quick installation**. All you need is to install Jet Bridge and connect it to your database.
 
 This is a complete remake of our popular [Django Jet](https://github.com/geex-arts/django-jet) admin interface.
