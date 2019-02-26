@@ -8,69 +8,52 @@ Jet Bridge
 Description
 ===========
 
-* Jet Admin: https://jetadmin.io
+* About Jet Admin: https://jetadmin.io
 * **Live Demo**: https://app.jetadmin.io/demo
 * Documentation: https://docs.jetadmin.io/
 * Support: support@jetadmin.io
 
-**Jet** is a SaaS service that automatically generates back office for your Django Application through REST API of **Jet Bridge** package installed to your project.
-
-– **Visual**. Admin interface can be easily changed without need of development with the help of Visual Editor.
-
-– **Secure**. Jet does not access your data: its transferred directly from browser to your application.
-
-– **Customizable**. Flex functions allow you to solve your specific business tasks when standard functionality is not enough.
+**Jet Admin** is a SaaS service that automatically generates extendable back office for your application. In order to communicate with your database it uses this repository **Jet Bridge** standalone application which generates REST API. This project has been designed to fit requirements of small startups to mature companies.
 
 This is a complete remake of popular [Django Jet](https://github.com/geex-arts/django-jet) admin interface.
 
-- **Visual editor:**
+– **Secure**. Jet does not access your data: its transferred directly from browser to your application.
 
-  Customize the admin area to make it easy for any manager to use. Allow managers to modify the interface, configure features, and set up analytics widgets without using any developers — just like WIX, Squarespace….
-
-- **Secure:**
-
-  Your data is safe. We do not have access to your information. We simply plug your information in to an easy-to-use interface for you to interact with it better.
+– **Customizable**. With WYSIWYG interface customization and Flex Features you can solve your specific business tasks when standard functionality is not enough.
   
-  - **Works with any technology:**
+- **Works with any technology**. The interface is generated automatically based on an analysis of the data and data structure of your applications.
 
-  The interface is generated automatically based on an analysis of the data and data structure of your applications.
+- **Quick installation**. All you need is to install Jet Bridge and connect it to your database.
 
-- **Quick installation:**
-
-  It takes only a few hours to integrate with your project.
-
-- **Available 24/7:**
-
-  Use it around the clock and don’t worry about updates — we take care of that.
 
 Features
 ========
 
-- **CRUD (create, read, update, delete):**
+- **CRUD (create, read, update, delete)**
 
   All common operations to view, create, update or delete data. 
 
-- **Search and Filter:**
+- **Search and Filter**
 
   Filter data easily by any field with most common lookups and search them by text occurrence. For some specific cases you can create SQL Segment to filter with.
   
-- **Segments:**
+- **Segments**
 
   Segments allow you to save applied set of filters as a Segment or create it from SQL query for quick use in future. 
   
-- **Export:**
+- **Export**
 
   You can export all collection data or part of it into the most common formats like CSV or Excel.
 
-- **Dashboards:**
+- **Dashboards**
 
   Create different types of charts, tables and other widgets to visualize your KPIs or monitor data without programming – inside your visual interface. Complex data queries can be created with SQL.
 
-- **Teams and Permissions:**
+- **Teams and Permissions**
 
   Invite users to collaborate on a project and assign access rights based on their team.
 
-- **Responsive Layout:**
+- **Responsive Layout**
 
   The interface is optimized for any device from phones to tablets to desktops.
   
@@ -93,7 +76,7 @@ Features
 How It Works
 ============
 
-Integrating Jet Admin with your project requires installing only one component - Jet Bridge.
+Integrating Jet Admin with your project requires installing only one component - Jet Bridge. Here how it should look like after installation.
 
 ![Jet Admin architecture](https://blobscdn.gitbook.com/v0/b/gitbook-28427.appspot.com/o/assets%2F-LQ08RFAKZvFADEiXKFy%2F-LWGeA3oSBVFoNy8gVVi%2F-LWGozY2Zrbc4W3JmrIg%2Fimage.png?alt=media&token=d09de1b5-b56f-4d0e-aece-8c578752bac8)
 
@@ -129,6 +112,8 @@ Requirements
 
 Installation
 ============
+
+### Method 1. Using standalone Jet Bridge
 
 1. Install **jet\_bridge** package using pip or update if you did it before
 
@@ -221,4 +206,4 @@ Feel free to Email us – support@jetadmin.io
 License
 =======
 
-This project is **MIT** licensed - see the LICENCE file for details.
+This project (Jet Bridge) is **MIT** licensed - see the LICENCE file for details.
