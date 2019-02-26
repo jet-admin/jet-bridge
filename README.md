@@ -1,6 +1,6 @@
 # [Jet Bridge](https://app.jetadmin.io/demo) &nbsp; [![Tweet](https://img.shields.io/twitter/url/http/shields.io.svg?style=social)](https://twitter.com/intent/tweet?text=Language%20agnostic%20Bridge%20for%20Jet%20%E2%80%93%20Back%20office%20totally%20ready%20to%20run%20your%20service&url=https://github.com/jet-admin/jet-bridge/&via=Jet_Admin&hashtags=admin,interface,backoffice,developers,jetadmin)
 
-for Jet Admin – Universal admin panel for your application
+for Jet Admin – Admin panel framework for your application 
 
 ![Preview](https://raw.githubusercontent.com/jet-admin/jet-bridge/master/static/overview.gif)
 
@@ -94,7 +94,7 @@ Features
 How It Works
 ============
 
-**Jet Admin** is a SaaS frontend application that works in your browser. It connects to your project SQL database through open source **Jet Bridge** backend application which you install on your side. So Integrating **Jet Admin** with your project requires installing only one component - Jet Bridge. Here how it should look like after installation:
+**Jet Admin** is a SaaS frontend application hosted on **Jet Admin** side that works in your browser. It connects to your project SQL database through open source **Jet Bridge** backend application which you install on your side. So Integrating **Jet Admin** with your project requires installing only one component - **Jet Bridge**. Here how it should look like after installation:
 
 ![Jet Admin architecture](https://static.tildacdn.com/tild6231-6534-4665-b036-396339366266/Artboard.png)
 
@@ -108,7 +108,7 @@ Your database **Jet Admin** has no direct access to.
 
 **Jet Bridge**
 
-An open source application installed on your server's side and connected to your database. It automatically generates REST API based on your database structure. **Jet Admin** works with database throught this application.
+An open source application installed on your server's side and connected to your database. It automatically generates REST API based on your database structure. **Jet Interface** works with **Database** through **Jet Bridge**.
 
 **Jet Interface**
 
@@ -149,7 +149,7 @@ pip install mysqlclient
 ```
 
 3. Run **Jet Bridge** for your configuration.
-You can read about all possible settings at [Configuration](configuration.md) page.
+You can read about all possible settings at [Configuration](https://docs.jetadmin.io/getting-started/configuration) page.
 
 ```bash
 DATABASE_ENGINE=postgresql \
@@ -165,7 +165,7 @@ DATABASE_ENGINE=postgresql \
 
 4. Register your project by opening in your browser:
 **http://localhost:8888/** where **localhost** is your **Jet Bridge** HOST and **8888** is its PORT.
-If you want to run Jet Bridge on different host/port you can configure it \(read more at [Configuration](configuration.md) page\).
+If you want to run Jet Bridge on different host/port you can configure it \(read more at [Configuration](https://docs.jetadmin.io/getting-started/configuration) page\).
 
 > If you don't have **Jet** account yet you will be asked to create one and sign in with the existing account.
 
@@ -177,7 +177,7 @@ After registering your project you will be redirected to your project and can st
 
 **Jet Bridge** has **Docker** image available on [Docker Hub](https://cloud.docker.com/u/jetadmin/repository/docker/jetadmin/jetbridge).
 In order start it inside **Docker** for your configuration run the following command.
-You can read about all possible settings at [Configuration](configuration.md) page.
+You can read about all possible settings at [Configuration](https://docs.jetadmin.io/getting-started/configuration) page.
 
 1. Install **Docker** if you don't have it [https://docs.docker.com/install/](https://docs.docker.com/install/)
 2. Make sure **Docker** is running
