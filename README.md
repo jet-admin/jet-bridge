@@ -12,7 +12,9 @@ Description
 * Documentation: https://docs.jetadmin.io/
 * Support: support@jetadmin.io
 
-**Jet Admin** is a SaaS service that automatically generates extendable back office for your application. **Jet Bridge** is a standalone application which generates REST API thought which your SQL database is connected to **Jet Admin**. This project has been designed to fit requirements of small startups and mature companies.
+**Jet Admin** is a SaaS service that automatically generates extendable back office for your application. <br />
+**Jet Bridge** is a standalone app which generates REST API thought which your SQL database is connected to **Jet Admin**. <br />
+This project has been designed to fit requirements of small startups and mature companies.
 
 - **Data Privacy**. Jet does not access your data: its transferred directly from browser to your application.
 - **Customizable Interface**. With WYSIWYG interface customization your can change almost every part of interface.
