@@ -31,49 +31,49 @@ Built-in Features
 
   All common operations to view, create, update or delete data. 
   
-  <img width="300px" src="https://raw.githubusercontent.com/jet-admin/jet-bridge/dev/static/customize.png" alt="CRUD (create, read, update, delete)">
+  <img width="300px" src="https://raw.githubusercontent.com/jet-admin/jet-bridge/dev/static/customize.jpeg" alt="CRUD (create, read, update, delete)">
 
 - **Search and Filter**
 
   Filter data easily by any field with most common lookups and search them by text occurrence. For some specific cases you can create SQL Segment to filter with.
   
-  <img width="300px" src="https://raw.githubusercontent.com/jet-admin/jet-bridge/dev/static/filters.png" alt="Search and Filter">
+  <img width="300px" src="https://raw.githubusercontent.com/jet-admin/jet-bridge/dev/static/filters.jpeg" alt="Search and Filter">
   
 - **Segments**
 
   Segments allow you to save applied set of filters as a Segment or create it from SQL query for quick use in future. 
   
-  <img width="300px" src="https://raw.githubusercontent.com/jet-admin/jet-bridge/dev/static/segment.png" alt="Segments">
+  <img width="300px" src="https://raw.githubusercontent.com/jet-admin/jet-bridge/dev/static/segment.jpeg" alt="Segments">
 
 - **WYSIWYG Interface Customization**
 
   You can customize almost every part of interface visually – navigation menu, collection list views, record create/update forms.
   
-  <img width="300px" src="https://raw.githubusercontent.com/jet-admin/jet-bridge/dev/static/customize.png" alt="WYSIWYG Interface Customization">
+  <img width="300px" src="https://raw.githubusercontent.com/jet-admin/jet-bridge/dev/static/customize.jpeg" alt="WYSIWYG Interface Customization">
 
 - **List View layout**
 
   A number of out-of-the-box list layouts except default Table View like Kanban Board and Map with markers.
   
-  <img width="300px" src="https://raw.githubusercontent.com/jet-admin/jet-bridge/dev/static/kanban.png" alt="List View layout">
+  <img width="300px" src="https://raw.githubusercontent.com/jet-admin/jet-bridge/dev/static/kanban.jpeg" alt="List View layout">
 
 - **Dashboards**
 
   Create different types of charts, tables and other widgets to visualize your KPIs or monitor data without programming – inside your visual interface. Complex data queries can be created with SQL.
   
-  <img width="300px" src="https://raw.githubusercontent.com/jet-admin/jet-bridge/dev/static/dashboard.png" alt="Dashboards">
+  <img width="300px" src="https://raw.githubusercontent.com/jet-admin/jet-bridge/dev/static/dashboard.jpeg" alt="Dashboards">
 
 - **Teams and Permissions**
 
   Invite users to collaborate on a project and assign access rights based on their team.
   
-  <img width="300px" src="https://raw.githubusercontent.com/jet-admin/jet-bridge/dev/static/users.png" alt="Teams and Permissions">
+  <img width="300px" src="https://raw.githubusercontent.com/jet-admin/jet-bridge/dev/static/users.jpeg" alt="Teams and Permissions">
   
 - **Export**
 
   You can export all collection data or part of it into the most common formats like CSV or Excel.
   
-  <img width="300px" src="https://raw.githubusercontent.com/jet-admin/jet-bridge/dev/static/export.png" alt="Export">
+  <img width="300px" src="https://raw.githubusercontent.com/jet-admin/jet-bridge/dev/static/export.jpeg" alt="Export">
 
 - **Responsive Layout**
 
