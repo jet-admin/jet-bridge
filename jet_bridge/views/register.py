@@ -1,7 +1,8 @@
 from six.moves.urllib_parse import quote
 
 from jet_bridge import settings
-from jet_bridge.utils.backend import register_token
+from jet_bridge.responses.base import Response
+from jet_bridge.utils.backend import register_token, is_token_activated
 from jet_bridge.views.base.api import APIView
 
 
@@ -11,6 +12,13 @@ class RegisterHandler(APIView):
         token, created = register_token()
 
         if not token:
+            return
+
+        if is_token_activated():
+            response = Response({
+                'message': 'Project token is already activated'
+            })
+            self.write_response(response)
             return
 
         if settings.WEB_BASE_URL.startswith('https') and not self.request.full_url().startswith('https'):
