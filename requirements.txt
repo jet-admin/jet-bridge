@@ -4,3 +4,4 @@ six
 requests
 Pillow
 dateparser
+prompt_toolkit

@@ -8,6 +8,9 @@ from jet_bridge.models import Base
 
 
 def build_engine_url():
+    if not settings.DATABASE_ENGINE or not settings.DATABASE_NAME:
+        return
+
     url = [
         settings.DATABASE_ENGINE,
         '://'
@@ -37,14 +40,17 @@ def build_engine_url():
     return ''.join(url)
 
 engine_url = build_engine_url()
-engine = create_engine(engine_url)
-Session = sessionmaker(bind=engine)
+Session = None
 
-logging.info('Connected to database engine "{}" with name "{}"'.format(settings.DATABASE_ENGINE, settings.DATABASE_NAME))
+if engine_url:
+    engine = create_engine(engine_url)
+    Session = sessionmaker(bind=engine)
 
-Base.metadata.create_all(engine)
+    logging.info('Connected to database engine "{}" with name "{}"'.format(settings.DATABASE_ENGINE, settings.DATABASE_NAME))
 
-metadata = MetaData()
-metadata.reflect(engine)
-MappedBase = automap_base(metadata=metadata)
-MappedBase.prepare()
+    Base.metadata.create_all(engine)
+
+    metadata = MetaData()
+    metadata.reflect(engine)
+    MappedBase = automap_base(metadata=metadata)
+    MappedBase.prepare()

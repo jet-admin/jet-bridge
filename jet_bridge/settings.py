@@ -7,7 +7,7 @@ from jet_bridge.utils.settings import parse_environment, parse_config_file
 # Constants
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DEFAULT_CONFIG_PATH = os.path.join('/etc', 'jet.conf')
+DEFAULT_CONFIG_PATH = os.path.join('jet.conf')
 
 # Options
 
@@ -38,6 +38,11 @@ required_options = [
     'database_name',
 ]
 
+required_options_without_default = [
+    'database_engine',
+    'database_name',
+]
+
 # Parse
 
 options.parse_command_line(final=False)
@@ -51,9 +56,7 @@ if options.config:
 
 parse_environment(options, final=True)
 
-for option in required_options:
-    if option not in options or options[option] is None:
-        raise Exception('Required option {} is not specified'.format(option))
+missing_options = list(filter(lambda x: x not in options or options[x] is None, required_options))
 
 # Settings
 

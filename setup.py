@@ -19,6 +19,7 @@ def get_install_requires():
         'requests',
         'Pillow',
         'dateparser',
+        'prompt_toolkit',
     ]
 
     try:
