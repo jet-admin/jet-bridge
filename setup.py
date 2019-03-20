@@ -32,7 +32,7 @@ setup(
     name='jet_bridge',
     version=__import__('jet_bridge').VERSION,
     description='',
-    long_description=read('README.rst'),
+    long_description=read('README.md'),
     author='Denis Kildishev',
     author_email='support@jetadmin.io',
     url='https://github.com/jet-admin/jet-bridge',
