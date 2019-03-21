@@ -1,0 +1,36 @@
+{
+  "name": "Jet Bridge",
+  "description": "Universal bridge for Jet Admin – Admin panel framework for your application",
+  "repository": "https://github.com/jet-admin/jet-bridge",
+  "website": "https://jetadmin.io/",
+  "logo": "https://app.jetadmin.io/assets/images/logo-tile.svg",
+  "keywords": [
+    "admin",
+    "interface",
+    "backoffice",
+    "responsive",
+    "developers",
+    "sql"
+  ],
+  "success_url": "/api/register/",
+  "env": {
+    "DATABASE_ENGINE": {
+      "description": "Database engine, one of: postgresql, mysql, oracle, mssql, sqlite"
+    },
+    "DATABASE_HOST": {
+      "description": "database host"
+    },
+    "DATABASE_PORT": {
+      "description": "database port"
+    },
+    "DATABASE_NAME": {
+      "description": "database user"
+    },
+    "DATABASE_USER": {
+      "description": "database password"
+    },
+    "DATABASE_PASSWORD": {
+      "description": "database name or path (SQLite)"
+    }
+  }
+}
