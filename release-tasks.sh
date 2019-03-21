@@ -1,3 +1,5 @@
+#!/bin/bash
+
 # for PostgreSQL
 pip install psycopg2
 # for MySQL
