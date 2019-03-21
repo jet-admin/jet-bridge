@@ -24,13 +24,13 @@
       "description": "database port"
     },
     "DATABASE_NAME": {
-      "description": "database user"
+      "description": "database name or path (SQLite)"
     },
     "DATABASE_USER": {
-      "description": "database password"
+      "description": "database user"
     },
     "DATABASE_PASSWORD": {
-      "description": "database name or path (SQLite)"
+      "description": "database password"
     }
   }
 }
