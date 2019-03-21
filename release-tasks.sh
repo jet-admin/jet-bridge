@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 # for PostgreSQL
 pip install psycopg2

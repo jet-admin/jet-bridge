@@ -13,6 +13,9 @@
     "sql"
   ],
   "success_url": "/api/register/",
+  "scripts": {
+    "postdeploy": "./release-tasks.sh"
+  },
   "env": {
     "DATABASE_ENGINE": {
       "description": "Database engine, one of: postgresql, mysql, oracle, mssql, sqlite"
