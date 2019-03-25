@@ -44,7 +44,7 @@ def main():
 
     try:
         if not is_token_activated():
-            register_url = '{}register/'.format(url)
+            register_url = '{}api/register/'.format(url)
             logging.warning('[!] Your server token is not activated')
 
             if webbrowser.open(register_url):
