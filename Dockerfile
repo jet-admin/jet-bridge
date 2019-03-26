@@ -6,7 +6,7 @@ RUN \
 
 RUN addgroup -S jet && adduser -S -G jet jet
 RUN pip install psycopg2 mysqlclient
-RUN pip install jet_bridge==0.1.7
+RUN pip install jet_bridge==0.2.0
 RUN apk --purge del .build-deps
 
 USER jet

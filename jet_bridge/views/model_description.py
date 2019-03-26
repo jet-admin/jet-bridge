@@ -1,6 +1,5 @@
 from sqlalchemy import inspect
 from sqlalchemy.orm.base import ONETOMANY
-from sqlalchemy.util import ImmutableProperties
 
 from jet_bridge.db import Session, MappedBase
 from jet_bridge.models import data_types
@@ -57,14 +56,14 @@ class ModelDescriptionsHandler(APIView):
             }
 
         def table_relations(mapper):
-            return list(map(map_relation, filter(lambda x: x.direction == ONETOMANY, mapper.relationships)))
+            return list(map(map_relation, filter(lambda x: x.direction == ONETOMANY and hasattr(x, 'table'), mapper.relationships)))
 
         def table_m2m_relations(mapper):
             result = []
             name = mapper.selectable.name
 
             for relation in mapper.relationships:
-                if relation.direction != ONETOMANY:
+                if relation.direction != ONETOMANY or not hasattr(relation, 'table'):
                     continue
 
                 m2m_relationships = relation.mapper.relationships.values()
