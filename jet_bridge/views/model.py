@@ -1,4 +1,6 @@
-from sqlalchemy import inspect
+from sqlalchemy import inspect, desc
+from sqlalchemy.sql import operators
+from sqlalchemy.sql.elements import UnaryExpression, AnnotatedColumnElement
 
 from jet_bridge.filters.model import get_model_filter_class
 from jet_bridge.filters.model_aggregate import ModelAggregateFilter
@@ -10,6 +12,7 @@ from jet_bridge.serializers.model import get_model_serializer
 from jet_bridge.serializers.model_group import ModelGroupSerializer
 from jet_bridge.serializers.reorder import get_reorder_serializer
 from jet_bridge.serializers.reset_order import get_reset_order_serializer
+from jet_bridge.utils.siblings import get_model_siblings
 from jet_bridge.views.mixins.model import ModelAPIViewMixin
 from jet_bridge.db import MappedBase
 
@@ -61,6 +64,26 @@ class ModelHandler(ModelAPIViewMixin):
         Model = self.get_model()
 
         return self.session.query(Model)
+
+    def filter_queryset(self, queryset):
+        queryset = super().filter_queryset(queryset)
+        if self.action == 'list':
+            mapper = inspect(self.model)
+            pk = mapper.primary_key[0].name
+            context = queryset._compile_context()
+            ordering = context.order_by
+
+            def is_pk(x):
+                if isinstance(x, AnnotatedColumnElement):
+                    return x.name == pk
+                elif isinstance(x, UnaryExpression):
+                    return x.element.name == pk and x.modifier == operators.desc_op
+                return False
+
+            if ordering is None or not any(map(is_pk, ordering)):
+                order_by = list(ordering or []) + [desc(pk)]
+                queryset = queryset.order_by(*order_by)
+        return queryset
 
     @action(methods=['get'], detail=False)
     def aggregate(self, *args, **kwargs):
@@ -143,3 +166,18 @@ class ModelHandler(ModelAPIViewMixin):
         serializer.save()
 
         self.write_response(Response(serializer.representation_data))
+
+    @action(methods=['get'], detail=True)
+    def get_siblings(self, *args, **kwargs):
+        lookup_url_kwarg = self.lookup_url_kwarg or 'pk'
+
+        assert lookup_url_kwarg in self.path_kwargs
+
+        model_field = getattr(self.get_model(), self.lookup_field)
+        obj = self.get_queryset().filter(getattr(model_field, '__eq__')(self.path_kwargs[lookup_url_kwarg])).first()
+
+        self.check_object_permissions(obj)
+
+        queryset = self.filter_queryset(self.get_queryset())
+
+        self.write_response(Response(get_model_siblings(self.model, obj, queryset)))
