@@ -1,18 +1,16 @@
-import dateparser
-import six
-
 from jet_bridge.fields.field import Field
 
 
-class DateTimeField(Field):
+class WKTField(Field):
 
     def to_internal_value_item(self, value):
         if value is None:
             return
-        value = six.text_type(value)
-        return dateparser.parse(value.strip())
+        from geoalchemy2 import WKTElement
+        return WKTElement(value)
 
     def to_representation_item(self, value):
         if value is None:
             return
-        return value.isoformat()
+        from geoalchemy2.shape import to_shape
+        return to_shape(value).to_wkt()

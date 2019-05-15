@@ -12,12 +12,17 @@ data_types = [
     {'query': 'NUMERIC', 'operator': 'startswith', 'date_type': fields.CharField},
     {'query': 'VARCHAR', 'operator': 'startswith', 'date_type': fields.CharField},
     {'query': 'TIMESTAMP', 'operator': 'startswith', 'date_type': fields.CharField},
+    {'query': 'geometry', 'operator': 'startswith', 'date_type': fields.WKTField},
+    {'query': 'geography', 'operator': 'startswith', 'date_type': fields.WKTField},
 ]
 default_data_type = fields.CharField
 
 
 def get_column_data_type(column):
-    data_type = str(column.type)
+    try:
+        data_type = str(column.type)
+    except:
+        data_type = 'NullType'
 
     for rule in data_types:
         if rule['operator'] == 'equals' and data_type == rule['query']:

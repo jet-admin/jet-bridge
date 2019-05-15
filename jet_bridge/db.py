@@ -1,7 +1,13 @@
 import logging
+
 from sqlalchemy import create_engine, MetaData
 from sqlalchemy.ext.automap import automap_base
 from sqlalchemy.orm import sessionmaker
+
+try:
+    from geoalchemy2 import types
+except ImportError:
+    pass
 
 from jet_bridge import settings
 from jet_bridge.models import Base
