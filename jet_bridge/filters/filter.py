@@ -17,6 +17,11 @@ def json_icontains(qs, model, field_name, value):
         return qs.filter(model_field.astext.ilike('%{}%'.format(value)))
 
 
+def coveredby(qs, model, field_name, value):
+    model_field = getattr(model, field_name)
+    return qs.filter(model_field.ST_CoveredBy(value))
+
+
 class Filter(object):
     field_class = field
     lookup_operators = {
@@ -30,7 +35,8 @@ class Filter(object):
         lookups.STARTS_WITH: {'operator': 'ilike', 'post_process': lambda x: '{}%'.format(x)},
         lookups.ENDS_WITH: {'operator': 'ilike', 'post_process': lambda x: '%{}'.format(x)},
         lookups.IS_NULL: {'operator': lambda x: ('__eq__', None) if x else ('isnot', None), 'field_class': BooleanField},
-        lookups.JSON_ICONTAINS: {'operator': False, 'func': json_icontains}
+        lookups.JSON_ICONTAINS: {'operator': False, 'func': json_icontains},
+        lookups.COVEREDBY: {'operator': False, 'func': coveredby}
     }
 
     def __init__(self, field_name=None, model=None, lookup=lookups.DEFAULT_LOOKUP, request=None, handler=None):

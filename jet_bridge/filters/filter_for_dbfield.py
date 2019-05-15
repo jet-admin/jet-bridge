@@ -4,6 +4,7 @@ from jet_bridge.filters import lookups
 from jet_bridge.filters.boolean_filter import BooleanFilter
 from jet_bridge.filters.char_filter import CharFilter
 from jet_bridge.filters.datetime_filter import DateTimeFilter
+from jet_bridge.filters.wkt_filter import WKTFilter
 from jet_bridge.filters.integer_filter import IntegerFilter
 
 number_lookups = [
@@ -48,6 +49,10 @@ json_lookups = [
     lookups.IS_NULL,
 ]
 
+geography_lookups = [
+    lookups.COVEREDBY
+]
+
 FILTER_FOR_DBFIELD = {
     sqltypes.VARCHAR: {'filter_class': CharFilter, 'lookups': text_lookups},
     sqltypes.TEXT: {'filter_class': CharFilter, 'lookups': text_lookups},
@@ -80,6 +85,13 @@ FILTER_FOR_DBFIELD = {
     # sqlalchemy.UUIDField:                   {'filter_class': UUIDFilter}
 }
 FILTER_FOR_DBFIELD_DEFAULT = FILTER_FOR_DBFIELD[sqltypes.VARCHAR]
+
+try:
+    from geoalchemy2 import types
+    FILTER_FOR_DBFIELD[types.Geometry] = {'filter_class': WKTFilter, 'lookups': geography_lookups}
+    FILTER_FOR_DBFIELD[types.Geography] = {'filter_class': WKTFilter, 'lookups': geography_lookups}
+except ImportError:
+    pass
 
 
 def filter_for_data_type(value):
