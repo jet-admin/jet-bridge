@@ -12,6 +12,8 @@ data_types = [
     {'query': 'NUMERIC', 'operator': 'startswith', 'date_type': fields.CharField},
     {'query': 'VARCHAR', 'operator': 'startswith', 'date_type': fields.CharField},
     {'query': 'TIMESTAMP', 'operator': 'startswith', 'date_type': fields.CharField},
+    {'query': 'geometry', 'operator': 'startswith', 'date_type': fields.WKTField},
+    {'query': 'geography', 'operator': 'startswith', 'date_type': fields.WKTField},
 ]
 default_data_type = fields.CharField
 
