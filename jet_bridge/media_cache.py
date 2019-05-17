@@ -1,4 +1,5 @@
 import os
+import hashlib
 
 from jet_bridge import settings
 
@@ -54,6 +55,8 @@ class MediaCache(object):
             self.files.remove(self.files[0])
 
     def full_path(self, path):
-        return os.path.join(self.cache_path, path)
+        extension = os.path.splitext(path)[1]
+        filename = '{}{}'.format(hashlib.sha256(path.encode('utf8')).hexdigest(), extension)
+        return os.path.join(self.cache_path, filename)
 
 cache = MediaCache()
