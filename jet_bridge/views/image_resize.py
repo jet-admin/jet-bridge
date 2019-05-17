@@ -1,4 +1,7 @@
+import io
 import os
+from six.moves import urllib
+
 from PIL import Image
 
 from jet_bridge import settings
@@ -9,8 +12,8 @@ from jet_bridge.views.base.api import APIView
 
 class ImageResizeHandler(APIView):
 
-    def create_thumbnail(self, path, thumbnail_path, max_width, max_height):
-        img = Image.open(path)
+    def create_thumbnail(self, file, thumbnail_path, max_width, max_height):
+        img = Image.open(file)
         img.thumbnail((max_width, max_height), Image.ANTIALIAS)
 
         if not os.path.exists(os.path.dirname(thumbnail_path)):
@@ -27,16 +30,22 @@ class ImageResizeHandler(APIView):
         path = self.get_argument('path')
         max_width = self.get_argument('max_width', 320)
         max_height = self.get_argument('max_height', 240)
-        image_full_path = os.path.join(settings.MEDIA_ROOT, path)
+        external_path = path.startswith('http://') or path.startswith('https://')
         thumbnail_full_path = cache.full_path(path)
 
-        if not os.path.exists(image_full_path):
-            raise NotFound
+        if not external_path:
+            file = os.path.join(settings.MEDIA_ROOT, path)
+
+            if not os.path.exists(file):
+                raise NotFound
+        else:
+            fd = urllib.request.urlopen(path)
+            file = io.BytesIO(fd.read())
 
         try:
             if not os.path.exists(thumbnail_full_path):
                 cache.clear_cache_if_needed()
-                self.create_thumbnail(image_full_path, thumbnail_full_path, max_width, max_height)
+                self.create_thumbnail(file, thumbnail_full_path, max_width, max_height)
                 cache.add_file(thumbnail_full_path)
 
             self.set_header('Content-Type', 'image/{}'.format(os.path.splitext(thumbnail_full_path)[1][1:]))
