@@ -33,26 +33,28 @@ class ImageResizeHandler(APIView):
         external_path = path.startswith('http://') or path.startswith('https://')
         thumbnail_full_path = cache.full_path(path)
 
-        if not external_path:
-            file = os.path.join(settings.MEDIA_ROOT, path)
-
-            if not os.path.exists(file):
-                raise NotFound
-        else:
-            fd = urllib.request.urlopen(path)
-            file = io.BytesIO(fd.read())
-
         try:
             if not os.path.exists(thumbnail_full_path):
+                if not external_path:
+                    file = os.path.join(settings.MEDIA_ROOT, path)
+
+                    if not os.path.exists(file):
+                        raise NotFound
+                else:
+                    fd = urllib.request.urlopen(path)
+                    file = io.BytesIO(fd.read())
+
                 cache.clear_cache_if_needed()
                 self.create_thumbnail(file, thumbnail_full_path, max_width, max_height)
                 cache.add_file(thumbnail_full_path)
 
             self.set_header('Content-Type', 'image/{}'.format(os.path.splitext(thumbnail_full_path)[1][1:]))
 
-            with open(thumbnail_full_path, 'rb') as f:
-                data = f.read()
-                self.write(data)
-            self.finish()
+            # with open(thumbnail_full_path, 'rb') as f:
+            #     data = f.read()
+            #     self.write(data)
+            # self.finish()
+
+            self.redirect('/{}'.format(thumbnail_full_path))
         except IOError as e:
             raise e
