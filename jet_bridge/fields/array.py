@@ -3,7 +3,7 @@ import json
 from jet_bridge.fields.field import Field
 
 
-class JSONField(Field):
+class ArrayField(Field):
 
     def to_internal_value_item(self, value):
         return json.loads(value)
