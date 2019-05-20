@@ -55,6 +55,6 @@ class ImageResizeHandler(APIView):
             #     self.write(data)
             # self.finish()
 
-            self.redirect('/{}'.format(thumbnail_full_path))
+            self.redirect(cache.url(path))
         except IOError as e:
             raise e
