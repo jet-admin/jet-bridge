@@ -6,12 +6,14 @@ import tornado.web
 from tornado.escape import json_decode
 
 from jet_bridge import settings, VERSION, status
+from jet_bridge.db import Session
 from jet_bridge.exceptions.api import APIException
 from jet_bridge.exceptions.permission_denied import PermissionDenied
 
 
 class APIView(tornado.web.RequestHandler):
     permission_classes = []
+    session = None
 
     @property
     def data(self):
@@ -28,6 +30,13 @@ class APIView(tornado.web.RequestHandler):
 
         if self.request.method != 'OPTIONS':
             self.check_permissions()
+
+        self.session = Session()
+
+    def on_finish(self):
+        if self.session:
+            self.session.close()
+            self.session = None
 
     def set_default_headers(self):
         ACCESS_CONTROL_ALLOW_ORIGIN = 'Access-Control-Allow-Origin'
