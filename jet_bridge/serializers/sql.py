@@ -55,3 +55,5 @@ class SqlSerializer(Serializer):
             return {'data': rows, 'columns': map(map_column, result.keys())}
         except (SQLAlchemyError, TypeError) as e:
             raise SqlError(e)
+        finally:
+            session.close()
