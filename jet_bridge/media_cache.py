@@ -8,9 +8,10 @@ class MediaCache(object):
     max_cache_size = 1024 * 1024 * 50
     files = []
     size = 0
+    dir = '_jet_cache'
 
     def __init__(self):
-        self.cache_path = os.path.join(settings.MEDIA_ROOT, '_jet_cache')
+        self.cache_path = os.path.join(settings.MEDIA_ROOT, self.dir)
         self.update_files()
 
     def get_files(self):
@@ -54,9 +55,14 @@ class MediaCache(object):
             self.size -= self.files[0]['size']
             self.files.remove(self.files[0])
 
-    def full_path(self, path):
+    def filename(self, path):
         extension = os.path.splitext(path)[1]
-        filename = '{}{}'.format(hashlib.sha256(path.encode('utf8')).hexdigest(), extension)
-        return os.path.join(self.cache_path, filename)
+        return '{}{}'.format(hashlib.sha256(path.encode('utf8')).hexdigest(), extension)
+
+    def full_path(self, path):
+        return os.path.join(self.cache_path, self.filename(path))
+
+    def url(self, path):
+        return os.path.join('/media', self.dir, self.filename(path))
 
 cache = MediaCache()
