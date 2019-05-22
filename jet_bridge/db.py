@@ -41,6 +41,9 @@ def build_engine_url():
 
         url.append('/')
 
+    if settings.DATABASE_ENGINE == 'sqlite':
+        url.append('/')
+
     url.append(settings.DATABASE_NAME)
 
     return ''.join(url)
