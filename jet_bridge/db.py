@@ -37,8 +37,11 @@ def build_engine_url():
 
         if settings.DATABASE_PORT:
             url.append(':')
-            url.append(str(settings.DATABASE_PORT))
+            url.append(settings.DATABASE_PORT)
 
+        url.append('/')
+
+    if settings.DATABASE_ENGINE == 'sqlite':
         url.append('/')
 
     url.append(settings.DATABASE_NAME)
@@ -49,7 +52,11 @@ engine_url = build_engine_url()
 Session = None
 
 if engine_url:
-    engine = create_engine(engine_url, pool_size=settings.CONNECTIONS, max_overflow=10)
+    if settings.DATABASE_ENGINE == 'sqlite':
+        engine = create_engine(engine_url)
+    else:
+        engine = create_engine(engine_url, pool_size=settings.CONNECTIONS, max_overflow=10)
+
     Session = sessionmaker(bind=engine)
 
     logging.info('Connected to database engine "{}" with name "{}"'.format(settings.DATABASE_ENGINE, settings.DATABASE_NAME))
@@ -59,4 +66,8 @@ if engine_url:
     metadata = MetaData()
     metadata.reflect(engine)
     MappedBase = automap_base(metadata=metadata)
-    MappedBase.prepare()
+
+    def name_for_scalar_relationship(base, local_cls, referred_cls, constraint):
+        return referred_cls.__name__.lower() + '_relation'
+
+    MappedBase.prepare(name_for_scalar_relationship=name_for_scalar_relationship)
