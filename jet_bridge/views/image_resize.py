@@ -48,8 +48,8 @@ class ImageResizeHandler(APIView):
                 self.create_thumbnail(file, thumbnail_full_path, max_width, max_height)
                 cache.add_file(thumbnail_full_path)
 
-            self.set_header('Content-Type', 'image/{}'.format(os.path.splitext(thumbnail_full_path)[1][1:]))
-
+            # self.set_header('Content-Type', 'image/jpg')
+            #
             # with open(thumbnail_full_path, 'rb') as f:
             #     data = f.read()
             #     self.write(data)

@@ -63,6 +63,7 @@ class MediaCache(object):
         return os.path.join(self.cache_path, self.filename(path))
 
     def url(self, path):
-        return os.path.join('/media', self.dir, self.filename(path))
+        base = settings.MEDIA_BASE_URL or '/media'
+        return os.path.join(base, self.dir, self.filename(path))
 
 cache = MediaCache()
