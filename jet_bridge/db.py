@@ -66,4 +66,8 @@ if engine_url:
     metadata = MetaData()
     metadata.reflect(engine)
     MappedBase = automap_base(metadata=metadata)
-    MappedBase.prepare()
+
+    def name_for_scalar_relationship(base, local_cls, referred_cls, constraint):
+        return referred_cls.__name__.lower() + '_relation'
+
+    MappedBase.prepare(name_for_scalar_relationship=name_for_scalar_relationship)
