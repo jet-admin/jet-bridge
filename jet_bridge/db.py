@@ -52,7 +52,11 @@ engine_url = build_engine_url()
 Session = None
 
 if engine_url:
-    engine = create_engine(engine_url, pool_size=settings.CONNECTIONS, max_overflow=10)
+    if settings.DATABASE_ENGINE == 'sqlite':
+        engine = create_engine(engine_url)
+    else:
+        engine = create_engine(engine_url, pool_size=settings.CONNECTIONS, max_overflow=10)
+
     Session = sessionmaker(bind=engine)
 
     logging.info('Connected to database engine "{}" with name "{}"'.format(settings.DATABASE_ENGINE, settings.DATABASE_NAME))
