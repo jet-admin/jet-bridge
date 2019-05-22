@@ -27,7 +27,7 @@ define('media_base_url', default=None, help='media base URL')
 
 define('database_engine', help='database engine (postgresql, mysql, oracle, mssql, sqlite)')
 define('database_host', help='database host')
-define('database_port', help='database port', type=int)
+define('database_port', help='database port')
 define('database_user', help='database user')
 define('database_password', help='database password')
 define('database_name', help='database name or path')
