@@ -14,7 +14,7 @@ RUN apk add --no-cache --virtual .build-deps-testing \
 RUN addgroup -S jet && adduser -S -G jet jet
 RUN pip install psycopg2 mysqlclient
 RUN pip install GeoAlchemy2==0.6.2 Shapely==1.6.4
-RUN pip install jet_bridge==0.2.8
+RUN pip install jet_bridge==0.2.9
 
 USER jet
 
