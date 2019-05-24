@@ -9,4 +9,4 @@ class JSONField(Field):
         return json.loads(value)
 
     def to_representation_item(self, value):
-        return json.dumps(value)
+        return value
