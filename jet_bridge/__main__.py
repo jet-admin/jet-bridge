@@ -1,11 +1,10 @@
 from datetime import datetime
 import webbrowser
-
 import logging
+from requests import RequestException
 
 import tornado.ioloop
 import tornado.web
-from requests import RequestException
 
 import jet_bridge.adapters.postgres
 
@@ -13,6 +12,7 @@ from jet_bridge import settings, VERSION
 from jet_bridge.settings import missing_options
 from jet_bridge.utils.backend import is_token_activated
 from jet_bridge.utils.create_config import create_config
+from jet_bridge.db import Session
 
 logging.getLogger().setLevel(logging.INFO)
 
@@ -43,7 +43,9 @@ def main():
     logging.info('Quit the server with CONTROL-C')
 
     try:
-        if not is_token_activated():
+        session = Session()
+
+        if not is_token_activated(session):
             register_url = '{}api/register/'.format(url)
             logging.warning('[!] Your server token is not activated')
 
@@ -54,6 +56,8 @@ def main():
     except RequestException:
         logging.error('[!] Can\'t connect to Jet Admin API')
         logging.error('[!] Token verification failed')
+    finally:
+        session.close()
 
     tornado.ioloop.IOLoop.current().start()
 
