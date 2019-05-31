@@ -11,12 +11,12 @@ RUN apk add --no-cache --virtual .build-deps-testing \
     geos-dev \
     proj4-dev
 
-RUN addgroup -S jet && adduser -S -G jet jet
+#RUN addgroup -S jet && adduser -S -G jet jet
 RUN pip install psycopg2 mysqlclient
 RUN pip install GeoAlchemy2==0.6.2 Shapely==1.6.4
 RUN pip install jet_bridge==0.3.2
 
-USER jet
+#USER jet
 
 CMD ["jet_bridge"]
 
