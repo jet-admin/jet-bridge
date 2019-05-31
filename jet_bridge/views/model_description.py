@@ -38,6 +38,7 @@ class ModelDescriptionsHandler(APIView):
                 'db_column': column.name,
                 'field': data_type,
                 'filterable': True,
+                'null': column.nullable,
                 'editable': column.name not in non_editable,
                 'params': params
             }
