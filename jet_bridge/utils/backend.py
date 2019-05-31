@@ -71,6 +71,26 @@ def reset_token(session):
     return register_token(session)
 
 
+def set_token(session, token):
+    project_token = session.query(Token).first()
+    token_clean = str(token).replace('-', '')
+
+    if project_token:
+        if project_token.token == token_clean:
+            logging.info('This token is already set, ignoring')
+            return
+
+        project_token.token = token_clean
+        project_token.date_add = datetime.now()
+        session.commit()
+        logging.info('Token changed to {}'.format(project_token.token))
+    else:
+        project_token = Token(token=token_clean, date_add=datetime.now())
+        session.add(project_token)
+        session.commit()
+        logging.info('Token created {}'.format(project_token.token))
+
+
 def project_auth(session, token, permission=None):
     project_token = session.query(Token).first()
 
