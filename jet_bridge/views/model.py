@@ -66,7 +66,7 @@ class ModelHandler(ModelAPIViewMixin):
         return self.session.query(Model)
 
     def filter_queryset(self, queryset):
-        queryset = super().filter_queryset(queryset)
+        queryset = super(ModelHandler, self).filter_queryset(queryset)
         if self.action == 'list':
             mapper = inspect(self.model)
             pk = mapper.primary_key[0].name
