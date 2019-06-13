@@ -82,7 +82,7 @@ class Serializer(Field):
         for field in self.writable_fields:
             field_value = field.get_value(value)
 
-            if field.field_name not in self.data.keys() and self.partial:
+            if field.field_name not in value.keys() and self.partial:
                 continue
 
             validate_method = getattr(self, 'validate_' + field.field_name, None)

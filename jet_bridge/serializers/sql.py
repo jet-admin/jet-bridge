@@ -33,11 +33,11 @@ class SqlSerializer(Serializer):
 
         return value
 
-    def execute(self):
+    def execute(self, data):
         session = Session()
 
-        query = self.validated_data['query']
-        params = self.validated_data.get('params', [])
+        query = data['query']
+        params = data.get('params', [])
 
         try:
             result = session.execute(
@@ -57,3 +57,11 @@ class SqlSerializer(Serializer):
             raise SqlError(e)
         finally:
             session.close()
+
+
+class SqlsSerializer(Serializer):
+    queries = SqlSerializer(many=True)
+
+    def execute(self, data):
+        serializer = SqlSerializer()
+        return map(lambda x: serializer.execute(x), data['queries'])
