@@ -16,14 +16,15 @@ def main():
     if len(args) >= 1:
         if args[0] == 'register_token':
             register_token_command()
+            return
         elif args[0] == 'reset_token':
             reset_token_command()
+            return
         elif args[0] == 'set_token':
             set_token_command(args)
-        else:
-            logging.error('Unknown command: {}'.format(args[0]))
-    else:
-        run_command()
+            return
+
+    run_command()
 
 if __name__ == '__main__':
     main()
