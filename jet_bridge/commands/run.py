@@ -11,7 +11,7 @@ import jet_bridge.adapters.postgres
 
 from jet_bridge import settings, VERSION
 from jet_bridge.settings import missing_options
-from jet_bridge.utils.backend import is_token_activated
+from jet_bridge.utils.backend import is_token_activated, get_token
 from jet_bridge.utils.create_config import create_config
 from jet_bridge.db import Session
 
@@ -45,13 +45,13 @@ def run_command():
         session = Session()
 
         if not is_token_activated(session):
-            register_url = '{}api/register/'.format(url)
+            token = get_token(session)
+            register_url = '{}api/register/?token={}'.format(url, token)
             logging.warning('[!] Your server token is not activated')
+            logging.warning('[!] Token: {}'.format(token))
 
-            if webbrowser.open(register_url):
+            if settings.AUTO_OPEN_REGISTER and webbrowser.open(register_url):
                 logging.warning('[!] Activation page was opened in your browser - {}'.format(register_url))
-            else:
-                logging.warning('[!] Go to {} to activate'.format(register_url))
     except RequestException:
         logging.error('[!] Can\'t connect to Jet Admin API')
         logging.error('[!] Token verification failed')
