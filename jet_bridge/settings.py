@@ -17,6 +17,7 @@ define('config', default=DEFAULT_CONFIG_PATH, help='config file path')
 define('debug', default=False, help='debug mode', type=bool)
 define('read_only', default=False, help='read only', type=bool)
 define('connections', default=50, help='connects', type=int)
+define('auto_open_register', default=True, help='open token register automatically', type=bool)
 
 define('web_base_url', default='https://app.jetadmin.io', help='Jet Admin frontend application base URL')
 define('api_base_url', default='https://api.jetadmin.io/api', help='Jet Admin API base URL')
@@ -66,6 +67,7 @@ PORT = options.port
 DEBUG = options.debug
 READ_ONLY = options.read_only
 CONNECTIONS = options.connections
+AUTO_OPEN_REGISTER = options.auto_open_register
 
 WEB_BASE_URL = options.web_base_url
 API_BASE_URL = options.api_base_url

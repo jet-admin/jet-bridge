@@ -11,6 +11,11 @@ def api_method_url(method):
     return '{}/{}'.format(settings.API_BASE_URL, method)
 
 
+def get_token(session):
+    token = session.query(Token).first()
+    return token.token if token else None
+
+
 def register_token(session):
     token = session.query(Token).first()
 
