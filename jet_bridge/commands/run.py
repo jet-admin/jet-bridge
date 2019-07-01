@@ -11,7 +11,7 @@ import jet_bridge.adapters.postgres
 
 from jet_bridge import settings, VERSION
 from jet_bridge.settings import missing_options
-from jet_bridge.utils.backend import is_token_activated, get_token
+from jet_bridge.utils.backend import is_token_activated, get_token, register_token
 from jet_bridge.utils.create_config import create_config
 from jet_bridge.db import Session
 
@@ -43,6 +43,10 @@ def run_command():
 
     try:
         session = Session()
+        token, created = register_token(session)
+
+        if not token:
+            return
 
         if not is_token_activated(session):
             token = get_token(session)
