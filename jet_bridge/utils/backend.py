@@ -3,7 +3,7 @@ from datetime import datetime
 import logging
 import requests
 
-from jet_bridge import settings
+from jet_bridge import settings, VERSION
 from jet_bridge.models.token import Token
 
 
@@ -26,8 +26,12 @@ def register_token(session):
     headers = {
         'User-Agent': 'Jet Django'
     }
+    data = {
+        'bridge_type': 'jet_bridge',
+        'bridge_version': VERSION
+    }
 
-    r = requests.request('POST', url, headers=headers)
+    r = requests.request('POST', url, headers=headers, data=data)
     success = 200 <= r.status_code < 300
 
     if not success:
