@@ -26,7 +26,7 @@ class ModelGroupFilter(CharFilter):
         else:
             return qs.filter(sql.false())
 
-        if value['x_lookup']:
+        if value['x_lookup'] and value['x_lookup'] in ['date']:
             x_lookup = getattr(func, value['x_lookup'])
             x_func = x_lookup(x_column)
         else:
