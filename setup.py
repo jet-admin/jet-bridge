@@ -34,6 +34,7 @@ setup(
     version=__import__('jet_bridge').VERSION,
     description='',
     long_description=read('README.md'),
+    long_description_content_type='text/markdown',
     author='Denis Kildishev',
     author_email='support@jetadmin.io',
     url='https://github.com/jet-admin/jet-bridge',
