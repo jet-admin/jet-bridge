@@ -13,7 +13,7 @@ def read(fname):
 
 def get_install_requires():
     install_requires = [
-        'tornado',
+        'tornado==5.1.1',
         'sqlalchemy',
         'six',
         'requests',

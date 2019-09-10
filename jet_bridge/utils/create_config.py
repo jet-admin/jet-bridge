@@ -21,7 +21,7 @@ engines = [
         'default_port': 1521
     },
     {
-        'name': 'mssql',
+        'name': 'mssql+pyodbc',
         'default_port': 1433
     },
     {

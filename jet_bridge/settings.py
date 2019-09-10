@@ -26,12 +26,13 @@ define('media_storage', default=MEDIA_STORAGE_DEFAULT, help='media storage type'
 define('media_root', default='media', help='media root')
 define('media_base_url', default=None, help='media base URL')
 
-define('database_engine', help='database engine (postgresql, mysql, oracle, mssql, sqlite)')
+define('database_engine', help='database engine (postgresql, mysql, oracle, mssql+pyodbc, sqlite)')
 define('database_host', help='database host')
 define('database_port', help='database port')
 define('database_user', help='database user')
 define('database_password', help='database password')
 define('database_name', help='database name or path')
+define('database_extra', default=None, help='database extra parameters')
 
 required_options = [
     'address',
@@ -82,3 +83,4 @@ DATABASE_PORT = options.database_port
 DATABASE_USER = options.database_user
 DATABASE_PASSWORD = options.database_password
 DATABASE_NAME = options.database_name
+DATABASE_EXTRA = options.database_extra

@@ -46,6 +46,13 @@ def build_engine_url():
 
     url.append(settings.DATABASE_NAME)
 
+    if settings.DATABASE_EXTRA:
+        url.append(settings.DATABASE_EXTRA)
+    elif settings.DATABASE_ENGINE == 'mysql':
+        url.append('?charset=utf8')
+    elif settings.DATABASE_ENGINE == 'mssql+pyodbc':
+        url.append('?driver=SQL+Server+Native+Client+11.0')
+
     return ''.join(url)
 
 engine_url = build_engine_url()

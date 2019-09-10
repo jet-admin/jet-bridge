@@ -18,7 +18,7 @@
   },
   "env": {
     "DATABASE_ENGINE": {
-      "description": "Database engine, one of: postgresql, mysql, oracle, mssql, sqlite"
+      "description": "Database engine, one of: postgresql, mysql, oracle, mssql+pyodbc, sqlite"
     },
     "DATABASE_HOST": {
       "description": "database host"
@@ -34,6 +34,10 @@
     },
     "DATABASE_PASSWORD": {
       "description": "database password"
+    },
+    "DATABASE_EXTRA": {
+      "description": "database extra",
+      "required": false
     }
   }
 }

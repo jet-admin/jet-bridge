@@ -1,10 +1,27 @@
-from datetime import datetime
+from datetime import datetime, tzinfo, timedelta
 
 import logging
 import requests
 
 from jet_bridge import settings, VERSION
 from jet_bridge.models.token import Token
+
+try:
+    from datetime import timezone
+    utc = timezone.utc
+except ImportError:
+    # Python 2
+    class UTC(tzinfo):
+        def utcoffset(self, dt):
+            return timedelta(0)
+
+        def tzname(self, dt):
+            return "UTC"
+
+        def dst(self, dt):
+            return timedelta(0)
+
+    utc = UTC()
 
 
 def api_method_url(method):
@@ -84,17 +101,19 @@ def set_token(session, token):
     project_token = session.query(Token).first()
     token_clean = str(token).replace('-', '')
 
+    now = datetime.now().replace(tzinfo=utc)
+
     if project_token:
         if project_token.token == token_clean:
             logging.info('This token is already set, ignoring')
             return
 
         project_token.token = token_clean
-        project_token.date_add = datetime.now()
+        project_token.date_add = now
         session.commit()
         logging.info('Token changed to {}'.format(project_token.token))
     else:
-        project_token = Token(token=token_clean, date_add=datetime.now())
+        project_token = Token(token=token_clean, date_add=now)
         session.add(project_token)
         session.commit()
         logging.info('Token created {}'.format(project_token.token))
