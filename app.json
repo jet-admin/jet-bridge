@@ -34,6 +34,10 @@
     },
     "DATABASE_PASSWORD": {
       "description": "database password"
+    },
+    "DATABASE_EXTRA": {
+      "description": "database extra",
+      "required": false
     }
   }
 }
