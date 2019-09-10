@@ -49,6 +49,9 @@ def build_engine_url():
     if settings.DATABASE_ENGINE == 'mysql':
         url.append('?charset=utf8')
 
+    if settings.DATABASE_EXTRA:
+        url.append(settings.DATABASE_EXTRA)
+
     return ''.join(url)
 
 engine_url = build_engine_url()

@@ -32,6 +32,7 @@ define('database_port', help='database port')
 define('database_user', help='database user')
 define('database_password', help='database password')
 define('database_name', help='database name or path')
+define('database_extra', default=None, help='database extra parameters')
 
 required_options = [
     'address',
@@ -82,3 +83,4 @@ DATABASE_PORT = options.database_port
 DATABASE_USER = options.database_user
 DATABASE_PASSWORD = options.database_password
 DATABASE_NAME = options.database_name
+DATABASE_EXTRA = options.database_extra
