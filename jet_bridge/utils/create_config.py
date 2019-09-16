@@ -1,3 +1,5 @@
+from __future__ import unicode_literals
+
 import os
 
 from prompt_toolkit import prompt, print_formatted_text, HTML
