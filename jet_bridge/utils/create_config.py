@@ -141,7 +141,7 @@ def create_config():
                 error_message='Database port is required',
                 move_cursor_to_end=True
             ),
-            default=default_port
+            default='{0}'.format(default_port)
         )
 
         print_formatted_text('')
@@ -176,7 +176,7 @@ def create_config():
 
     config = prompt(
         promt_message('<green><b>Where to store config file?</b></green>\nDefault is jet.conf inside current working directory\n[{}]'.format(os.path.abspath(settings.DEFAULT_CONFIG_PATH))),
-        default=settings.DEFAULT_CONFIG_PATH
+        default='{0}'.format(settings.DEFAULT_CONFIG_PATH)
     )
 
     config_content = {
