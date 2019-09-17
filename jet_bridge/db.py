@@ -58,26 +58,23 @@ def build_engine_url():
 engine_url = build_engine_url()
 Session = None
 
-if not engine_url:
-    raise Exception('Database configuration is not set')
+if engine_url:
+    if settings.DATABASE_ENGINE == 'sqlite':
+        engine = create_engine(engine_url)
+    else:
+        engine = create_engine(engine_url, pool_size=settings.CONNECTIONS, max_overflow=10)
 
-if settings.DATABASE_ENGINE == 'sqlite':
-    engine = create_engine(engine_url)
-else:
-    engine = create_engine(engine_url, pool_size=settings.CONNECTIONS, max_overflow=10)
+    Session = sessionmaker(bind=engine)
 
-Session = sessionmaker(bind=engine)
+    logging.info('Connected to database engine "{}" with name "{}"'.format(settings.DATABASE_ENGINE, settings.DATABASE_NAME))
 
-logging.info('Connected to database engine "{}" with name "{}"'.format(settings.DATABASE_ENGINE, settings.DATABASE_NAME))
+    Base.metadata.create_all(engine)
 
-Base.metadata.create_all(engine)
+    metadata = MetaData()
+    metadata.reflect(engine)
+    MappedBase = automap_base(metadata=metadata)
 
-metadata = MetaData()
-metadata.reflect(engine)
-MappedBase = automap_base(metadata=metadata)
+    def name_for_scalar_relationship(base, local_cls, referred_cls, constraint):
+        return referred_cls.__name__.lower() + '_relation'
 
-
-def name_for_scalar_relationship(base, local_cls, referred_cls, constraint):
-    return referred_cls.__name__.lower() + '_relation'
-
-MappedBase.prepare(name_for_scalar_relationship=name_for_scalar_relationship)
+    MappedBase.prepare(name_for_scalar_relationship=name_for_scalar_relationship)

@@ -1,4 +1,3 @@
-from datetime import datetime
 import webbrowser
 import logging
 
@@ -9,24 +8,12 @@ import tornado.web
 
 import jet_bridge.adapters.postgres
 
-from jet_bridge import settings, VERSION
-from jet_bridge.settings import missing_options
+from jet_bridge import settings
 from jet_bridge.utils.backend import is_token_activated, get_token, register_token
-from jet_bridge.utils.create_config import create_config
 from jet_bridge.db import Session
 
 
 def run_command():
-    logging.info(datetime.now().strftime('%B %d, %Y - %H:%M:%S %Z'))
-    logging.info('Jet Bridge version {}'.format(VERSION))
-
-    if missing_options == settings.required_options_without_default:
-        create_config()
-        return
-    elif len(missing_options) and len(missing_options) < len(settings.required_options_without_default):
-        logging.info('Required options are not specified: {}'.format(', '.join(missing_options)))
-        return
-
     from jet_bridge.app import make_app
 
     app = make_app()
