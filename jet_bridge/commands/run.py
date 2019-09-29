@@ -40,6 +40,7 @@ def run_command():
             register_url = '{}api/register/?token={}'.format(url, token)
             logging.warning('[!] Your server token is not activated')
             logging.warning('[!] Token: {}'.format(token))
+            logging.warning('[!] Go to {} to activate it'.format(settings.WEB_BASE_URL))
 
             if settings.AUTO_OPEN_REGISTER and webbrowser.open(register_url):
                 logging.warning('[!] Activation page was opened in your browser - {}'.format(register_url))
