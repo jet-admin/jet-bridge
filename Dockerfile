@@ -16,8 +16,9 @@ RUN pip install psycopg2 mysqlclient pyodbc
 RUN pip install GeoAlchemy2==0.6.2 Shapely==1.6.4
 COPY requirements.txt ./
 RUN pip install -r requirements.txt
-COPY ./ /jet_bridge
-RUN pip install -e /jet_bridge
+COPY packages /packages
+RUN pip install -e /packages/jet_bridge_base
+RUN pip install -e /packages/jet_bridge
 
 #USER jet
 
