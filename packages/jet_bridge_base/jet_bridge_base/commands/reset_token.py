@@ -5,8 +5,9 @@ from jet_bridge_base.db import Session
 
 
 def reset_token_command():
+    session = Session()
+
     try:
-        session = Session()
         token, created = reset_token(session)
 
         logging.info('Token reset')

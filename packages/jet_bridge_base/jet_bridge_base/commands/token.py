@@ -5,8 +5,9 @@ from jet_bridge_base.db import Session
 
 
 def token_command():
+    session = Session()
+
     try:
-        session = Session()
         token = get_token(session)
 
         if token:

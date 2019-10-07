@@ -6,8 +6,9 @@ from jet_bridge_base.db import Session
 
 
 def set_token_command(token):
+    session = Session()
+
     try:
-        session = Session()
         token = uuid.UUID(token) if token else None
 
         if not token:
