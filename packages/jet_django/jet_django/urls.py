@@ -28,7 +28,6 @@ def init_urls():
         url(r'^messages/', route_view(MessageView).as_view(), name='message'),
         url(r'^file_upload/', route_view(FileUploadView).as_view(), name='file-upload'),
         url(r'^image_resize/', route_view(ImageResizeView).as_view(), name='image-resize'),
-
     ]
 
     api_urls = router.urls + extra_urls

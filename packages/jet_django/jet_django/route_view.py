@@ -9,9 +9,11 @@ from jet_bridge_base.status import HTTP_204_NO_CONTENT
 
 
 class BaseRouteView(generic.View):
+    view_cls = None
     view = None
 
     def prepare(self):
+        self.view = self.view_cls()
         self.view.request = Request(
             self.request.method.upper(),
             self.request.scheme,
@@ -19,11 +21,11 @@ class BaseRouteView(generic.View):
             self.request.path,
             self.kwargs,
             self.request.get_full_path(),
-            self.request.GET,
+            dict(self.request.GET.lists()),
             self.request.META,
             self.request.body,
-            self.request.POST,
-            self.request.FILES
+            dict(self.request.POST.lists()),
+            self.request.FILES.dict()
         )
 
         self.view.prepare()
@@ -87,6 +89,6 @@ class BaseRouteView(generic.View):
 
 def route_view(cls):
     class RouteView(BaseRouteView):
-        view = cls()
+        view_cls = cls
 
     return RouteView

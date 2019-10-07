@@ -31,8 +31,8 @@ class Router(object):
         for method, method_action in actions.items():
             def create_action_method(action):
                 def action_method(inner_self, *args, **kwargs):
-                    inner_self.view.action = action
                     inner_self.prepare()
+                    inner_self.view.action = action
                     response = getattr(inner_self.view, action)(*args, **kwargs)
                     inner_self.on_finish()
                     return inner_self.write_response(response)
@@ -45,7 +45,7 @@ class Router(object):
         self.urls.append(url(url_, ActionHandler.as_view()))
 
     def add_route_actions(self, view, route, prefix):
-        viewset = view.view
+        viewset = view.view_cls
         actions = route['method_mapping']
         actions = dict(filter(lambda x: hasattr(viewset, x[1]), actions.items()))
 
@@ -56,7 +56,7 @@ class Router(object):
         self.add_handler(view, url, actions)
 
     def add_route_extra_actions(self, view, route, prefix):
-        viewset = view.view
+        viewset = view.view_cls
         for attr in dir(viewset):
             method = getattr(viewset, attr)
             bind_to_methods = getattr(method, 'bind_to_methods', None)
