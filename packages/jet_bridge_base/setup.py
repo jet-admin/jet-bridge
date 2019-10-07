@@ -13,22 +13,30 @@ def read(fname):
 
 def get_install_requires():
     install_requires = [
-        'tornado==5.1.1',
+        'sqlalchemy',
         'six',
-        'jet_bridge_base',
+        'requests',
+        'Pillow',
+        'dateparser',
+        'prompt_toolkit==2.0.9',
     ]
+
+    try:
+        from collections import OrderedDict
+    except ImportError:
+        install_requires.append('ordereddict')
 
     return install_requires
 
 setup(
-    name='jet_bridge',
-    version=__import__('jet_bridge').VERSION,
+    name='jet_bridge_base',
+    version=__import__('jet_bridge_base').VERSION,
     description='',
     long_description=read('README.md'),
     long_description_content_type='text/markdown',
     author='Denis Kildishev',
     author_email='support@jetadmin.io',
-    url='https://github.com/jet-admin/jet-bridge',
+    url='https://github.com/jet-admin/jet-bridge-base',
     packages=find_packages(),
     license='MIT',
     classifiers=[
@@ -36,10 +44,5 @@ setup(
     ],
     zip_safe=False,
     include_package_data=True,
-    install_requires=get_install_requires(),
-    entry_points={
-        'console_scripts': [
-            'jet_bridge = jet_bridge.__main__:main',
-        ],
-    },
+    install_requires=get_install_requires()
 )
