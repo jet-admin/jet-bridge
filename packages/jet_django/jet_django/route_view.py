@@ -12,6 +12,15 @@ class BaseRouteView(generic.View):
     view_cls = None
     view = None
 
+    def request_headers(self):
+        def filter_header_key(k):
+            return k.startswith('HTTP_') or k in ['CONTENT_LENGTH', 'CONTENT_TYPE']
+
+        def map_header_key(k):
+            return k[len('HTTP_'):] if k.startswith('HTTP_') else k
+
+        return {map_header_key(k): v for k, v in self.request.META.items() if filter_header_key(k)}
+
     def prepare(self):
         self.view = self.view_cls()
         self.view.request = Request(
@@ -22,7 +31,7 @@ class BaseRouteView(generic.View):
             self.kwargs,
             self.request.get_full_path(),
             dict(self.request.GET.lists()),
-            self.request.META,
+            self.request_headers(),
             self.request.body,
             dict(self.request.POST.lists()),
             self.request.FILES.dict()

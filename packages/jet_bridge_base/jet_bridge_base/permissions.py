@@ -18,8 +18,8 @@ class HasProjectPermissions(BasePermission):
     project_token_prefix = 'ProjectToken '
 
     def has_permission(self, view):
-        return True
-        token = view.request.headers.get('Authorization')
+        # return True
+        token = view.request.headers.get('AUTHORIZATION')
         session_create = not getattr(view, 'session')
         permission = view.required_project_permission() if hasattr(view, 'required_project_permission') else None
 

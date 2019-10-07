@@ -15,6 +15,9 @@ from jet_bridge_base.status import HTTP_204_NO_CONTENT
 class BaseViewHandler(tornado.web.RequestHandler):
     view = None
 
+    def request_headers(self):
+        return {k.upper(): v for k, v in self.request.headers.items()}
+
     def prepare(self):
         self.view.request = Request(
             self.request.method.upper(),
@@ -24,7 +27,7 @@ class BaseViewHandler(tornado.web.RequestHandler):
             self.path_kwargs,
             self.request.uri,
             self.request.query_arguments,
-            self.request.headers,
+            self.request_headers(),
             self.request.body,
             self.request.body_arguments,
             self.request.files

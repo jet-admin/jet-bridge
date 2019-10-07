@@ -8,7 +8,7 @@ class APIView(object):
     permission_classes = []
 
     def prepare(self):
-        method_override = self.request.headers.get('X-Http-Method-Override')
+        method_override = self.request.headers.get('X-HTTP-METHOD-OVERRIDE')
         if method_override is not None:
             self.request.method = method_override
 
