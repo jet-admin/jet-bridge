@@ -10,5 +10,6 @@ class JetDjangoConfig(AppConfig):
     name = 'jet_django'
 
     def ready(self):
+        from jet_django.models.token import Token
         from jet_bridge_base.commands.check_token import check_token_command
         check_token_command('/jet_api/')
