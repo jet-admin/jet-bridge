@@ -1,10 +1,12 @@
 from django.http import HttpResponse, HttpResponseRedirect
+from django.http.response import HttpResponseBase
 from django.views import generic
 from django.views.decorators.csrf import csrf_exempt
 
 from jet_bridge_base.exceptions.not_found import NotFound
 from jet_bridge_base.request import Request
 from jet_bridge_base.responses.base import Response
+from jet_bridge_base.responses.optional_json import OptionalJSONResponse
 from jet_bridge_base.responses.redirect import RedirectResponse
 from jet_bridge_base.status import HTTP_204_NO_CONTENT
 
@@ -45,9 +47,11 @@ class BaseRouteView(generic.View):
 
     def write_response(self, response):
         if isinstance(response, RedirectResponse):
-            return HttpResponseRedirect(response.url, status=response.status)
-
-        result = HttpResponse(response.render(), status=response.status)
+            result = HttpResponseRedirect(response.url, status=response.status)
+        elif isinstance(response, OptionalJSONResponse) and isinstance(response.data, HttpResponseBase):
+            result = response.data
+        else:
+            result = HttpResponse(response.render(), status=response.status)
 
         for name, value in self.view.default_headers().items():
             result[name] = value

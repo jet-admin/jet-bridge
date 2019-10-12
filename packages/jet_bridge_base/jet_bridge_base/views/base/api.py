@@ -46,7 +46,7 @@ class APIView(object):
             ACCESS_CONTROL_ALLOW_ORIGIN: '*',
             ACCESS_CONTROL_ALLOW_METHODS: 'GET, POST, PUT, PATCH, DELETE, OPTIONS',
             ACCESS_CONTROL_ALLOW_HEADERS: 'Authorization,DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,X-Application-Warning,X-HTTP-Method-Override',
-            ACCESS_CONTROL_EXPOSE_HEADERS: 'Content-Length,Content-Range,X-Application-Warning',
+            ACCESS_CONTROL_EXPOSE_HEADERS: 'Content-Length,Content-Range,Content-Disposition,Content-Type,X-Application-Warning',
             ACCESS_CONTROL_ALLOW_CREDENTIALS: 'true'
         }
 
