@@ -1,5 +1,6 @@
-from django.views import generic
 from django.http import HttpResponse, HttpResponseRedirect
+from django.views import generic
+from django.views.decorators.csrf import csrf_exempt
 
 from jet_bridge_base.exceptions.not_found import NotFound
 from jet_bridge_base.request import Request
@@ -94,6 +95,13 @@ class BaseRouteView(generic.View):
         response = super(BaseRouteView, self).dispatch(*args, **kwargs)
         self.on_finish()
         return response
+
+    @classmethod
+    def as_view(cls, **initkwargs):
+        view = super(BaseRouteView, cls).as_view(**initkwargs)
+        view.cls = cls
+        view.initkwargs = initkwargs
+        return csrf_exempt(view)
 
 
 def route_view(cls):
