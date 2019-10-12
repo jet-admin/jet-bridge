@@ -153,7 +153,7 @@ class ModelViewSet(ModelAPIViewMixin):
         queryset = self.filter_queryset(self.get_queryset())
         ReorderSerializer = get_reorder_serializer(self.get_model(), queryset, self.session)
 
-        serializer = ReorderSerializer(data=self.data)
+        serializer = ReorderSerializer(data=self.request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
 
@@ -164,7 +164,7 @@ class ModelViewSet(ModelAPIViewMixin):
         queryset = self.filter_queryset(self.get_queryset())
         ResetOrderSerializer = get_reset_order_serializer(self.get_model(), queryset, self.session)
 
-        serializer = ResetOrderSerializer(data=self.data)
+        serializer = ResetOrderSerializer(data=self.request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
 
