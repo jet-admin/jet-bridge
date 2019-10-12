@@ -1,5 +1,16 @@
 from collections import Mapping
 
+from jet_bridge_base.exceptions.validation_error import ValidationError
+
+class empty:
+    """
+    This class is used to represent no data being provided for a given input
+    or output value.
+
+    It is required because `None` may be a valid input or output value.
+    """
+    pass
+
 
 class Field(object):
     field_name = None
@@ -20,7 +31,7 @@ class Field(object):
             else:
                 field_value = getattr(data, self.field_name)
         except (KeyError, AttributeError):
-            return
+            return empty
 
         if not getattr(self, 'many', False) and isinstance(field_value, list):
             field_value = field_value[0]
@@ -31,8 +42,12 @@ class Field(object):
         return field_value
 
     def run_validation(self, value):
-        value = self.to_internal_value(value)
-        return value
+        if value is empty:
+            if self.required:
+                raise ValidationError('Field is required')
+            else:
+                return value
+        return self.to_internal_value(value)
 
     def to_internal_value_item(self, value):
         raise NotImplementedError
