@@ -3,11 +3,11 @@ import os
 import tornado.ioloop
 import tornado.web
 
+from jet_bridge.handlers.temporary_redirect import TemporaryRedirectHandler
 from jet_bridge_base import media, settings as base_settings
 from jet_bridge_base.views.api import ApiView
 from jet_bridge_base.views.image_resize import ImageResizeView
 from jet_bridge_base.views.file_upload import FileUploadView
-from jet_bridge_base.views.main import MainView
 from jet_bridge_base.views.message import MessageView
 from jet_bridge_base.views.model import ModelViewSet
 from jet_bridge_base.views.model_description import ModelDescriptionView
@@ -26,7 +26,7 @@ def make_app():
     router.register('/api/models/(?P<model>[^/]+)/', view_handler(ModelViewSet))
 
     urls = [
-        (r'/', view_handler(MainView)),
+        (r'/', TemporaryRedirectHandler, {'url': "/api/"}),
         (r'/register/', view_handler(RegisterView)),
         (r'/api/', view_handler(ApiView)),
         (r'/api/register/', view_handler(RegisterView)),
