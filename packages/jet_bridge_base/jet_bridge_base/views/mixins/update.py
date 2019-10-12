@@ -19,3 +19,7 @@ class UpdateAPIViewMixin(object):
 
     def perform_update(self, serializer):
         serializer.save()
+
+    def partial_update(self, request, *args, **kwargs):
+        kwargs['partial'] = True
+        return self.update(request, *args, **kwargs)
