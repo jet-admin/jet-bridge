@@ -19,7 +19,7 @@ class FileUploadView(APIView):
 
         return name
 
-    def post(self):
+    def post(self, *args, **kwargs):
         # TODO: Move to serializer
         file = self.request.files.get('file', [])[0]
         path = self.request.data.get('path')

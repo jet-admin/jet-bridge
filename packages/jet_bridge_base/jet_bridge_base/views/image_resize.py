@@ -25,7 +25,7 @@ class ImageResizeView(APIView):
 
         img.save(thumbnail_path, format=img.format, quality=85)  # TODO: determine real extension from format
 
-    def get(self):
+    def get(self, *args, **kwargs):
         # TODO: Move to serializer
 
         path = self.request.get_argument('path')
