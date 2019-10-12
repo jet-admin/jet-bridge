@@ -4,6 +4,7 @@ import sys
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 CURRENT_MODULE = sys.modules[__name__]
 
+BRIDGE_TYPE = 'jet_bridge'
 DEBUG = None
 READ_ONLY = None
 AUTO_OPEN_REGISTER = None

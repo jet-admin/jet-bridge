@@ -25,6 +25,7 @@ elif connection.vendor == 'sqlite':
     database_engine = 'sqlite'
 
 set_settings({
+    'BRIDGE_TYPE': 'jet_django',
     'DEBUG': settings.DEBUG,
     'READ_ONLY': JET_READ_ONLY,
     'WEB_BASE_URL': JET_BACKEND_WEB_BASE_URL,

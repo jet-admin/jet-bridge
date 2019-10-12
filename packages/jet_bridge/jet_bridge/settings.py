@@ -88,6 +88,7 @@ DATABASE_NAME = options.database_name
 DATABASE_EXTRA = options.database_extra
 
 set_settings({
+    'BRIDGE_TYPE': 'jet_bridge',
     'DEBUG': DEBUG,
     'READ_ONLY': READ_ONLY,
     'AUTO_OPEN_REGISTER': AUTO_OPEN_REGISTER,

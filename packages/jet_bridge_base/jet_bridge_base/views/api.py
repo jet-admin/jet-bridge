@@ -10,6 +10,6 @@ class ApiView(APIView):
             else self.build_absolute_uri('/media/{}')
         return JSONResponse({
             'version': VERSION,
-            'type': 'jet_bridge',
+            'type': settings.BRIDGE_TYPE,
             'media_url_template': media_url_base
         })
