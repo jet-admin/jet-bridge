@@ -33,7 +33,7 @@ class Request(object):
         self.body_arguments = body_arguments or {}
         self.files = files or {}
 
-        content_type = self.headers.get('CONTENT-TYPE', '')
+        content_type = self.headers.get('CONTENT_TYPE', '')
 
         if content_type.startswith('application/json'):
             self.data = json.loads(self.body)

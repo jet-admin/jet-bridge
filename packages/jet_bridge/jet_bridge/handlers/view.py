@@ -16,7 +16,7 @@ class BaseViewHandler(tornado.web.RequestHandler):
     view = None
 
     def request_headers(self):
-        return {k.upper(): v for k, v in self.request.headers.items()}
+        return {k.upper().replace('-', '_'): v for k, v in self.request.headers.items()}
 
     def prepare(self):
         self.view.request = Request(
