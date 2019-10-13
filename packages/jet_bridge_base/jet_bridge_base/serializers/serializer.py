@@ -130,9 +130,15 @@ class Serializer(Field):
 
         for field in self.readable_fields:
             if isinstance(value, Mapping):
-                field_value = value[field.field_name]
+                field_value = value.get(field.field_name, empty)
             else:
-                field_value = getattr(value, field.field_name)
+                field_value = getattr(value, field.field_name, empty)
+
+            if field_value is empty:
+                if not field.required:
+                    continue
+                else:
+                    field_value = None
 
             result[field.field_name] = field.to_representation(field_value)
 
