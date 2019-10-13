@@ -2,8 +2,6 @@ import os
 from tornado.options import define, options
 
 from jet_bridge_base.media import MEDIA_STORAGE_DEFAULT
-from jet_bridge_base.settings import set_settings
-
 from jet_bridge.utils.settings import parse_environment, parse_config_file
 
 # Constants
@@ -86,23 +84,3 @@ DATABASE_USER = options.database_user
 DATABASE_PASSWORD = options.database_password
 DATABASE_NAME = options.database_name
 DATABASE_EXTRA = options.database_extra
-
-set_settings({
-    'BRIDGE_TYPE': 'jet_bridge',
-    'DEBUG': DEBUG,
-    'READ_ONLY': READ_ONLY,
-    'AUTO_OPEN_REGISTER': AUTO_OPEN_REGISTER,
-    'WEB_BASE_URL': WEB_BASE_URL,
-    'API_BASE_URL': API_BASE_URL,
-    'MEDIA_STORAGE': MEDIA_STORAGE,
-    'MEDIA_ROOT': MEDIA_ROOT,
-    'MEDIA_BASE_URL': MEDIA_BASE_URL,
-    'DATABASE_ENGINE': DATABASE_ENGINE,
-    'DATABASE_HOST': DATABASE_HOST,
-    'DATABASE_PORT': DATABASE_PORT,
-    'DATABASE_USER': DATABASE_USER,
-    'DATABASE_PASSWORD': DATABASE_PASSWORD,
-    'DATABASE_NAME': DATABASE_NAME,
-    'DATABASE_EXTRA': DATABASE_EXTRA,
-    'DATABASE_CONNECTIONS': CONNECTIONS
-})

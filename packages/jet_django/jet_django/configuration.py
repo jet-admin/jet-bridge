@@ -1,8 +1,10 @@
 from django.apps import apps
+from django.conf import settings as django_settings
 from django.db import models
 from django.contrib.contenttypes.fields import GenericRel, GenericForeignKey, GenericRelation
 
 from jet_bridge_base.configuration import Configuration
+from jet_django import settings
 
 
 class JetDjangoConfiguration(Configuration):
@@ -23,6 +25,26 @@ class JetDjangoConfiguration(Configuration):
 
     def get_hidden_model_description(self):
         return ['__jet__token', 'jet_django_token', 'django_migrations']
+
+    def get_settings(self):
+        return {
+            'BRIDGE_TYPE': 'jet_django',
+            'DEBUG': django_settings.DEBUG,
+            'READ_ONLY': settings.JET_READ_ONLY,
+            'WEB_BASE_URL': settings.JET_BACKEND_WEB_BASE_URL,
+            'API_BASE_URL': settings.JET_BACKEND_API_BASE_URL,
+            # 'MEDIA_STORAGE': MEDIA_STORAGE,
+            # 'MEDIA_ROOT': MEDIA_ROOT,
+            # 'MEDIA_BASE_URL': MEDIA_BASE_URL,
+            'DATABASE_ENGINE': settings.database_engine,
+            'DATABASE_HOST': settings.database_settings.get('HOST'),
+            'DATABASE_PORT': settings.database_settings.get('PORT'),
+            'DATABASE_USER': settings.database_settings.get('USER'),
+            'DATABASE_PASSWORD': settings.database_settings.get('PASSWORD'),
+            'DATABASE_NAME': settings.database_settings.get('NAME'),
+            # 'DATABASE_EXTRA': DATABASE_EXTRA,
+            'DATABASE_CONNECTIONS': 1
+        }
 
     def model_key(self, model):
         return model._meta.db_table

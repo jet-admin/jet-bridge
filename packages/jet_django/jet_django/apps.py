@@ -1,7 +1,7 @@
 import logging
+
 from django.apps import AppConfig
 
-import jet_django.settings
 from jet_bridge_base import configuration
 
 logger = logging.getLogger('jet_django')

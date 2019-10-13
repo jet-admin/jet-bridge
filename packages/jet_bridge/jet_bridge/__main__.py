@@ -5,7 +5,13 @@ import sys
 import tornado.ioloop
 import tornado.web
 
+from jet_bridge_base import configuration
+
 from jet_bridge import settings
+from jet_bridge.configuration import JetBridgeConfiguration
+
+conf = JetBridgeConfiguration()
+configuration.set_configuration(conf)
 
 from jet_bridge_base.commands.check_token import check_token_command
 from jet_bridge_base.utils.create_config import create_config
