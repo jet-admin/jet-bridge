@@ -9,4 +9,6 @@ class MessageSerializer(Serializer):
 
     def save(self):
         handler = get_handler(self.validated_data['name'])
-        return handler(self.validated_data['name'], self.validated_data['params'])
+        if not handler:
+            return
+        return handler(self.validated_data['name'], self.validated_data.get('params', {}))
