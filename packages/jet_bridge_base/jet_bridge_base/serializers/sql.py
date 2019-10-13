@@ -62,6 +62,11 @@ class SqlSerializer(Serializer):
 class SqlsSerializer(Serializer):
     queries = SqlSerializer(many=True)
 
+    class Meta:
+        fields = (
+            'queries',
+        )
+
     def execute(self, data):
         serializer = SqlSerializer()
         return map(lambda x: serializer.execute(x), data['queries'])
