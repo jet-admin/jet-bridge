@@ -77,4 +77,6 @@ class Router(object):
     def register(self, prefix, view):
         for route in self.routes:
             self.add_route_extra_actions(view, route, prefix)
+
+        for route in self.routes:
             self.add_route_actions(view, route, prefix)
