@@ -2,6 +2,7 @@ from collections import Mapping
 
 from jet_bridge_base.exceptions.validation_error import ValidationError
 
+
 class empty:
     """
     This class is used to represent no data being provided for a given input
@@ -13,9 +14,13 @@ class empty:
 
 
 class Field(object):
+    creation_counter = 0
     field_name = None
 
     def __init__(self, *args, **kwargs):
+        self.creation_counter = Field.creation_counter
+        Field.creation_counter += 1
+
         self.required = kwargs.pop('required', True)
         self.read_only = kwargs.pop('read_only', False)
         self.write_only = kwargs.pop('write_only', False)

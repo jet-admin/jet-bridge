@@ -1,10 +1,35 @@
 from collections import OrderedDict, Mapping, Iterable
+import six
 
 from jet_bridge_base.exceptions.validation_error import ValidationError
-from jet_bridge_base.fields.field import Field
-from jet_bridge_base.filters.filter import EMPTY_VALUES
+from jet_bridge_base.fields.field import Field, empty
 
 
+class SerializerMetaclass(type):
+
+    @classmethod
+    def _get_declared_fields(cls, bases, attrs):
+        fields = [(field_name, attrs.pop(field_name))
+                  for field_name, obj in list(attrs.items())
+                  if isinstance(obj, Field)]
+        fields.sort(key=lambda x: x[1].creation_counter)
+
+        for base in reversed(bases):
+            if hasattr(base, '_declared_fields'):
+                fields = [
+                    (field_name, obj) for field_name, obj
+                    in base._declared_fields.items()
+                    if field_name not in attrs
+                ] + fields
+
+        return OrderedDict(fields)
+
+    def __new__(cls, name, bases, attrs):
+        attrs['_declared_fields'] = cls._get_declared_fields(bases, attrs)
+        return super(SerializerMetaclass, cls).__new__(cls, name, bases, attrs)
+
+
+@six.add_metaclass(SerializerMetaclass)
 class Serializer(Field):
     validated_data = None
     fields = []
@@ -23,10 +48,10 @@ class Serializer(Field):
 
         if hasattr(self.meta, 'fields'):
             for field_name in self.meta.fields:
-                assert hasattr(self, field_name), (
+                assert field_name in self._declared_fields, (
                     'No such field %s for serializer %s' % (field_name, self.__class__.__name__)
                 )
-                field = getattr(self, field_name)
+                field = self._declared_fields.get(field_name)
                 field.field_name = field_name
                 fields.append(field)
 
@@ -36,7 +61,7 @@ class Serializer(Field):
                 fields.append(field)
 
         for field_name in dir(self):
-            field = getattr(self, field_name)
+            field = self._declared_fields.get(field_name)
 
             if not isinstance(field, Field):
                 continue
