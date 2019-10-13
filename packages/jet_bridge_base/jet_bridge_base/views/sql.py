@@ -10,8 +10,11 @@ class SqlView(APIView):
     permission_classes = (HasProjectPermissions,)
 
     def post(self, *args, **kwargs):
-        serializer = SqlsSerializer(data=self.request.data) if 'queries' in self.request.data \
-            else SqlSerializer(data=self.request.data)
+        if 'queries' in self.request.data:
+            serializer = SqlsSerializer(data=self.request.data)
+        else:
+            serializer = SqlSerializer(data=self.request.data)
+
         serializer.is_valid(raise_exception=True)
 
         try:
