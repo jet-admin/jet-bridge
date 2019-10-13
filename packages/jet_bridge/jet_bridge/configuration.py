@@ -1,9 +1,12 @@
 from jet_bridge_base.configuration import Configuration
 
-from jet_bridge import settings
+from jet_bridge import settings, VERSION
 
 
 class JetBridgeConfiguration(Configuration):
+
+    def get_version(self):
+        return VERSION
 
     def get_settings(self):
         return {

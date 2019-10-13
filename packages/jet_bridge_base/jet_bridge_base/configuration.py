@@ -3,6 +3,9 @@ from jet_bridge_base.settings import set_settings
 
 class Configuration(object):
 
+    def get_version(self):
+        pass
+
     def get_model_description(self, db_table):
         pass
 

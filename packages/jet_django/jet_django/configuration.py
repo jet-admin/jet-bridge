@@ -4,7 +4,8 @@ from django.db import models
 from django.contrib.contenttypes.fields import GenericRel, GenericForeignKey, GenericRelation
 
 from jet_bridge_base.configuration import Configuration
-from jet_django import settings
+
+from jet_django import settings, VERSION
 
 
 class JetDjangoConfiguration(Configuration):
@@ -19,6 +20,9 @@ class JetDjangoConfiguration(Configuration):
                 if self.model_key(related_model) in self.models:
                     continue
                 self.models[self.model_key(related_model)] = self.serialize_model(related_model)
+
+    def get_version(self):
+        return VERSION
 
     def get_model_description(self, db_table):
         return self.models.get(db_table)
