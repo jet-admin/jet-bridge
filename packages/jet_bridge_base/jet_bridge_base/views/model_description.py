@@ -7,6 +7,7 @@ from jet_bridge_base.permissions import HasProjectPermissions
 from jet_bridge_base.responses.json import JSONResponse
 from jet_bridge_base.serializers.model_description import ModelDescriptionSerializer
 from jet_bridge_base.utils.db_types import map_data_type
+from jet_bridge_base.utils.generic import merge
 from jet_bridge_base.views.base.api import APIView
 
 
@@ -99,14 +100,22 @@ class ModelDescriptionView(APIView):
             mapper = inspect(cls)
             name = mapper.selectable.name
 
-            return {
+            from jet_bridge_base.configuration import configuration
+            additional = configuration.get_model_description(name)
+
+            result = {
                 'model': name,
                 'db_table': name,
                 'fields': list(map(map_column, mapper.columns)),
-                'hidden': name in hidden,
+                'hidden': name in hidden or name in configuration.get_hidden_model_description(),
                 'relations': table_relations(mapper) + table_m2m_relations(mapper),
                 'primary_key_field': mapper.primary_key[0].name
             }
+
+            if additional:
+                result = merge(result, additional)
+
+            return result
 
         return list(map(map_table, MappedBase.classes))
 
