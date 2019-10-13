@@ -44,32 +44,16 @@ class Serializer(Field):
         self.update_fields()
 
     def update_fields(self):
-        fields = []
+        self.fields = self.get_fields()
 
-        if hasattr(self.meta, 'fields'):
-            for field_name in self.meta.fields:
-                assert field_name in self._declared_fields, (
-                    'No such field %s for serializer %s' % (field_name, self.__class__.__name__)
-                )
-                field = self._declared_fields.get(field_name)
-                field.field_name = field_name
-                fields.append(field)
+    def get_fields(self):
+        result = []
 
-        if hasattr(self.meta, 'dynamic_fields'):
-            for field_name, field in self.meta.dynamic_fields.items():
-                field.field_name = field_name
-                fields.append(field)
-
-        for field_name in dir(self):
-            field = self._declared_fields.get(field_name)
-
-            if not isinstance(field, Field):
-                continue
-
+        for field_name, field in self._declared_fields.items():
             field.field_name = field_name
-            fields.append(field)
+            result.append(field)
 
-        self.fields = fields
+        return result
 
     @property
     def readable_fields(self):

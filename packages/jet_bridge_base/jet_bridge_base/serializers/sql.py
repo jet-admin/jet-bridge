@@ -13,12 +13,6 @@ class SqlSerializer(Serializer):
     query = fields.CharField()
     params = SqlParamsSerializers(required=False)
 
-    class Meta:
-        fields = (
-            'query',
-            'params',
-        )
-
     def validate_query(self, value):
         forbidden = ['insert', 'update', 'delete', 'grant', 'show']
         for i in range(len(forbidden)):
@@ -61,11 +55,6 @@ class SqlSerializer(Serializer):
 
 class SqlsSerializer(Serializer):
     queries = SqlSerializer(many=True)
-
-    class Meta:
-        fields = (
-            'queries',
-        )
 
     def execute(self, data):
         serializer = SqlSerializer()

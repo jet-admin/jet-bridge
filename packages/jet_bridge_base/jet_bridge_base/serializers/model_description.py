@@ -12,21 +12,6 @@ class ModelDescriptionFieldSerializer(Serializer):
     params = fields_.JSONField()
     verbose_name = fields_.CharField(required=False)
     required = fields_.BooleanField(required=False)
-    editable = fields_.BooleanField(required=False)
-
-    class Meta:
-        fields = (
-            'name',
-            'db_column',
-            'field',
-            'filterable',
-            'null',
-            'editable',
-            'params',
-            'verbose_name',
-            'required',
-            'editable',
-        )
 
 
 class ModelDescriptionRelationSerializer(Serializer):
@@ -35,15 +20,6 @@ class ModelDescriptionRelationSerializer(Serializer):
     field = fields_.CharField()
     related_model_field = fields_.CharField()
     through = fields_.JSONField()
-
-    class Meta:
-        fields = (
-            'name',
-            'related_model',
-            'field',
-            'related_model_field',
-            'through',
-        )
 
 
 class ModelDescriptionSerializer(Serializer):
@@ -56,14 +32,3 @@ class ModelDescriptionSerializer(Serializer):
     verbose_name = fields_.CharField(required=False)
     verbose_name_plural = fields_.CharField(required=False)
 
-    class Meta:
-        fields = (
-            'model',
-            'db_table',
-            'hidden',
-            'fields',
-            'relations',
-            'primary_key_field',
-            'verbose_name',
-            'verbose_name_plural',
-        )

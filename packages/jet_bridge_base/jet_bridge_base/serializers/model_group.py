@@ -15,8 +15,3 @@ class ModelGroupSerializer(Serializer):
 
         super(ModelGroupSerializer, self).__init__(*args, **kwargs)
 
-    class Meta:
-        fields = (
-            'group',
-            'y_func',
-        )
