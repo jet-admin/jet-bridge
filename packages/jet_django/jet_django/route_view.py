@@ -24,6 +24,13 @@ class BaseRouteView(generic.View):
 
         return {map_header_key(k): v for k, v in self.request.META.items() if filter_header_key(k)}
 
+    def request_files(self):
+        def map_file(arg):
+            key, file = arg
+            return key, (file.name, file.file)
+
+        return dict(map(map_file, self.request.FILES.dict().items()))
+
     def prepare(self):
         self.view = self.view_cls()
         self.view.request = Request(
@@ -37,7 +44,7 @@ class BaseRouteView(generic.View):
             self.request_headers(),
             self.request.body,
             dict(self.request.POST.lists()),
-            self.request.FILES.dict()
+            self.request_files()
         )
 
         self.view.prepare()

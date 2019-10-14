@@ -18,6 +18,14 @@ class BaseViewHandler(tornado.web.RequestHandler):
     def request_headers(self):
         return {k.upper().replace('-', '_'): v for k, v in self.request.headers.items()}
 
+    def request_files(self):
+        def map_file(arg):
+            key, files = arg
+            file = files[0]
+            return key, (file.filename, file.body)
+
+        return dict(map(map_file, self.request.files.items()))
+
     def prepare(self):
         self.view.request = Request(
             self.request.method.upper(),
@@ -30,7 +38,7 @@ class BaseViewHandler(tornado.web.RequestHandler):
             self.request_headers(),
             self.request.body,
             self.request.body_arguments,
-            self.request.files
+            self.request_files()
         )
 
         self.view.prepare()

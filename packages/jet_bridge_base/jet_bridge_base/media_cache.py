@@ -1,7 +1,8 @@
 import os
 import hashlib
 
-from jet_bridge_base import settings
+# from jet_bridge_base import settings
+from jet_bridge_base.configuration import configuration
 
 
 class MediaCache(object):
@@ -11,25 +12,26 @@ class MediaCache(object):
     dir = '_jet_cache'
 
     def __init__(self):
-        if not settings.MEDIA_ROOT:
-            return
-        self.cache_path = os.path.join(settings.MEDIA_ROOT, self.dir)
+        # if not settings.MEDIA_ROOT:
+        #     return
+        # self.cache_path = os.path.join(settings.MEDIA_ROOT, self.dir)
         self.update_files()
 
     def get_files(self):
         files = []
-        for dirpath, dirnames, filenames in os.walk(self.cache_path):
-            for f in filenames:
-                fp = os.path.join(dirpath, f)
-                files.append({
-                    'path': fp,
-                    'size': os.path.getsize(fp)
-                })
-        self.sort_files(files)
+        if configuration.media_exists(self.dir):
+            for directories, files in configuration.media_listdir(self.dir):
+                for f in files:
+                    fp = os.path.join(self.dir, f)
+                    files.append({
+                        'path': fp,
+                        'size': configuration.media_size(fp)
+                    })
+            self.sort_files(files)
         return files
 
     def sort_files(self, files):
-        files.sort(key=lambda x: os.path.getmtime(x['path']))
+        files.sort(key=lambda x: configuration.media_get_modified_time(x['path']))
 
     def get_files_size(self, files):
         total_size = 0
@@ -42,10 +44,11 @@ class MediaCache(object):
         self.size = self.get_files_size(self.files)
 
     def add_file(self, path):
-        size = os.path.getsize(path)
+        absolute_path = cache.full_path(path)
+        size = configuration.media_size(absolute_path)
 
         self.files.append({
-            'path': path,
+            'path': absolute_path,
             'size': size
         })
         self.size += size
@@ -53,7 +56,8 @@ class MediaCache(object):
 
     def clear_cache_if_needed(self):
         while self.size > self.max_cache_size:
-            os.remove(self.files[0]['path'])
+            # os.remove(self.files[0]['path'])
+            configuration.media_delete(self.files[0]['path'])
             self.size -= self.files[0]['size']
             self.files.remove(self.files[0])
 
@@ -62,10 +66,17 @@ class MediaCache(object):
         return '{}{}'.format(hashlib.sha256(path.encode('utf8')).hexdigest(), extension)
 
     def full_path(self, path):
-        return os.path.join(self.cache_path, self.filename(path))
+        return os.path.join(self.dir, self.filename(path))
+
+    def exists(self, path):
+        thumbnail_full_path = self.full_path(path)
+
+        # return os.path.exists(thumbnail_full_path)
+        return configuration.media_exists(thumbnail_full_path)
 
     def url(self, path):
-        base = settings.MEDIA_BASE_URL or '/media'
-        return os.path.join(base, self.dir, self.filename(path))
+        # base = settings.MEDIA_BASE_URL or '/media'
+        # return os.path.join(base, self.dir, self.filename(path))
+        return configuration.media_url(os.path.join(self.dir, self.filename(path)))
 
 cache = MediaCache()

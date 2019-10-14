@@ -15,6 +15,31 @@ class Configuration(object):
     def get_settings(self):
         pass
 
+    def media_get_available_name(self, path):
+        pass
+
+    def media_exists(self, path):
+        pass
+
+    def media_listdir(self, path):
+        pass
+
+    def media_get_modified_time(self, path):
+        pass
+
+    def media_open(self, path, mode='rb'):
+        pass
+
+    def media_save(self, path, content):
+        pass
+
+    def media_delete(self, path):
+        pass
+
+    def media_url(self, path, request):
+        pass
+
+
 configuration = Configuration()
 
 

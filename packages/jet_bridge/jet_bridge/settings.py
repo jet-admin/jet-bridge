@@ -1,7 +1,8 @@
 import os
+
 from tornado.options import define, options
 
-from jet_bridge_base.media import MEDIA_STORAGE_DEFAULT
+from jet_bridge import media
 from jet_bridge.utils.settings import parse_environment, parse_config_file
 
 # Constants
@@ -22,9 +23,8 @@ define('auto_open_register', default=True, help='open token register automatical
 define('web_base_url', default='https://app.jetadmin.io', help='Jet Admin frontend application base URL')
 define('api_base_url', default='https://api.jetadmin.io/api', help='Jet Admin API base URL')
 
-define('media_storage', default=MEDIA_STORAGE_DEFAULT, help='media storage type')
+define('media_storage', default=media.MEDIA_STORAGE_FILE, help='media storage type')
 define('media_root', default='media', help='media root')
-define('media_base_url', default=None, help='media base URL')
 
 define('database_engine', help='database engine (postgresql, mysql, oracle, mssql+pyodbc, sqlite)')
 define('database_host', help='database host')
@@ -75,7 +75,6 @@ API_BASE_URL = options.api_base_url
 
 MEDIA_STORAGE = options.media_storage
 MEDIA_ROOT = options.media_root
-MEDIA_BASE_URL = options.media_base_url
 
 DATABASE_ENGINE = options.database_engine
 DATABASE_HOST = options.database_host

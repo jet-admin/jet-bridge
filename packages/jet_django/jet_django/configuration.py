@@ -1,7 +1,8 @@
 from django.apps import apps
 from django.conf import settings as django_settings
-from django.db import models
 from django.contrib.contenttypes.fields import GenericRel, GenericForeignKey, GenericRelation
+from django.core.files.storage import get_storage_class
+from django.db import models
 
 from jet_bridge_base.configuration import Configuration
 
@@ -10,6 +11,7 @@ from jet_django import settings, VERSION
 
 class JetDjangoConfiguration(Configuration):
     models = dict()
+    media_storage = None
 
     def __init__(self):
         models = apps.get_models()
@@ -20,6 +22,8 @@ class JetDjangoConfiguration(Configuration):
                 if self.model_key(related_model) in self.models:
                     continue
                 self.models[self.model_key(related_model)] = self.serialize_model(related_model)
+
+        self.media_storage = get_storage_class(settings.JET_MEDIA_FILE_STORAGE)()
 
     def get_version(self):
         return VERSION
@@ -37,9 +41,6 @@ class JetDjangoConfiguration(Configuration):
             'READ_ONLY': settings.JET_READ_ONLY,
             'WEB_BASE_URL': settings.JET_BACKEND_WEB_BASE_URL,
             'API_BASE_URL': settings.JET_BACKEND_API_BASE_URL,
-            # 'MEDIA_STORAGE': MEDIA_STORAGE,
-            # 'MEDIA_ROOT': MEDIA_ROOT,
-            # 'MEDIA_BASE_URL': MEDIA_BASE_URL,
             'DATABASE_ENGINE': settings.database_engine,
             'DATABASE_HOST': settings.database_settings.get('HOST'),
             'DATABASE_PORT': settings.database_settings.get('PORT'),
@@ -110,3 +111,35 @@ class JetDjangoConfiguration(Configuration):
                 return False
             return True
         return filter(filter_fields, fields)
+
+    def media_get_available_name(self, path):
+        return self.media_storage.get_available_name(path)
+
+    def media_exists(self, path):
+        return self.media_storage.exists(path)
+
+    def media_listdir(self, path):
+        return self.media_storage.listdir(path)
+
+    def media_get_modified_time(self, path):
+        return self.media_storage.get_modified_time(path)
+
+    def media_size(self, path):
+        return self.media_storage.size(path)
+
+    def media_open(self, path, mode='rb'):
+        return self.media_storage.open(path, mode)
+
+    def media_save(self, path, content):
+        return self.media_storage.save(path, content)
+
+    def media_delete(self, path):
+        self.media_storage.delete(path)
+
+    def media_url(self, path, request):
+        url = '{}{}'.format(django_settings.MEDIA_URL, path)
+
+        if not django_settings.MEDIA_URL.startswith('http://') and not django_settings.MEDIA_URL.startswith('https://'):
+            url = '{}://{}{}'.format(request.protocol, request.host, url)
+
+        return url
