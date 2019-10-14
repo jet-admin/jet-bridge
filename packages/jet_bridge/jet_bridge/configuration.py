@@ -38,6 +38,32 @@ class JetBridgeConfiguration(Configuration):
 
         return path
 
+    def media_exists(self, path):
+        absolute_path = os.path.join(settings.MEDIA_ROOT, path)
+        os.path.exists(absolute_path)
+
+    def media_listdir(self, path):
+        absolute_path = os.path.join(settings.MEDIA_ROOT, path)
+        directories = []
+        files = []
+
+        for dirpath, dirnames, filenames in os.walk(absolute_path):
+            directories.extend(dirnames)
+            files.extend(filenames)
+
+        return directories, files
+
+    def media_get_modified_time(self, path):
+        absolute_path = os.path.join(settings.MEDIA_ROOT, path)
+        return os.path.getmtime(absolute_path)
+
+    def media_size(self, path):
+        absolute_path = os.path.join(settings.MEDIA_ROOT, path)
+        return os.path.getsize(absolute_path)
+
+    def media_open(self, path, mode='rb'):
+        return open(path, mode)
+
     def media_save(self, path, content):
         absolute_path = os.path.join(settings.MEDIA_ROOT, path)
 
@@ -51,6 +77,10 @@ class JetBridgeConfiguration(Configuration):
             f.write(content)
 
         return path
+
+    def media_delete(self, path):
+        absolute_path = os.path.join(settings.MEDIA_ROOT, path)
+        os.remove(absolute_path)
 
     def media_url(self, path, request):
         url = '/media/{}'.format(path)
