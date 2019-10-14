@@ -1,7 +1,6 @@
 import os
 import hashlib
 
-# from jet_bridge_base import settings
 from jet_bridge_base.configuration import configuration
 
 
@@ -12,9 +11,6 @@ class MediaCache(object):
     dir = '_jet_cache'
 
     def __init__(self):
-        # if not settings.MEDIA_ROOT:
-        #     return
-        # self.cache_path = os.path.join(settings.MEDIA_ROOT, self.dir)
         self.update_files()
 
     def get_files(self):
@@ -56,7 +52,6 @@ class MediaCache(object):
 
     def clear_cache_if_needed(self):
         while self.size > self.max_cache_size:
-            # os.remove(self.files[0]['path'])
             configuration.media_delete(self.files[0]['path'])
             self.size -= self.files[0]['size']
             self.files.remove(self.files[0])
@@ -70,13 +65,9 @@ class MediaCache(object):
 
     def exists(self, path):
         thumbnail_full_path = self.full_path(path)
-
-        # return os.path.exists(thumbnail_full_path)
         return configuration.media_exists(thumbnail_full_path)
 
     def url(self, path, request):
-        # base = settings.MEDIA_BASE_URL or '/media'
-        # return os.path.join(base, self.dir, self.filename(path))
         return configuration.media_url(os.path.join(self.dir, self.filename(path)), request)
 
 cache = MediaCache()

@@ -6,8 +6,8 @@ from jet_bridge_base.models import data_types
 from jet_bridge_base.permissions import HasProjectPermissions
 from jet_bridge_base.responses.json import JSONResponse
 from jet_bridge_base.serializers.model_description import ModelDescriptionSerializer
+from jet_bridge_base.utils.common import merge
 from jet_bridge_base.utils.db_types import map_data_type
-from jet_bridge_base.utils.generic import merge
 from jet_bridge_base.views.base.api import APIView
 
 

@@ -22,6 +22,7 @@ class ImageResizeView(APIView):
 
     def get(self, *args, **kwargs):
         # TODO: Move to serializer
+        # TODO: Add options dependant cache name
 
         path = self.request.get_argument('path')
         max_width = self.request.get_argument('max_width', 320)
