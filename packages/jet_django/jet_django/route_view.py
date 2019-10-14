@@ -3,7 +3,6 @@ from django.http.response import HttpResponseBase
 from django.views import generic
 from django.views.decorators.csrf import csrf_exempt
 
-from jet_bridge_base.exceptions.not_found import NotFound
 from jet_bridge_base.request import Request
 from jet_bridge_base.responses.base import Response
 from jet_bridge_base.responses.optional_json import OptionalJSONResponse
@@ -72,33 +71,23 @@ class BaseRouteView(generic.View):
         return self.write_response(Response(status=HTTP_204_NO_CONTENT))
 
     def get(self, *args, **kwargs):
-        if not hasattr(self.view, 'get'):
-            raise NotFound()
-        response = self.view.get(*args, **kwargs)
+        response = self.view.dispatch('get', *args, **kwargs)
         return self.write_response(response)
 
     def post(self, *args, **kwargs):
-        if not hasattr(self.view, 'post'):
-            raise NotFound()
-        response = self.view.post(*args, **kwargs)
+        response = self.view.dispatch('post', *args, **kwargs)
         return self.write_response(response)
 
     def put(self, *args, **kwargs):
-        if not hasattr(self.view, 'put'):
-            raise NotFound()
-        response = self.view.put(*args, **kwargs)
+        response = self.view.dispatch('put', *args, **kwargs)
         return self.write_response(response)
 
     def patch(self, *args, **kwargs):
-        if not hasattr(self.view, 'patch'):
-            raise NotFound()
-        response = self.view.patch(*args, **kwargs)
+        response = self.view.dispatch('patch', *args, **kwargs)
         return self.write_response(response)
 
     def delete(self, *args, **kwargs):
-        if not hasattr(self.view, 'delete'):
-            raise NotFound()
-        response = self.view.delete(*args, **kwargs)
+        response = self.view.dispatch('delete', *args, **kwargs)
         return self.write_response(response)
 
     def dispatch(self, *args, **kwargs):

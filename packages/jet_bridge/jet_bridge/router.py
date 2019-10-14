@@ -30,7 +30,7 @@ class Router(object):
             def create_action_method(action):
                 def action_method(inner_self, *args, **kwargs):
                     inner_self.view.action = action
-                    response = getattr(inner_self.view, action)(*args, **kwargs)
+                    response = inner_self.view.dispatch(action, *args, **kwargs)
                     inner_self.write_response(response)
 
                 return action_method

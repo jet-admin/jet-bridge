@@ -1,5 +1,8 @@
 from jet_bridge_base.db import Session
+from jet_bridge_base.exceptions.not_found import NotFound
 from jet_bridge_base.exceptions.permission_denied import PermissionDenied
+from jet_bridge_base.exceptions.validation_error import ValidationError
+from jet_bridge_base.responses.json import JSONResponse
 
 
 class APIView(object):
@@ -49,6 +52,23 @@ class APIView(object):
             ACCESS_CONTROL_EXPOSE_HEADERS: 'Content-Length,Content-Range,Content-Disposition,Content-Type,X-Application-Warning',
             ACCESS_CONTROL_ALLOW_CREDENTIALS: 'true'
         }
+
+    def handle_exception(self, exc):
+        if isinstance(exc, ValidationError):
+            return JSONResponse({
+                'error': True,
+                'exc': type(exc).__name__
+            })
+
+        raise exc
+
+    def dispatch(self, action, *args, **kwargs):
+        if not hasattr(self, action):
+            raise NotFound()
+        try:
+            return getattr(self, action)(*args, **kwargs)
+        except Exception as e:
+            return self.handle_exception(e)
 
     def build_absolute_uri(self, url):
         return self.request.protocol + "://" + self.request.host + url
