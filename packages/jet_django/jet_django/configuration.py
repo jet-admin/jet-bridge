@@ -119,7 +119,19 @@ class JetDjangoConfiguration(Configuration):
         return self.media_storage.exists(path)
 
     def media_listdir(self, path):
-        return self.media_storage.listdir(path)
+        directories = []
+        files = []
+
+        for dirnames, filenames in self.media_storage.listdir(path):
+            directories.extend(dirnames)
+            files.extend(filenames)
+
+            for dirname in dirnames:
+                directories_inner, files_inner = self.media_listdir(dirname)
+                directories.extend(directories_inner)
+                files.extend(files_inner)
+
+        return directories, files
 
     def media_get_modified_time(self, path):
         return self.media_storage.get_modified_time(path)
