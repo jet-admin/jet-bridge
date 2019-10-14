@@ -1,10 +1,7 @@
 import io
-# import os
-
 from six.moves import urllib
 from PIL import Image
 
-from jet_bridge_base import settings
 from jet_bridge_base.configuration import configuration
 from jet_bridge_base.exceptions.not_found import NotFound
 from jet_bridge_base.media_cache import cache
@@ -18,20 +15,10 @@ class ImageResizeView(APIView):
         img = Image.open(file)
         img.thumbnail((max_width, max_height), Image.ANTIALIAS)
 
-        # if not os.path.exists(os.path.dirname(thumbnail_path)):
-        #     try:
-        #         os.makedirs(os.path.dirname(thumbnail_path))
-        #     except OSError:
-        #         raise
-
-            # fh = storage.open(self.image.name, "w")
-            # format = 'png'  # You need to set the correct image format here
-            # image.save(fh, format)
-            # fh.close()
-
-        with io.BytesIO as memory_file:
+        with io.BytesIO() as memory_file:
             img.save(memory_file, format=img.format, quality=85)  # TODO: determine real extension from format
-            configuration.media_save(thumbnail_path, memory_file)
+            memory_file.seek(0)
+            configuration.media_save(thumbnail_path, memory_file.read())
 
     def get(self, *args, **kwargs):
         # TODO: Move to serializer
@@ -40,20 +27,12 @@ class ImageResizeView(APIView):
         max_width = self.request.get_argument('max_width', 320)
         max_height = self.request.get_argument('max_height', 240)
         external_path = path.startswith('http://') or path.startswith('https://')
-        # thumbnail_full_path = cache.full_path(path)
 
         try:
             if not cache.exists(path):
                 thumbnail_full_path = cache.full_path(path)
 
                 if not external_path:
-                    # file_path = os.path.join(settings.MEDIA_ROOT, path)
-                    #
-                    # if not os.path.exists(file_path):
-                    #     raise NotFound
-                    #
-                    # file = open(file_path)
-
                     if not configuration.media_exists(path):
                         raise NotFound
 
@@ -75,6 +54,6 @@ class ImageResizeView(APIView):
             # self.finish()
 
             # self.redirect(cache.url(path))
-            return RedirectResponse(cache.url(path))
+            return RedirectResponse(cache.url(path, self.request))
         except IOError as e:
             raise e

@@ -122,14 +122,14 @@ class JetDjangoConfiguration(Configuration):
         directories = []
         files = []
 
-        for dirnames, filenames in self.media_storage.listdir(path):
-            directories.extend(dirnames)
-            files.extend(filenames)
+        dirnames, filenames = self.media_storage.listdir(path)
+        directories.extend(dirnames)
+        files.extend(filenames)
 
-            for dirname in dirnames:
-                directories_inner, files_inner = self.media_listdir(dirname)
-                directories.extend(directories_inner)
-                files.extend(files_inner)
+        for dirname in dirnames:
+            directories_inner, files_inner = self.media_listdir(dirname)
+            directories.extend(directories_inner)
+            files.extend(files_inner)
 
         return directories, files
 

@@ -18,17 +18,17 @@ class MediaCache(object):
         self.update_files()
 
     def get_files(self):
-        files = []
+        result = []
         if configuration.media_exists(self.dir):
-            for directories, files in configuration.media_listdir(self.dir):
-                for f in files:
-                    fp = os.path.join(self.dir, f)
-                    files.append({
-                        'path': fp,
-                        'size': configuration.media_size(fp)
-                    })
-            self.sort_files(files)
-        return files
+            directories, files = configuration.media_listdir(self.dir)
+            for f in files:
+                fp = os.path.join(self.dir, f)
+                result.append({
+                    'path': fp,
+                    'size': configuration.media_size(fp)
+                })
+            self.sort_files(result)
+        return result
 
     def sort_files(self, files):
         files.sort(key=lambda x: configuration.media_get_modified_time(x['path']))
@@ -74,9 +74,9 @@ class MediaCache(object):
         # return os.path.exists(thumbnail_full_path)
         return configuration.media_exists(thumbnail_full_path)
 
-    def url(self, path):
+    def url(self, path, request):
         # base = settings.MEDIA_BASE_URL or '/media'
         # return os.path.join(base, self.dir, self.filename(path))
-        return configuration.media_url(os.path.join(self.dir, self.filename(path)))
+        return configuration.media_url(os.path.join(self.dir, self.filename(path)), request)
 
 cache = MediaCache()
