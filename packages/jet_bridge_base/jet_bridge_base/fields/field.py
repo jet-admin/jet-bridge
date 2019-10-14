@@ -51,7 +51,7 @@ class Field(object):
             if self.required:
                 raise ValidationError('Field is required')
             else:
-                return value
+                return None
         return self.to_internal_value(value)
 
     def to_internal_value_item(self, value):

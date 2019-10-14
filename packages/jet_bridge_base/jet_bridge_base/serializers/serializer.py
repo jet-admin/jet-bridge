@@ -94,8 +94,6 @@ class Serializer(Field):
             if field_value is empty:
                 if self.partial or not field.required:
                     continue
-                else:
-                    field_value = None
 
             validate_method = getattr(self, 'validate_' + field.field_name, None)
 
