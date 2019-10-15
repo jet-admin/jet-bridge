@@ -37,11 +37,12 @@ class BaseViewHandler(tornado.web.RequestHandler):
 
         self.view.prepare()
 
-        for name, value in self.view.default_headers().items():
-            self.set_header(name, value)
-
     def on_finish(self):
         self.view.on_finish()
+
+    def set_default_headers(self):
+        for name, value in self.view.default_headers().items():
+            self.set_header(name, value)
 
     def write_response(self, response):
         if isinstance(response, RedirectResponse):

@@ -63,6 +63,14 @@ class BaseRouteView(generic.View):
             result = HttpResponseRedirect(response.url, status=response.status)
         elif isinstance(response, OptionalJSONResponse) and isinstance(response.data, HttpResponseBase):
             result = response.data
+        elif isinstance(response, TemplateResponse):
+            template_path = os.path.join(base_settings.BASE_DIR, 'templates', response.template)
+            with open(template_path, 'r') as file:
+                template = file.read()
+                template = template.replace('{% end %}', '{% endif %}')
+                context = Context(response.data)
+                content = Template(template).render(context)
+                result = HttpResponse(content)
         else:
             result = HttpResponse(response.render(), status=response.status)
 
@@ -71,15 +79,6 @@ class BaseRouteView(generic.View):
 
         for name, value in response.header_items():
             result[name] = value
-
-        if isinstance(response, TemplateResponse):
-            template_path = os.path.join(base_settings.BASE_DIR, 'templates', response.template)
-            with open(template_path, 'r') as file:
-                template = file.read()
-                template = template.replace('{% end %}', '{% endif %}')
-                context = Context(response.data)
-                content = Template(template).render(context)
-                return HttpResponse(content)
 
         return result
 
