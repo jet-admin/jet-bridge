@@ -80,6 +80,7 @@ class JetDjangoConfiguration(Configuration):
     
     def serialize_field(self, field):
         result = {
+            'db_column': field.get_attname_column()[1],
             'verbose_name': field.verbose_name,
             'field': field.__class__.__name__,
             'required': not field.blank,

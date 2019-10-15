@@ -36,7 +36,15 @@ def get_random_string(length, allowed_chars='abcdefghijklmnopqrstuvwxyzABCDEFGHI
     return ''.join(random.choice(allowed_chars) for i in range(length))
 
 
+def find_index(list, predicate):
+    for i, value in enumerate(list):
+        if predicate(value, i):
+            return i
+    return None
+
+
 # TODO: Fix non dict list items
+# TODO: List merge is not universal
 def merge(destination, source):
     for key, value in source.items():
         if isinstance(value, dict):
@@ -44,8 +52,13 @@ def merge(destination, source):
             merge(node, value)
         elif isinstance(value, list):
             node = destination.setdefault(key, [])
-            for i, item in enumerate(value):
-                merge(node[i], value[i])
+
+            for item in value:
+                index = find_index(node, lambda x, i: x['db_column'] == item['db_column'])
+                if index is None:
+                    continue
+                node[index]
+                merge(node[index], item)
         else:
             destination[key] = value
 
