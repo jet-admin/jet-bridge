@@ -1,8 +1,17 @@
+import platform
+from datetime import datetime
+
+import sys
+
+from jet_bridge_base import settings
+from jet_bridge_base.configuration import configuration
 from jet_bridge_base.db import Session
+from jet_bridge_base.exceptions.api import APIException
 from jet_bridge_base.exceptions.not_found import NotFound
 from jet_bridge_base.exceptions.permission_denied import PermissionDenied
 from jet_bridge_base.exceptions.validation_error import ValidationError
 from jet_bridge_base.responses.json import JSONResponse
+from jet_bridge_base.responses.template import TemplateResponse
 
 
 class APIView(object):
@@ -53,22 +62,72 @@ class APIView(object):
             ACCESS_CONTROL_ALLOW_CREDENTIALS: 'true'
         }
 
-    def handle_exception(self, exc):
-        if isinstance(exc, ValidationError):
-            return JSONResponse({
-                'error': True,
-                'exc': type(exc).__name__
-            })
+    # def handle_exception(self, exc):
+    #     if isinstance(exc, ValidationError):
+    #         return JSONResponse({
+    #             'error': True,
+    #             'exc': type(exc).__name__
+    #         })
+    #
+    #     raise exc
 
-        raise exc
+    def error_response(self, exc_type, exc, traceback):
+        # exc_type = exc = traceback = None
+
+        # if kwargs.get('exc_info'):
+        #     exc_type, exc, traceback = kwargs['exc_info']
+
+        # if isinstance(exc, APIException):
+        #     status_code = exc.status_code
+
+        if isinstance(exc, PermissionDenied):
+        # if status_code == status.HTTP_403_FORBIDDEN:
+            return TemplateResponse('403.html', {
+                'path': self.request.path,
+            })
+        # elif status_code == status.HTTP_404_NOT_FOUND:
+        elif isinstance(exc, NotFound):
+            return TemplateResponse('404.html', {
+                'path': self.request.path,
+            })
+        else:
+            if settings.DEBUG:
+                ctx = {
+                    'path': self.request.path,
+                    'full_path': self.request.protocol + "://" + self.request.host + self.request.path,
+                    'method': self.request.method,
+                    'version': configuration.get_version(),
+                    'current_datetime': datetime.now().strftime('%c'),
+                    'python_version': platform.python_version(),
+                    'python_executable': sys.executable,
+                    'python_path': sys.path
+                }
+
+                if exc:
+                    ctx.update({
+                        'exception_type': exc_type.__name__,
+                        'exception_value': str(exc)
+                    })
+
+                if traceback:
+                    last_traceback = traceback
+
+                    while last_traceback.tb_next:
+                        last_traceback = last_traceback.tb_next
+
+                    ctx.update({
+                        'exception_last_traceback_line': last_traceback.tb_lineno,
+                        'exception_last_traceback_name': last_traceback.tb_frame
+                    })
+
+                return TemplateResponse('500.debug.html', ctx)
+            else:
+                return TemplateResponse('500.html')
 
     def dispatch(self, action, *args, **kwargs):
         if not hasattr(self, action):
             raise NotFound()
-        try:
-            return getattr(self, action)(*args, **kwargs)
-        except Exception as e:
-            return self.handle_exception(e)
+        return getattr(self, action)(*args, **kwargs)
 
     def build_absolute_uri(self, url):
         return self.request.protocol + "://" + self.request.host + url

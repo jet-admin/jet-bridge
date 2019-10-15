@@ -1,12 +1,19 @@
+import os
+import sys
 from django.http import HttpResponse, HttpResponseRedirect
 from django.http.response import HttpResponseBase
+from django.template import Template
+from django.template.context import Context
 from django.views import generic
 from django.views.decorators.csrf import csrf_exempt
 
+from jet_bridge_base import settings as base_settings
 from jet_bridge_base.request import Request
 from jet_bridge_base.responses.base import Response
 from jet_bridge_base.responses.optional_json import OptionalJSONResponse
 from jet_bridge_base.responses.redirect import RedirectResponse
+from jet_bridge_base.responses.template import TemplateResponse
+
 from jet_bridge_base.status import HTTP_204_NO_CONTENT
 
 
@@ -65,6 +72,15 @@ class BaseRouteView(generic.View):
         for name, value in response.header_items():
             result[name] = value
 
+        if isinstance(response, TemplateResponse):
+            template_path = os.path.join(base_settings.BASE_DIR, 'templates', response.template)
+            with open(template_path, 'r') as file:
+                template = file.read()
+                template = template.replace('{% end %}', '{% endif %}')
+                context = Context(response.data)
+                content = Template(template).render(context)
+                return HttpResponse(content)
+
         return result
 
     def options(self, request, *args, **kwargs):
@@ -91,10 +107,15 @@ class BaseRouteView(generic.View):
         return self.write_response(response)
 
     def dispatch(self, *args, **kwargs):
-        self.prepare()
-        response = super(BaseRouteView, self).dispatch(*args, **kwargs)
-        self.on_finish()
-        return response
+        try:
+            self.prepare()
+            response = super(BaseRouteView, self).dispatch(*args, **kwargs)
+            self.on_finish()
+            return response
+        except Exception:
+            exc_type, exc, traceback = sys.exc_info()
+            response = self.view.error_response(exc_type, exc, traceback)
+            return self.write_response(response)
 
     @classmethod
     def as_view(cls, **initkwargs):
