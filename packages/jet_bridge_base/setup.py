@@ -29,7 +29,7 @@ def get_install_requires():
     return install_requires
 
 setup(
-    name='jet_bridge_base',
+    name='jet-bridge-base',
     version=__import__('jet_bridge_base').VERSION,
     description='',
     long_description=read('README.md'),

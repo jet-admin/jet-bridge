@@ -15,13 +15,13 @@ def get_install_requires():
     install_requires = [
         'tornado==5.1.1',
         'six',
-        'jet_bridge_base',
+        'jet-bridge-base==0.4.9',
     ]
 
     return install_requires
 
 setup(
-    name='jet_bridge',
+    name='jet-bridge',
     version=__import__('jet_bridge').VERSION,
     description='',
     long_description=read('README.md'),

@@ -12,7 +12,11 @@ def read(fname):
 
 
 def get_install_requires():
-    install_requires = ['Django', 'requests', 'jet_bridge_base']
+    install_requires = [
+        'Django',
+        'requests',
+        'jet-bridge-base==0.4.9'
+    ]
 
     try:
         from collections import OrderedDict
