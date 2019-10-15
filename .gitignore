@@ -3,6 +3,5 @@
 *.egg*
 
 /.idea
-/dist/
-/build/
-/docs/_build/
+/packages/*/dist/
+/packages/*/build/
