@@ -55,7 +55,7 @@ class BaseViewHandler(tornado.web.RequestHandler):
             self.set_status(response.status)
 
         if isinstance(response, TemplateResponse):
-            self.render(response.template, **response.data)
+            self.render(response.template, **(response.data or {}))
             return
 
         self.finish(response.render())
