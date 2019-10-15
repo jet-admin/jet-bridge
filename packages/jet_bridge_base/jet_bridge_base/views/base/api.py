@@ -96,6 +96,7 @@ class APIView(object):
                     'path': self.request.path,
                     'full_path': self.request.protocol + "://" + self.request.host + self.request.path,
                     'method': self.request.method,
+                    'type': configuration.get_type(),
                     'version': configuration.get_version(),
                     'current_datetime': datetime.now().strftime('%c'),
                     'python_version': platform.python_version(),

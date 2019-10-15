@@ -25,6 +25,9 @@ class JetDjangoConfiguration(Configuration):
 
         self.media_storage = get_storage_class(settings.JET_MEDIA_FILE_STORAGE)()
 
+    def get_type(self):
+        return 'jet_django'
+
     def get_version(self):
         return VERSION
 
@@ -36,7 +39,6 @@ class JetDjangoConfiguration(Configuration):
 
     def get_settings(self):
         return {
-            'BRIDGE_TYPE': 'jet_django',
             'DEBUG': django_settings.DEBUG,
             'READ_ONLY': settings.JET_READ_ONLY,
             'WEB_BASE_URL': settings.JET_BACKEND_WEB_BASE_URL,

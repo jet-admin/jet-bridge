@@ -8,12 +8,14 @@ from jet_bridge import settings, VERSION
 
 class JetBridgeConfiguration(Configuration):
 
+    def get_type(self):
+        return 'jet_bridge'
+
     def get_version(self):
         return VERSION
 
     def get_settings(self):
         return {
-            'BRIDGE_TYPE': 'jet_bridge',
             'DEBUG': settings.DEBUG,
             'READ_ONLY': settings.READ_ONLY,
             'AUTO_OPEN_REGISTER': settings.AUTO_OPEN_REGISTER,

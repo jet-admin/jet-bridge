@@ -4,7 +4,6 @@ import sys
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 CURRENT_MODULE = sys.modules[__name__]
 
-BRIDGE_TYPE = ''
 DEBUG = False
 READ_ONLY = False
 AUTO_OPEN_REGISTER = True
