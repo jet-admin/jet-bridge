@@ -154,7 +154,7 @@
         </tr>
         <tr>
           <th>Exception Location:</th>
-          <td>{{ exception_last_traceback_name }}, line {{ exception_last_traceback_line }}</td>
+          <td>{{ exception_last_traceback_func }} in {{ exception_last_traceback_file }}, line {{ exception_last_traceback_line }}</td>
         </tr>
     {% end %}
     <tr>

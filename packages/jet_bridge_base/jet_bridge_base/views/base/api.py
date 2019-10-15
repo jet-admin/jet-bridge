@@ -62,30 +62,14 @@ class APIView(object):
             ACCESS_CONTROL_ALLOW_CREDENTIALS: 'true'
         }
 
-    # def handle_exception(self, exc):
-    #     if isinstance(exc, ValidationError):
-    #         return JSONResponse({
-    #             'error': True,
-    #             'exc': type(exc).__name__
-    #         })
-    #
-    #     raise exc
-
     def error_response(self, exc_type, exc, traceback):
-        # exc_type = exc = traceback = None
-
-        # if kwargs.get('exc_info'):
-        #     exc_type, exc, traceback = kwargs['exc_info']
-
         # if isinstance(exc, APIException):
         #     status_code = exc.status_code
 
         if isinstance(exc, PermissionDenied):
-        # if status_code == status.HTTP_403_FORBIDDEN:
             return TemplateResponse('403.html', {
                 'path': self.request.path,
             })
-        # elif status_code == status.HTTP_404_NOT_FOUND:
         elif isinstance(exc, NotFound):
             return TemplateResponse('404.html', {
                 'path': self.request.path,
@@ -94,7 +78,7 @@ class APIView(object):
             if settings.DEBUG:
                 ctx = {
                     'path': self.request.path,
-                    'full_path': self.request.protocol + "://" + self.request.host + self.request.path,
+                    'full_path': self.request.protocol + '://' + self.request.host + self.request.path,
                     'method': self.request.method,
                     'type': configuration.get_type(),
                     'version': configuration.get_version(),
@@ -116,9 +100,15 @@ class APIView(object):
                     while last_traceback.tb_next:
                         last_traceback = last_traceback.tb_next
 
+                    frame = last_traceback.tb_frame
+                    func_name = frame.f_code.co_name
+                    file_name = frame.f_code.co_filename
+                    line_number = frame.f_lineno
+
                     ctx.update({
-                        'exception_last_traceback_line': last_traceback.tb_lineno,
-                        'exception_last_traceback_name': last_traceback.tb_frame
+                        'exception_last_traceback_line': line_number,
+                        'exception_last_traceback_func': func_name,
+                        'exception_last_traceback_file': file_name,
                     })
 
                 return TemplateResponse('500.debug.html', ctx)
