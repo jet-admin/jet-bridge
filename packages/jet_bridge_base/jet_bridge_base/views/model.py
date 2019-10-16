@@ -172,15 +172,7 @@ class ModelViewSet(ModelAPIViewMixin):
 
     @action(methods=['get'], detail=True)
     def get_siblings(self, *args, **kwargs):
-        lookup_url_kwarg = self.lookup_url_kwarg or 'pk'
-
-        assert lookup_url_kwarg in self.request.path_kwargs
-
-        model_field = getattr(self.get_model(), self.lookup_field)
-        obj = self.get_queryset().filter(getattr(model_field, '__eq__')(self.request.path_kwargs[lookup_url_kwarg])).first()
-
-        self.check_object_permissions(obj)
-
         queryset = self.filter_queryset(self.get_queryset())
+        obj = self.get_object()
 
         return JSONResponse(get_model_siblings(self.model, obj, queryset))

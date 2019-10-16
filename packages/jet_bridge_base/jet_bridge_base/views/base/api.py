@@ -9,8 +9,6 @@ from jet_bridge_base.db import Session
 from jet_bridge_base.exceptions.api import APIException
 from jet_bridge_base.exceptions.not_found import NotFound
 from jet_bridge_base.exceptions.permission_denied import PermissionDenied
-from jet_bridge_base.exceptions.validation_error import ValidationError
-from jet_bridge_base.responses.json import JSONResponse
 from jet_bridge_base.responses.template import TemplateResponse
 
 
