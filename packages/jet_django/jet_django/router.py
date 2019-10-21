@@ -1,3 +1,4 @@
+import sys
 from django.conf.urls import url
 
 
@@ -35,7 +36,6 @@ class Router(object):
                         inner_self.prepare()
                         inner_self.view.action = action
                         response = inner_self.view.dispatch(action, *args, **kwargs)
-                        inner_self.on_finish()
                         return inner_self.write_response(response)
                     except Exception:
                         exc_type, exc, traceback = sys.exc_info()
