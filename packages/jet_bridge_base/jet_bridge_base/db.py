@@ -62,7 +62,7 @@ if engine_url:
     if settings.DATABASE_ENGINE == 'sqlite':
         engine = create_engine(engine_url)
     else:
-        engine = create_engine(engine_url, pool_size=settings.DATABASE_CONNECTIONS, max_overflow=10)
+        engine = create_engine(engine_url, pool_size=settings.DATABASE_CONNECTIONS, max_overflow=10, pool_recycle=1)
 
     Session = scoped_session(sessionmaker(bind=engine))
 
