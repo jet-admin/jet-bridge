@@ -1,6 +1,6 @@
 
 class Response(object):
-    headers = {'Content-Type': 'application/text'}
+    headers = {'Content-Type': 'text/html'}
 
     def __init__(self, data=None, status=None, headers=None, exception=False, content_type=None):
         self.data = data
