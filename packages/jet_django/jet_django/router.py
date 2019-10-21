@@ -31,11 +31,18 @@ class Router(object):
         for method, method_action in actions.items():
             def create_action_method(action):
                 def action_method(inner_self, *args, **kwargs):
-                    inner_self.prepare()
-                    inner_self.view.action = action
-                    response = inner_self.view.dispatch(action, *args, **kwargs)
-                    inner_self.on_finish()
-                    return inner_self.write_response(response)
+                    try:
+                        inner_self.prepare()
+                        inner_self.view.action = action
+                        response = inner_self.view.dispatch(action, *args, **kwargs)
+                        inner_self.on_finish()
+                        return inner_self.write_response(response)
+                    except Exception:
+                        exc_type, exc, traceback = sys.exc_info()
+                        response = inner_self.view.error_response(exc_type, exc, traceback)
+                        return inner_self.write_response(response)
+                    finally:
+                        inner_self.on_finish()
 
                 return action_method
 

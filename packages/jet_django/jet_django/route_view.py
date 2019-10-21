@@ -109,12 +109,13 @@ class BaseRouteView(generic.View):
         try:
             self.prepare()
             response = super(BaseRouteView, self).dispatch(*args, **kwargs)
-            self.on_finish()
             return response
         except Exception:
             exc_type, exc, traceback = sys.exc_info()
             response = self.view.error_response(exc_type, exc, traceback)
             return self.write_response(response)
+        finally:
+            self.on_finish()
 
     @classmethod
     def as_view(cls, **initkwargs):
