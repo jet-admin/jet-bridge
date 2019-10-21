@@ -2,7 +2,7 @@ import logging
 
 from sqlalchemy import create_engine, MetaData
 from sqlalchemy.ext.automap import automap_base
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import sessionmaker, scoped_session
 
 try:
     from geoalchemy2 import types
@@ -64,7 +64,7 @@ if engine_url:
     else:
         engine = create_engine(engine_url, pool_size=settings.DATABASE_CONNECTIONS, max_overflow=10)
 
-    Session = sessionmaker(bind=engine)
+    Session = scoped_session(sessionmaker(bind=engine))
 
     logging.info('Connected to database engine "{}" with name "{}"'.format(settings.DATABASE_ENGINE, settings.DATABASE_NAME))
 
