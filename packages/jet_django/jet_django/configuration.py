@@ -116,6 +116,15 @@ class JetDjangoConfiguration(Configuration):
             'fields': list(map(lambda field: self.serialize_field(field), fields))
         }
 
+        if hasattr(model._meta, 'ordering') and len(model._meta.ordering):
+            ordering = model._meta.ordering[0]
+            desc = ordering.startswith('-')
+            field_name = ordering[1:] if desc else ordering
+
+            if '__' not in field_name:
+                field_name = self.field_db_column_from_name(field_name, fields)
+                result['default_order_by'] = '-' + field_name if desc else field_name
+
         display_field = self.guess_display_field(model, fields)
         if display_field:
             result['display_field'] = display_field

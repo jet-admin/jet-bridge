@@ -32,3 +32,4 @@ class ModelDescriptionSerializer(Serializer):
     verbose_name = fields_.CharField(required=False)
     verbose_name_plural = fields_.CharField(required=False)
     display_field = fields_.CharField(required=False)
+    default_order_by = fields_.CharField(required=False)
