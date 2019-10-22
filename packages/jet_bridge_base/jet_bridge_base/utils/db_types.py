@@ -15,12 +15,12 @@ map_data_types = [
 ]
 default_data_type = data_types.TEXT
 
-# try:
-#     from geoalchemy2 import types
-#     map_data_types.append({'query': types.Geometry, 'date_type': data_types.GEOMETRY})
-#     map_data_types.append({'query': types.Geography, 'date_type': data_types.GEOGRAPHY})
-# except ImportError:
-#     pass
+try:
+    from geoalchemy2 import types
+    map_data_types.append({'query': types.Geometry, 'date_type': data_types.GEOMETRY})
+    map_data_types.append({'query': types.Geography, 'date_type': data_types.GEOGRAPHY})
+except ImportError:
+    pass
 
 
 def map_data_type(value):
