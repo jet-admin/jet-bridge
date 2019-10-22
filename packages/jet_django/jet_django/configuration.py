@@ -71,6 +71,13 @@ class JetDjangoConfiguration(Configuration):
             return False
         return list(map(lambda x: x.related_model, filter(filter_fields, fields)))
 
+    def field_db_column_from_name(self, name, fields):
+        for f in fields:
+            if f.name != name:
+                continue
+            return f.get_attname_column()[1]
+        return name
+
     def guess_display_field(self, model, fields):
         str_method = None
         str_methods = ['__str__', '__unicode__']
@@ -97,11 +104,7 @@ class JetDjangoConfiguration(Configuration):
             if not m:
                 continue
             field_name = m.group(1)
-
-            for f in fields:
-                if f.name != field_name:
-                    continue
-                return f.get_attname_column()[1]
+            return self.field_db_column_from_name(field_name, fields)
 
     def serialize_model(self, model):
         fields = list(self.get_model_fields(model))
