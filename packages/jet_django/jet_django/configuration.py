@@ -142,6 +142,9 @@ class JetDjangoConfiguration(Configuration):
         
         if hasattr(field, 'related_model') and field.related_model:
             result['params'] = {'related_model': self.serialize_related_model(field.related_model)}
+
+        if not field.editable and not field.blank and not field.null and field.default:
+            result['editable'] = True
             
         return result
 
