@@ -86,12 +86,12 @@ FILTER_FOR_DBFIELD = {
 }
 FILTER_FOR_DBFIELD_DEFAULT = FILTER_FOR_DBFIELD[sqltypes.VARCHAR]
 
-try:
-    from geoalchemy2 import types
-    FILTER_FOR_DBFIELD[types.Geometry] = {'filter_class': WKTFilter, 'lookups': geography_lookups}
-    FILTER_FOR_DBFIELD[types.Geography] = {'filter_class': WKTFilter, 'lookups': geography_lookups}
-except ImportError:
-    pass
+# try:
+#     from geoalchemy2 import types
+#     FILTER_FOR_DBFIELD[types.Geometry] = {'filter_class': WKTFilter, 'lookups': geography_lookups}
+#     FILTER_FOR_DBFIELD[types.Geography] = {'filter_class': WKTFilter, 'lookups': geography_lookups}
+# except ImportError:
+#     pass
 
 
 def filter_for_data_type(value):

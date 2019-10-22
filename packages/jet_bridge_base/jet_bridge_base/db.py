@@ -4,10 +4,10 @@ from sqlalchemy import create_engine, MetaData
 from sqlalchemy.ext.automap import automap_base
 from sqlalchemy.orm import sessionmaker, scoped_session
 
-try:
-    from geoalchemy2 import types
-except ImportError:
-    pass
+# try:
+#     from geoalchemy2 import types
+# except ImportError:
+#     pass
 
 from jet_bridge_base import settings
 from jet_bridge_base.models import Base
