@@ -2,8 +2,6 @@ import logging
 
 from django.apps import AppConfig
 
-from jet_bridge_base import configuration
-
 logger = logging.getLogger('jet_django')
 
 
@@ -11,6 +9,7 @@ class JetDjangoConfig(AppConfig):
     name = 'jet_django'
 
     def ready(self):
+        from jet_bridge_base import configuration
         from jet_django.configuration import JetDjangoConfiguration
         conf = JetDjangoConfiguration()
         configuration.set_configuration(conf)
