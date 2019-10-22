@@ -65,11 +65,11 @@ class APIView(object):
         #     status_code = exc.status_code
 
         if isinstance(exc, PermissionDenied):
-            return TemplateResponse('403.html', {
+            return TemplateResponse('403.html', status=403, data={
                 'path': self.request.path,
             })
         elif isinstance(exc, NotFound):
-            return TemplateResponse('404.html', {
+            return TemplateResponse('404.html', status=404, data={
                 'path': self.request.path,
             })
         else:
@@ -109,9 +109,9 @@ class APIView(object):
                         'exception_last_traceback_file': file_name,
                     })
 
-                return TemplateResponse('500.debug.html', ctx)
+                return TemplateResponse('500.debug.html', status=500, data=ctx)
             else:
-                return TemplateResponse('500.html')
+                return TemplateResponse('500.html', status=500)
 
     def dispatch(self, action, *args, **kwargs):
         if not hasattr(self, action):

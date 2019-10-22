@@ -70,7 +70,7 @@ class BaseRouteView(generic.View):
                 template = template.replace('{% end %}', '{% endif %}')
                 context = Context(response.data)
                 content = Template(template).render(context)
-                result = HttpResponse(content)
+                result = HttpResponse(content, status=response.status)
         else:
             result = HttpResponse(response.render(), status=response.status)
 
