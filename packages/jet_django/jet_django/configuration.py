@@ -1,3 +1,4 @@
+import inspect, re
 from django.apps import apps
 from django.conf import settings as django_settings
 from django.contrib.contenttypes.fields import GenericRel, GenericForeignKey, GenericRelation
@@ -70,14 +71,54 @@ class JetDjangoConfiguration(Configuration):
             return False
         return list(map(lambda x: x.related_model, filter(filter_fields, fields)))
 
+    def guess_display_field(self, model, fields):
+        str_method = None
+        str_methods = ['__str__', '__unicode__']
+
+        for m in str_methods:
+            if hasattr(model, m):
+                str_method = m
+                break
+
+        if str_method is None:
+            return
+
+        source_code = inspect.getsource(getattr(model, str_method))
+        regexes = [
+            r'(?s:.*)return\s+self\.(\w+)',
+            r'(?s:.*)return\s+str\(self\.(\w+)\)',
+            r'(?s:.*)return\s+text_type\(self\.(\w+)\)',
+            r'(?s:.*)return\su?\'%[sd]\'\s+%\s+self\.(\w+)',
+            r'(?s:.*)return\s+u?\'\{0?\}\'\.format\(self.(\w+)\)',
+        ]
+
+        for regex in regexes:
+            m = re.search(regex, source_code)
+            if not m:
+                continue
+            field_name = m.group(1)
+
+            for f in fields:
+                if f.name != field_name:
+                    continue
+                return f.get_attname_column()[1]
+
     def serialize_model(self, model):
-        return {
+        fields = list(self.get_model_fields(model))
+
+        result = {
             'model': model._meta.db_table,
             'verbose_name': model._meta.verbose_name,
             'verbose_name_plural': model._meta.verbose_name_plural,
-            'fields': list(map(lambda field: self.serialize_field(field), self.get_model_fields(model)))
+            'fields': list(map(lambda field: self.serialize_field(field), fields))
         }
-    
+
+        display_field = self.guess_display_field(model, fields)
+        if display_field:
+            result['display_field'] = display_field
+
+        return result
+
     def serialize_field(self, field):
         result = {
             'db_column': field.get_attname_column()[1],

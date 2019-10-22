@@ -31,4 +31,4 @@ class ModelDescriptionSerializer(Serializer):
     relations = ModelDescriptionRelationSerializer(many=True)
     verbose_name = fields_.CharField(required=False)
     verbose_name_plural = fields_.CharField(required=False)
-
+    display_field = fields_.CharField(required=False)
