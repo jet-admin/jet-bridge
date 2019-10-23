@@ -14,7 +14,6 @@ conf = JetBridgeConfiguration()
 configuration.set_configuration(conf)
 
 from jet_bridge_base.commands.check_token import check_token_command
-from jet_bridge_base.utils.create_config import create_config
 from jet_bridge_base import VERSION
 from jet_bridge_base.db import engine_url
 from jet_bridge_base.commands.register_token import register_token_command
@@ -23,6 +22,7 @@ from jet_bridge_base.commands.set_token import set_token_command
 from jet_bridge_base.commands.token import token_command
 
 from jet_bridge.settings import missing_options, required_options_without_default
+from jet_bridge.utils.create_config import create_config
 
 
 logging.getLogger().setLevel(logging.INFO)

@@ -6,7 +6,7 @@ from prompt_toolkit import prompt, print_formatted_text, HTML
 from prompt_toolkit.completion import WordCompleter
 from prompt_toolkit.validation import Validator
 
-from jet_bridge_base import settings
+from jet_bridge import settings
 
 
 engines = [
