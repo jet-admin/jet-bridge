@@ -34,7 +34,7 @@ class ModelDescriptionView(APIView):
                     'model': foreign_key.column.table.name
                 }
 
-            return {
+            result = {
                 'name': column.name,
                 'db_column': column.name,
                 'field': data_type,
@@ -43,6 +43,12 @@ class ModelDescriptionView(APIView):
                 'editable': column.name not in non_editable,
                 'params': params
             }
+
+            if column.default is not None:
+                result['default_type'] = 'value'
+                result['default_value'] = column.default
+
+            return result
 
         def map_relation(relation):
             field = None

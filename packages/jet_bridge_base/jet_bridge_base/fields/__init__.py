@@ -1,3 +1,4 @@
+from jet_bridge_base.fields.any import AnyField
 from jet_bridge_base.fields.char import CharField
 from jet_bridge_base.fields.boolean import BooleanField
 from jet_bridge_base.fields.integer import IntegerField

@@ -1,9 +1,12 @@
 import inspect, re
+from datetime import datetime
+
 from django.apps import apps
 from django.conf import settings as django_settings
 from django.contrib.contenttypes.fields import GenericRel, GenericForeignKey, GenericRelation
 from django.core.files.storage import get_storage_class
 from django.db import models
+from django.utils import timezone
 
 from jet_bridge_base.configuration import Configuration
 
@@ -145,6 +148,12 @@ class JetDjangoConfiguration(Configuration):
 
         if not field.editable and not field.blank and not field.null and field.default:
             result['editable'] = True
+
+        if field.default == timezone.now or field.default == datetime.now:
+            result['default_type'] = 'datetime_now'
+        elif field.default is None or isinstance(field.default, (str, bool, int, float)):
+            result['default_type'] = 'value'
+            result['default_value'] = field.default
             
         return result
 

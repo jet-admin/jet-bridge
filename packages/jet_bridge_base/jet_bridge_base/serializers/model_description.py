@@ -12,6 +12,8 @@ class ModelDescriptionFieldSerializer(Serializer):
     params = fields_.JSONField()
     verbose_name = fields_.CharField(required=False)
     required = fields_.BooleanField(required=False)
+    default_type = fields_.CharField(required=False)
+    default_value = fields_.AnyField(required=False)
 
 
 class ModelDescriptionRelationSerializer(Serializer):
