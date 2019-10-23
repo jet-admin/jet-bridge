@@ -154,7 +154,16 @@ class JetDjangoConfiguration(Configuration):
         elif field.default is None or isinstance(field.default, (str, bool, int, float)):
             result['default_type'] = 'value'
             result['default_value'] = field.default
-            
+
+        if hasattr(field, 'choices') and field.choices and len(field.choices) > 0:
+            result['field'] = 'SelectField'
+            result['params'] = {
+                'options': list(map(lambda x: {
+                    'value': x[0],
+                    'name': str(x[1])
+                }, field.choices))
+            }
+
         return result
 
     def serialize_related_model(self, Model):

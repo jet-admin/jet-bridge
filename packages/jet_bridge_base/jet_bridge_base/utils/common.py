@@ -47,7 +47,9 @@ def find_index(list, predicate):
 # TODO: List merge is not universal
 def merge(destination, source):
     for key, value in source.items():
-        if isinstance(value, dict):
+        if key == 'params':
+            destination[key] = value
+        elif isinstance(value, dict):
             node = destination.setdefault(key, {})
             merge(node, value)
         elif isinstance(value, list):
