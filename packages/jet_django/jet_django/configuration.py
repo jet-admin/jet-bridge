@@ -79,7 +79,6 @@ class JetDjangoConfiguration(Configuration):
             if f.name != name:
                 continue
             return f.get_attname_column()[1]
-        return name
 
     def guess_display_field(self, model, fields):
         str_method = None
@@ -126,7 +125,8 @@ class JetDjangoConfiguration(Configuration):
 
             if '__' not in field_name:
                 field_name = self.field_db_column_from_name(field_name, fields)
-                result['default_order_by'] = '-' + field_name if desc else field_name
+                if field_name:
+                    result['default_order_by'] = '-' + field_name if desc else field_name
 
         display_field = self.guess_display_field(model, fields)
         if display_field:
