@@ -64,10 +64,12 @@ class ModelSerializer(Serializer):
 
         return result
 
-    def create(self, validated_data):
+    def create_instance(self, validated_data):
         ModelClass = self.meta.model
+        return ModelClass(**validated_data)
 
-        instance = ModelClass(**validated_data)
+    def create(self, validated_data):
+        instance = self.create_instance(validated_data)
         self.session.add(instance)
         self.session.commit()
 

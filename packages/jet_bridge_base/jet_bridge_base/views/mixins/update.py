@@ -1,3 +1,4 @@
+from jet_bridge_base.configuration import configuration
 from jet_bridge_base.responses.json import JSONResponse
 
 
@@ -18,7 +19,9 @@ class UpdateAPIViewMixin(object):
         self.update(partial=True, *args, **kwargs)
 
     def perform_update(self, serializer):
-        serializer.save()
+        configuration.on_model_pre_update(self.request.path_kwargs['model'], serializer.instance)
+        instance = serializer.save()
+        configuration.on_model_post_update(self.request.path_kwargs['model'], instance)
 
     def partial_update(self, *args, **kwargs):
         kwargs['partial'] = True

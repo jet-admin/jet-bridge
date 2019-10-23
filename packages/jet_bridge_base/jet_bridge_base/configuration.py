@@ -18,6 +18,24 @@ class Configuration(object):
     def get_settings(self):
         pass
 
+    def on_model_pre_create(self, model, pk):
+        pass
+
+    def on_model_post_create(self, model, instance):
+        pass
+
+    def on_model_pre_update(self, model, instance):
+        pass
+
+    def on_model_post_update(self, model, instance):
+        pass
+
+    def on_model_pre_delete(self, model, instance):
+        pass
+
+    def on_model_post_delete(self, model, instance):
+        pass
+
     def media_get_available_name(self, path):
         pass
 

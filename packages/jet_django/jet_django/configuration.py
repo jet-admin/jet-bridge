@@ -6,6 +6,7 @@ from django.conf import settings as django_settings
 from django.contrib.contenttypes.fields import GenericRel, GenericForeignKey, GenericRelation
 from django.core.files.storage import get_storage_class
 from django.db import models
+from django.db.models.signals import post_save, post_delete, pre_save, pre_delete
 from django.utils import timezone
 
 from jet_bridge_base.configuration import Configuration
@@ -15,10 +16,13 @@ from jet_django import settings, VERSION
 
 class JetDjangoConfiguration(Configuration):
     models = dict()
+    model_classes = dict()
     media_storage = None
+    pre_delete_django_instance = None
 
     def __init__(self):
         models = apps.get_models()
+        self.model_classes = dict(map(lambda x: (x._meta.db_table, x), models))
         self.models = dict(map(lambda x: (self.model_key(x), self.serialize_model(x)), models))
 
         for model in models:
@@ -56,6 +60,42 @@ class JetDjangoConfiguration(Configuration):
             # 'DATABASE_EXTRA': DATABASE_EXTRA,
             'DATABASE_CONNECTIONS': 1
         }
+
+    def get_django_instance(self, model, instance):
+        model_cls = self.model_classes.get(model)
+        pk = model_cls._meta.pk.column
+        if getattr(instance, pk):
+            return model_cls, model_cls.objects.get(pk=getattr(instance, pk))
+        else:
+            django_instance = model_cls()
+            for field in self.get_model_fields(model_cls):
+                setattr(django_instance, field.name, getattr(instance, field.get_attname_column()[1]))
+            return model_cls, django_instance
+
+    def on_model_pre_create(self, model, instance):
+        model_cls, django_instance = self.get_django_instance(model, instance)
+        pre_save.send(model_cls, raw=True, using=self, instance=django_instance, update_fields=[])
+
+    def on_model_post_create(self, model, instance):
+        model_cls, django_instance = self.get_django_instance(model, instance)
+        post_save.send(model_cls, raw=True, using=self, instance=django_instance, created=True, update_fields=[])
+
+    def on_model_pre_update(self, model, instance):
+        model_cls, django_instance = self.get_django_instance(model, instance)
+        pre_save.send(model_cls, raw=True, using=self, instance=django_instance, update_fields=[])
+
+    def on_model_post_update(self, model, instance):
+        model_cls, django_instance = self.get_django_instance(model, instance)
+        post_save.send(model_cls, raw=True, using=self, instance=django_instance, created=False, update_fields=[])
+
+    def on_model_pre_delete(self, model, instance):
+        model_cls, django_instance = self.get_django_instance(model, instance)
+        pre_delete.send(model_cls, using=self, instance=django_instance)
+        self.pre_delete_django_instance = django_instance
+
+    def on_model_post_delete(self, model, instance):
+        model_cls = self.model_classes.get(model)
+        post_delete.send(model_cls, using=self, instance=self.pre_delete_django_instance)
 
     def model_key(self, model):
         return model._meta.db_table
