@@ -55,9 +55,14 @@ def is_file_exists(text):
 promt_messages = 0
 
 
-def create_config():
+def create_config(config_not_set):
     print_formatted_text(HTML('<skyblue><b>===========================================</b></skyblue>'))
-    print_formatted_text(HTML('<skyblue><b>Configuration file is not found</b></skyblue>'))
+
+    if config_not_set:
+        print_formatted_text(HTML('<skyblue><b>Configuration is not set</b></skyblue>'))
+    else:
+        print_formatted_text(HTML('<skyblue><b>Configuration</b></skyblue>'))
+
     print_formatted_text(HTML('<skyblue>You will be asked to enter settings</skyblue>'))
     print_formatted_text(HTML('<skyblue>and config file will be generated</skyblue>'))
     print_formatted_text(HTML('<skyblue><b>===========================================</b></skyblue>\n'))
@@ -72,7 +77,7 @@ def create_config():
 
     address = prompt(
         promt_message('<green><b>Which host to run Jet Bridge on?</b></green>\n<i>Default is {}</i>'.format('0.0.0.0 (any IP)')),
-        default='0.0.0.0'
+        default=settings.ADDRESS or '0.0.0.0'
     )
 
     print_formatted_text('')
@@ -84,7 +89,7 @@ def create_config():
             error_message='Incorrect port',
             move_cursor_to_end=True
         ),
-        default='8888'
+        default='{0}'.format(settings.PORT) if settings.PORT else '8888'
     )
 
     print_formatted_text('')
@@ -98,7 +103,8 @@ def create_config():
             move_cursor_to_end=True
         ),
         completer=html_completer,
-        validate_while_typing=False
+        validate_while_typing=False,
+        default=settings.DATABASE_ENGINE or ''
     )
 
     print_formatted_text('')
@@ -110,7 +116,8 @@ def create_config():
                 is_file_exists,
                 error_message='File does not exist on given path',
                 move_cursor_to_end=True
-            )
+            ),
+            default=settings.DATABASE_NAME or ''
         )
 
         database_host = ''
@@ -125,7 +132,7 @@ def create_config():
                 error_message='Database host is required',
                 move_cursor_to_end=True
             ),
-            default='localhost'
+            default=settings.DATABASE_HOST or 'localhost'
         )
 
         print_formatted_text('')
@@ -141,7 +148,7 @@ def create_config():
                 error_message='Database port is required',
                 move_cursor_to_end=True
             ),
-            default='{0}'.format(default_port)
+            default='{0}'.format(settings.DATABASE_PORT) if settings.DATABASE_PORT else '{0}'.format(default_port)
         )
 
         print_formatted_text('')
@@ -152,7 +159,8 @@ def create_config():
                 is_not_empty,
                 error_message='Database name is required',
                 move_cursor_to_end=True
-            )
+            ),
+            default=settings.DATABASE_NAME or ''
         )
 
         print_formatted_text('')
@@ -163,20 +171,22 @@ def create_config():
                 is_not_empty,
                 error_message='Database user is required',
                 move_cursor_to_end=True
-            )
+            ),
+            default=settings.DATABASE_USER or ''
         )
 
         print_formatted_text('')
 
         database_password = prompt(
-            promt_message('<green><b>Enter your database password</b></green>')
+            promt_message('<green><b>Enter your database password</b></green>'),
+            default=settings.DATABASE_PASSWORD or ''
         )
 
     print_formatted_text('')
 
     config = prompt(
         promt_message('<green><b>Where to store config file?</b></green>\nDefault is jet.conf inside current working directory\n[{}]'.format(os.path.abspath(settings.DEFAULT_CONFIG_PATH))),
-        default='{0}'.format(settings.DEFAULT_CONFIG_PATH)
+        default=settings.CONFIG or '{0}'.format(settings.DEFAULT_CONFIG_PATH)
     )
 
     config_content = {
@@ -190,6 +200,11 @@ def create_config():
         'DATABASE_USER': database_user,
         'DATABASE_PASSWORD': database_password
     }
+
+    try:
+        os.makedirs(os.path.dirname(config))
+    except OSError:
+        pass
 
     with open(config, 'w') as f:
         f.write('[JET]\n')

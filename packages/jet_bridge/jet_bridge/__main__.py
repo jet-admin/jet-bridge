@@ -1,3 +1,4 @@
+import os
 from datetime import datetime
 import logging
 import sys
@@ -31,11 +32,14 @@ logging.getLogger().setLevel(logging.INFO)
 def main():
     args = sys.argv[1:]
 
+    if 'ARGS' in os.environ:
+        args = os.environ['ARGS'].split(' ')
+
     logging.info(datetime.now().strftime('%B %d, %Y - %H:%M:%S %Z'))
     logging.info('Jet Bridge version {}'.format(VERSION))
 
-    if missing_options == required_options_without_default:
-        create_config()
+    if (len(args) >= 1 and args[0] == 'config') or missing_options == required_options_without_default:
+        create_config(missing_options == required_options_without_default)
         return
     elif len(missing_options) and len(missing_options) < len(required_options_without_default):
         logging.info('Required options are not specified: {}'.format(', '.join(missing_options)))

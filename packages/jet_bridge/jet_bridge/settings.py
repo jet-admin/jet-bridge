@@ -55,7 +55,7 @@ if options.config:
         parse_config_file(options, options.config, 'JET', final=False)
     except IOError as e:
         if options.config != DEFAULT_CONFIG_PATH:
-            raise e
+            print(e)
 
 parse_environment(options, final=True)
 
@@ -69,6 +69,7 @@ DEBUG = options.debug
 READ_ONLY = options.read_only
 CONNECTIONS = options.connections
 AUTO_OPEN_REGISTER = options.auto_open_register
+CONFIG = options.config
 
 WEB_BASE_URL = options.web_base_url
 API_BASE_URL = options.api_base_url
