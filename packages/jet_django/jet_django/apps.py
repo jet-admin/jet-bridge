@@ -1,8 +1,4 @@
-import logging
-
 from django.apps import AppConfig
-
-logger = logging.getLogger('jet_django')
 
 
 class JetDjangoConfig(AppConfig):

@@ -1,6 +1,5 @@
 import platform
 from datetime import datetime
-import logging
 import sys
 
 from jet_bridge_base import settings
@@ -10,6 +9,7 @@ from jet_bridge_base.exceptions.api import APIException
 from jet_bridge_base.exceptions.not_found import NotFound
 from jet_bridge_base.exceptions.permission_denied import PermissionDenied
 from jet_bridge_base.responses.template import TemplateResponse
+from jet_bridge_base.logger import logger
 
 
 class APIView(object):
@@ -109,7 +109,7 @@ class APIView(object):
                         'exception_last_traceback_file': file_name,
                     })
 
-                logging.exception(exc)
+                logger.exception(exc)
 
                 return TemplateResponse('500.debug.html', status=500, data=ctx)
             else:

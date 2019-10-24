@@ -1,5 +1,3 @@
-import logging
-
 from sqlalchemy import create_engine, MetaData
 from sqlalchemy.ext.automap import automap_base
 from sqlalchemy.orm import sessionmaker, scoped_session
@@ -11,6 +9,7 @@ except ImportError:
 
 from jet_bridge_base import settings
 from jet_bridge_base.models import Base
+from jet_bridge_base.logger import logger
 
 
 def build_engine_url(
@@ -88,7 +87,7 @@ if engine_url:
 
     Session = scoped_session(sessionmaker(bind=engine))
 
-    logging.info('Connected to database engine "{}" with name "{}"'.format(settings.DATABASE_ENGINE, settings.DATABASE_NAME))
+    logger.info('Connected to database engine "{}" with name "{}"'.format(settings.DATABASE_ENGINE, settings.DATABASE_NAME))
 
     Base.metadata.create_all(engine)
 

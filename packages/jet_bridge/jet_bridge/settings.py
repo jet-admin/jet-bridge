@@ -2,6 +2,8 @@ import os
 
 from tornado.options import define, options
 
+from jet_bridge_base.logger import logger
+
 from jet_bridge import media
 from jet_bridge.utils.settings import parse_environment, parse_config_file
 
@@ -56,7 +58,7 @@ if options.config:
         parse_config_file(options, options.config, 'JET', final=False)
     except IOError as e:
         if options.config != DEFAULT_CONFIG_PATH:
-            print(e)
+            logger.warning(e)
 
 parse_environment(options, final=True)
 

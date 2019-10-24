@@ -1,7 +1,6 @@
-import logging
-
-from jet_bridge_base.utils.backend import register_token, get_token
+from jet_bridge_base.utils.backend import get_token
 from jet_bridge_base.db import Session
+from jet_bridge_base.logger import logger
 
 
 def token_command():
@@ -11,9 +10,9 @@ def token_command():
         token = get_token(session)
 
         if token:
-            logging.info('Jet Admin Token:')
-            logging.info(token)
+            logger.info('Jet Admin Token:')
+            logger.info(token)
         else:
-            logging.info('Jet Admin Token is not set')
+            logger.info('Jet Admin Token is not set')
     finally:
         session.close()

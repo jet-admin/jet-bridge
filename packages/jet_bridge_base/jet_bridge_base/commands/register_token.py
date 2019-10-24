@@ -1,7 +1,6 @@
-import logging
-
 from jet_bridge_base.utils.backend import register_token
 from jet_bridge_base.db import Session
+from jet_bridge_base.logger import logger
 
 
 def register_token_command():
@@ -11,10 +10,10 @@ def register_token_command():
         token, created = register_token(session)
 
         if not created and token:
-            logging.info('Token already exists: {}'.format(token.token))
+            logger.info('Token already exists: {}'.format(token.token))
         elif not created and not token:
-            logging.info('Token creation failed')
+            logger.info('Token creation failed')
         elif created and token:
-            logging.info('Token created: {}'.format(token.token))
+            logger.info('Token created: {}'.format(token.token))
     finally:
         session.close()

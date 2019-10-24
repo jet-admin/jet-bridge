@@ -1,10 +1,9 @@
 from datetime import datetime, tzinfo, timedelta
-
-import logging
 import requests
 
 from jet_bridge_base import settings, VERSION
 from jet_bridge_base.models.token import Token
+from jet_bridge_base.logger import logger
 
 try:
     from datetime import timezone
@@ -52,7 +51,7 @@ def register_token(session):
     success = 200 <= r.status_code < 300
 
     if not success:
-        logging.error('Register Token request error', r.status_code, r.reason)
+        logger.error('Register Token request error', r.status_code, r.reason)
         return None, False
 
     result = r.json()
@@ -105,18 +104,18 @@ def set_token(session, token):
 
     if project_token:
         if project_token.token == token_clean:
-            logging.info('This token is already set, ignoring')
+            logger.info('This token is already set, ignoring')
             return
 
         project_token.token = token_clean
         project_token.date_add = now
         session.commit()
-        logging.info('Token changed to {}'.format(project_token.token))
+        logger.info('Token changed to {}'.format(project_token.token))
     else:
         project_token = Token(token=token_clean, date_add=now)
         session.add(project_token)
         session.commit()
-        logging.info('Token created {}'.format(project_token.token))
+        logger.info('Token created {}'.format(project_token.token))
 
 
 def project_auth(session, token, permission=None):
@@ -143,7 +142,7 @@ def project_auth(session, token, permission=None):
     success = 200 <= r.status_code < 300
 
     if not success:
-        logging.error('Project Auth request error', r.status_code, r.reason)
+        logger.error('Project Auth request error', r.status_code, r.reason)
         return {
             'result': False
         }

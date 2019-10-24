@@ -1,8 +1,8 @@
 import uuid
-import logging
 
 from jet_bridge_base.utils.backend import set_token
 from jet_bridge_base.db import Session
+from jet_bridge_base.logger import logger
 
 
 def set_token_command(token):
@@ -12,7 +12,7 @@ def set_token_command(token):
         token = uuid.UUID(token) if token else None
 
         if not token:
-            logging.info('No token was specified')
+            logger.info('No token was specified')
             return
 
         set_token(session, token)
