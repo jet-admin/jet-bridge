@@ -6,7 +6,7 @@ set -e
 #
 # This script is meant for quick & easy install via:
 #
-#   sh <(curl -s https://raw.githubusercontent.com/jet-admin/jet-bridge/master/jet_docker.sh)"
+#   sh <(curl -s https://raw.githubusercontent.com/jet-admin/jet-bridge/master/jet_docker.sh)
 
 
 # Check if docker is installed
