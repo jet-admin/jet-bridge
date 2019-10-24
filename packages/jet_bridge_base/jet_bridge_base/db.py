@@ -30,24 +30,25 @@ def build_engine_url(
         '://'
     ]
 
-    if DATABASE_USER:
-        url.append(DATABASE_USER)
+    if DATABASE_ENGINE != 'sqlite':
+        if DATABASE_USER:
+            url.append(DATABASE_USER)
 
-        if DATABASE_PASSWORD:
-            url.append(':')
-            url.append(DATABASE_PASSWORD)
+            if DATABASE_PASSWORD:
+                url.append(':')
+                url.append(DATABASE_PASSWORD)
+
+            if DATABASE_HOST:
+                url.append('@')
 
         if DATABASE_HOST:
-            url.append('@')
+            url.append(DATABASE_HOST)
 
-    if DATABASE_HOST:
-        url.append(DATABASE_HOST)
+            if DATABASE_PORT:
+                url.append(':')
+                url.append(DATABASE_PORT)
 
-        if DATABASE_PORT:
-            url.append(':')
-            url.append(DATABASE_PORT)
-
-        url.append('/')
+            url.append('/')
 
     if DATABASE_ENGINE == 'sqlite':
         url.append('/')
