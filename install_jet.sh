@@ -40,6 +40,11 @@ if [ $docker_state != 1 ]; then
     exit 1
 fi
 
+echo
+echo "    Fetching latest Jet Bridge image..."
+echo
+docker pull jetadmin/jetbridge:dev
+
 CONFIG_FILE="${PWD}/jet.conf"
 
 echo
