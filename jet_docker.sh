@@ -37,6 +37,13 @@ fi
 
 CONFIG_FILE="${PWD}/jet.conf"
 
+    echo
+    echo "    Installing Jet Bridge as a Docker container..."
+    echo
+
+read -p "Enter Docker container name [jet_bridge by default]: " CONTAINER_NAME
+CONTAINER_NAME=${CONTAINER_NAME:-jet_bridge}
+
 # Checking if config file exists
 if [ -f "$CONFIG_FILE" ]; then
     echo
@@ -45,10 +52,9 @@ if [ -f "$CONFIG_FILE" ]; then
 	echo "    You can edit it to change settings"
 	echo
 else
-    docker rm --force jet_bridge &> /dev/null
+    docker rm --force ${CONTAINER_NAME} &> /dev/null
     docker run \
-        -p 8888:8888 \
-        --name=jet_bridge \
+        --name=${CONTAINER_NAME} \
         -it \
         -v $(pwd):/jet \
         -e DATABASE_HOST=host.docker.internal \
@@ -62,10 +68,9 @@ PORT=$(awk -F "=" '/^PORT=/ {print $2}' jet.conf)
     echo "    Checking if your Jet Bridge instance is registered, please wait..."
     echo
 
-docker rm --force jet_bridge &> /dev/null
+docker rm --force ${CONTAINER_NAME} &> /dev/null
 docker run \
-    -p ${PORT}:8888 \
-    --name=jet_bridge \
+    --name=${CONTAINER_NAME} \
     -it \
     -v $(pwd):/jet \
     -e DATABASE_HOST=host.docker.internal \
@@ -73,12 +78,12 @@ docker run \
     jetadmin/jetbridge
 
 echo
-echo "    Starting Jet Bridge on port ${PORT}"
+echo "    Starting Jet Bridge..."
 
-docker rm --force jet_bridge &> /dev/null
+docker rm --force ${CONTAINER_NAME} &> /dev/null
 docker run \
-    -p 8888:8888 \
-    --name=jet_bridge \
+    -p ${PORT}:${PORT} \
+    --name=${CONTAINER_NAME} \
     -v $(pwd):/jet \
     -d \
     jetadmin/jetbridge \
@@ -86,16 +91,20 @@ docker run \
 
 echo
 echo "    To stop:"
-echo "        docker stop jet_bridge"
+echo "        docker stop ${CONTAINER_NAME}"
 echo
 echo "    To start:"
-echo "        docker start jet_bridge"
+echo "        docker start ${CONTAINER_NAME}"
 echo
 echo "    To view logs:"
-echo "        docker logs -f jet_bridge"
+echo "        docker logs -f ${CONTAINER_NAME}"
 echo
 echo "    To view token:"
-echo "        docker exec -it jet_bridge jet_bridge token"
+echo "        docker exec -it ${CONTAINER_NAME} jet_bridge token"
 echo
-echo "    Jet Bridge is now running and will start automatically on system reboot"
+echo "    Success! Jet Bridge is now running and will start automatically on system reboot"
+echo
+echo "    Port: ${PORT}"
+echo "    Docker Container: ${CONTAINER_NAME}"
+echo "    Config File: ${CONFIG_FILE}"
 echo
