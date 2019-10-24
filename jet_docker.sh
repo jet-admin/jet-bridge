@@ -9,6 +9,12 @@ set -e
 #   sh <(curl -s https://raw.githubusercontent.com/jet-admin/jet-bridge/master/jet_docker.sh)
 
 
+remove_container() {
+    if [[ -n "$(docker inspect ${CONTAINER_NAME})" ]]; then
+        docker rm --force ${CONTAINER_NAME} 1> /dev/null || true
+    fi
+}
+
 # Check if docker is installed
 if ! [ -x "$(command -v docker)" ]; then
     echo
@@ -52,7 +58,7 @@ if [ -f "$CONFIG_FILE" ]; then
 	echo "    You can edit it to change settings"
 	echo
 else
-    docker rm --force ${CONTAINER_NAME} &> /dev/null || true
+    remove_container
     docker run \
         --name=${CONTAINER_NAME} \
         -it \
@@ -68,8 +74,8 @@ echo
 echo "    Checking if your Jet Bridge instance is registered, please wait..."
 echo
 
-docker rm --force ${CONTAINER_NAME} &> /dev/null || true
 
+remove_container
 docker run \
     --name=${CONTAINER_NAME} \
     -it \
@@ -80,17 +86,18 @@ docker run \
 
 echo
 echo "    Starting Jet Bridge..."
+echo
 
-docker rm --force ${CONTAINER_NAME} &> /dev/null || true
+# docker rm --force ${CONTAINER_NAME} &> /dev/null || true
+remove_container
 docker run \
     -p ${PORT}:${PORT} \
     --name=${CONTAINER_NAME} \
     -v $(pwd):/jet \
     -d \
     jetadmin/jetbridge \
-    &> /dev/null
+    1> /dev/null
 
-echo
 echo "    To stop:"
 echo "        docker stop ${CONTAINER_NAME}"
 echo
