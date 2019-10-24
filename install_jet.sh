@@ -69,7 +69,7 @@ else
         -v $(pwd):/jet \
         -e DATABASE_HOST=host.docker.internal \
         -e ARGS=config \
-        jetadmin/jetbridge
+        jetadmin/jetbridge:dev
 fi
 
 PORT=$(awk -F "=" '/^PORT=/ {print $2}' jet.conf)
@@ -86,7 +86,7 @@ docker run \
     -v $(pwd):/jet \
     -e DATABASE_HOST=host.docker.internal \
     -e ARGS=check_token \
-    jetadmin/jetbridge
+    jetadmin/jetbridge:dev
 
 echo
 echo "    Starting Jet Bridge..."
@@ -99,7 +99,7 @@ docker run \
     --name=${CONTAINER_NAME} \
     -v $(pwd):/jet \
     -d \
-    jetadmin/jetbridge \
+    jetadmin/jetbridge:dev \
     1> /dev/null
 
 echo "    To stop:"
