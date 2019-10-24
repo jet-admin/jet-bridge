@@ -10,9 +10,7 @@ set -e
 
 
 remove_container() {
-    if [[ -n "$(docker inspect ${CONTAINER_NAME})" ]]; then
-        docker rm --force ${CONTAINER_NAME} 1> /dev/null || true
-    fi
+    docker rm --force ${CONTAINER_NAME} &> /dev/null || true
 }
 
 # Check if docker is installed
