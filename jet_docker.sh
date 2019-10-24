@@ -41,7 +41,7 @@ CONFIG_FILE="${PWD}/jet.conf"
     echo "    Installing Jet Bridge as a Docker container..."
     echo
 
-read -p "Enter Docker container name [jet_bridge by default]: " CONTAINER_NAME
+read -p "Enter Docker container name or leave default [jet_bridge]: " CONTAINER_NAME
 CONTAINER_NAME=${CONTAINER_NAME:-jet_bridge}
 
 # Checking if config file exists
@@ -52,7 +52,7 @@ if [ -f "$CONFIG_FILE" ]; then
 	echo "    You can edit it to change settings"
 	echo
 else
-    docker rm --force ${CONTAINER_NAME} &> /dev/null
+    docker rm --force ${CONTAINER_NAME} &> /dev/null || true
     docker run \
         --name=${CONTAINER_NAME} \
         -it \
@@ -64,11 +64,12 @@ fi
 
 PORT=$(awk -F "=" '/^PORT=/ {print $2}' jet.conf)
 
-    echo
-    echo "    Checking if your Jet Bridge instance is registered, please wait..."
-    echo
+echo
+echo "    Checking if your Jet Bridge instance is registered, please wait..."
+echo
 
-docker rm --force ${CONTAINER_NAME} &> /dev/null
+docker rm --force ${CONTAINER_NAME} &> /dev/null || true
+
 docker run \
     --name=${CONTAINER_NAME} \
     -it \
@@ -80,7 +81,7 @@ docker run \
 echo
 echo "    Starting Jet Bridge..."
 
-docker rm --force ${CONTAINER_NAME} &> /dev/null
+docker rm --force ${CONTAINER_NAME} &> /dev/null || true
 docker run \
     -p ${PORT}:${PORT} \
     --name=${CONTAINER_NAME} \
