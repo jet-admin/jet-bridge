@@ -27,4 +27,3 @@ WORKDIR /jet
 
 CMD ["jet_bridge", "--media_root=/jet/jet_media", "--use_default_config=address,config"]
 
-EXPOSE 8888
