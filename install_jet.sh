@@ -16,17 +16,17 @@ remove_container() {
 # Check if docker is installed
 if ! [ -x "$(command -v docker)" ]; then
     echo
-	echo "ERROR:"
-	echo "    Docker is not found on your system"
-	echo "    Install Docker by running the following command:"
-	echo
-	echo "        sh <(curl -s https://get.docker.com)"
-	echo
-	echo "    or follow official documentation"
-	echo
-	echo "        https://docs.docker.com/install/"
-	echo
-	exit 1
+    echo "ERROR:"
+    echo "    Docker is not found on your system"
+    echo "    Install Docker by running the following command:"
+    echo
+    echo "        sh <(curl -s https://get.docker.com)"
+    echo
+    echo "    or follow official documentation"
+    echo
+    echo "        https://docs.docker.com/install/"
+    echo
+    exit 1
 fi
 
 # Check if docker is running
@@ -57,10 +57,10 @@ CONTAINER_NAME=${CONTAINER_NAME:-jet_bridge}
 # Checking if config file exists
 if [ -f "$CONFIG_FILE" ]; then
     echo
-	echo "    There is an existing config file will be used:"
-	echo "    ${CONFIG_FILE}"
-	echo "    You can edit it to change settings"
-	echo
+    echo "    There is an existing config file will be used:"
+    echo "    ${CONFIG_FILE}"
+    echo "    You can edit it to change settings"
+    echo
 else
     remove_container
     docker run \
