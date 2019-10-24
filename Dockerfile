@@ -22,9 +22,10 @@ RUN pip install -e /packages/jet_bridge
 
 RUN mkdir /jet
 VOLUME /jet
+WORKDIR /jet
 
 #USER jet
 
-CMD ["jet_bridge", "--config=/jet/jet.conf", "--media_root=/jet/jet_media"]
+CMD ["jet_bridge", "--media_root=/jet/jet_media", "--use_default_config=address,config"]
 
 EXPOSE 8888

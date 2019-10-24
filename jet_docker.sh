@@ -59,7 +59,7 @@ fi
 PORT=$(awk -F "=" '/^PORT=/ {print $2}' jet.conf)
 
     echo
-    echo "    Checking if your Jet Bridge instance is registered..."
+    echo "    Checking if your Jet Bridge instance is registered, please wait..."
     echo
 
 docker rm --force jet_bridge &> /dev/null
@@ -69,7 +69,7 @@ docker run \
     -it \
     -v $(pwd):/jet \
     -e DATABASE_HOST=host.docker.internal \
-    -e ARGS=token \
+    -e ARGS=check_token \
     jetadmin/jetbridge
 
 echo
@@ -84,11 +84,18 @@ docker run \
     jetadmin/jetbridge \
     &> /dev/null
 
-echo "    Jet Bridge is now running and will run in startup"
 echo
-echo "    To stop run:"
+echo "    To stop:"
 echo "        docker stop jet_bridge"
 echo
-echo "    To start run:"
+echo "    To start:"
 echo "        docker start jet_bridge"
+echo
+echo "    To view logs:"
+echo "        docker logs -f jet_bridge"
+echo
+echo "    To view token:"
+echo "        docker exec -it jet_bridge jet_bridge token"
+echo
+echo "    Jet Bridge is now running and will start automatically on system reboot"
 echo

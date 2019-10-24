@@ -5,9 +5,10 @@ import os
 from prompt_toolkit import prompt, print_formatted_text, HTML
 from prompt_toolkit.completion import WordCompleter
 from prompt_toolkit.validation import Validator
+from sqlalchemy import create_engine
 
 from jet_bridge import settings
-
+from jet_bridge_base.db import build_engine_url
 
 engines = [
     {
@@ -75,15 +76,18 @@ def create_config(config_not_set):
         promt_messages += 1
         return HTML('{}. {}\n> '.format(promt_messages, message))
 
-    address = prompt(
-        promt_message('<green><b>Which host to run Jet Bridge on?</b></green>\n<i>Default is {}</i>'.format('0.0.0.0 (any IP)')),
-        default=settings.ADDRESS or '0.0.0.0'
-    )
+    if 'address' not in settings.USE_DEFAULT_CONFIG:
+        address = prompt(
+            promt_message('<green><b>Which host to run Jet Bridge on?</b></green>\n<i>Default is {}</i>'.format('0.0.0.0 (any IP)')),
+            default=settings.ADDRESS or '0.0.0.0'
+        )
 
-    print_formatted_text('')
+        print_formatted_text('')
+    else:
+        address = settings.ADDRESS or '0.0.0.0'
 
     port = prompt(
-        promt_message('<green><b>Which port?</b></green>\n<i>Default is {}</i>'.format('8888')),
+        promt_message('<green><b>Which port to run Jet Bridge on?</b></green>\n<i>Default is {}</i>'.format('8888')),
         validator=Validator.from_callable(
             port_is_valid,
             error_message='Incorrect port',
@@ -107,87 +111,134 @@ def create_config(config_not_set):
         default=settings.DATABASE_ENGINE or ''
     )
 
-    print_formatted_text('')
+    database_name = None
+    database_host = None
+    database_port = None
+    database_user = None
+    database_password = None
 
-    if database_engine == 'sqlite':
-        database_name = prompt(
-            promt_message('<green><b>Enter your database file path</b></green>'),
-            validator=Validator.from_callable(
-                is_file_exists,
-                error_message='File does not exist on given path',
-                move_cursor_to_end=True
-            ),
-            default=settings.DATABASE_NAME or ''
+    while True:
+        print_formatted_text('')
+
+        if database_engine == 'sqlite':
+            prompts = 1
+
+            database_name = prompt(
+                promt_message('<green><b>Enter your database file path</b></green>'),
+                validator=Validator.from_callable(
+                    is_file_exists,
+                    error_message='File does not exist on given path',
+                    move_cursor_to_end=True
+                ),
+                default=database_name or settings.DATABASE_NAME or ''
+            )
+
+            database_host = ''
+            database_port = ''
+            database_user = ''
+            database_password = ''
+        else:
+            prompts = 5
+
+            database_host = prompt(
+                promt_message('<green><b>Enter your database host</b></green>\n<i>Default is {}</i>'.format('localhost')),
+                validator=Validator.from_callable(
+                    is_not_empty,
+                    error_message='Database host is required',
+                    move_cursor_to_end=True
+                ),
+                default=database_host or settings.DATABASE_HOST or 'localhost'
+            )
+
+            print_formatted_text('')
+
+            default_port = list(map(lambda x: str(x.get('default_port', '')), filter(
+                lambda x: x['name'] == database_engine, engines
+            )))[0]
+
+            database_port = prompt(
+                promt_message('<green><b>Enter your database port</b></green>'),
+                validator=Validator.from_callable(
+                    is_not_empty,
+                    error_message='Database port is required',
+                    move_cursor_to_end=True
+                ),
+                default=database_port or '{0}'.format(settings.DATABASE_PORT) if settings.DATABASE_PORT else '{0}'.format(default_port)
+            )
+
+            print_formatted_text('')
+
+            database_name = prompt(
+                promt_message('<green><b>Enter your database name</b></green>'),
+                validator=Validator.from_callable(
+                    is_not_empty,
+                    error_message='Database name is required',
+                    move_cursor_to_end=True
+                ),
+                default=database_name or settings.DATABASE_NAME or ''
+            )
+
+            print_formatted_text('')
+
+            database_user = prompt(
+                promt_message('<green><b>Enter your database user</b></green>'),
+                validator=Validator.from_callable(
+                    is_not_empty,
+                    error_message='Database user is required',
+                    move_cursor_to_end=True
+                ),
+                default=database_user or settings.DATABASE_USER or ''
+            )
+
+            print_formatted_text('')
+
+            database_password = prompt(
+                promt_message('<green><b>Enter your database password</b></green>'),
+                default=database_password or settings.DATABASE_PASSWORD or ''
+            )
+
+        engine_url = build_engine_url(
+            database_engine,
+            database_host,
+            database_port,
+            database_name,
+            database_user,
+            database_password
         )
 
-        database_host = ''
-        database_port = ''
-        database_user = ''
-        database_password = ''
+        if not engine_url:
+            continue
+
+        engine = create_engine(engine_url)
+
+        try:
+            connection = engine.connect()
+            connection.close()
+        except Exception as e:
+            global promt_messages
+            print_formatted_text('')
+            print_formatted_text(HTML('<red><b>Connection failed:</b></red>'))
+            print_formatted_text(HTML('<red>{}</red>'.format(e)))
+            print_formatted_text('')
+            print_formatted_text(HTML('<skyblue><b>Please try again</b></skyblue>'))
+            promt_messages -= prompts
+            continue
+
+        print_formatted_text('')
+        print_formatted_text(HTML('<skyblue><b>Database connected successfully!</b></skyblue>'))
+        print_formatted_text('')
+
+        break
+
+    if 'config' not in settings.USE_DEFAULT_CONFIG:
+        print_formatted_text('')
+
+        config = prompt(
+            promt_message('<green><b>Where to store config file?</b></green>\nDefault is jet.conf inside current working directory\n[{}]'.format(os.path.abspath(settings.DEFAULT_CONFIG_PATH))),
+            default=settings.CONFIG or '{0}'.format(settings.DEFAULT_CONFIG_PATH)
+        )
     else:
-        database_host = prompt(
-            promt_message('<green><b>Enter your database host</b></green>\n<i>Default is {}</i>'.format('localhost')),
-            validator=Validator.from_callable(
-                is_not_empty,
-                error_message='Database host is required',
-                move_cursor_to_end=True
-            ),
-            default=settings.DATABASE_HOST or 'localhost'
-        )
-
-        print_formatted_text('')
-
-        default_port = list(map(lambda x: str(x.get('default_port', '')), filter(
-            lambda x: x['name'] == database_engine, engines
-        )))[0]
-
-        database_port = prompt(
-            promt_message('<green><b>Enter your database port</b></green>'),
-            validator=Validator.from_callable(
-                is_not_empty,
-                error_message='Database port is required',
-                move_cursor_to_end=True
-            ),
-            default='{0}'.format(settings.DATABASE_PORT) if settings.DATABASE_PORT else '{0}'.format(default_port)
-        )
-
-        print_formatted_text('')
-
-        database_name = prompt(
-            promt_message('<green><b>Enter your database name</b></green>'),
-            validator=Validator.from_callable(
-                is_not_empty,
-                error_message='Database name is required',
-                move_cursor_to_end=True
-            ),
-            default=settings.DATABASE_NAME or ''
-        )
-
-        print_formatted_text('')
-
-        database_user = prompt(
-            promt_message('<green><b>Enter your database user</b></green>'),
-            validator=Validator.from_callable(
-                is_not_empty,
-                error_message='Database user is required',
-                move_cursor_to_end=True
-            ),
-            default=settings.DATABASE_USER or ''
-        )
-
-        print_formatted_text('')
-
-        database_password = prompt(
-            promt_message('<green><b>Enter your database password</b></green>'),
-            default=settings.DATABASE_PASSWORD or ''
-        )
-
-    print_formatted_text('')
-
-    config = prompt(
-        promt_message('<green><b>Where to store config file?</b></green>\nDefault is jet.conf inside current working directory\n[{}]'.format(os.path.abspath(settings.DEFAULT_CONFIG_PATH))),
-        default=settings.CONFIG or '{0}'.format(settings.DEFAULT_CONFIG_PATH)
-    )
+        config = settings.CONFIG or '{0}'.format(settings.DEFAULT_CONFIG_PATH)
 
     config_content = {
         'ADDRESS': address,
@@ -216,6 +267,5 @@ def create_config(config_not_set):
     print_formatted_text(HTML('<skyblue><b>Configuration file is created at:</b></skyblue>'))
     print_formatted_text(HTML('<skyblue>{}</skyblue>'.format(os.path.abspath(config))))
     print_formatted_text('')
-    print_formatted_text(HTML('<skyblue>You can now start <b>Jet Bridge</b> by running</skyblue>'))
-    print_formatted_text(HTML('<skyblue><b>jet_bridge</b> command once again</skyblue>'))
+    print_formatted_text(HTML('<skyblue>You can now start <b>Jet Bridge</b></skyblue>'))
     print_formatted_text(HTML('<skyblue><b>===========================================</b></skyblue>\n'))

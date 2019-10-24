@@ -15,6 +15,7 @@ DEFAULT_CONFIG_PATH = os.path.join('jet.conf')
 define('address', default='0.0.0.0', help='server address')
 define('port', default=8888, help='server port', type=int)
 define('config', default=DEFAULT_CONFIG_PATH, help='config file path')
+define('use_default_config', default='', help='use default config values')
 define('debug', default=False, help='debug mode', type=bool)
 define('read_only', default=False, help='read only', type=bool)
 define('connections', default=50, help='connects', type=int)
@@ -70,6 +71,7 @@ READ_ONLY = options.read_only
 CONNECTIONS = options.connections
 AUTO_OPEN_REGISTER = options.auto_open_register
 CONFIG = options.config
+USE_DEFAULT_CONFIG = options.use_default_config.lower().split(',')
 
 WEB_BASE_URL = options.web_base_url
 API_BASE_URL = options.api_base_url

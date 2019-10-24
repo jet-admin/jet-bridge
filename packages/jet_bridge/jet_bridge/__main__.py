@@ -48,6 +48,10 @@ def main():
     if not engine_url:
         raise Exception('Database configuration is not set')
 
+    address = 'localhost' if settings.ADDRESS == '0.0.0.0' else settings.ADDRESS
+    url = 'http://{}:{}/'.format(address, settings.PORT)
+    api_url = '{}api/'.format(url)
+
     if len(args) >= 1:
         if args[0] == 'register_token':
             register_token_command()
@@ -62,14 +66,14 @@ def main():
         elif args[0] == 'token':
             token_command()
             return
+        elif args[0] == 'check_token':
+            check_token_command(api_url)
+            return
 
     from jet_bridge.app import make_app
 
     app = make_app()
     app.listen(settings.PORT, settings.ADDRESS)
-    address = 'localhost' if settings.ADDRESS == '0.0.0.0' else settings.ADDRESS
-    url = 'http://{}:{}/'.format(address, settings.PORT)
-    api_url = '{}jet_api/'.format(url)
 
     logging.info('Starting server at {}'.format(url))
 

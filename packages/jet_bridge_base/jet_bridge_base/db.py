@@ -13,49 +13,70 @@ from jet_bridge_base import settings
 from jet_bridge_base.models import Base
 
 
-def build_engine_url():
-    if not settings.DATABASE_ENGINE or not settings.DATABASE_NAME:
+def build_engine_url(
+        DATABASE_ENGINE,
+        DATABASE_HOST,
+        DATABASE_PORT,
+        DATABASE_NAME,
+        DATABASE_USER,
+        DATABASE_PASSWORD,
+        DATABASE_EXTRA=''
+):
+    if not DATABASE_ENGINE or not DATABASE_NAME:
         return
 
     url = [
-        settings.DATABASE_ENGINE,
+        DATABASE_ENGINE,
         '://'
     ]
 
-    if settings.DATABASE_USER:
-        url.append(settings.DATABASE_USER)
+    if DATABASE_USER:
+        url.append(DATABASE_USER)
 
-        if settings.DATABASE_PASSWORD:
+        if DATABASE_PASSWORD:
             url.append(':')
-            url.append(settings.DATABASE_PASSWORD)
+            url.append(DATABASE_PASSWORD)
 
-        if settings.DATABASE_HOST:
+        if DATABASE_HOST:
             url.append('@')
 
-    if settings.DATABASE_HOST:
-        url.append(settings.DATABASE_HOST)
+    if DATABASE_HOST:
+        url.append(DATABASE_HOST)
 
-        if settings.DATABASE_PORT:
+        if DATABASE_PORT:
             url.append(':')
-            url.append(settings.DATABASE_PORT)
+            url.append(DATABASE_PORT)
 
         url.append('/')
 
-    if settings.DATABASE_ENGINE == 'sqlite':
+    if DATABASE_ENGINE == 'sqlite':
         url.append('/')
 
-    url.append(settings.DATABASE_NAME)
+    url.append(DATABASE_NAME)
 
-    if settings.DATABASE_EXTRA:
-        url.append(settings.DATABASE_EXTRA)
-    elif settings.DATABASE_ENGINE == 'mysql':
+    if DATABASE_EXTRA:
+        url.append(DATABASE_EXTRA)
+    elif DATABASE_ENGINE == 'mysql':
         url.append('?charset=utf8')
-    elif settings.DATABASE_ENGINE == 'mssql+pyodbc':
+    elif DATABASE_ENGINE == 'mssql+pyodbc':
         url.append('?driver=SQL+Server+Native+Client+11.0')
 
     return ''.join(url)
 
-engine_url = build_engine_url()
+
+def build_engine_url_from_settings():
+    return build_engine_url(
+        settings.DATABASE_ENGINE,
+        settings.DATABASE_HOST,
+        settings.DATABASE_PORT,
+        settings.DATABASE_NAME,
+        settings.DATABASE_USER,
+        settings.DATABASE_PASSWORD,
+        settings.DATABASE_EXTRA
+    )
+
+
+engine_url = build_engine_url_from_settings()
 Session = None
 
 if engine_url:
