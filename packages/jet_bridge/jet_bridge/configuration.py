@@ -73,7 +73,7 @@ class JetBridgeConfiguration(Configuration):
             try:
                 os.makedirs(os.path.dirname(absolute_path))
             except OSError:
-                raise
+                pass
 
         with open(absolute_path, 'wb') as f:
             f.write(content)
