@@ -30,8 +30,9 @@ if ! [ -x "$(command -v docker)" ]; then
 fi
 
 # Check if docker is running
-docker_state=$(docker info >/dev/null 2>&1)
-if [[ $? -ne 0 ]]; then
+docker info &> /dev/null && { docker_state=1; } || { docker_state=0; }
+
+if [ $docker_state != 1 ]; then
     echo
     echo "ERROR:"
     echo "    Docker does not seem to be running, run it first and retry"
