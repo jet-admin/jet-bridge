@@ -134,11 +134,11 @@ class JetDjangoConfiguration(Configuration):
 
         source_code = inspect.getsource(getattr(model, str_method))
         regexes = [
-            r'(?s:.*)return\s+self\.(\w+)',
-            r'(?s:.*)return\s+str\(self\.(\w+)\)',
-            r'(?s:.*)return\s+text_type\(self\.(\w+)\)',
-            r'(?s:.*)return\su?\'%[sd]\'\s+%\s+self\.(\w+)',
-            r'(?s:.*)return\s+u?\'\{0?\}\'\.format\(self.(\w+)\)',
+            r'return\s+self\.(\w+)',
+            r'return\s+str\(self\.(\w+)\)',
+            r'return\s+text_type\(self\.(\w+)\)',
+            r'return\su?\'%[sd]\'\s+%\s+self\.(\w+)',
+            r'return\s+u?\'\{0?\}\'\.format\(self.(\w+)\)',
         ]
 
         for regex in regexes:
