@@ -53,7 +53,7 @@ else
         -v $(pwd):/jet \
         -e DATABASE_HOST=host.docker.internal \
         -e ARGS=config \
-        br
+        jetadmin/jetbridge
 fi
 
 PORT=$(awk -F "=" '/^PORT=/ {print $2}' jet.conf)
@@ -70,7 +70,7 @@ docker run \
     -v $(pwd):/jet \
     -e DATABASE_HOST=host.docker.internal \
     -e ARGS=token \
-    br
+    jetadmin/jetbridge
 
 echo
 echo "    Starting Jet Bridge on port ${PORT}"
@@ -81,7 +81,7 @@ docker run \
     --name=jet_bridge \
     -v $(pwd):/jet \
     -d \
-    br \
+    jetadmin/jetbridge \
     &> /dev/null
 
 echo "    Jet Bridge is now running and will run in startup"
