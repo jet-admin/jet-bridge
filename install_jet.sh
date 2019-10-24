@@ -6,7 +6,7 @@ set -e
 #
 # This script is meant for quick & easy install via:
 #
-#   sh <(curl -s https://raw.githubusercontent.com/jet-admin/jet-bridge/master/install_jet.sh)
+#   sh <(curl -s https://raw.githubusercontent.com/jet-admin/jet-bridge/dev/install_jet.sh)
 
 
 remove_container() {
