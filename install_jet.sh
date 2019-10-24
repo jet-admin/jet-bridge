@@ -41,9 +41,9 @@ fi
 
 CONFIG_FILE="${PWD}/jet.conf"
 
-    echo
-    echo "    Installing Jet Bridge as a Docker container..."
-    echo
+echo
+echo "    Installing Jet Bridge as a Docker container..."
+echo
 
 read -p "Enter Docker container name or leave default [jet_bridge]: " CONTAINER_NAME
 CONTAINER_NAME=${CONTAINER_NAME:-jet_bridge}
