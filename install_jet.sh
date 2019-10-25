@@ -84,7 +84,6 @@ docker run \
     --name=${CONTAINER_NAME} \
     -it \
     -v $(pwd):/jet \
-    -e DATABASE_HOST=host.docker.internal \
     -e ARGS=check_token \
     jetadmin/jetbridge:dev
 
