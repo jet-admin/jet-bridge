@@ -99,8 +99,8 @@ docker run \
     -p ${PORT}:${PORT} \
     --name=${CONTAINER_NAME} \
     -v $(pwd):/jet \
-    -d \
     --net=host \
+    -d \
     jetadmin/jetbridge:dev \
     1> /dev/null
 
