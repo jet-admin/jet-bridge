@@ -100,8 +100,8 @@ docker run \
     --name=${CONTAINER_NAME} \
     -v $(pwd):/jet \
     -d \
-    jetadmin/jetbridge:dev \
     --net=host \
+    jetadmin/jetbridge:dev \
     1> /dev/null
 
 echo "    To stop:"
