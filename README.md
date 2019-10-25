@@ -94,7 +94,7 @@ While we are trying to include most of important features out of the box sometim
 
 - **Custom Fields**
 
-  Sometimes using existing fields is not enough and you need to create custom which can be a combination of multiple fields, use fields from related collections and be result of some calculation. In this case you can use FlexField and write your custom JavaScript function which can format fields data any way you want.
+  Sometimes you may want custom fields that are a combination of multiple fields, use fields from related collections, or are the result of some calculation. In this case you can use FlexField and write a custom JavaScript function to format fields data in any way you want.
 
 How It Works
 ============
