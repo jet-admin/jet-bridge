@@ -69,6 +69,7 @@ else
         -v $(pwd):/jet \
         -e DATABASE_HOST=host.docker.internal \
         -e ARGS=config \
+        --net=host \
         jetadmin/jetbridge:dev
 fi
 
@@ -85,6 +86,7 @@ docker run \
     -it \
     -v $(pwd):/jet \
     -e ARGS=check_token \
+    --net=host \
     jetadmin/jetbridge:dev
 
 echo
@@ -99,6 +101,7 @@ docker run \
     -v $(pwd):/jet \
     -d \
     jetadmin/jetbridge:dev \
+    --net=host \
     1> /dev/null
 
 echo "    To stop:"
