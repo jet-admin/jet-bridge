@@ -100,7 +100,6 @@ create_config() {
             --name=${CONTAINER_NAME} \
             -it \
             -v $(pwd):/jet \
-            -e ENVIRONMENT=jet_bridge_docker \
             --entrypoint=/network-entrypoint.sh \
             --net=host \
             jetadmin/jetbridge:dev)
@@ -126,26 +125,9 @@ create_config() {
             -e TOKEN=${TOKEN} \
             -e DATABASE_HOST=${POSSIBLE_HOST} \
             -e ARGS=config \
-            -e ENVIRONMENT=jet_bridge_docker \
             --net=${NET} \
             jetadmin/jetbridge:dev
     fi
-}
-
-check_token() {
-    echo
-    echo "    Checking if your Jet Bridge instance is registered, please wait..."
-    echo
-
-    remove_container
-    docker run \
-        --name=${CONTAINER_NAME} \
-        -it \
-        -v $(pwd):/jet \
-        -e ARGS=check_token \
-        -e ENVIRONMENT=jet_bridge_docker \
-        --net=host \
-        jetadmin/jetbridge:dev
 }
 
 run_instance() {
@@ -156,13 +138,11 @@ run_instance() {
     echo
     echo "    Starting Jet Bridge..."
 
-    # docker rm --force ${CONTAINER_NAME} &> /dev/null || true
     remove_container
     docker run \
         -p ${PORT}:${PORT} \
         --name=${CONTAINER_NAME} \
         -v $(pwd):/jet \
-        -e ENVIRONMENT=jet_bridge_docker \
         --net=${NET} \
         --restart=always \
         -d \
@@ -230,5 +210,4 @@ check_is_docker_running
 fetch_latest_jet_bridge
 prepare_container
 create_config
-#check_token
 run_instance
