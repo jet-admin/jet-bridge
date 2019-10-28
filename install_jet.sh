@@ -13,112 +13,137 @@ remove_container() {
     docker rm --force ${CONTAINER_NAME} &> /dev/null || true
 }
 
-# Check if docker is installed
-if ! [ -x "$(command -v docker)" ]; then
-    echo
-    echo "ERROR:"
-    echo "    Docker is not found on your system"
-    echo "    Install Docker by running the following command:"
-    echo
-    echo "        sh <(curl -s https://get.docker.com)"
-    echo
-    echo "    or follow official documentation"
-    echo
-    echo "        https://docs.docker.com/install/"
-    echo
-    exit 1
-fi
+check_is_docker_installed() {
+    # Check if docker is installed
+    if ! [ -x "$(command -v docker)" ]; then
+        echo
+        echo "ERROR:"
+        echo "    Docker is not found on your system"
+        echo "    Install Docker by running the following command:"
+        echo
+        echo "        sh <(curl -s https://get.docker.com)"
+        echo
+        echo "    or follow official documentation"
+        echo
+        echo "        https://docs.docker.com/install/"
+        echo
+        exit 1
+    fi
+}
 
-# Check if docker is running
-docker info &> /dev/null && { docker_state=1; } || { docker_state=0; }
+check_is_docker_running() {
+    # Check if docker is running
+    docker info &> /dev/null && { docker_state=1; } || { docker_state=0; }
 
-if [ $docker_state != 1 ]; then
+    if [ $docker_state != 1 ]; then
+        echo
+        echo "ERROR:"
+        echo "    Docker does not seem to be running, run it first and retry"
+        echo
+        exit 1
+    fi
+}
+
+fetch_latest_jet_bridge() {
     echo
-    echo "ERROR:"
-    echo "    Docker does not seem to be running, run it first and retry"
+    echo "    Fetching latest Jet Bridge image..."
     echo
-    exit 1
-fi
 
-echo
-echo "    Fetching latest Jet Bridge image..."
-echo
-docker pull jetadmin/jetbridge:dev
+    docker pull jetadmin/jetbridge:dev
+}
 
-CONFIG_FILE="${PWD}/jet.conf"
-
-echo
-echo "    Installing Jet Bridge as a Docker container..."
-echo
-
-read -p "Enter Docker container name or leave default [jet_bridge]: " CONTAINER_NAME
-CONTAINER_NAME=${CONTAINER_NAME:-jet_bridge}
-
-# Checking if config file exists
-if [ -f "$CONFIG_FILE" ]; then
+prepare_container() {
     echo
-    echo "    There is an existing config file will be used:"
-    echo "    ${CONFIG_FILE}"
-    echo "    You can edit it to change settings"
+    echo "    Installing Jet Bridge as a Docker container..."
     echo
-else
+
+    read -p "Enter Docker container name or leave default [jet_bridge]: " CONTAINER_NAME
+    CONTAINER_NAME=${CONTAINER_NAME:-jet_bridge}
+}
+
+create_config() {
+    CONFIG_FILE="${PWD}/jet.conf"
+
+    # Checking if config file exists
+    if [ -f "$CONFIG_FILE" ]; then
+        echo
+        echo "    There is an existing config file will be used:"
+        echo "    ${CONFIG_FILE}"
+        echo "    You can edit it to change settings"
+        echo
+    else
+        remove_container
+        docker run \
+            --name=${CONTAINER_NAME} \
+            -it \
+            -v $(pwd):/jet \
+            -e DATABASE_HOST=host.docker.internal \
+            -e ARGS=config \
+            -e ENVIRONMENT=jet_bridge_docker \
+            --net=host \
+            jetadmin/jetbridge:dev
+    fi
+}
+
+check_token() {
+    echo
+    echo "    Checking if your Jet Bridge instance is registered, please wait..."
+    echo
+
     remove_container
     docker run \
         --name=${CONTAINER_NAME} \
         -it \
         -v $(pwd):/jet \
-        -e DATABASE_HOST=host.docker.internal \
-        -e ARGS=config \
+        -e ARGS=check_token \
+        -e ENVIRONMENT=jet_bridge_docker \
         --net=host \
         jetadmin/jetbridge:dev
-fi
+}
 
-PORT=$(awk -F "=" '/^PORT=/ {print $2}' jet.conf)
+run_instance() {
+    echo
+    echo "    Starting Jet Bridge..."
+    echo
 
-echo
-echo "    Checking if your Jet Bridge instance is registered, please wait..."
-echo
+    PORT=$(awk -F "=" '/^PORT=/ {print $2}' jet.conf)
 
+    # docker rm --force ${CONTAINER_NAME} &> /dev/null || true
+    remove_container
+    docker run \
+        -p ${PORT}:${PORT} \
+        --name=${CONTAINER_NAME} \
+        -v $(pwd):/jet \
+        -e ENVIRONMENT=jet_bridge_docker \
+        --net=host \
+        -d \
+        jetadmin/jetbridge:dev \
+        1> /dev/null
 
-remove_container
-docker run \
-    --name=${CONTAINER_NAME} \
-    -it \
-    -v $(pwd):/jet \
-    -e ARGS=check_token \
-    --net=host \
-    jetadmin/jetbridge:dev
+    echo "    To stop:"
+    echo "        docker stop ${CONTAINER_NAME}"
+    echo
+    echo "    To start:"
+    echo "        docker start ${CONTAINER_NAME}"
+    echo
+    echo "    To view logs:"
+    echo "        docker logs -f ${CONTAINER_NAME}"
+    echo
+    echo "    To view token:"
+    echo "        docker exec -it ${CONTAINER_NAME} jet_bridge token"
+    echo
+    echo "    Success! Jet Bridge is now running and will start automatically on system reboot"
+    echo
+    echo "    Port: ${PORT}"
+    echo "    Docker Container: ${CONTAINER_NAME}"
+    echo "    Config File: ${CONFIG_FILE}"
+    echo
+}
 
-echo
-echo "    Starting Jet Bridge..."
-echo
-
-# docker rm --force ${CONTAINER_NAME} &> /dev/null || true
-remove_container
-docker run \
-    -p ${PORT}:${PORT} \
-    --name=${CONTAINER_NAME} \
-    -v $(pwd):/jet \
-    --net=host \
-    -d \
-    jetadmin/jetbridge:dev \
-    1> /dev/null
-
-echo "    To stop:"
-echo "        docker stop ${CONTAINER_NAME}"
-echo
-echo "    To start:"
-echo "        docker start ${CONTAINER_NAME}"
-echo
-echo "    To view logs:"
-echo "        docker logs -f ${CONTAINER_NAME}"
-echo
-echo "    To view token:"
-echo "        docker exec -it ${CONTAINER_NAME} jet_bridge token"
-echo
-echo "    Success! Jet Bridge is now running and will start automatically on system reboot"
-echo
-echo "    Port: ${PORT}"
-echo "    Docker Container: ${CONTAINER_NAME}"
-echo "    Config File: ${CONFIG_FILE}"
-echo
+check_is_docker_installed
+check_is_docker_running
+fetch_latest_jet_bridge
+prepare_container
+create_config
+check_token
+run_instance
