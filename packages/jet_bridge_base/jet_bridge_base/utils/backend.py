@@ -2,6 +2,7 @@ from datetime import datetime, tzinfo, timedelta
 import requests
 
 from jet_bridge_base import settings, VERSION
+from jet_bridge_base.configuration import configuration
 from jet_bridge_base.models.token import Token
 from jet_bridge_base.logger import logger
 
@@ -127,10 +128,12 @@ def project_auth(session, token, permission=None):
     url = api_method_url('project_auth/')
     data = {
         'project_token': settings.TOKEN,
-        'token': token
+        'token': token,
+        'bridge_version': configuration.get_version(),
+        'bridge_type': configuration.get_type()
     }
     headers = {
-        'User-Agent': 'Jet Django'
+        'User-Agent': '{} v. {}'.format(configuration.get_type(), configuration.get_version())
     }
 
     if permission:
