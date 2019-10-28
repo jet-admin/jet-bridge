@@ -25,5 +25,6 @@ WORKDIR /jet
 
 #USER jet
 
-CMD ["jet_bridge", "--media_root=/jet/jet_media", "--use_default_config=address,config"]
-
+COPY docker/entrypoint.sh /
+RUN chmod +x /entrypoint.sh
+ENTRYPOINT ["/entrypoint.sh"]
