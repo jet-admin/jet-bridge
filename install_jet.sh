@@ -107,31 +107,21 @@ create_config() {
 
     POSSIBLE_HOST="${POSSIBLE_HOST:-localhost}"
 
-    CONFIG_FILE="${PWD}/jet.conf"
-
-    # Checking if config file exists
-    if [ -f "$CONFIG_FILE" ]; then
-        echo
-        echo "    There is an existing config file will be used:"
-        echo "    ${CONFIG_FILE}"
-        echo "    You can edit it to change settings"
-        echo
-    else
-        remove_container
-        docker run \
-            --name=${CONTAINER_NAME} \
-            -it \
-            -v $(pwd):/jet \
-            -e TOKEN=${TOKEN} \
-            -e DATABASE_HOST=${POSSIBLE_HOST} \
-            -e ARGS=config \
-            --net=${NET} \
-            jetadmin/jetbridge:dev
-    fi
+    remove_container
+    docker run \
+        --name=${CONTAINER_NAME} \
+        -it \
+        -v $(pwd):/jet \
+        -e TOKEN=${TOKEN} \
+        -e DATABASE_HOST=${POSSIBLE_HOST} \
+        -e ARGS=config \
+        --net=${NET} \
+        jetadmin/jetbridge:dev
 }
 
 run_instance() {
     PORT=$(awk -F "=" '/^PORT=/ {print $2}' jet.conf)
+    CONFIG_FILE="${PWD}/jet.conf"
     RUN_TIMEOUT=$(awk -F "=" '/^RUN_TIMEOUT=/ {print $2}' jet.conf)
     RUN_TIMEOUT="${RUN_TIMEOUT:-10}"
 
