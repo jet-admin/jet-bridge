@@ -116,6 +116,8 @@ check_token() {
 
 run_instance() {
     PORT=$(awk -F "=" '/^PORT=/ {print $2}' jet.conf)
+    RUN_TIMEOUT=$(awk -F "=" '/^RUN_TIMEOUT=/ {print $2}' jet.conf)
+    RUN_TIMEOUT="${RUN_TIMEOUT:-10}"
 
     echo
     echo "    Starting Jet Bridge..."
