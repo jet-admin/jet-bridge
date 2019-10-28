@@ -11,6 +11,24 @@ set -e
 
 TOKEN=$1
 
+if [ "$(uname)" == "Darwin" ]; then
+    MAC=1
+else
+    MAC=0
+fi
+
+if [[ $(uname -s) == CYGWIN* ]];then
+    WIN=1
+else
+    WIN=0
+fi
+
+if [ $WIN -eq 1 ] || [ $MAC -eq 1 ]; then
+    NET="bridge"
+else
+    NET="host"
+fi
+
 check_arguments() {
     if [[ -z $TOKEN ]]; then
         echo
@@ -93,7 +111,7 @@ create_config() {
             -e DATABASE_HOST=host.docker.internal \
             -e ARGS=config \
             -e ENVIRONMENT=jet_bridge_docker \
-            --net=host \
+            --net=${NET} \
             jetadmin/jetbridge:dev
     fi
 }
@@ -129,7 +147,7 @@ run_instance() {
         --name=${CONTAINER_NAME} \
         -v $(pwd):/jet \
         -e ENVIRONMENT=jet_bridge_docker \
-        --net=host \
+        --net=${NET} \
         -d \
         jetadmin/jetbridge:dev \
         1> /dev/null
