@@ -148,6 +148,7 @@ run_instance() {
         -v $(pwd):/jet \
         -e ENVIRONMENT=jet_bridge_docker \
         --net=${NET} \
+        --restart=always \
         -d \
         jetadmin/jetbridge:dev \
         1> /dev/null
