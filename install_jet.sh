@@ -92,6 +92,22 @@ prepare_container() {
 }
 
 create_config() {
+    POSSIBLE_HOST=''
+
+    if [ $WIN -eq 1 ] || [ $MAC -eq 1 ]; then
+        remove_container
+        POSSIBLE_HOST=$(docker run \
+            --name=${CONTAINER_NAME} \
+            -it \
+            -v $(pwd):/jet \
+            -e ENVIRONMENT=jet_bridge_docker \
+            --entrypoint=/network-entrypoint.sh \
+            --net=host \
+            jetadmin/jetbridge:dev)
+    fi
+
+    POSSIBLE_HOST="${POSSIBLE_HOST:-localhost}"
+
     CONFIG_FILE="${PWD}/jet.conf"
 
     # Checking if config file exists
@@ -108,7 +124,7 @@ create_config() {
             -it \
             -v $(pwd):/jet \
             -e TOKEN=${TOKEN} \
-            -e DATABASE_HOST=host.docker.internal \
+            -e DATABASE_HOST=${POSSIBLE_HOST} \
             -e ARGS=config \
             -e ENVIRONMENT=jet_bridge_docker \
             --net=${NET} \

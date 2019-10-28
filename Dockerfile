@@ -26,5 +26,7 @@ WORKDIR /jet
 #USER jet
 
 COPY docker/entrypoint.sh /
+COPY docker/network-entrypoint.sh /
 RUN chmod +x /entrypoint.sh
+RUN chmod +x /network-entrypoint.sh
 ENTRYPOINT ["/entrypoint.sh"]
