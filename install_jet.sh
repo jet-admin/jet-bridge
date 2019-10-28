@@ -200,7 +200,7 @@ run_instance() {
     echo "    Docker Container: ${CONTAINER_NAME}"
     echo "    Config File: ${CONFIG_FILE}"
     echo
-    echo "    Go to https://app.jetadmin.io/ to finish installation"
+    echo "    Open http://localhost:${PORT}/api/register/ to finish installation"
     echo
 }
 
