@@ -7,6 +7,7 @@ CURRENT_MODULE = sys.modules[__name__]
 DEBUG = False
 READ_ONLY = False
 AUTO_OPEN_REGISTER = True
+TOKEN = None
 
 WEB_BASE_URL = None
 API_BASE_URL = None

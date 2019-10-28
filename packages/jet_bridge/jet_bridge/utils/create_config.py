@@ -76,6 +76,16 @@ def create_config(config_not_set):
         promt_messages += 1
         return HTML('{}. {}\n> '.format(promt_messages, message))
 
+    if 'token' not in settings.USE_DEFAULT_CONFIG:
+        token = prompt(
+            promt_message('<green><b>Enter your Jet Bridge token</b></green>'),
+            default=settings.TOKEN
+        )
+
+        print_formatted_text('')
+    else:
+        token = settings.TOKEN
+
     if 'address' not in settings.USE_DEFAULT_CONFIG:
         address = prompt(
             promt_message('<green><b>Which host to run Jet Bridge on?</b></green>\n<i>Default is {}</i>'.format('0.0.0.0 (any IP)')),
@@ -244,6 +254,7 @@ def create_config(config_not_set):
         'ADDRESS': address,
         'PORT': port,
         'CONFIG': config,
+        'TOKEN': token,
         'DATABASE_ENGINE': database_engine,
         'DATABASE_HOST': database_host,
         'DATABASE_PORT': database_port,

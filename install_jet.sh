@@ -9,6 +9,18 @@ set -e
 #   sh <(curl -s https://raw.githubusercontent.com/jet-admin/jet-bridge/dev/install_jet.sh)
 
 
+TOKEN=$1
+
+check_arguments() {
+    if [[ -z $TOKEN ]]; then
+        echo
+        echo "ERROR:"
+        echo "    Pass token as an argument"
+        echo
+        exit 1
+    fi
+}
+
 remove_container() {
     docker rm --force ${CONTAINER_NAME} &> /dev/null || true
 }
@@ -77,6 +89,7 @@ create_config() {
             --name=${CONTAINER_NAME} \
             -it \
             -v $(pwd):/jet \
+            -e TOKEN=${TOKEN} \
             -e DATABASE_HOST=host.docker.internal \
             -e ARGS=config \
             -e ENVIRONMENT=jet_bridge_docker \
@@ -102,11 +115,10 @@ check_token() {
 }
 
 run_instance() {
+    PORT=$(awk -F "=" '/^PORT=/ {print $2}' jet.conf)
+
     echo
     echo "    Starting Jet Bridge..."
-    echo
-
-    PORT=$(awk -F "=" '/^PORT=/ {print $2}' jet.conf)
 
     # docker rm --force ${CONTAINER_NAME} &> /dev/null || true
     remove_container
@@ -120,6 +132,39 @@ run_instance() {
         jetadmin/jetbridge:dev \
         1> /dev/null
 
+    BASE_URL="http://localhost:${PORT}/api/"
+    REGISTER_URL="${BASE_URL}register/"
+
+    printf '    '
+
+    i=0
+    DELAY=1
+    TIMEOUT=10
+    i_last=$((TIMEOUT / DELAY))
+
+    until $(curl --output /dev/null --silent --fail ${BASE_URL}); do
+        printf '.'
+        sleep $DELAY
+        (( count++ ))
+
+        if [[ count -ge $i_last ]]; then
+            echo
+            echo
+            echo "ERROR:"
+            echo "    Jet Bridge failed to start after timeout (${TIMEOUT}):"
+            echo
+
+            docker logs ${CONTAINER_NAME}
+
+            exit 1
+        fi
+    done
+
+    if command -v python &>/dev/null; then
+        python -mwebbrowser ${REGISTER_URL}
+    fi
+
+    echo
     echo "    To stop:"
     echo "        docker stop ${CONTAINER_NAME}"
     echo
@@ -138,12 +183,15 @@ run_instance() {
     echo "    Docker Container: ${CONTAINER_NAME}"
     echo "    Config File: ${CONFIG_FILE}"
     echo
+    echo "    Go to https://app.jetadmin.io/ to finish installation"
+    echo
 }
 
+check_arguments
 check_is_docker_installed
 check_is_docker_running
 fetch_latest_jet_bridge
 prepare_container
 create_config
-check_token
+#check_token
 run_instance

@@ -119,16 +119,14 @@ def set_token(session, token):
 
 
 def project_auth(session, token, permission=None):
-    project_token = session.query(Token).first()
-
-    if not project_token:
+    if not settings.TOKEN:
         return {
             'result': False
         }
 
     url = api_method_url('project_auth/')
     data = {
-        'project_token': project_token.token,
+        'project_token': settings.TOKEN,
         'token': token
     }
     headers = {
