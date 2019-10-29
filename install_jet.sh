@@ -150,7 +150,7 @@ run_instance() {
         1> /dev/null
 
     BASE_URL="http://localhost:${PORT}/api/"
-    REGISTER_URL="${BASE_URL}register/"
+    REGISTER_URL="${BASE_URL}register/?install_type=sql_docker"
 
     printf '    '
 
@@ -200,7 +200,7 @@ run_instance() {
     echo "    Docker Container: ${CONTAINER_NAME}"
     echo "    Config File: ${CONFIG_FILE}"
     echo
-    echo "    Open http://localhost:${PORT}/api/register/ to finish installation"
+    echo "    Open ${REGISTER_URL} to finish installation"
     echo
 }
 
