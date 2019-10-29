@@ -13,7 +13,7 @@ from jet_bridge.configuration import JetBridgeConfiguration
 conf = JetBridgeConfiguration()
 configuration.set_configuration(conf)
 
-from jet_bridge_base.commands.check_token import check_token_command
+# from jet_bridge_base.commands.check_token import check_token_command
 from jet_bridge_base import VERSION
 from jet_bridge_base.db import engine_url
 from jet_bridge_base.commands.register_token import register_token_command
@@ -47,25 +47,25 @@ def main():
 
     address = 'localhost' if settings.ADDRESS == '0.0.0.0' else settings.ADDRESS
     url = 'http://{}:{}/'.format(address, settings.PORT)
-    api_url = '{}api/'.format(url)
+    # api_url = '{}api/'.format(url)
 
-    if len(args) >= 1:
-        if args[0] == 'register_token':
-            register_token_command()
-            return
-        elif args[0] == 'reset_token':
-            reset_token_command()
-            return
-        elif args[0] == 'set_token':
-            token = args[1] if len(args) >= 2 else None
-            set_token_command(token)
-            return
-        elif args[0] == 'token':
-            token_command()
-            return
-        elif args[0] == 'check_token':
-            check_token_command(api_url)
-            return
+    # if len(args) >= 1:
+    #     if args[0] == 'register_token':
+    #         register_token_command()
+    #         return
+    #     elif args[0] == 'reset_token':
+    #         reset_token_command()
+    #         return
+    #     elif args[0] == 'set_token':
+    #         token = args[1] if len(args) >= 2 else None
+    #         set_token_command(token)
+    #         return
+    #     elif args[0] == 'token':
+    #         token_command()
+    #         return
+    #     elif args[0] == 'check_token':
+    #         check_token_command(api_url)
+    #         return
 
     from jet_bridge.app import make_app
 
@@ -79,7 +79,7 @@ def main():
 
     logger.info('Quit the server with CONTROL-C')
 
-    check_token_command(api_url)
+    # check_token_command(api_url)
 
     tornado.ioloop.IOLoop.current().start()
 

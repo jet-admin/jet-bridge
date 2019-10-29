@@ -12,26 +12,24 @@ def check_token_command(api_url):
     session = Session()
 
     try:
-        # token, created = register_token(session)
+        token, created = register_token(session)
 
-        # if not token:
-        #     return
+        if not token:
+            return
 
         if not is_token_activated(session):
-            # token = get_token(session)
+            token = get_token(session)
 
             logger.warning('[!] Your server token is not activated')
-            # logger.warning('[!] Token: {}'.format(token))
-
-            register_url = '{}register/'.format(api_url)
+            logger.warning('[!] Token: {}'.format(token))
 
             if settings.AUTO_OPEN_REGISTER and api_url.startswith('http'):
-                # register_url = '{}register/?token={}'.format(api_url, token)
+                register_url = '{}register/?token={}'.format(api_url, token)
 
                 if webbrowser.open(register_url):
                     logger.warning('[!] Activation page was opened in your browser - {}'.format(register_url))
             else:
-                # register_url = '{}register/'.format(api_url)
+                register_url = '{}register/'.format(api_url)
                 logger.warning('[!] Go to {} to activate it'.format(register_url))
     except RequestException:
         logger.error('[!] Can\'t connect to Jet Admin API')
