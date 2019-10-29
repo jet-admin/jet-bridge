@@ -99,6 +99,7 @@ prepare_container() {
 }
 
 create_config() {
+    DATABASE_HOST=''
     POSSIBLE_HOST=''
 
     if [ $WIN -eq 1 ] || [ $MAC -eq 1 ]; then
@@ -112,7 +113,9 @@ create_config() {
             jetadmin/jetbridge:dev)
     fi
 
-    POSSIBLE_HOST="${POSSIBLE_HOST:-localhost}"
+    if [ $POSSIBLE_HOST ]; then
+        DATABASE_HOST=" -e DATABASE_HOST=${POSSIBLE_HOST}"
+    fi
 
     remove_container
     docker run \
@@ -121,7 +124,7 @@ create_config() {
         -v ${PWD}:/jet \
         -e PROJECT=${PROJECT} \
         -e TOKEN=${TOKEN} \
-        -e DATABASE_HOST=${POSSIBLE_HOST} \
+        ${DATABASE_HOST} \
         -e POSSIBLE_HOST=${POSSIBLE_HOST} \
         -e ARGS=config \
         --net=${NET} \
