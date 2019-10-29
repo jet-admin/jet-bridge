@@ -1,5 +1,3 @@
-from jet_bridge_base.db import Session
-
 from jet_bridge_base import settings
 from jet_bridge_base.utils.backend import project_auth
 
@@ -20,38 +18,31 @@ class HasProjectPermissions(BasePermission):
     def has_permission(self, view):
         # return True
         token = view.request.headers.get('AUTHORIZATION')
-        session_create = not getattr(view, 'session')
         permission = view.required_project_permission() if hasattr(view, 'required_project_permission') else None
 
         if not token:
             return False
 
-        try:
-            session = Session() if session_create else getattr(view, 'session')
+        if token[:len(self.token_prefix)] == self.token_prefix:
+            token = token[len(self.token_prefix):]
 
-            if token[:len(self.token_prefix)] == self.token_prefix:
-                token = token[len(self.token_prefix):]
+            result = project_auth(token, permission)
 
-                result = project_auth(session, token, permission)
+            if result.get('warning'):
+                view.headers['X-Application-Warning'] = result['warning']
 
-                if result.get('warning'):
-                    view.headers['X-Application-Warning'] = result['warning']
+            return result['result']
+        elif token[:len(self.project_token_prefix)] == self.project_token_prefix:
+            token = token[len(self.project_token_prefix):]
 
-                return result['result']
-            elif token[:len(self.project_token_prefix)] == self.project_token_prefix:
-                token = token[len(self.project_token_prefix):]
+            result = project_auth(token, permission)
 
-                result = project_auth(session, token, permission)
+            if result.get('warning'):
+                view.headers['X-Application-Warning'] = result['warning']
 
-                if result.get('warning'):
-                    view.headers['X-Application-Warning'] = result['warning']
-
-                return result['result']
-            else:
-                return False
-        finally:
-            if session_create:
-                session.close()
+            return result['result']
+        else:
+            return False
 
 
 class ModifyNotInDemo(BasePermission):
