@@ -17,6 +17,7 @@ class RegisterView(APIView):
             return Response('Project token is not set', status=HTTP_400_BAD_REQUEST)
 
         token = self.request.get_argument('token', '')
+        install_type = self.request.get_argument('install_type', '')
 
         if settings.WEB_BASE_URL.startswith('https') and not self.request.full_url().startswith('https'):
             web_base_url = 'http{}'.format(settings.WEB_BASE_URL[5:])
@@ -28,9 +29,14 @@ class RegisterView(APIView):
         else:
             url = '{}/projects/register'.format(web_base_url)
 
-        query_string = 'project={}&referrer={}'.format(
-            quote(settings.PROJECT),
-            quote(self.request.full_url().encode('utf8'))
-        )
+        parameters = [
+            ['project', settings.PROJECT],
+            ['referrer', self.request.full_url().encode('utf8')],
+        ]
+
+        if install_type:
+            parameters.append(['install_type', install_type])
+
+        query_string = '&'.join(map(lambda x: '{}={}'.format(x[0], quote(x[1])), parameters))
 
         return RedirectResponse('%s?%s' % (url, query_string))
