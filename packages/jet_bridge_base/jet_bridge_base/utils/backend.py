@@ -17,7 +17,7 @@ def is_token_activated():
 
     url = api_method_url('project_tokens/{}/'.format(settings.TOKEN))
     headers = {
-        'User-Agent': 'Jet Django'
+        'User-Agent': '{} v{}'.format(configuration.get_type(), configuration.get_version())
     }
 
     r = requests.request('GET', url, headers=headers)
@@ -40,9 +40,7 @@ def project_auth(token, permission=None):
     url = api_method_url('project_auth/')
     data = {
         'project_token': settings.TOKEN,
-        'token': token,
-        'bridge_type': configuration.get_type(),
-        'bridge_version': configuration.get_version()
+        'token': token
     }
     headers = {
         'User-Agent': '{} v{}'.format(configuration.get_type(), configuration.get_version())
