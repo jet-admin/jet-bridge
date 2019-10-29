@@ -129,11 +129,11 @@ def project_auth(session, token, permission=None):
     data = {
         'project_token': settings.TOKEN,
         'token': token,
-        'bridge_version': configuration.get_version(),
-        'bridge_type': configuration.get_type()
+        'bridge_type': configuration.get_type(),
+        'bridge_version': configuration.get_version()
     }
     headers = {
-        'User-Agent': '{} v. {}'.format(configuration.get_type(), configuration.get_version())
+        'User-Agent': '{} v{}'.format(configuration.get_type(), configuration.get_version())
     }
 
     if permission:
