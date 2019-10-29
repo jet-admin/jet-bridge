@@ -12,11 +12,16 @@ set -e
 PROJECT=$1
 TOKEN=$2
 
-if [ "$(uname)" == "Darwin" ]; then
+if [ "$(uname)" = "Darwin" ]; then
     MAC=1
 else
     MAC=0
 fi
+
+WIN=0
+case $(uname -s) in CYGWIN*)
+    WIN=1
+esac
 
 if [[ $(uname -s) == CYGWIN* ]];then
     WIN=1
@@ -31,14 +36,14 @@ else
 fi
 
 check_arguments() {
-    if [[ -z $PROJECT ]]; then
+    if [ -z $PROJECT ]; then
         echo
         echo "ERROR:"
         echo "    Pass project as an argument"
         echo
         exit 1
     fi
-    if [[ -z $TOKEN ]]; then
+    if [ -z $TOKEN ]; then
         echo
         echo "ERROR:"
         echo "    Pass token as an argument"
@@ -48,7 +53,7 @@ check_arguments() {
 }
 
 remove_container() {
-    docker rm --force ${CONTAINER_NAME} &> /dev/null || true
+    docker rm --force ${CONTAINER_NAME} >/dev/null || true
 }
 
 check_is_docker_installed() {
@@ -71,7 +76,7 @@ check_is_docker_installed() {
 
 check_is_docker_running() {
     # Check if docker is running
-    docker info &> /dev/null && { docker_state=1; } || { docker_state=0; }
+    docker info >/dev/null && { docker_state=1; } || { docker_state=0; }
 
     if [ $docker_state != 1 ]; then
         echo
@@ -107,7 +112,7 @@ create_config() {
         POSSIBLE_HOST=$(docker run \
             --name=${CONTAINER_NAME} \
             -it \
-            -v $(pwd):/jet \
+            -v ${PWD}:/jet \
             --entrypoint=/network-entrypoint.sh \
             --net=host \
             jetadmin/jetbridge:dev)
@@ -119,7 +124,7 @@ create_config() {
     docker run \
         --name=${CONTAINER_NAME} \
         -it \
-        -v $(pwd):/jet \
+        -v ${PWD}:/jet \
         -e PROJECT=${PROJECT} \
         -e TOKEN=${TOKEN} \
         -e DATABASE_HOST=${POSSIBLE_HOST} \
@@ -142,7 +147,7 @@ run_instance() {
     docker run \
         -p ${PORT}:${PORT} \
         --name=${CONTAINER_NAME} \
-        -v $(pwd):/jet \
+        -v ${PWD}:/jet \
         --net=${NET} \
         --restart=always \
         -d \
@@ -177,7 +182,7 @@ run_instance() {
         fi
     done
 
-    if command -v python &>/dev/null; then
+    if command -v python >/dev/null; then
         python -mwebbrowser ${REGISTER_URL}
     fi
 
