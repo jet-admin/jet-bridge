@@ -51,6 +51,7 @@ class JetDjangoConfiguration(Configuration):
             'READ_ONLY': settings.JET_READ_ONLY,
             'WEB_BASE_URL': settings.JET_BACKEND_WEB_BASE_URL,
             'API_BASE_URL': settings.JET_BACKEND_API_BASE_URL,
+            'PROJECT': settings.JET_PROJECT,
             'TOKEN': settings.JET_TOKEN,
             'DATABASE_ENGINE': settings.database_engine,
             'DATABASE_HOST': settings.database_settings.get('HOST'),

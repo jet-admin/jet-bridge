@@ -9,7 +9,8 @@ set -e
 #   sh <(curl -s https://raw.githubusercontent.com/jet-admin/jet-bridge/dev/install_jet.sh)
 
 
-TOKEN=$1
+PROJECT=$1
+TOKEN=$2
 
 if [ "$(uname)" == "Darwin" ]; then
     MAC=1
@@ -30,6 +31,13 @@ else
 fi
 
 check_arguments() {
+    if [[ -z $PROJECT ]]; then
+        echo
+        echo "ERROR:"
+        echo "    Pass project as an argument"
+        echo
+        exit 1
+    fi
     if [[ -z $TOKEN ]]; then
         echo
         echo "ERROR:"
@@ -112,8 +120,10 @@ create_config() {
         --name=${CONTAINER_NAME} \
         -it \
         -v $(pwd):/jet \
+        -e PROJECT=${PROJECT} \
         -e TOKEN=${TOKEN} \
         -e DATABASE_HOST=${POSSIBLE_HOST} \
+        -e POSSIBLE_HOST=${POSSIBLE_HOST} \
         -e ARGS=config \
         --net=${NET} \
         jetadmin/jetbridge:dev

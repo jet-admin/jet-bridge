@@ -76,6 +76,16 @@ def create_config(config_not_set):
         promt_messages += 1
         return HTML('{}. {}\n> '.format(promt_messages, message))
 
+    if 'project' not in settings.USE_DEFAULT_CONFIG:
+        project = prompt(
+            promt_message('<green><b>Enter your project unique name</b></green>'),
+            default=settings.PROJECT
+        )
+
+        print_formatted_text('')
+    else:
+        project = settings.PROJECT
+
     if 'token' not in settings.USE_DEFAULT_CONFIG:
         token = prompt(
             promt_message('<green><b>Enter your Jet Bridge token</b></green>'),
@@ -150,14 +160,20 @@ def create_config(config_not_set):
         else:
             prompts = 5
 
+            default = database_host or settings.DATABASE_HOST or 'localhost'
+            message = '<green><b>Enter your database host</b></green>\n<i>Default is {}</i>'.format('localhost')
+
+            if default == settings.POSSIBLE_HOST:
+                message += '\n<b>{}</b> should point to <b>{}</b> on Docker environment'.format(settings.DATABASE_HOST, 'localhost')
+
             database_host = prompt(
-                promt_message('<green><b>Enter your database host</b></green>\n<i>Default is {}</i>'.format('localhost')),
+                promt_message(message),
                 validator=Validator.from_callable(
                     is_not_empty,
                     error_message='Database host is required',
                     move_cursor_to_end=True
                 ),
-                default=database_host or settings.DATABASE_HOST or 'localhost'
+                default=default
             )
 
             print_formatted_text('')
@@ -254,6 +270,7 @@ def create_config(config_not_set):
         'ADDRESS': address,
         'PORT': port,
         'CONFIG': config,
+        'PROJECT': project,
         'TOKEN': token,
         'DATABASE_ENGINE': database_engine,
         'DATABASE_HOST': database_host,

@@ -21,6 +21,7 @@ class JetBridgeConfiguration(Configuration):
             'AUTO_OPEN_REGISTER': settings.AUTO_OPEN_REGISTER,
             'WEB_BASE_URL': settings.WEB_BASE_URL,
             'API_BASE_URL': settings.API_BASE_URL,
+            'PROJECT': settings.PROJECT,
             'TOKEN': settings.TOKEN,
             'DATABASE_ENGINE': settings.DATABASE_ENGINE,
             'DATABASE_HOST': settings.DATABASE_HOST,

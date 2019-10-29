@@ -17,6 +17,9 @@
     "postdeploy": "./release-tasks.sh"
   },
   "env": {
+    "PROJECT": {
+      "description": "Unique project name from app.jetadmin.io"
+    },
     "TOKEN": {
       "description": "Jet Bridge token from app.jetadmin.io"
     },
