@@ -23,12 +23,6 @@ case $(uname -s) in CYGWIN*)
     WIN=1
 esac
 
-if [[ $(uname -s) == CYGWIN* ]];then
-    WIN=1
-else
-    WIN=0
-fi
-
 if [ $WIN -eq 1 ] || [ $MAC -eq 1 ]; then
     NET="bridge"
 else
@@ -53,7 +47,7 @@ check_arguments() {
 }
 
 remove_container() {
-    docker rm --force ${CONTAINER_NAME} >/dev/null || true
+    docker rm --force ${CONTAINER_NAME} >/dev/null 2>&1 || true
 }
 
 check_is_docker_installed() {
@@ -76,7 +70,7 @@ check_is_docker_installed() {
 
 check_is_docker_running() {
     # Check if docker is running
-    docker info >/dev/null && { docker_state=1; } || { docker_state=0; }
+    docker info >/dev/null 2>&1 && { docker_state=1; } || { docker_state=0; }
 
     if [ $docker_state != 1 ]; then
         echo
@@ -182,7 +176,7 @@ run_instance() {
         fi
     done
 
-    if command -v python >/dev/null; then
+    if command -v python >/dev/null 2>&1; then
         python -mwebbrowser ${REGISTER_URL}
     fi
 
