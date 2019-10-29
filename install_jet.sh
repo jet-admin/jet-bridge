@@ -161,9 +161,9 @@ run_instance() {
     until $(curl --output /dev/null --silent --fail ${BASE_URL}); do
         printf '.'
         sleep $DELAY
-        (( count++ ))
+        i=$((i+1))
 
-        if [[ count -ge $i_last ]]; then
+        if [ $i -ge $i_last ]; then
             echo
             echo
             echo "ERROR:"
