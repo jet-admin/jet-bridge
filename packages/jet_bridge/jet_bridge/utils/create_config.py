@@ -163,8 +163,8 @@ def create_config(config_not_set):
             default = database_host or settings.DATABASE_HOST or 'localhost'
             message = '<green><b>Enter your database host</b></green>\n<i>Default is {}</i>'.format('localhost')
 
-            if default == settings.POSSIBLE_HOST:
-                message += '\n<b>{}</b> should point to <b>{}</b> on Docker environment'.format(settings.DATABASE_HOST, 'localhost')
+            if settings.POSSIBLE_HOST:
+                message += '\n<b>{}</b> should point to <b>{}</b> on Docker environment'.format(settings.POSSIBLE_HOST, 'localhost')
 
             database_host = prompt(
                 promt_message(message),
