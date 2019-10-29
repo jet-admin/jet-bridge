@@ -8,6 +8,8 @@ from jet_bridge_base.db import Session
 from jet_bridge_base.exceptions.api import APIException
 from jet_bridge_base.exceptions.not_found import NotFound
 from jet_bridge_base.exceptions.permission_denied import PermissionDenied
+from jet_bridge_base.exceptions.validation_error import ValidationError
+from jet_bridge_base.responses.json import JSONResponse
 from jet_bridge_base.responses.template import TemplateResponse
 from jet_bridge_base.logger import logger
 
@@ -61,9 +63,6 @@ class APIView(object):
         }
 
     def error_response(self, exc_type, exc, traceback):
-        # if isinstance(exc, APIException):
-        #     status_code = exc.status_code
-
         if isinstance(exc, PermissionDenied):
             return TemplateResponse('403.html', status=403, data={
                 'path': self.request.path,
@@ -72,6 +71,22 @@ class APIView(object):
             return TemplateResponse('404.html', status=404, data={
                 'path': self.request.path,
             })
+        elif isinstance(exc, ValidationError):
+            def process(e):
+                if isinstance(e.detail, dict):
+                    return dict(map(lambda x: (x[0], process(x[1])), e.detail.items()))
+                elif isinstance(e.detail, list):
+                    return list(map(lambda x: process(x), e.detail))
+                else:
+                    return e.detail
+
+            response = process(exc)
+            return JSONResponse(response, status=exc.status_code)
+        elif isinstance(exc, APIException):
+            return JSONResponse({
+                'error': exc.detail,
+                'error_code': exc.code
+            }, status=exc.status_code)
         else:
             if settings.DEBUG:
                 ctx = {

@@ -103,7 +103,7 @@ class Serializer(Field):
                     validated_value = validate_method(validated_value)
                 result[field.field_name] = validated_value
             except ValidationError as e:
-                errors[field.field_name] = e.detail
+                errors[field.field_name] = e
 
         if errors:
             raise ValidationError(errors)

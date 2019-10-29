@@ -16,6 +16,10 @@ class empty:
 class Field(object):
     creation_counter = 0
     field_name = None
+    field_error_messages = {
+        'required': 'this field is required',
+        'null': 'this field may not be null'
+    }
 
     def __init__(self, *args, **kwargs):
         self.creation_counter = Field.creation_counter
@@ -25,6 +29,11 @@ class Field(object):
         self.read_only = kwargs.pop('read_only', False)
         self.write_only = kwargs.pop('write_only', False)
         self.many = kwargs.pop('many', False)
+
+        messages = {}
+        for cls in reversed(self.__class__.__mro__):
+            messages.update(getattr(cls, 'field_error_messages', {}))
+        self.error_messages = messages
 
     def validate(self, value):
         return value
@@ -49,7 +58,8 @@ class Field(object):
     def run_validation(self, value):
         if value is empty:
             if self.required:
-                raise ValidationError('Field is required')
+                # raise ValidationError('Field is required')
+                self.error('required')
             else:
                 return None
         return self.to_internal_value(value)
@@ -71,3 +81,15 @@ class Field(object):
             return list(map(lambda x: self.to_representation_item(x), value))
         else:
             return self.to_representation_item(value)
+
+    def error(self, key, **kwargs):
+        """
+        A helper method that simply raises a validation error.
+        """
+        try:
+            msg = self.error_messages[key]
+        except KeyError:
+            class_name = self.__class__.__name__
+            raise AssertionError('Error with key={} is not found for class={}'.format(key, class_name))
+        message_string = msg.format(**kwargs)
+        raise ValidationError(message_string, code=key)
