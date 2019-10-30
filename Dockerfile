@@ -14,13 +14,19 @@ RUN apk add --no-cache --virtual .build-deps-testing \
 #RUN addgroup -S jet && adduser -S -G jet jet
 RUN pip install psycopg2 mysqlclient pyodbc
 RUN pip install GeoAlchemy2==0.6.2 Shapely==1.6.4
-COPY requirements.txt ./
-RUN pip install -r requirements.txt
-COPY ./ /jet_bridge
-RUN pip install -e /jet_bridge
+
+COPY packages /packages
+RUN pip install -e /packages/jet_bridge_base
+RUN pip install -e /packages/jet_bridge
+
+RUN mkdir /jet
+VOLUME /jet
+WORKDIR /jet
 
 #USER jet
 
-CMD ["jet_bridge"]
-
-EXPOSE 8888
+COPY docker/entrypoint.sh /
+COPY docker/network-entrypoint.sh /
+RUN chmod +x /entrypoint.sh
+RUN chmod +x /network-entrypoint.sh
+ENTRYPOINT ["/entrypoint.sh"]

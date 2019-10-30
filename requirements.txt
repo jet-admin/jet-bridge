@@ -1,7 +1,0 @@
-tornado
-sqlalchemy
-six
-requests
-Pillow
-dateparser
-prompt_toolkit>=2.0.9

@@ -1,0 +1,1 @@
+MEDIA_STORAGE_FILE = 'file'
