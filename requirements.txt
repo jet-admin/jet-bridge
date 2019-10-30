@@ -1,2 +1,4 @@
+psycopg2-binary==2.8.3
+
 -e packages/jet_bridge_base
 -e packages/jet_bridge
