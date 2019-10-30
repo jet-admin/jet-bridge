@@ -1,3 +1,0 @@
-tornado
-six
-jet_bridge_base
