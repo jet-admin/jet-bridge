@@ -1,6 +1,6 @@
 #!/bin/sh
 
-#pip install --upgrade pip
+pip install --upgrade pip
 
 # for PostgreSQL
 #pip install psycopg2-binary==2.8.3
