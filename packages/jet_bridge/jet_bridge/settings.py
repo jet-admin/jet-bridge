@@ -49,8 +49,8 @@ required_options = [
 ]
 
 required_options_without_default = [
-    'project',
-    'token',
+    # 'project',
+    # 'token',
     'database_engine',
     'database_name',
 ]
