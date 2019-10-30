@@ -152,7 +152,7 @@ run_instance() {
         1> /dev/null
 
     BASE_URL="http://localhost:${PORT}/api/"
-    REGISTER_URL="${BASE_URL}register/?install_type=sql_docker"
+    REGISTER_URL="${BASE_URL}register/"
 
     printf '    '
 
