@@ -16,6 +16,11 @@
   "scripts": {
     "postdeploy": "./release-tasks.sh"
   },
+  "buildpacks": [
+    {
+      "url": "heroku/python"
+    }
+  ],
   "env": {
     "PROJECT": {
       "description": "Unique project name from app.jetadmin.io"
