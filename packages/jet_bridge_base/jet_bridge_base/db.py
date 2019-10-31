@@ -2,6 +2,8 @@ from sqlalchemy import create_engine, MetaData
 from sqlalchemy.ext.automap import automap_base, generate_relationship
 from sqlalchemy.orm import sessionmaker, scoped_session
 
+from jet_bridge_base.utils.common import get_random_string
+
 try:
     from geoalchemy2 import types
 except ImportError:
@@ -96,14 +98,17 @@ if engine_url:
     MappedBase = automap_base(metadata=metadata)
 
     def name_for_scalar_relationship(base, local_cls, referred_cls, constraint):
-        return referred_cls.__name__.lower() + '_jet_relation'
-
+        rnd = get_random_string(4)
+        return referred_cls.__name__.lower() + '_jet_relation' + rnd
 
     def name_for_collection_relationship(base, local_cls, referred_cls, constraint):
-        return referred_cls.__name__.lower() + '_jet_collection'
+        rnd = get_random_string(4)
+        return referred_cls.__name__.lower() + '_jet_collection' + rnd
 
     def custom_generate_relationship(base, direction, return_fn, attrname, local_cls, referred_cls, **kw):
-        return generate_relationship(base, direction, return_fn, attrname + '_jet_ref', local_cls, referred_cls, **kw)
+        rnd = get_random_string(4)
+        attrname = attrname + '_jet_ref' + rnd
+        return generate_relationship(base, direction, return_fn, attrname, local_cls, referred_cls, **kw)
 
     MappedBase.prepare(
         name_for_scalar_relationship=name_for_scalar_relationship,
