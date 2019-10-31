@@ -78,7 +78,7 @@ class Field(object):
 
     def to_representation(self, value):
         if self.many:
-            return list(map(lambda x: self.to_representation_item(x), value))
+            return list(map(lambda x: self.to_representation_item(x), value or []))
         else:
             return self.to_representation_item(value)
 

@@ -36,7 +36,12 @@ class Request(object):
         content_type = self.headers.get('CONTENT_TYPE', '')
 
         if content_type.startswith('application/json'):
-            self.data = json.loads(self.body) if self.body else {}
+            data = self.body
+
+            if not isinstance(data, str):
+                data = data.decode('utf-8', 'surrogatepass')
+
+            self.data = json.loads(data) if data else {}
         else:
             self.data = self.body_arguments
 

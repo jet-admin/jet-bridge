@@ -188,10 +188,10 @@ class JetDjangoConfiguration(Configuration):
         if hasattr(field, 'related_model') and field.related_model:
             result['params'] = {'related_model': self.serialize_related_model(field.related_model)}
 
-        if not field.editable and not field.blank and not field.null and field.default:
-            result['editable'] = True
-
-        if field.default == timezone.now or field.default == datetime.now:
+        if field.default == timezone.now \
+                or field.default == datetime.now \
+                or getattr(field, 'auto_now', False) \
+                or getattr(field, 'auto_now_add', False):
             result['default_type'] = 'datetime_now'
         elif field.default is None or isinstance(field.default, (str, bool, int, float)):
             result['default_type'] = 'value'
@@ -205,6 +205,9 @@ class JetDjangoConfiguration(Configuration):
                     'name': str(x[1])
                 }, field.choices))
             }
+
+        if not field.editable and not field.null and result.get('default_type') is None:
+            result['editable'] = True
 
         return result
 

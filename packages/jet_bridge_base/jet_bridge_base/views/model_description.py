@@ -50,57 +50,57 @@ class ModelDescriptionView(APIView):
 
             return result
 
-        def map_relation(relation):
-            field = None
-
-            if relation.direction == ONETOMANY:
-                field = 'ManyToOneRel'
-
-            return {
-                'name': relation.key,
-                'related_model': {
-                    'model': relation.table.name
-                },
-                'field': field,
-                'related_model_field': relation.primaryjoin.right.name,
-                'through': None
-            }
-
-        def table_relations(mapper):
-            return list(map(map_relation, filter(lambda x: x.direction == ONETOMANY and hasattr(x, 'table'), mapper.relationships)))
-
-        def table_m2m_relations(mapper):
-            result = []
-            name = mapper.selectable.name
-
-            for relation in mapper.relationships:
-                if relation.direction != ONETOMANY or not hasattr(relation, 'table'):
-                    continue
-
-                m2m_relationships = relation.mapper.relationships.values()
-
-                if len(m2m_relationships) != 2:
-                    continue
-
-                if len(relation.table.columns) > 5:
-                    continue
-
-                self_relationship = m2m_relationships[1] if m2m_relationships[1].table.name == name else \
-                m2m_relationships[0]
-                other_relationship = m2m_relationships[0] if self_relationship == m2m_relationships[1] else \
-                m2m_relationships[1]
-
-                result.append({
-                    'name': 'M2M {} {}'.format(self_relationship.table.name, other_relationship.table.name),
-                    'related_model': {
-                        'model': other_relationship.table.name
-                    },
-                    'field': 'ManyToManyField',
-                    'related_model_field': self_relationship.table.name,
-                    'through': {'model': relation.table.name}
-                })
-
-            return result
+        # def map_relation(relation):
+        #     field = None
+        #
+        #     if relation.direction == ONETOMANY:
+        #         field = 'ManyToOneRel'
+        #
+        #     return {
+        #         'name': relation.key,
+        #         'related_model': {
+        #             'model': relation.table.name
+        #         },
+        #         'field': field,
+        #         'related_model_field': relation.primaryjoin.right.name,
+        #         'through': None
+        #     }
+        #
+        # def table_relations(mapper):
+        #     return list(map(map_relation, filter(lambda x: x.direction == ONETOMANY and hasattr(x, 'table'), mapper.relationships)))
+        #
+        # def table_m2m_relations(mapper):
+        #     result = []
+        #     name = mapper.selectable.name
+        #
+        #     for relation in mapper.relationships:
+        #         if relation.direction != ONETOMANY or not hasattr(relation, 'table'):
+        #             continue
+        #
+        #         m2m_relationships = relation.mapper.relationships.values()
+        #
+        #         if len(m2m_relationships) != 2:
+        #             continue
+        #
+        #         if len(relation.table.columns) > 5:
+        #             continue
+        #
+        #         self_relationship = m2m_relationships[1] if m2m_relationships[1].table.name == name else \
+        #         m2m_relationships[0]
+        #         other_relationship = m2m_relationships[0] if self_relationship == m2m_relationships[1] else \
+        #         m2m_relationships[1]
+        #
+        #         result.append({
+        #             'name': 'M2M {} {}'.format(self_relationship.table.name, other_relationship.table.name),
+        #             'related_model': {
+        #                 'model': other_relationship.table.name
+        #             },
+        #             'field': 'ManyToManyField',
+        #             'related_model_field': self_relationship.table.name,
+        #             'through': {'model': relation.table.name}
+        #         })
+        #
+        #     return result
 
         def map_table(cls):
             mapper = inspect(cls)
@@ -114,7 +114,7 @@ class ModelDescriptionView(APIView):
                 'db_table': name,
                 'fields': list(map(map_column, mapper.columns)),
                 'hidden': name in hidden or name in configuration.get_hidden_model_description(),
-                'relations': table_relations(mapper) + table_m2m_relations(mapper),
+                # 'relations': table_relations(mapper) + table_m2m_relations(mapper),
                 'primary_key_field': mapper.primary_key[0].name
             }
 
