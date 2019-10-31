@@ -1,5 +1,5 @@
 from sqlalchemy import create_engine, MetaData
-from sqlalchemy.ext.automap import automap_base
+from sqlalchemy.ext.automap import automap_base, generate_relationship
 from sqlalchemy.orm import sessionmaker, scoped_session
 
 try:
@@ -96,6 +96,17 @@ if engine_url:
     MappedBase = automap_base(metadata=metadata)
 
     def name_for_scalar_relationship(base, local_cls, referred_cls, constraint):
-        return referred_cls.__name__.lower() + '_relation'
+        return referred_cls.__name__.lower() + '_jet_relation'
 
-    MappedBase.prepare(name_for_scalar_relationship=name_for_scalar_relationship)
+
+    def name_for_collection_relationship(base, local_cls, referred_cls, constraint):
+        return referred_cls.__name__.lower() + '_jet_collection'
+
+    def custom_generate_relationship(base, direction, return_fn, attrname, local_cls, referred_cls, **kw):
+        return generate_relationship(base, direction, return_fn, attrname + '_jet_ref', local_cls, referred_cls, **kw)
+
+    MappedBase.prepare(
+        name_for_scalar_relationship=name_for_scalar_relationship,
+        name_for_collection_relationship=name_for_collection_relationship,
+        generate_relationship=custom_generate_relationship
+    )
