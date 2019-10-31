@@ -55,7 +55,7 @@ class ModelSerializer(Serializer):
                 date_type = get_column_data_type(column)
                 kwargs = {}
 
-                if column.primary_key:
+                if column.primary_key and column.autoincrement:
                     kwargs['read_only'] = True
 
                 field = date_type(**kwargs)
