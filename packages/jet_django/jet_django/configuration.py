@@ -206,6 +206,9 @@ class JetDjangoConfiguration(Configuration):
                 }, field.choices))
             }
 
+        if not field.editable and not field.null and result.get('default_type') is None:
+            result['editable'] = True
+
         return result
 
     def serialize_related_model(self, Model):
