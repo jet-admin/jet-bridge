@@ -30,7 +30,9 @@ class JetBridgeConfiguration(Configuration):
             'DATABASE_PASSWORD': settings.DATABASE_PASSWORD,
             'DATABASE_NAME': settings.DATABASE_NAME,
             'DATABASE_EXTRA': settings.DATABASE_EXTRA,
-            'DATABASE_CONNECTIONS': settings.CONNECTIONS
+            'DATABASE_CONNECTIONS': settings.CONNECTIONS,
+            'DATABASE_ONLY': settings.DATABASE_ONLY,
+            'DATABASE_EXCEPT': settings.DATABASE_EXCEPT
         }
 
     def media_get_available_name(self, path):

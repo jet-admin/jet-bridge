@@ -9,7 +9,8 @@ JET_CORS_HEADERS = getattr(settings, 'JET_CORS_HEADERS', 'corsheaders' not in se
 JET_MEDIA_FILE_STORAGE = getattr(settings, 'JET_MEDIA_FILE_STORAGE', settings.DEFAULT_FILE_STORAGE)
 JET_PROJECT = getattr(settings, 'JET_PROJECT', None)
 JET_TOKEN = getattr(settings, 'JET_TOKEN', None)
-
+JET_DATABASE_ONLY = getattr(settings, 'JET_DATABASE_ONLY', None)
+JET_DATABASE_EXCEPT = getattr(settings, 'JET_DATABASE_EXCEPT', None)
 
 database_settings = settings.DATABASES.get('default', {})
 database_engine = None

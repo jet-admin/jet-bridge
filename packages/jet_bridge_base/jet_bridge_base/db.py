@@ -93,8 +93,15 @@ if engine_url:
 
     Base.metadata.create_all(engine)
 
+    def only(table, meta):
+        if settings.DATABASE_ONLY is not None and table not in settings.DATABASE_ONLY:
+            return False
+        if settings.DATABASE_EXCEPT is not None and table in settings.DATABASE_EXCEPT:
+            return False
+        return True
+
     metadata = MetaData()
-    metadata.reflect(engine)
+    metadata.reflect(engine, only=only)
     MappedBase = automap_base(metadata=metadata)
 
     def name_for_scalar_relationship(base, local_cls, referred_cls, constraint):
