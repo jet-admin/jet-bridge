@@ -2,6 +2,7 @@ from sqlalchemy import inspect, desc
 from sqlalchemy.sql import operators
 from sqlalchemy.sql.elements import UnaryExpression, AnnotatedColumnElement
 
+from jet_bridge_base.exceptions.not_found import NotFound
 from jet_bridge_base.filters.model import get_model_filter_class
 from jet_bridge_base.filters.model_aggregate import ModelAggregateFilter
 from jet_bridge_base.filters.model_group import ModelGroupFilter
@@ -51,6 +52,9 @@ class ModelViewSet(ModelAPIViewMixin):
     def get_model(self):
         if self.model:
             return self.model
+
+        if self.request.path_kwargs['model'] not in MappedBase.classes:
+            raise NotFound
 
         self.model = MappedBase.classes[self.request.path_kwargs['model']]
 

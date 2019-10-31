@@ -1,6 +1,8 @@
 from sqlalchemy import create_engine, MetaData
-from sqlalchemy.ext.automap import automap_base
+from sqlalchemy.ext.automap import automap_base, generate_relationship
 from sqlalchemy.orm import sessionmaker, scoped_session
+
+from jet_bridge_base.utils.common import get_random_string
 
 try:
     from geoalchemy2 import types
@@ -91,11 +93,32 @@ if engine_url:
 
     Base.metadata.create_all(engine)
 
+    def only(table, meta):
+        if settings.DATABASE_ONLY is not None and table not in settings.DATABASE_ONLY:
+            return False
+        if settings.DATABASE_EXCEPT is not None and table in settings.DATABASE_EXCEPT:
+            return False
+        return True
+
     metadata = MetaData()
-    metadata.reflect(engine)
+    metadata.reflect(engine, only=only)
     MappedBase = automap_base(metadata=metadata)
 
     def name_for_scalar_relationship(base, local_cls, referred_cls, constraint):
-        return referred_cls.__name__.lower() + '_relation'
+        rnd = get_random_string(4)
+        return referred_cls.__name__.lower() + '_jet_relation' + rnd
 
-    MappedBase.prepare(name_for_scalar_relationship=name_for_scalar_relationship)
+    def name_for_collection_relationship(base, local_cls, referred_cls, constraint):
+        rnd = get_random_string(4)
+        return referred_cls.__name__.lower() + '_jet_collection' + rnd
+
+    def custom_generate_relationship(base, direction, return_fn, attrname, local_cls, referred_cls, **kw):
+        rnd = get_random_string(4)
+        attrname = attrname + '_jet_ref' + rnd
+        return generate_relationship(base, direction, return_fn, attrname, local_cls, referred_cls, **kw)
+
+    MappedBase.prepare(
+        name_for_scalar_relationship=name_for_scalar_relationship,
+        name_for_collection_relationship=name_for_collection_relationship,
+        generate_relationship=custom_generate_relationship
+    )
