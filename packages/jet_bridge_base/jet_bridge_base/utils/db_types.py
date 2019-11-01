@@ -8,6 +8,7 @@ map_data_types = [
     {'query': sqltypes.BOOLEAN, 'date_type': data_types.BOOLEAN},
     {'query': sqltypes.INTEGER, 'date_type': data_types.INTEGER},
     {'query': sqltypes.SMALLINT, 'date_type': data_types.INTEGER},
+    {'query': sqltypes.BIGINT, 'date_type': data_types.INTEGER},
     {'query': sqltypes.NUMERIC, 'date_type': data_types.FLOAT},
     {'query': sqltypes.DATETIME, 'date_type': data_types.DATE_TIME},
     {'query': sqltypes.TIMESTAMP, 'date_type': data_types.DATE_TIME},
