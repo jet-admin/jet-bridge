@@ -50,8 +50,6 @@ class ModifyNotInDemo(BasePermission):
     def has_permission(self, view):
         if not settings.READ_ONLY:
             return True
-        # if view.action in ['create', 'update', 'partial_update', 'destroy']:
-        #     return False
-        if view.request.method.lower() in ['post', 'put', 'patch', 'delete']:
+        if view.action in ['create', 'update', 'partial_update', 'destroy']:
             return False
         return True
