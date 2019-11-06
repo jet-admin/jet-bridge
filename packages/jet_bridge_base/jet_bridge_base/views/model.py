@@ -22,8 +22,8 @@ class ModelViewSet(ModelAPIViewMixin):
     model = None
     permission_classes = (HasProjectPermissions, ModifyNotInDemo)
 
-    def prepare(self):
-        super(ModelViewSet, self).prepare()
+    def before_dispatch(self):
+        super(ModelViewSet, self).before_dispatch()
         mapper = inspect(self.get_model())
         self.lookup_field = mapper.primary_key[0].name
 

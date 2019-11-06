@@ -33,8 +33,8 @@ class Router(object):
             def create_action_method(action):
                 def action_method(inner_self, *args, **kwargs):
                     try:
-                        inner_self.prepare()
                         inner_self.view.action = action
+                        inner_self.before_dispatch()
                         response = inner_self.view.dispatch(action, *args, **kwargs)
                         return inner_self.write_response(response)
                     except Exception:
