@@ -20,7 +20,7 @@ class BaseViewHandler(tornado.web.RequestHandler):
 
         return dict(map(map_file, self.request.files.items()))
 
-    def prepare(self):
+    def before_dispatch(self):
         self.view.request = Request(
             self.request.method.upper(),
             self.request.protocol,
@@ -35,7 +35,7 @@ class BaseViewHandler(tornado.web.RequestHandler):
             self.request_files()
         )
 
-        self.view.prepare()
+        self.view.before_dispatch()
 
     def on_finish(self):
         self.view.on_finish()
@@ -77,22 +77,27 @@ class BaseViewHandler(tornado.web.RequestHandler):
         self.finish()
 
     def get(self, *args, **kwargs):
+        self.before_dispatch()
         response = self.view.dispatch('get', *args, **kwargs)
         self.write_response(response)
 
     def post(self, *args, **kwargs):
+        self.before_dispatch()
         response = self.view.dispatch('post', *args, **kwargs)
         self.write_response(response)
 
     def put(self, *args, **kwargs):
+        self.before_dispatch()
         response = self.view.dispatch('put', *args, **kwargs)
         self.write_response(response)
 
     def patch(self, *args, **kwargs):
+        self.before_dispatch()
         response = self.view.dispatch('patch', *args, **kwargs)
         self.write_response(response)
 
     def delete(self, *args, **kwargs):
+        self.before_dispatch()
         response = self.view.dispatch('delete', *args, **kwargs)
         self.write_response(response)
 

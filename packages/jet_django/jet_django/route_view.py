@@ -37,7 +37,7 @@ class BaseRouteView(generic.View):
 
         return dict(map(map_file, self.request.FILES.dict().items()))
 
-    def prepare(self):
+    def before_dispatch(self):
         self.view = self.view_cls()
         self.view.request = Request(
             self.request.method.upper(),
@@ -53,7 +53,7 @@ class BaseRouteView(generic.View):
             self.request_files()
         )
 
-        self.view.prepare()
+        self.view.before_dispatch()
 
     def on_finish(self):
         self.view.on_finish()
@@ -107,7 +107,7 @@ class BaseRouteView(generic.View):
 
     def dispatch(self, *args, **kwargs):
         try:
-            self.prepare()
+            self.before_dispatch()
             response = super(BaseRouteView, self).dispatch(*args, **kwargs)
             return response
         except Exception:

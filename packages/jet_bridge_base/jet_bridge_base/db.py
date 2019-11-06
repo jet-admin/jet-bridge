@@ -122,3 +122,7 @@ if engine_url:
         name_for_collection_relationship=name_for_collection_relationship,
         generate_relationship=custom_generate_relationship
     )
+
+    for table_name, table in MappedBase.metadata.tables.items():
+        if len(table.primary_key.columns) == 0 and table_name not in MappedBase.classes:
+            logger.warning('Table "{}" does not have primary key and will be ignored'.format(table_name))
