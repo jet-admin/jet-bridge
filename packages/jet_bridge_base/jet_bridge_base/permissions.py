@@ -45,7 +45,7 @@ class HasProjectPermissions(BasePermission):
             return False
 
 
-class ModifyNotInDemo(BasePermission):
+class ReadOnly(BasePermission):
 
     def has_permission(self, view):
         if not settings.READ_ONLY:

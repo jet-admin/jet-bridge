@@ -6,7 +6,7 @@ from jet_bridge_base.exceptions.not_found import NotFound
 from jet_bridge_base.filters.model import get_model_filter_class
 from jet_bridge_base.filters.model_aggregate import ModelAggregateFilter
 from jet_bridge_base.filters.model_group import ModelGroupFilter
-from jet_bridge_base.permissions import HasProjectPermissions, ModifyNotInDemo
+from jet_bridge_base.permissions import HasProjectPermissions, ReadOnly
 from jet_bridge_base.responses.json import JSONResponse
 from jet_bridge_base.router import action
 from jet_bridge_base.serializers.model import get_model_serializer
@@ -20,7 +20,7 @@ from jet_bridge_base.db import MappedBase
 
 class ModelViewSet(ModelAPIViewMixin):
     model = None
-    permission_classes = (HasProjectPermissions, ModifyNotInDemo)
+    permission_classes = (HasProjectPermissions, ReadOnly)
 
     def before_dispatch(self):
         super(ModelViewSet, self).before_dispatch()
