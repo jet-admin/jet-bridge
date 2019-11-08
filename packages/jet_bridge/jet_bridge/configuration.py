@@ -89,11 +89,9 @@ class JetBridgeConfiguration(Configuration):
         os.remove(absolute_path)
 
     def media_url(self, path, request):
-        url = '/media/{}'.format(path)
-
         if settings.MEDIA_BASE_URL:
-            url = '{}{}'.format(settings.MEDIA_BASE_URL, url)
+            url = '{}{}'.format(settings.MEDIA_BASE_URL, path)
         else:
-            url = request.protocol + "://" + request.host + url
+            url = request.protocol + "://" + request.host + '/media/' + path
 
         return url
