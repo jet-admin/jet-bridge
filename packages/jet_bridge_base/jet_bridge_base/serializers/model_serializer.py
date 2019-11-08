@@ -3,7 +3,7 @@ from sqlalchemy import inspect
 
 from jet_bridge_base import fields
 from jet_bridge_base.serializers.serializer import Serializer
-
+from jet_bridge_base.utils.exceptions import validation_error_from_database_error
 
 data_types = [
     {'query': 'VARCHAR', 'operator': 'startswith', 'date_type': fields.CharField},
@@ -73,13 +73,21 @@ class ModelSerializer(Serializer):
     def create(self, validated_data):
         instance = self.create_instance(validated_data)
         self.session.add(instance)
-        self.session.commit()
+
+        try:
+            self.session.commit()
+        except Exception as e:
+            raise validation_error_from_database_error(e, self.model)
 
         return instance
 
     def update(self, instance, validated_data):
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
-        self.session.commit()
+
+        try:
+            self.session.commit()
+        except Exception as e:
+            raise validation_error_from_database_error(e, self.model)
 
         return instance
