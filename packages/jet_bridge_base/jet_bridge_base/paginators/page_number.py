@@ -33,7 +33,7 @@ class PageNumberPagination(Pagination):
     def queryset_count(self, queryset):
         result = None
 
-        if not queryset.whereclause:
+        if queryset.whereclause is not None:
             try:
                 table = queryset.statement.froms[0].name
                 if settings.DATABASE_ENGINE == 'postgresql':
