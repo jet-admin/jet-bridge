@@ -1,3 +1,4 @@
+import six
 from sqlalchemy import inspect
 
 from jet_bridge_base import fields
@@ -23,7 +24,7 @@ default_data_type = fields.CharField
 
 def get_column_data_type(column):
     try:
-        data_type = str(column.type)
+        data_type = six.text_type(column.type)
     except:
         data_type = 'NullType'
 

@@ -2,6 +2,8 @@ import platform
 from datetime import datetime
 import sys
 
+import six
+
 from jet_bridge_base import settings
 from jet_bridge_base.configuration import configuration
 from jet_bridge_base.db import Session
@@ -104,7 +106,7 @@ class APIView(object):
                 if exc:
                     ctx.update({
                         'exception_type': exc_type.__name__,
-                        'exception_value': str(exc)
+                        'exception_value': six.text_type(exc)
                     })
 
                 if traceback:

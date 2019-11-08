@@ -1,6 +1,7 @@
 import inspect, re
 from datetime import datetime
 
+import six
 from django.apps import apps
 from django.conf import settings as django_settings
 from django.contrib.contenttypes.fields import GenericRel, GenericForeignKey, GenericRelation
@@ -204,7 +205,7 @@ class JetDjangoConfiguration(Configuration):
             result['params'] = {
                 'options': list(map(lambda x: {
                     'value': x[0],
-                    'name': str(x[1])
+                    'name': six.text_type(x[1])
                 }, field.choices))
             }
 
