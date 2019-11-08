@@ -1,3 +1,5 @@
+import six
+
 from jet_bridge_base import status
 
 
@@ -19,4 +21,4 @@ class APIException(Exception):
         self.status_code = status_code
 
     def __str__(self):
-        return str(self.detail)
+        return six.text_type(self.detail)

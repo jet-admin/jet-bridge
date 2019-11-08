@@ -1,3 +1,5 @@
+import six
+
 from jet_bridge_base.fields.field import Field
 
 
@@ -13,7 +15,7 @@ class WKTField(Field):
         try:
             return WKTElement(value)
         except ArgumentError as e:
-            self.error('invalid', error=str(e))
+            self.error('invalid', error=six.text_type(e))
 
     def to_representation_item(self, value):
         if value is None:

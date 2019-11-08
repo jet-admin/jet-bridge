@@ -1,8 +1,9 @@
+import six
 from sqlalchemy import inspect
 
 from jet_bridge_base import fields
 from jet_bridge_base.serializers.serializer import Serializer
-
+from jet_bridge_base.utils.exceptions import validation_error_from_database_error
 
 data_types = [
     {'query': 'VARCHAR', 'operator': 'startswith', 'date_type': fields.CharField},
@@ -14,6 +15,7 @@ data_types = [
     {'query': 'NUMERIC', 'operator': 'startswith', 'date_type': fields.CharField},
     {'query': 'VARCHAR', 'operator': 'startswith', 'date_type': fields.CharField},
     {'query': 'TIMESTAMP', 'operator': 'startswith', 'date_type': fields.DateTimeField},
+    {'query': 'DATETIME', 'operator': 'startswith', 'date_type': fields.DateTimeField},
     {'query': 'JSON', 'operator': 'startswith', 'date_type': fields.JSONField},
     {'query': 'geometry', 'operator': 'startswith', 'date_type': fields.WKTField},
     {'query': 'geography', 'operator': 'startswith', 'date_type': fields.WKTField},
@@ -23,7 +25,7 @@ default_data_type = fields.CharField
 
 def get_column_data_type(column):
     try:
-        data_type = str(column.type)
+        data_type = six.text_type(column.type)
     except:
         data_type = 'NullType'
 
@@ -71,13 +73,21 @@ class ModelSerializer(Serializer):
     def create(self, validated_data):
         instance = self.create_instance(validated_data)
         self.session.add(instance)
-        self.session.commit()
+
+        try:
+            self.session.commit()
+        except Exception as e:
+            raise validation_error_from_database_error(e, self.model)
 
         return instance
 
     def update(self, instance, validated_data):
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
-        self.session.commit()
+
+        try:
+            self.session.commit()
+        except Exception as e:
+            raise validation_error_from_database_error(e, self.model)
 
         return instance

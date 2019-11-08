@@ -2,6 +2,7 @@
 GET_ACTION_LIST = 'get_action_list'
 EXECUTE_ACTION = 'execute_action'
 GET_FIELD_OPTIONS = 'get_field_options'
+GET_ELEMENT_STATUS = 'get_element_status'
 
 message_handlers = {}
 

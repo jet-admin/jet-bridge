@@ -2,6 +2,7 @@ from __future__ import unicode_literals
 
 import os
 
+import six
 from prompt_toolkit import prompt, print_formatted_text, HTML
 from prompt_toolkit.completion import WordCompleter
 from prompt_toolkit.validation import Validator
@@ -178,7 +179,7 @@ def create_config(config_not_set):
 
             print_formatted_text('')
 
-            default_port = list(map(lambda x: str(x.get('default_port', '')), filter(
+            default_port = list(map(lambda x: six.text_type(x.get('default_port', '')), filter(
                 lambda x: x['name'] == database_engine, engines
             )))[0]
 
