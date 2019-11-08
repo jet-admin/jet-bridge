@@ -15,6 +15,7 @@ data_types = [
     {'query': 'NUMERIC', 'operator': 'startswith', 'date_type': fields.CharField},
     {'query': 'VARCHAR', 'operator': 'startswith', 'date_type': fields.CharField},
     {'query': 'TIMESTAMP', 'operator': 'startswith', 'date_type': fields.DateTimeField},
+    {'query': 'DATETIME', 'operator': 'startswith', 'date_type': fields.DateTimeField},
     {'query': 'JSON', 'operator': 'startswith', 'date_type': fields.JSONField},
     {'query': 'geometry', 'operator': 'startswith', 'date_type': fields.WKTField},
     {'query': 'geography', 'operator': 'startswith', 'date_type': fields.WKTField},
