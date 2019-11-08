@@ -90,4 +90,10 @@ class JetBridgeConfiguration(Configuration):
 
     def media_url(self, path, request):
         url = '/media/{}'.format(path)
-        return request.protocol + "://" + request.host + url
+
+        if settings.MEDIA_BASE_URL:
+            url = '{}{}'.format(settings.MEDIA_BASE_URL, url)
+        else:
+            url = request.protocol + "://" + request.host + url
+
+        return url
