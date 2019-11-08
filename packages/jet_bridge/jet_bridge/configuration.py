@@ -46,7 +46,7 @@ class JetBridgeConfiguration(Configuration):
 
     def media_exists(self, path):
         absolute_path = os.path.join(settings.MEDIA_ROOT, path)
-        os.path.exists(absolute_path)
+        return os.path.exists(absolute_path)
 
     def media_listdir(self, path):
         absolute_path = os.path.join(settings.MEDIA_ROOT, path)
