@@ -11,12 +11,11 @@ from jet_bridge.configuration import JetBridgeConfiguration
 conf = JetBridgeConfiguration()
 configuration.set_configuration(conf)
 
-from jet_bridge_base import VERSION
 from jet_bridge_base.commands.check_token import check_token_command
 from jet_bridge_base.db import database_connect
 from jet_bridge_base.logger import logger
 
-from jet_bridge import settings
+from jet_bridge import settings, VERSION
 from jet_bridge.settings import missing_options, required_options_without_default
 
 
