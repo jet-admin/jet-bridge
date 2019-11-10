@@ -6,7 +6,8 @@ class ListAPIViewMixin(object):
     def list(self, *args, **kwargs):
         queryset = self.filter_queryset(self.get_queryset())
 
-        page = self.paginate_queryset(queryset)
+        paginate = not self.request.get_argument('_no_pagination', False)
+        page = self.paginate_queryset(queryset) if paginate else None
         if page is not None:
             serializer = self.get_serializer(instance=page, many=True)
             return self.get_paginated_response(serializer.representation_data)
