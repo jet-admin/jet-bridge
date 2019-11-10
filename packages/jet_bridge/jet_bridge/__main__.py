@@ -11,12 +11,11 @@ from jet_bridge.configuration import JetBridgeConfiguration
 conf = JetBridgeConfiguration()
 configuration.set_configuration(conf)
 
-from jet_bridge_base import VERSION
 from jet_bridge_base.commands.check_token import check_token_command
 from jet_bridge_base.db import database_connect
 from jet_bridge_base.logger import logger
 
-from jet_bridge import settings
+from jet_bridge import settings, VERSION
 from jet_bridge.settings import missing_options, required_options_without_default
 
 
@@ -55,7 +54,7 @@ def main():
     server.bind(settings.PORT, settings.ADDRESS)
     server.start(settings.WORKERS if not settings.DEBUG else 1)
 
-    if settings.WORKERS and settings.DEBUG:
+    if settings.WORKERS > 1 and settings.DEBUG:
         logger.warning('Multiple workers are not supported in DEBUG mode')
 
     logger.info('Starting server at {}'.format(url))
