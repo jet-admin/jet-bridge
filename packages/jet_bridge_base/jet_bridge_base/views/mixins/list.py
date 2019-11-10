@@ -11,5 +11,9 @@ class ListAPIViewMixin(object):
             serializer = self.get_serializer(instance=page, many=True)
             return self.get_paginated_response(serializer.representation_data)
 
+        if queryset._limit is None:
+            queryset = queryset.limit(10000)
+
         serializer = self.get_serializer(instance=queryset, many=True)
-        return JSONResponse(serializer.representation_data)
+        data = serializer.representation_data
+        return JSONResponse(data)
