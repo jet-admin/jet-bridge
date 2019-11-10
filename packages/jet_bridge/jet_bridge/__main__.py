@@ -54,7 +54,7 @@ def main():
     server.bind(settings.PORT, settings.ADDRESS)
     server.start(settings.WORKERS if not settings.DEBUG else 1)
 
-    if settings.WORKERS and settings.DEBUG:
+    if settings.WORKERS > 1 and settings.DEBUG:
         logger.warning('Multiple workers are not supported in DEBUG mode')
 
     logger.info('Starting server at {}'.format(url))
