@@ -77,8 +77,7 @@ class ModelViewSet(ModelAPIViewMixin):
         if self.action == 'list':
             mapper = inspect(self.model)
             pk = mapper.primary_key[0].name
-            context = queryset._compile_context()
-            ordering = context.order_by
+            ordering = queryset._order_by if queryset._order_by else []
 
             def is_pk(x):
                 if isinstance(x, AnnotatedColumnElement):
