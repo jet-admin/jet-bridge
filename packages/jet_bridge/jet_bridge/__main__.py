@@ -2,6 +2,7 @@ import os
 from datetime import datetime
 import sys
 
+from tornado.httpserver import HTTPServer
 from tornado.ioloop import IOLoop
 
 from jet_bridge_base import configuration
@@ -50,7 +51,12 @@ def main():
     from jet_bridge.app import make_app
 
     app = make_app()
-    app.listen(settings.PORT, settings.ADDRESS)
+    server = HTTPServer(app)
+    server.bind(settings.PORT, settings.ADDRESS)
+    server.start(settings.WORKERS if not settings.DEBUG else 1)
+
+    if settings.WORKERS and settings.DEBUG:
+        logger.warning('Multiple workers are not supported in DEBUG mode')
 
     logger.info('Starting server at {}'.format(url))
 
