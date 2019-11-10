@@ -11,11 +11,14 @@ from jet_bridge_base.utils.http import replace_query_param, remove_query_param
 
 
 class PageNumberPagination(Pagination):
-    page_number = None
-    page_size = 25
+    default_page_size = 25
     page_query_param = 'page'
     page_size_query_param = '_per_page'
     max_page_size = 10000
+
+    count = None
+    page_number = None
+    page_size = None
     handler = None
 
     def count_for_postgresql(self, db_table):
@@ -99,7 +102,7 @@ class PageNumberPagination(Pagination):
             except (MissingArgumentError, ValueError):
                 pass
 
-        return self.page_size
+        return self.default_page_size
 
     def has_next(self):
         return self.page_number < self.get_pages_count()

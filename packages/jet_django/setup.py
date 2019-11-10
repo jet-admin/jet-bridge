@@ -15,7 +15,7 @@ def get_install_requires():
     install_requires = [
         'Django',
         'requests',
-        'jet-bridge-base==0.6.3'
+        'jet-bridge-base==0.6.4'
     ]
 
     try:
