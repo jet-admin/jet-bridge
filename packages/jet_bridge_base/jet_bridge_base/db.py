@@ -14,6 +14,12 @@ from jet_bridge_base.models import Base
 from jet_bridge_base.logger import logger
 
 
+engine_url = None
+engine = None
+Session = None
+MappedBase = None
+
+
 def build_engine_url(
         DATABASE_ENGINE,
         DATABASE_HOST,
@@ -78,10 +84,14 @@ def build_engine_url_from_settings():
     )
 
 
-engine_url = build_engine_url_from_settings()
-Session = None
+def database_connect():
+    global engine_url, engine, Session, MappedBase
 
-if engine_url:
+    engine_url = build_engine_url_from_settings()
+
+    if not engine_url:
+        raise Exception('Database configuration is not set')
+
     if settings.DATABASE_ENGINE == 'sqlite':
         engine = create_engine(engine_url)
     else:

@@ -2,24 +2,22 @@ import os
 from datetime import datetime
 import sys
 
-import tornado.ioloop
-import tornado.web
+from tornado.httpserver import HTTPServer
+from tornado.ioloop import IOLoop
 
 from jet_bridge_base import configuration
-
-from jet_bridge import settings
 from jet_bridge.configuration import JetBridgeConfiguration
 
 conf = JetBridgeConfiguration()
 configuration.set_configuration(conf)
 
-from jet_bridge_base.commands.check_token import check_token_command
 from jet_bridge_base import VERSION
-from jet_bridge_base.db import engine_url
+from jet_bridge_base.commands.check_token import check_token_command
+from jet_bridge_base.db import database_connect
 from jet_bridge_base.logger import logger
 
+from jet_bridge import settings
 from jet_bridge.settings import missing_options, required_options_without_default
-from jet_bridge.utils.create_config import create_config
 
 
 def main():
@@ -32,14 +30,12 @@ def main():
     logger.info('Jet Bridge version {}'.format(VERSION))
 
     if (len(args) >= 1 and args[0] == 'config') or missing_options == required_options_without_default:
+        from jet_bridge.utils.create_config import create_config
         create_config(missing_options == required_options_without_default)
         return
     elif len(missing_options) and len(missing_options) < len(required_options_without_default):
         logger.info('Required options are not specified: {}'.format(', '.join(missing_options)))
         return
-
-    if not engine_url:
-        raise Exception('Database configuration is not set')
 
     address = 'localhost' if settings.ADDRESS == '0.0.0.0' else settings.ADDRESS
     url = 'http://{}:{}/'.format(address, settings.PORT)
@@ -50,10 +46,17 @@ def main():
             check_token_command(api_url)
             return
 
+    database_connect()
+
     from jet_bridge.app import make_app
 
     app = make_app()
-    app.listen(settings.PORT, settings.ADDRESS)
+    server = HTTPServer(app)
+    server.bind(settings.PORT, settings.ADDRESS)
+    server.start(settings.WORKERS if not settings.DEBUG else 1)
+
+    if settings.WORKERS and settings.DEBUG:
+        logger.warning('Multiple workers are not supported in DEBUG mode')
 
     logger.info('Starting server at {}'.format(url))
 
@@ -64,7 +67,7 @@ def main():
 
     check_token_command(api_url)
 
-    tornado.ioloop.IOLoop.current().start()
+    IOLoop.current().start()
 
 if __name__ == '__main__':
     main()

@@ -46,5 +46,6 @@ def make_app():
         handlers=urls,
         debug=settings.DEBUG,
         default_handler_class=NotFoundHandler,
-        template_path=os.path.join(base_settings.BASE_DIR, 'templates')
+        template_path=os.path.join(base_settings.BASE_DIR, 'templates'),
+        autoreload=settings.DEBUG
     )
