@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import json
 
 from jet_bridge_base.fields.field import Field
