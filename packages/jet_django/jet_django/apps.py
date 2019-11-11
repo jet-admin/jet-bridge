@@ -11,3 +11,5 @@ class JetDjangoConfig(AppConfig):
         configuration.set_configuration(conf)
         from jet_bridge_base.commands.check_token import check_token_command
         check_token_command('/jet_api/')
+        from jet_bridge_base.db import database_connect
+        database_connect()
