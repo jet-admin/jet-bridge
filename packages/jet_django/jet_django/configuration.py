@@ -158,8 +158,8 @@ class JetDjangoConfiguration(Configuration):
 
         result = {
             'model': model._meta.db_table,
-            'verbose_name': model._meta.verbose_name,
-            'verbose_name_plural': model._meta.verbose_name_plural,
+            'verbose_name': self.serializable(model._meta.verbose_name),
+            'verbose_name_plural': self.serializable(model._meta.verbose_name_plural),
             'fields': list(map(lambda field: self.serialize_field(field), fields))
         }
 
@@ -182,7 +182,7 @@ class JetDjangoConfiguration(Configuration):
     def serialize_field(self, field):
         result = {
             'db_column': field.get_attname_column()[1],
-            'verbose_name': field.verbose_name,
+            'verbose_name': self.serializable(field.verbose_name),
             'field': field.__class__.__name__,
             'required': not field.blank,
             'editable': field.editable
@@ -204,7 +204,7 @@ class JetDjangoConfiguration(Configuration):
             result['field'] = 'SelectField'
             result['params'] = {
                 'options': list(map(lambda x: {
-                    'value': x[0],
+                    'value': self.serializable(x[0]),
                     'name': six.text_type(x[1])
                 }, field.choices))
             }
@@ -213,6 +213,13 @@ class JetDjangoConfiguration(Configuration):
             result['editable'] = True
 
         return result
+
+    def serializable(self, value):
+        if value is None:
+            return value
+        if not isinstance(value, (str, bool, int, float)):
+            return six.text_type(value)
+        return value
 
     def serialize_related_model(self, Model):
         if not Model:
