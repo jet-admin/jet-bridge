@@ -1,7 +1,7 @@
-from sqlalchemy import inspect, desc, func
+from sqlalchemy import inspect, func
 from sqlalchemy.orm import load_only
-from sqlalchemy.sql import operators
-from sqlalchemy.sql.elements import AnnotatedColumnElement, UnaryExpression
+
+from jet_bridge_base.utils.queryset import apply_default_ordering, queryset_count_optimized
 
 
 def get_row_number(Model, queryset, instance):
@@ -50,22 +50,12 @@ def get_row_siblings(Model, queryset, row_number):
 
 
 def get_model_siblings(Model, instance, queryset):
-    mapper = inspect(Model)
-    pk = mapper.primary_key[0].name
-    context = queryset._compile_context()
-    ordering = context.order_by
+    count = queryset_count_optimized(queryset)
 
-    def is_pk(x):
-        if isinstance(x, AnnotatedColumnElement):
-            return x.name == pk
-        elif isinstance(x, UnaryExpression):
-            return x.element.name == pk and x.modifier == operators.desc_op
-        return False
+    if count > 10000:
+        return {}
 
-    if ordering is None or not any(map(is_pk, ordering)):
-        order_by = list(ordering or []) + [desc(pk)]
-        queryset = queryset.order_by(*order_by)
-
+    queryset = apply_default_ordering(queryset)
     row_number = get_row_number(Model, queryset, instance)
 
     if not row_number:
