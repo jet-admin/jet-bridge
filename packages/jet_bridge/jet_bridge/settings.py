@@ -42,6 +42,7 @@ define('database_name', help='database name or path')
 define('database_extra', default=None, help='database extra parameters')
 define('database_only', default=None, type=str)
 define('database_except', default=None, type=str)
+define('database_schema', default=None, type=str)
 
 required_options = [
     'address',
@@ -104,5 +105,6 @@ DATABASE_NAME = options.database_name
 DATABASE_EXTRA = options.database_extra
 DATABASE_ONLY = options.database_only.split(',') if options.database_only else None
 DATABASE_EXCEPT = options.database_except.split(',') if options.database_except else None
+DATABASE_SCHEMA = options.database_schema
 
 POSSIBLE_HOST = os.environ.get('POSSIBLE_HOST')

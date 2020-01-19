@@ -9,11 +9,19 @@ JET_CORS_HEADERS = getattr(settings, 'JET_CORS_HEADERS', 'corsheaders' not in se
 JET_MEDIA_FILE_STORAGE = getattr(settings, 'JET_MEDIA_FILE_STORAGE', settings.DEFAULT_FILE_STORAGE)
 JET_PROJECT = getattr(settings, 'JET_PROJECT', None)
 JET_TOKEN = getattr(settings, 'JET_TOKEN', None)
+JET_DJANGO_DATABASE = getattr(settings, 'JET_DJANGO_DATABASE', 'default')
+JET_DATABASE_EXTRA = getattr(settings, 'JET_DATABASE_EXTRA', None)
 JET_DATABASE_ONLY = getattr(settings, 'JET_DATABASE_ONLY', None)
 JET_DATABASE_EXCEPT = getattr(settings, 'JET_DATABASE_EXCEPT', None)
+JET_DATABASE_SCHEMA = getattr(settings, 'JET_DATABASE_SCHEMA', None)
 
-database_settings = settings.DATABASES.get('default', {})
+database_settings = settings.DATABASES.get(JET_DJANGO_DATABASE, {})
 database_engine = None
+
+mysql_read_default_file = database_settings.get('OPTIONS', {}).get('read_default_file')
+
+if JET_DATABASE_EXTRA is None and mysql_read_default_file:
+    JET_DATABASE_EXTRA = '?read_default_file={}'.format(mysql_read_default_file)
 
 if connection.vendor == 'postgresql':
     database_engine = 'postgresql'

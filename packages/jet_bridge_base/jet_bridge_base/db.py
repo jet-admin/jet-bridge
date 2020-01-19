@@ -110,7 +110,7 @@ def database_connect():
             return False
         return True
 
-    metadata = MetaData()
+    metadata = MetaData(schema=settings.DATABASE_SCHEMA)
     metadata.reflect(engine, only=only)
     MappedBase = automap_base(metadata=metadata)
 

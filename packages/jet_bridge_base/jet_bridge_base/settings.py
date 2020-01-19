@@ -23,6 +23,7 @@ DATABASE_EXTRA = None
 DATABASE_CONNECTIONS = None
 DATABASE_ONLY = None
 DATABASE_EXCEPT = None
+DATABASE_SCHEMA = None
 
 
 def set_settings(settings):
