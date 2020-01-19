@@ -11,7 +11,7 @@ class JSONResponse(Response):
 
     def render(self):
         if self.data is None:
-            return bytes()
+            return
 
         return json.dumps(
             self.data,
