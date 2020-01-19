@@ -13,6 +13,7 @@ JET_DJANGO_DATABASE = getattr(settings, 'JET_DJANGO_DATABASE', 'default')
 JET_DATABASE_EXTRA = getattr(settings, 'JET_DATABASE_EXTRA', None)
 JET_DATABASE_ONLY = getattr(settings, 'JET_DATABASE_ONLY', None)
 JET_DATABASE_EXCEPT = getattr(settings, 'JET_DATABASE_EXCEPT', None)
+JET_DATABASE_SCHEMA = getattr(settings, 'JET_DATABASE_SCHEMA', None)
 
 database_settings = settings.DATABASES.get(JET_DJANGO_DATABASE, {})
 database_engine = None
