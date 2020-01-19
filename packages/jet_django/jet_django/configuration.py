@@ -60,7 +60,7 @@ class JetDjangoConfiguration(Configuration):
             'DATABASE_USER': settings.database_settings.get('USER'),
             'DATABASE_PASSWORD': settings.database_settings.get('PASSWORD'),
             'DATABASE_NAME': settings.database_settings.get('NAME'),
-            # 'DATABASE_EXTRA': DATABASE_EXTRA,
+            'DATABASE_EXTRA': settings.JET_DATABASE_EXTRA,
             'DATABASE_CONNECTIONS': 1,
             'DATABASE_ONLY': settings.JET_DATABASE_ONLY,
             'DATABASE_EXCEPT': settings.JET_DATABASE_EXCEPT

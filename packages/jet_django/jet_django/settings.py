@@ -10,6 +10,7 @@ JET_MEDIA_FILE_STORAGE = getattr(settings, 'JET_MEDIA_FILE_STORAGE', settings.DE
 JET_PROJECT = getattr(settings, 'JET_PROJECT', None)
 JET_TOKEN = getattr(settings, 'JET_TOKEN', None)
 JET_DJANGO_DATABASE = getattr(settings, 'JET_DJANGO_DATABASE', 'default')
+JET_DATABASE_EXTRA = getattr(settings, 'JET_DATABASE_EXTRA', None)
 JET_DATABASE_ONLY = getattr(settings, 'JET_DATABASE_ONLY', None)
 JET_DATABASE_EXCEPT = getattr(settings, 'JET_DATABASE_EXCEPT', None)
 
