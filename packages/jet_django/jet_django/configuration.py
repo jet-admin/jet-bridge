@@ -163,7 +163,7 @@ class JetDjangoConfiguration(Configuration):
             'fields': list(map(lambda field: self.serialize_field(field), fields))
         }
 
-        if hasattr(model._meta, 'ordering') and len(model._meta.ordering):
+        if hasattr(model._meta, 'ordering') and model._meta.ordering:
             ordering = model._meta.ordering[0]
             desc = ordering.startswith('-')
             field_name = ordering[1:] if desc else ordering
