@@ -75,8 +75,17 @@ check_is_docker_running() {
     if [ $docker_state != 1 ]; then
         echo
         echo "ERROR:"
-        echo "    Docker does not seem to be running, run it first and retry"
+        echo "    Docker does not seem to be running or you don't have permissions"
         echo
+
+        if [ "$(id -u)" -ne 0 ]; then
+            echo "    [!] Try running this script with sudo:"
+            echo
+            echo "    curl -s https://raw.githubusercontent.com/jet-admin/jet-bridge/dev/install_jet.sh -o install_jet.sh"
+            echo "    sudo sh install_jet.sh ${PROJECT} ${TOKEN}"
+            echo
+        fi
+
         exit 1
     fi
 }
