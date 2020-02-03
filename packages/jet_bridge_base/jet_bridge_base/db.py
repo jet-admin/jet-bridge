@@ -53,7 +53,7 @@ def build_engine_url(
 
             if DATABASE_PORT:
                 url.append(':')
-                url.append(DATABASE_PORT)
+                url.append(str(DATABASE_PORT))
 
             url.append('/')
 
