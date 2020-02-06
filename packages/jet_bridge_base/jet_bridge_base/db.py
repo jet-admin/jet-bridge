@@ -33,37 +33,37 @@ def build_engine_url(
         return
 
     url = [
-        DATABASE_ENGINE,
+        str(DATABASE_ENGINE),
         '://'
     ]
 
     if DATABASE_ENGINE != 'sqlite':
         if DATABASE_USER:
-            url.append(DATABASE_USER)
+            url.append(str(DATABASE_USER))
 
             if DATABASE_PASSWORD:
                 url.append(':')
-                url.append(DATABASE_PASSWORD)
+                url.append(str(DATABASE_PASSWORD))
 
             if DATABASE_HOST:
                 url.append('@')
 
         if DATABASE_HOST:
-            url.append(DATABASE_HOST)
+            url.append(str(DATABASE_HOST))
 
             if DATABASE_PORT:
                 url.append(':')
-                url.append(DATABASE_PORT)
+                url.append(str(DATABASE_PORT))
 
             url.append('/')
 
     if DATABASE_ENGINE == 'sqlite':
         url.append('/')
 
-    url.append(DATABASE_NAME)
+    url.append(str(DATABASE_NAME))
 
     if DATABASE_EXTRA:
-        url.append(DATABASE_EXTRA)
+        url.append(str(DATABASE_EXTRA))
     elif DATABASE_ENGINE == 'mysql':
         url.append('?charset=utf8')
     elif DATABASE_ENGINE == 'mssql+pyodbc':
