@@ -1,6 +1,6 @@
 #!/bin/sh
 
-apt install python-pyodbc
+apt install g++
 apt install unixodbc unixodbc-dev
 # for PostgreSQL
 pip install psycopg2-binary==2.8.3
