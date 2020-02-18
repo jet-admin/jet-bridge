@@ -25,7 +25,7 @@ class OrderFilter(CharFilter):
                 field = desc(field)
             return field
 
-        if len(ordering):
+        if ordering:
             qs = qs.order_by(*map(lambda x: map_field(x), ordering))
 
         return qs

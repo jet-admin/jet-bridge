@@ -27,7 +27,7 @@ class ModelDescriptionView(APIView):
             except:
                 data_type = 'NullType'
 
-            if len(column.foreign_keys):
+            if column.foreign_keys:
                 foreign_key = next(iter(column.foreign_keys))
                 data_type = data_types.FOREIGN_KEY
                 params['related_model'] = {
