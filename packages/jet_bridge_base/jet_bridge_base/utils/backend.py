@@ -53,7 +53,7 @@ def project_auth(token, permission=None):
     success = 200 <= r.status_code < 300
 
     if not success:
-        logger.error('Project Auth request error', r.status_code, r.reason)
+        logger.error('Project Auth request error: %d %s', r.status_code, r.reason)
         return {
             'result': False
         }

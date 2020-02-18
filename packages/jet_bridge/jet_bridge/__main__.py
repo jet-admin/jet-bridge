@@ -32,7 +32,7 @@ def main():
         from jet_bridge.utils.create_config import create_config
         create_config(missing_options == required_options_without_default)
         return
-    elif len(missing_options) and len(missing_options) < len(required_options_without_default):
+    elif missing_options and len(missing_options) < len(required_options_without_default):
         logger.info('Required options are not specified: {}'.format(', '.join(missing_options)))
         return
 

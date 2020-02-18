@@ -143,9 +143,8 @@ class Serializer(Field):
         raise NotImplementedError('`create()` must be implemented.')
 
     def save(self, **kwargs):
-        assert not self.errors, (
-            'You cannot call `.save()` on a serializer with invalid data.'
-        )
+        if self.errors:
+            raise AssertionError('You cannot call `.save()` on a serializer with invalid data.')
 
         validated_data = dict(
             list(self.validated_data.items()) +
@@ -154,13 +153,13 @@ class Serializer(Field):
 
         if self.instance is not None:
             self.instance = self.update(self.instance, validated_data)
-            assert self.instance is not None, (
-                '`update()` did not return an object instance.'
-            )
+
+            if self.instance is None:
+                raise AssertionError('`update()` did not return an object instance.')
+
         else:
             self.instance = self.create(validated_data)
-            assert self.instance is not None, (
-                '`create()` did not return an object instance.'
-            )
+            if self.instance is None:
+                raise AssertionError('`create()` did not return an object instance.')
 
         return self.instance
