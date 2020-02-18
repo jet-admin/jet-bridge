@@ -94,7 +94,7 @@ While we are trying to include most of important features out of the box sometim
 
 - **Custom Fields**
 
-  Sometimes using existing fields is not enough and you need to create custom which can be a combination of multiple fields, use fields from related collections and be result of some calculation. In this case you can use FlexField and write your custom JavaScript function which can format fields data any way you want.
+  Sometimes you may want custom fields that are a combination of multiple fields, use fields from related collections, or are the result of some calculation. In this case you can use FlexField and write a custom JavaScript function to format fields data in any way you want.
 
 How It Works
 ============
@@ -136,86 +136,8 @@ Requirements
 Installation
 ============
 
-### Method 1. Using standalone Jet Bridge
-
-1. Install **jet\_bridge** package using pip or update if you did it before
-
-```bash
-pip install jet_bridge -U
-```
-
-2. Install appropriate database adapter
-
-```bash
-# for PostgreSQL
-pip install psycopg2
-# for MySQL
-pip install mysqlclient
-```
-
-3. Run **Jet Bridge** for your configuration.
-You can read about all possible settings at [Configuration](https://docs.jetadmin.io/getting-started/configuration) page.
-
-```bash
-DATABASE_ENGINE=postgresql \
-    DATABASE_HOST=host.docker.internal \
-    DATABASE_PORT=5432 \
-    DATABASE_NAME=database \
-    DATABASE_USER=postgres \
-    DATABASE_PASSWORD=password \
-    jet_bridge
-```
-
-![Result of running Jet Bridge](https://github.com/jet-admin/docs/raw/master/.gitbook/assets/image%20%2828%29.png)
-
-4. Register your project by opening in your browser:
-**http://localhost:8888/** where **localhost** is your **Jet Bridge** HOST and **8888** is its PORT.
-If you want to run Jet Bridge on different host/port you can configure it \(read more at [Configuration](https://docs.jetadmin.io/getting-started/configuration) page\).
-
-> If you don't have **Jet** account yet you will be asked to create one and sign in with the existing account.
-
-> After registering your project you will be redirected to your project and can start working with **Jet**
-
-After registering your project you will be redirected to your project and can start working with **Jet**
-
-### Method 2. Using Jet Bridge inside Docker
-
-**Jet Bridge** has **Docker** image available on [Docker Hub](https://cloud.docker.com/u/jetadmin/repository/docker/jetadmin/jetbridge).
-In order start it inside **Docker** for your configuration run the following command.
-You can read about all possible settings at [Configuration](https://docs.jetadmin.io/getting-started/configuration) page.
-
-1. Install **Docker** if you don't have it [https://docs.docker.com/install/](https://docs.docker.com/install/)
-2. Make sure **Docker** is running
-3. Update **Jet Bridge** image if downloaded it before
-
-```text
-docker pull jetadmin/jetbridge
-```
-
-4. Run **Docker** container. This will run Jet Bridge on **http://localhost:8888/.**
-
-> If you want to run on different port change it here:
-> ****`... -p 9000:8888 ...` – this will run on **9000**
-
-```bash
-docker run -p 8888:8888 \
-    -e DATABASE_ENGINE=postgresql \
-    -e DATABASE_HOST=host.docker.internal \
-    -e DATABASE_PORT=5432 \
-    -e DATABASE_NAME=database \
-    -e DATABASE_USER=postgres \
-    -e DATABASE_PASSWORD=password \
-    jetadmin/jetbridge
-```
-
-> If you are using **Docker before 18.03** you can't use `host.docker.internal` for DATABASE\_HOST
-> **Docker 17.12 – 18.02** use `docker.for.mac.host.internal`
-> **Docker 17.06 – 17.11** use `docker.for.mac.localhost`
-> **Docker 17.05 and below** your `local host IP address` \(can be found using `ifconfig` command\)
-
-5. Register your project by opening in your browser:
-**http://localhost:8888/** where **localhost** is your **Jet Bridge** HOST and **8888** is its PORT.
-If you want to run Jet Bridge on different host/port you can configure it by changing **Docker** container port in this command.
+In order to install Jet Admin on your project please follow this guide:<br/>
+https://app.jetadmin.io/projects/create
 
 > If you don't have **Jet** account yet you will be asked to create one and sign in with the existing account.
 
