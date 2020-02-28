@@ -51,19 +51,16 @@ class APIView(object):
                 raise PermissionDenied(getattr(permission, 'message', 'forbidden'))
 
     def default_headers(self):
-        ACCESS_CONTROL_ALLOW_ORIGIN = 'Access-Control-Allow-Origin'
-        ACCESS_CONTROL_EXPOSE_HEADERS = 'Access-Control-Expose-Headers'
-        ACCESS_CONTROL_ALLOW_CREDENTIALS = 'Access-Control-Allow-Credentials'
-        ACCESS_CONTROL_ALLOW_HEADERS = 'Access-Control-Allow-Headers'
-        ACCESS_CONTROL_ALLOW_METHODS = 'Access-Control-Allow-Methods'
+        headers = {}
 
-        return {
-            ACCESS_CONTROL_ALLOW_ORIGIN: '*',
-            ACCESS_CONTROL_ALLOW_METHODS: 'GET, POST, PUT, PATCH, DELETE, OPTIONS',
-            ACCESS_CONTROL_ALLOW_HEADERS: 'Authorization,DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,X-Application-Warning,X-HTTP-Method-Override',
-            ACCESS_CONTROL_EXPOSE_HEADERS: 'Content-Length,Content-Range,Content-Disposition,Content-Type,X-Application-Warning',
-            ACCESS_CONTROL_ALLOW_CREDENTIALS: 'true'
-        }
+        if settings.CORS_HEADERS:
+            headers['Access-Control-Allow-Origin'] = '*'
+            headers['Access-Control-Allow-Methods'] = 'GET, POST, PUT, PATCH, DELETE, OPTIONS'
+            headers['Access-Control-Allow-Headers'] = 'Authorization,DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,X-Application-Warning,X-HTTP-Method-Override'
+            headers['Access-Control-Expose-Headers'] = 'Content-Length,Content-Range,Content-Disposition,Content-Type,X-Application-Warning'
+            headers['Access-Control-Allow-Credentials'] = 'true'
+
+        return headers
 
     def error_response(self, exc_type, exc, traceback):
         if isinstance(exc, PermissionDenied):
