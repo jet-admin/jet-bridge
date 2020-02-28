@@ -9,6 +9,7 @@ READ_ONLY = False
 AUTO_OPEN_REGISTER = True
 PROJECT = None
 TOKEN = None
+CORS_HEADERS = True
 
 WEB_BASE_URL = None
 API_BASE_URL = None

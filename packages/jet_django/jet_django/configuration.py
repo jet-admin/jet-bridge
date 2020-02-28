@@ -54,6 +54,7 @@ class JetDjangoConfiguration(Configuration):
             'API_BASE_URL': settings.JET_BACKEND_API_BASE_URL,
             'PROJECT': settings.JET_PROJECT,
             'TOKEN': settings.JET_TOKEN,
+            'CORS_HEADERS': settings.JET_CORS_HEADERS,
             'DATABASE_ENGINE': settings.database_engine,
             'DATABASE_HOST': settings.database_settings.get('HOST'),
             'DATABASE_PORT': settings.database_settings.get('PORT'),
