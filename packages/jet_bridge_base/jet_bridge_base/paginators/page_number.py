@@ -28,7 +28,7 @@ class PageNumberPagination(Pagination):
         if not page_size:
             return None
 
-        self.count = queryset_count_optimized(queryset)
+        self.count = queryset_count_optimized(handler.request, queryset)
         self.page_number = page_number
         self.page_size = page_size
         self.handler = handler

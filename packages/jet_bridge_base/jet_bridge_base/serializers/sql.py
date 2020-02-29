@@ -2,7 +2,7 @@ from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
 
 from jet_bridge_base import fields
-from jet_bridge_base.db import Session
+from jet_bridge_base.db import create_session
 from jet_bridge_base.exceptions.sql import SqlError
 from jet_bridge_base.exceptions.validation_error import ValidationError
 from jet_bridge_base.fields.sql_params import SqlParamsSerializers
@@ -28,7 +28,8 @@ class SqlSerializer(Serializer):
         return value
 
     def execute(self, data):
-        session = Session()
+        request = self.context.get('request')
+        session = create_session(request)
 
         query = data['query']
         params = data.get('params', [])
@@ -57,5 +58,5 @@ class SqlsSerializer(Serializer):
     queries = SqlSerializer(many=True)
 
     def execute(self, data):
-        serializer = SqlSerializer()
+        serializer = SqlSerializer(context=self.context)
         return map(lambda x: serializer.execute(x), data['queries'])

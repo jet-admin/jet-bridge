@@ -1,5 +1,6 @@
 from sqlalchemy import inspect
 
+from jet_bridge_base.db import get_mapped_base
 from jet_bridge_base.exceptions.not_found import NotFound
 from jet_bridge_base.filters.model import get_model_filter_class
 from jet_bridge_base.filters.model_aggregate import ModelAggregateFilter
@@ -14,7 +15,6 @@ from jet_bridge_base.serializers.reset_order import get_reset_order_serializer
 from jet_bridge_base.utils.queryset import apply_default_ordering
 from jet_bridge_base.utils.siblings import get_model_siblings
 from jet_bridge_base.views.mixins.model import ModelAPIViewMixin
-from jet_bridge_base.db import MappedBase
 
 
 class ModelViewSet(ModelAPIViewMixin):
@@ -49,6 +49,8 @@ class ModelViewSet(ModelAPIViewMixin):
         }
 
     def get_model(self):
+        MappedBase = get_mapped_base(self.request)
+
         if self.model:
             return self.model
 
@@ -64,7 +66,7 @@ class ModelViewSet(ModelAPIViewMixin):
         return get_model_serializer(Model)
 
     def get_filter_class(self):
-        return get_model_filter_class(self.get_model())
+        return get_model_filter_class(self.request, self.get_model())
 
     def get_queryset(self):
         Model = self.get_model()
@@ -164,4 +166,4 @@ class ModelViewSet(ModelAPIViewMixin):
         queryset = self.filter_queryset(self.get_queryset())
         obj = self.get_object()
 
-        return JSONResponse(get_model_siblings(self.model, obj, queryset))
+        return JSONResponse(get_model_siblings(self.request, self.model, obj, queryset))

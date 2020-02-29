@@ -6,7 +6,7 @@ import six
 
 from jet_bridge_base import settings
 from jet_bridge_base.configuration import configuration
-from jet_bridge_base.db import Session
+from jet_bridge_base.db import create_session
 from jet_bridge_base.exceptions.api import APIException
 from jet_bridge_base.exceptions.not_found import NotFound
 from jet_bridge_base.exceptions.permission_denied import PermissionDenied
@@ -30,7 +30,7 @@ class APIView(object):
         if self.request.method != 'OPTIONS':
             self.check_permissions()
 
-        self.session = Session()
+        self.session = create_session(self.request)
 
     def on_finish(self):
         if self.session:

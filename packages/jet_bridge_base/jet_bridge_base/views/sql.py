@@ -11,9 +11,9 @@ class SqlView(APIView):
 
     def post(self, *args, **kwargs):
         if 'queries' in self.request.data:
-            serializer = SqlsSerializer(data=self.request.data)
+            serializer = SqlsSerializer(data=self.request.data, context={'request': self.request})
         else:
-            serializer = SqlSerializer(data=self.request.data)
+            serializer = SqlSerializer(data=self.request.data, context={'request': self.request})
 
         serializer.is_valid(raise_exception=True)
 

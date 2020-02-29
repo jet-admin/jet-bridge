@@ -49,8 +49,8 @@ def get_row_siblings(Model, queryset, row_number):
     }
 
 
-def get_model_siblings(Model, instance, queryset):
-    count = queryset_count_optimized(queryset)
+def get_model_siblings(request, Model, instance, queryset):
+    count = queryset_count_optimized(request, queryset)
 
     if count > 10000:
         return {}
