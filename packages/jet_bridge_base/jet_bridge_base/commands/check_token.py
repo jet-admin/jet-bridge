@@ -9,7 +9,7 @@ from jet_bridge_base.logger import logger
 
 def check_token_command(api_url):
     try:
-        if not is_token_activated():
+        if not is_token_activated(settings.TOKEN):
             logger.warning('[!] Your server token is not activated')
             logger.warning('[!] Token: {}'.format(settings.TOKEN))
 

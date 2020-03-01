@@ -9,13 +9,11 @@ def api_method_url(method):
     return '{}/{}'.format(settings.API_BASE_URL, method)
 
 
-def is_token_activated():
-    token = settings.TOKEN
-
-    if not token:
+def is_token_activated(project_token):
+    if not project_token:
         return False
 
-    url = api_method_url('project_tokens/{}/'.format(settings.TOKEN))
+    url = api_method_url('project_tokens/{}/'.format(project_token))
     headers = {
         'User-Agent': '{} v{}'.format(configuration.get_type(), configuration.get_version())
     }
