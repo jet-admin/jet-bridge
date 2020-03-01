@@ -1,3 +1,5 @@
+import json
+
 from sqlalchemy import create_engine, MetaData
 from sqlalchemy.ext.automap import automap_base, generate_relationship
 from sqlalchemy.orm import sessionmaker, scoped_session
@@ -149,7 +151,32 @@ def connect_database_from_settings():
 def get_connection(request):
     global settings_engine_url
 
-    engine_url = settings_engine_url
+    db_url_encoded = request.headers.get('X_DBURL')
+
+    if db_url_encoded:
+        from jet_bridge_base.utils.crypt import decrypt
+
+        try:
+            secret_key = settings.TOKEN
+            db_settings = json.loads(decrypt(db_url_encoded, secret_key))
+        except Exception:
+            db_settings = {}
+
+        engine_url = build_engine_url(
+            db_settings.get('database_engine'),
+            db_settings.get('database_host'),
+            db_settings.get('database_port'),
+            db_settings.get('database_name'),
+            db_settings.get('database_user'),
+            db_settings.get('database_password'),
+            db_settings.get('database_extra')
+        )
+    else:
+        engine_url = settings_engine_url
+
+    if engine_url not in connections:
+        connect_database(engine_url)
+
     return connections.get(engine_url)
 
 
