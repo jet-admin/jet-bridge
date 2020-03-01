@@ -30,7 +30,10 @@ class APIView(object):
         if self.request.method != 'OPTIONS':
             self.check_permissions()
 
-        self.session = create_session(self.request)
+        try:
+            self.session = create_session(self.request)
+        except Exception as e:
+            raise ValidationError(str(e))
 
     def on_finish(self):
         if self.session:
