@@ -31,15 +31,15 @@ def is_token_activated():
     return bool(result.get('activated'))
 
 
-def project_auth(token, permission=None):
-    if not settings.TOKEN:
+def project_auth(token, project_token, permission=None):
+    if not project_token:
         return {
             'result': False
         }
 
     url = api_method_url('project_auth/')
     data = {
-        'project_token': settings.TOKEN,
+        'project_token': project_token,
         'token': token
     }
     headers = {
