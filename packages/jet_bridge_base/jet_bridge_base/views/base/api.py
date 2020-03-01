@@ -30,7 +30,10 @@ class APIView(object):
         if self.request.method != 'OPTIONS':
             self.check_permissions()
 
-        self.session = create_session(self.request)
+        try:
+            self.session = create_session(self.request)
+        except Exception as e:
+            raise ValidationError(str(e))
 
     def on_finish(self):
         if self.session:
@@ -56,7 +59,7 @@ class APIView(object):
         if settings.CORS_HEADERS:
             headers['Access-Control-Allow-Origin'] = '*'
             headers['Access-Control-Allow-Methods'] = 'GET, POST, PUT, PATCH, DELETE, OPTIONS'
-            headers['Access-Control-Allow-Headers'] = 'Authorization,DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,X-Application-Warning,X-HTTP-Method-Override,X-DbUrl'
+            headers['Access-Control-Allow-Headers'] = 'Authorization,DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,X-Application-Warning,X-HTTP-Method-Override,X-Bridge-Settings'
             headers['Access-Control-Expose-Headers'] = 'Content-Length,Content-Range,Content-Disposition,Content-Type,X-Application-Warning'
             headers['Access-Control-Allow-Credentials'] = 'true'
 

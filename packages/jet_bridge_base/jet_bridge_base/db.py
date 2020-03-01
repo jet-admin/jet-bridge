@@ -84,15 +84,15 @@ def build_engine_url_from_settings():
     )
 
 
-def connect_database(engine_url):
-    if settings.DATABASE_ENGINE == 'sqlite':
+def connect_database(engine_url, database_engine):
+    if database_engine == 'sqlite':
         engine = create_engine(engine_url)
     else:
         engine = create_engine(engine_url, pool_size=settings.DATABASE_CONNECTIONS, max_overflow=10, pool_recycle=1)
 
     Session = scoped_session(sessionmaker(bind=engine))
 
-    logger.info('Connected to database engine "{}" with name "{}"'.format(settings.DATABASE_ENGINE, settings.DATABASE_NAME))
+    logger.info('Connected to database engine "{}"'.format(engine_url))
 
     Base.metadata.create_all(engine)
 
@@ -148,37 +148,39 @@ def connect_database_from_settings():
     if not settings_engine_url:
         raise Exception('Database configuration is not set')
 
-    connect_database(settings_engine_url)
+    connect_database(settings_engine_url, settings.DATABASE_ENGINE)
 
 
 def get_connection(request):
     global settings_engine_url
 
-    db_url_encoded = request.headers.get('X_DBURL')
+    bridge_settings_encoded = request.headers.get('X_BRIDGE_SETTINGS')
 
-    if db_url_encoded:
+    if bridge_settings_encoded:
         from jet_bridge_base.utils.crypt import decrypt
 
         try:
-            secret_key = settings.TOKEN
-            db_settings = json.loads(decrypt(db_url_encoded, secret_key))
+            secret_key = settings.TOKEN.replace('-', '').lower()
+            bridge_settings = json.loads(decrypt(bridge_settings_encoded, secret_key))
         except Exception:
-            db_settings = {}
+            bridge_settings = {}
 
         engine_url = build_engine_url(
-            db_settings.get('database_engine'),
-            db_settings.get('database_host'),
-            db_settings.get('database_port'),
-            db_settings.get('database_name'),
-            db_settings.get('database_user'),
-            db_settings.get('database_password'),
-            db_settings.get('database_extra')
+            bridge_settings.get('database_engine'),
+            bridge_settings.get('database_host'),
+            bridge_settings.get('database_port'),
+            bridge_settings.get('database_name'),
+            bridge_settings.get('database_user'),
+            bridge_settings.get('database_password'),
+            bridge_settings.get('database_extra')
         )
+        database_engine = bridge_settings.get('database_engine')
     else:
         engine_url = settings_engine_url
+        database_engine = settings.DATABASE_ENGINE
 
     if engine_url and engine_url not in connections:
-        connect_database(engine_url)
+        connect_database(engine_url, database_engine)
 
     return connections.get(engine_url)
 
