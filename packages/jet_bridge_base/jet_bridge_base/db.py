@@ -140,6 +140,9 @@ def connect_database(engine_url):
 def connect_database_from_settings():
     global settings_engine_url
 
+    if settings.DATABASE_ENGINE == 'none':
+        return
+
     settings_engine_url = build_engine_url_from_settings()
 
     if not settings_engine_url:
@@ -174,7 +177,7 @@ def get_connection(request):
     else:
         engine_url = settings_engine_url
 
-    if engine_url not in connections:
+    if engine_url and engine_url not in connections:
         connect_database(engine_url)
 
     return connections.get(engine_url)
@@ -182,14 +185,20 @@ def get_connection(request):
 
 def create_session(request):
     connection = get_connection(request)
+    if not connection:
+        return
     return connection['Session']()
 
 
 def get_mapped_base(request):
     connection = get_connection(request)
+    if not connection:
+        return
     return connection['MappedBase']
 
 
 def get_engine(request):
     connection = get_connection(request)
+    if not connection:
+        return
     return connection['engine']
