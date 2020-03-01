@@ -12,7 +12,7 @@ conf = JetBridgeConfiguration()
 configuration.set_configuration(conf)
 
 from jet_bridge_base.commands.check_token import check_token_command
-from jet_bridge_base.db import database_connect
+from jet_bridge_base.db import connect_database_from_settings
 from jet_bridge_base.logger import logger
 
 from jet_bridge import settings, VERSION
@@ -45,7 +45,7 @@ def main():
             check_token_command(api_url)
             return
 
-    database_connect()
+    connect_database_from_settings()
 
     from jet_bridge.app import make_app
 

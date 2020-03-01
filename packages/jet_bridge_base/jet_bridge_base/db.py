@@ -1,3 +1,5 @@
+import json
+
 from sqlalchemy import create_engine, MetaData
 from sqlalchemy.ext.automap import automap_base, generate_relationship
 from sqlalchemy.orm import sessionmaker, scoped_session
@@ -14,10 +16,8 @@ from jet_bridge_base.models import Base
 from jet_bridge_base.logger import logger
 
 
-engine_url = None
-engine = None
-Session = None
-MappedBase = None
+settings_engine_url = None
+connections = {}
 
 
 def build_engine_url(
@@ -84,14 +84,7 @@ def build_engine_url_from_settings():
     )
 
 
-def database_connect():
-    global engine_url, engine, Session, MappedBase
-
-    engine_url = build_engine_url_from_settings()
-
-    if not engine_url:
-        raise Exception('Database configuration is not set')
-
+def connect_database(engine_url):
     if settings.DATABASE_ENGINE == 'sqlite':
         engine = create_engine(engine_url)
     else:
@@ -136,3 +129,67 @@ def database_connect():
     for table_name, table in MappedBase.metadata.tables.items():
         if len(table.primary_key.columns) == 0 and table_name not in MappedBase.classes:
             logger.warning('Table "{}" does not have primary key and will be ignored'.format(table_name))
+
+    connections[engine_url] = {
+        'engine': engine,
+        'Session': Session,
+        'MappedBase': MappedBase
+    }
+
+
+def connect_database_from_settings():
+    global settings_engine_url
+
+    settings_engine_url = build_engine_url_from_settings()
+
+    if not settings_engine_url:
+        raise Exception('Database configuration is not set')
+
+    connect_database(settings_engine_url)
+
+
+def get_connection(request):
+    global settings_engine_url
+
+    db_url_encoded = request.headers.get('X_DBURL')
+
+    if db_url_encoded:
+        from jet_bridge_base.utils.crypt import decrypt
+
+        try:
+            secret_key = settings.TOKEN
+            db_settings = json.loads(decrypt(db_url_encoded, secret_key))
+        except Exception:
+            db_settings = {}
+
+        engine_url = build_engine_url(
+            db_settings.get('database_engine'),
+            db_settings.get('database_host'),
+            db_settings.get('database_port'),
+            db_settings.get('database_name'),
+            db_settings.get('database_user'),
+            db_settings.get('database_password'),
+            db_settings.get('database_extra')
+        )
+    else:
+        engine_url = settings_engine_url
+
+    if engine_url not in connections:
+        connect_database(engine_url)
+
+    return connections.get(engine_url)
+
+
+def create_session(request):
+    connection = get_connection(request)
+    return connection['Session']()
+
+
+def get_mapped_base(request):
+    connection = get_connection(request)
+    return connection['MappedBase']
+
+
+def get_engine(request):
+    connection = get_connection(request)
+    return connection['engine']

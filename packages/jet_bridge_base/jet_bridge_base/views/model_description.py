@@ -1,7 +1,7 @@
 from sqlalchemy import inspect
 from sqlalchemy.orm.base import ONETOMANY
 
-from jet_bridge_base.db import MappedBase
+from jet_bridge_base.db import get_mapped_base
 from jet_bridge_base.models import data_types
 from jet_bridge_base.permissions import HasProjectPermissions
 from jet_bridge_base.responses.json import JSONResponse
@@ -18,6 +18,7 @@ class ModelDescriptionView(APIView):
     def get_queryset(self):
         non_editable = ['id']
         hidden = ['__jet__token']
+        MappedBase = get_mapped_base(self.request)
 
         def map_column(column):
             params = {}

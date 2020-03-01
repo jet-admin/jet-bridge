@@ -14,7 +14,10 @@ def check_token_command(api_url):
             logger.warning('[!] Token: {}'.format(settings.TOKEN))
 
             if settings.AUTO_OPEN_REGISTER and api_url.startswith('http'):
-                register_url = '{}register/?token={}'.format(api_url, settings.TOKEN)
+                register_url = '{}register/'.format(api_url)
+
+                if settings.TOKEN:
+                    register_url += '?token={}'.format(settings.TOKEN)
 
                 if webbrowser.open(register_url):
                     logger.warning('[!] Activation page was opened in your browser - {}'.format(register_url))
