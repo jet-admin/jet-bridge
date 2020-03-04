@@ -84,7 +84,7 @@ def build_engine_url_from_settings():
     )
 
 
-def connect_database(engine_url, database_engine):
+def connect_database(engine_url, database_engine, schema):
     if database_engine == 'sqlite':
         engine = create_engine(engine_url)
     else:
@@ -103,7 +103,7 @@ def connect_database(engine_url, database_engine):
             return False
         return True
 
-    metadata = MetaData(schema=settings.DATABASE_SCHEMA)
+    metadata = MetaData(schema=schema if schema and schema != '' else None)
     metadata.reflect(engine, only=only)
     MappedBase = automap_base(metadata=metadata)
 
@@ -148,7 +148,7 @@ def connect_database_from_settings():
     if not settings_engine_url:
         raise Exception('Database configuration is not set')
 
-    connect_database(settings_engine_url, settings.DATABASE_ENGINE)
+    connect_database(settings_engine_url, settings.DATABASE_ENGINE, settings.DATABASE_SCHEMA)
 
 
 def get_connection(request):
@@ -175,12 +175,14 @@ def get_connection(request):
             bridge_settings.get('database_extra')
         )
         database_engine = bridge_settings.get('database_engine')
+        database_schema = bridge_settings.get('database_schema')
     else:
         engine_url = settings_engine_url
         database_engine = settings.DATABASE_ENGINE
+        database_schema = settings.DATABASE_SCHEMA
 
     if engine_url and engine_url not in connections:
-        connect_database(engine_url, database_engine)
+        connect_database(engine_url, database_engine, database_schema)
 
     return connections.get(engine_url)
 
