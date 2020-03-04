@@ -6,7 +6,7 @@ import six
 
 from jet_bridge_base import settings
 from jet_bridge_base.configuration import configuration
-from jet_bridge_base.db import Session
+from jet_bridge_base.db import create_session
 from jet_bridge_base.exceptions.api import APIException
 from jet_bridge_base.exceptions.not_found import NotFound
 from jet_bridge_base.exceptions.permission_denied import PermissionDenied
@@ -30,7 +30,10 @@ class APIView(object):
         if self.request.method != 'OPTIONS':
             self.check_permissions()
 
-        self.session = Session()
+        try:
+            self.session = create_session(self.request)
+        except Exception as e:
+            raise ValidationError(str(e))
 
     def on_finish(self):
         if self.session:
@@ -51,19 +54,16 @@ class APIView(object):
                 raise PermissionDenied(getattr(permission, 'message', 'forbidden'))
 
     def default_headers(self):
-        ACCESS_CONTROL_ALLOW_ORIGIN = 'Access-Control-Allow-Origin'
-        ACCESS_CONTROL_EXPOSE_HEADERS = 'Access-Control-Expose-Headers'
-        ACCESS_CONTROL_ALLOW_CREDENTIALS = 'Access-Control-Allow-Credentials'
-        ACCESS_CONTROL_ALLOW_HEADERS = 'Access-Control-Allow-Headers'
-        ACCESS_CONTROL_ALLOW_METHODS = 'Access-Control-Allow-Methods'
+        headers = {}
 
-        return {
-            ACCESS_CONTROL_ALLOW_ORIGIN: '*',
-            ACCESS_CONTROL_ALLOW_METHODS: 'GET, POST, PUT, PATCH, DELETE, OPTIONS',
-            ACCESS_CONTROL_ALLOW_HEADERS: 'Authorization,DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,X-Application-Warning,X-HTTP-Method-Override',
-            ACCESS_CONTROL_EXPOSE_HEADERS: 'Content-Length,Content-Range,Content-Disposition,Content-Type,X-Application-Warning',
-            ACCESS_CONTROL_ALLOW_CREDENTIALS: 'true'
-        }
+        if settings.CORS_HEADERS:
+            headers['Access-Control-Allow-Origin'] = '*'
+            headers['Access-Control-Allow-Methods'] = 'GET, POST, PUT, PATCH, DELETE, OPTIONS'
+            headers['Access-Control-Allow-Headers'] = 'Authorization,DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,X-Application-Warning,X-HTTP-Method-Override,X-Bridge-Settings'
+            headers['Access-Control-Expose-Headers'] = 'Content-Length,Content-Range,Content-Disposition,Content-Type,X-Application-Warning'
+            headers['Access-Control-Allow-Credentials'] = 'true'
+
+        return headers
 
     def error_response(self, exc_type, exc, traceback):
         if isinstance(exc, PermissionDenied):

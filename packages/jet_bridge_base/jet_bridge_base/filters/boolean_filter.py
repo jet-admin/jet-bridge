@@ -1,4 +1,4 @@
-from jet_bridge_base.fields import CharField, BooleanField
+from jet_bridge_base.fields import BooleanField
 from jet_bridge_base.filters.filter import Filter
 
 

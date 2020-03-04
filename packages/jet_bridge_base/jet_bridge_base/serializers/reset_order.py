@@ -40,7 +40,7 @@ def get_reset_order_serializer(Model, queryset, session):
 
                 order_by.extend(map(lambda x: map_field(x), ordering.split(',')))
 
-            if len(order_by):
+            if order_by:
                 qs = qs.order_by(*order_by)
 
             i = 1

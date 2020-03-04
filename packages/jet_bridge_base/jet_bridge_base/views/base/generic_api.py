@@ -21,7 +21,8 @@ class GenericAPIView(APIView):
         queryset = self.filter_queryset(self.get_queryset())
         lookup_url_kwarg = self.lookup_url_kwarg or 'pk'
 
-        assert lookup_url_kwarg in self.request.path_kwargs
+        if lookup_url_kwarg not in self.request.path_kwargs:
+            raise AssertionError()
 
         model_field = getattr(self.get_model(), self.lookup_field)
         obj = queryset.filter(getattr(model_field, '__eq__')(self.request.path_kwargs[lookup_url_kwarg])).first()
@@ -67,7 +68,8 @@ class GenericAPIView(APIView):
         return self.paginator.paginate_queryset(queryset, self)
 
     def get_paginated_response(self, data):
-        assert self.paginator is not None
+        if self.paginator is None:
+            raise AssertionError()
         return self.paginator.get_paginated_response(data)
 
     def get_serializer(self, *args, **kwargs):

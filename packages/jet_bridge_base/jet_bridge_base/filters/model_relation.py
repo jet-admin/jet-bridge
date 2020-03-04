@@ -2,7 +2,7 @@ import sqlalchemy
 from jet_bridge_base.filters.filter import EMPTY_VALUES
 from sqlalchemy import inspect
 
-from jet_bridge_base.db import MappedBase
+from jet_bridge_base.db import get_mapped_base
 from jet_bridge_base.filters.char_filter import CharFilter
 
 
@@ -15,8 +15,9 @@ def filter_search_field(field):
     return isinstance(field.type, tuple(allowed_fields))
 
 
-def get_model_relation_filter(Model):
+def get_model_relation_filter(request, Model):
     mapper = inspect(Model)
+    MappedBase = get_mapped_base(request)
 
     class ModelRelationFilter(CharFilter):
         def filter(self, qs, value):

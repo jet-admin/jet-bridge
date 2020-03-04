@@ -1,0 +1,13 @@
+version = 1
+
+test_patterns = []
+
+exclude_patterns = []
+
+[[ analyzers ]]
+  name = 'python'
+  enabled = true
+
+[[ analyzers ]]
+  name = 'docker'
+  enabled = true

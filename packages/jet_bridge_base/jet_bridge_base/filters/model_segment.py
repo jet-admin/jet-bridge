@@ -5,7 +5,7 @@ from jet_bridge_base.filters.filter import EMPTY_VALUES
 from jet_bridge_base.serializers.sql import SqlSerializer
 
 
-def get_model_segment_filter(Model):
+def get_model_segment_filter(request, Model):
     mapper = inspect(Model)
     primary_key = mapper.primary_key[0].name
 
@@ -27,7 +27,7 @@ def get_model_segment_filter(Model):
 
             query = items[0].get('query')
 
-            serializer = SqlSerializer(data={'query': query})
+            serializer = SqlSerializer(data={'query': query}, context={'request': request})
             serializer.is_valid(raise_exception=True)
             result = serializer.execute()
             columns = list(result['columns'])
