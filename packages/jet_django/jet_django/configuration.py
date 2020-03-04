@@ -11,6 +11,7 @@ from django.db.models.signals import post_save, post_delete, pre_save, pre_delet
 from django.utils import timezone
 
 from jet_bridge_base.configuration import Configuration
+from jet_bridge_base.logger import logger
 
 from jet_django import settings, VERSION
 
@@ -80,29 +81,47 @@ class JetDjangoConfiguration(Configuration):
             return model_cls, django_instance
 
     def on_model_pre_create(self, model, instance):
-        model_cls, django_instance = self.get_django_instance(model, instance)
-        pre_save.send(model_cls, raw=True, using=self, instance=django_instance, update_fields=[])
+        try:
+            model_cls, django_instance = self.get_django_instance(model, instance)
+            pre_save.send(model_cls, raw=True, using=self, instance=django_instance, update_fields=[])
+        except Exception as e:
+            logger.warning('[!] on_model_pre_create signal failed: {}'.format(str(e)))
 
     def on_model_post_create(self, model, instance):
-        model_cls, django_instance = self.get_django_instance(model, instance)
-        post_save.send(model_cls, raw=True, using=self, instance=django_instance, created=True, update_fields=[])
+        try:
+            model_cls, django_instance = self.get_django_instance(model, instance)
+            post_save.send(model_cls, raw=True, using=self, instance=django_instance, created=True, update_fields=[])
+        except Exception as e:
+            logger.warning('[!] on_model_post_create signal failed: {}'.format(str(e)))
 
     def on_model_pre_update(self, model, instance):
-        model_cls, django_instance = self.get_django_instance(model, instance)
-        pre_save.send(model_cls, raw=True, using=self, instance=django_instance, update_fields=[])
+        try:
+            model_cls, django_instance = self.get_django_instance(model, instance)
+            pre_save.send(model_cls, raw=True, using=self, instance=django_instance, update_fields=[])
+        except Exception as e:
+            logger.warning('[!] on_model_pre_update signal failed: {}'.format(str(e)))
 
     def on_model_post_update(self, model, instance):
-        model_cls, django_instance = self.get_django_instance(model, instance)
-        post_save.send(model_cls, raw=True, using=self, instance=django_instance, created=False, update_fields=[])
+        try:
+            model_cls, django_instance = self.get_django_instance(model, instance)
+            post_save.send(model_cls, raw=True, using=self, instance=django_instance, created=False, update_fields=[])
+        except Exception as e:
+            logger.warning('[!] on_model_post_update signal failed: {}'.format(str(e)))
 
     def on_model_pre_delete(self, model, instance):
-        model_cls, django_instance = self.get_django_instance(model, instance)
-        pre_delete.send(model_cls, using=self, instance=django_instance)
-        self.pre_delete_django_instance = django_instance
+        try:
+            model_cls, django_instance = self.get_django_instance(model, instance)
+            pre_delete.send(model_cls, using=self, instance=django_instance)
+            self.pre_delete_django_instance = django_instance
+        except Exception as e:
+            logger.warning('[!] on_model_pre_delete signal failed: {}'.format(str(e)))
 
     def on_model_post_delete(self, model, instance):
-        model_cls = self.model_classes.get(model)
-        post_delete.send(model_cls, using=self, instance=self.pre_delete_django_instance)
+        try:
+            model_cls = self.model_classes.get(model)
+            post_delete.send(model_cls, using=self, instance=self.pre_delete_django_instance)
+        except Exception as e:
+            logger.warning('[!] on_model_post_delete signal failed: {}'.format(str(e)))
 
     def model_key(self, model):
         return model._meta.db_table
