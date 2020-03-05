@@ -16,79 +16,98 @@ from jet_bridge_base.models import Base
 from jet_bridge_base.logger import logger
 
 
-settings_engine_url = None
 connections = {}
 
 
-def build_engine_url(
-        DATABASE_ENGINE,
-        DATABASE_HOST,
-        DATABASE_PORT,
-        DATABASE_NAME,
-        DATABASE_USER,
-        DATABASE_PASSWORD,
-        DATABASE_EXTRA=''
-):
-    if not DATABASE_ENGINE or not DATABASE_NAME:
+def build_engine_url(conf):
+    if not conf.get('engine') or not conf.get('name'):
         return
 
     url = [
-        str(DATABASE_ENGINE),
+        str(conf.get('engine')),
         '://'
     ]
 
-    if DATABASE_ENGINE != 'sqlite':
-        if DATABASE_USER:
-            url.append(str(DATABASE_USER))
+    if conf.get('engine') != 'sqlite':
+        if conf.get('user'):
+            url.append(str(conf.get('user')))
 
-            if DATABASE_PASSWORD:
+            if conf.get('password'):
                 url.append(':')
-                url.append(str(DATABASE_PASSWORD))
+                url.append(str(conf.get('password')))
 
-            if DATABASE_HOST:
+            if conf.get('host'):
                 url.append('@')
 
-        if DATABASE_HOST:
-            url.append(str(DATABASE_HOST))
+        if conf.get('host'):
+            url.append(str(conf.get('host')))
 
-            if DATABASE_PORT:
+            if conf.get('port'):
                 url.append(':')
-                url.append(str(DATABASE_PORT))
+                url.append(str(conf.get('port')))
 
             url.append('/')
 
-    if DATABASE_ENGINE == 'sqlite':
+    if conf.get('engine') == 'sqlite':
         url.append('/')
 
-    url.append(str(DATABASE_NAME))
+    url.append(str(conf.get('name')))
 
-    if DATABASE_EXTRA:
-        url.append(str(DATABASE_EXTRA))
-    elif DATABASE_ENGINE == 'mysql':
+    if conf.get('extra'):
+        url.append(str(conf.get('extra')))
+    elif conf.get('engine') == 'mysql':
         url.append('?charset=utf8')
-    elif DATABASE_ENGINE == 'mssql+pyodbc':
+    elif conf.get('engine') == 'mssql+pyodbc':
         url.append('?driver=SQL+Server+Native+Client+11.0')
 
     return ''.join(url)
 
 
-def build_engine_url_from_settings():
-    return build_engine_url(
-        settings.DATABASE_ENGINE,
-        settings.DATABASE_HOST,
-        settings.DATABASE_PORT,
-        settings.DATABASE_NAME,
-        settings.DATABASE_USER,
-        settings.DATABASE_PASSWORD,
-        settings.DATABASE_EXTRA
-    )
+def get_connection_id(conf):
+    return json.dumps([
+        conf.get('database_engine'),
+        conf.get('database_host'),
+        conf.get('database_port'),
+        conf.get('database_name'),
+        conf.get('database_user'),
+        conf.get('database_password'),
+        conf.get('database_only'),
+        conf.get('database_except'),
+        conf.get('database_schema')
+    ])
 
 
-def connect_database(engine_url, database_engine, schema):
-    if database_engine == 'sqlite':
+def get_connection_params_id(conf):
+    return json.dumps([
+        conf.get('database_extra'),
+        conf.get('database_connections')
+    ])
+
+
+def connect_database(conf):
+    global connections
+
+    engine_url = build_engine_url(conf)
+
+    if not engine_url:
+        raise Exception('Database configuration is not set')
+
+    connection_id = get_connection_id(conf)
+    connection_params_id = get_connection_params_id(conf)
+
+    if connection_id in connections:
+        if connections[connection_id]['params_id'] == connection_params_id:
+            return connections[connection_id]
+        else:
+            try:
+                connections[connection_id]['engine'].dispose()
+            except Exception:
+                pass
+
+    if conf.get('engine') == 'sqlite':
         engine = create_engine(engine_url)
     else:
-        engine = create_engine(engine_url, pool_size=settings.DATABASE_CONNECTIONS, max_overflow=10, pool_recycle=1)
+        engine = create_engine(engine_url, pool_size=conf.get('connections'), max_overflow=10, pool_recycle=1)
 
     Session = scoped_session(sessionmaker(bind=engine))
 
@@ -97,13 +116,13 @@ def connect_database(engine_url, database_engine, schema):
     Base.metadata.create_all(engine)
 
     def only(table, meta):
-        if settings.DATABASE_ONLY is not None and table not in settings.DATABASE_ONLY:
+        if conf.get('only') is not None and table not in conf.get('only'):
             return False
-        if settings.DATABASE_EXCEPT is not None and table in settings.DATABASE_EXCEPT:
+        if conf.get('except') is not None and table in conf.get('except'):
             return False
         return True
 
-    metadata = MetaData(schema=schema if schema and schema != '' else None)
+    metadata = MetaData(schema=conf.get('schema') if conf.get('schema') and conf.get('schema') != '' else None)
     metadata.reflect(engine, only=only)
     MappedBase = automap_base(metadata=metadata)
 
@@ -130,30 +149,34 @@ def connect_database(engine_url, database_engine, schema):
         if len(table.primary_key.columns) == 0 and table_name not in MappedBase.classes:
             logger.warning('Table "{}" does not have primary key and will be ignored'.format(table_name))
 
-    connections[engine_url] = {
+    connections[connection_id] = {
         'engine': engine,
         'Session': Session,
-        'MappedBase': MappedBase
+        'MappedBase': MappedBase,
+        'params_id': connection_params_id
     }
 
 
 def connect_database_from_settings():
-    global settings_engine_url
-
     if settings.DATABASE_ENGINE == 'none':
         return
 
-    settings_engine_url = build_engine_url_from_settings()
-
-    if not settings_engine_url:
-        raise Exception('Database configuration is not set')
-
-    connect_database(settings_engine_url, settings.DATABASE_ENGINE, settings.DATABASE_SCHEMA)
+    return connect_database({
+        'engine': settings.DATABASE_ENGINE,
+        'host': settings.DATABASE_HOST,
+        'port': settings.DATABASE_PORT,
+        'name': settings.DATABASE_NAME,
+        'user': settings.DATABASE_USER,
+        'password': settings.DATABASE_PASSWORD,
+        'extra': settings.DATABASE_EXTRA,
+        'connections': settings.DATABASE_CONNECTIONS,
+        'only': settings.DATABASE_ONLY,
+        'except': settings.DATABASE_EXCEPT,
+        'schema': settings.DATABASE_SCHEMA
+    })
 
 
 def get_connection(request):
-    global settings_engine_url
-
     bridge_settings_encoded = request.headers.get('X_BRIDGE_SETTINGS')
 
     if bridge_settings_encoded:
@@ -165,26 +188,21 @@ def get_connection(request):
         except Exception:
             bridge_settings = {}
 
-        engine_url = build_engine_url(
-            bridge_settings.get('database_engine'),
-            bridge_settings.get('database_host'),
-            bridge_settings.get('database_port'),
-            bridge_settings.get('database_name'),
-            bridge_settings.get('database_user'),
-            bridge_settings.get('database_password'),
-            bridge_settings.get('database_extra')
-        )
-        database_engine = bridge_settings.get('database_engine')
-        database_schema = bridge_settings.get('database_schema')
+        return connect_database({
+            'engine': bridge_settings.get('database_engine'),
+            'host': bridge_settings.get('database_host'),
+            'port': bridge_settings.get('database_port'),
+            'name': bridge_settings.get('database_name'),
+            'user': bridge_settings.get('database_user'),
+            'password': bridge_settings.get('database_password'),
+            'extra': bridge_settings.get('database_extra'),
+            'connections': bridge_settings.get('database_connections'),
+            'only': bridge_settings.get('database_only'),
+            'except': bridge_settings.get('database_except'),
+            'schema': bridge_settings.get('database_schema'),
+        })
     else:
-        engine_url = settings_engine_url
-        database_engine = settings.DATABASE_ENGINE
-        database_schema = settings.DATABASE_SCHEMA
-
-    if engine_url and engine_url not in connections:
-        connect_database(engine_url, database_engine, database_schema)
-
-    return connections.get(engine_url)
+        return connect_database_from_settings()
 
 
 def create_session(request):
