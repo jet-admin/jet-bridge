@@ -220,6 +220,8 @@ def get_conf(request):
 
 
 def connect_database_from_settings():
+    if settings.DATABASE_ENGINE == 'none':
+        return
     return connect_database(get_settings_conf())
 
 
