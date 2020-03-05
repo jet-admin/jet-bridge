@@ -1,9 +1,9 @@
 from jet_bridge_base.configuration import configuration
 from jet_bridge_base.responses.json import JSONResponse
-from jet_bridge_base.views.base.api import APIView
+from jet_bridge_base.views.base.api import BaseAPIView
 
 
-class ApiView(APIView):
+class ApiView(BaseAPIView):
 
     def get(self, *args, **kwargs):
         return JSONResponse({
