@@ -17,7 +17,7 @@ from jet_bridge_base.logger import logger
 from jet_bridge_base.utils.exceptions import serialize_validation_error
 
 
-class APIView(object):
+class BaseAPIView(object):
     request = None
     session = None
     permission_classes = []
@@ -30,15 +30,8 @@ class APIView(object):
         if self.request.method != 'OPTIONS':
             self.check_permissions()
 
-        try:
-            self.session = create_session(self.request)
-        except Exception as e:
-            raise ValidationError(str(e))
-
     def on_finish(self):
-        if self.session:
-            self.session.close()
-            self.session = None
+        pass
 
     def get_permissions(self):
         return [permission() for permission in self.permission_classes]
@@ -132,3 +125,24 @@ class APIView(object):
 
     def build_absolute_uri(self, url):
         return self.request.protocol + "://" + self.request.host + url
+
+
+class APIView(BaseAPIView):
+    request = None
+    session = None
+    permission_classes = []
+
+    def before_dispatch(self):
+        super(APIView, self).before_dispatch()
+
+        try:
+            self.session = create_session(self.request)
+        except Exception as e:
+            raise ValidationError(str(e))
+
+    def on_finish(self):
+        super(APIView, self).on_finish()
+
+        if self.session:
+            self.session.close()
+            self.session = None
