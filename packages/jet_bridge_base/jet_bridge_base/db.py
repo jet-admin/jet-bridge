@@ -65,22 +65,22 @@ def build_engine_url(conf):
 
 def get_connection_id(conf):
     return json.dumps([
-        conf.get('database_engine'),
-        conf.get('database_host'),
-        conf.get('database_port'),
-        conf.get('database_name'),
-        conf.get('database_user'),
-        conf.get('database_password'),
-        conf.get('database_only'),
-        conf.get('database_except'),
-        conf.get('database_schema')
+        conf.get('engine'),
+        conf.get('host'),
+        conf.get('port'),
+        conf.get('name'),
+        conf.get('user'),
+        conf.get('password'),
+        conf.get('only'),
+        conf.get('except'),
+        conf.get('schema')
     ])
 
 
 def get_connection_params_id(conf):
     return json.dumps([
-        conf.get('database_extra'),
-        conf.get('database_connections')
+        conf.get('extra'),
+        conf.get('connections')
     ])
 
 
