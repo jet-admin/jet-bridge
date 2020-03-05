@@ -204,7 +204,7 @@ def get_request_conf(bridge_settings_encoded):
         'user': bridge_settings.get('database_user'),
         'password': bridge_settings.get('database_password'),
         'extra': bridge_settings.get('database_extra'),
-        'connections': bridge_settings.get('database_connections'),
+        'connections': bridge_settings.get('database_connections', 50),
         'only': bridge_settings.get('database_only'),
         'except': bridge_settings.get('database_except'),
         'schema': bridge_settings.get('database_schema'),
