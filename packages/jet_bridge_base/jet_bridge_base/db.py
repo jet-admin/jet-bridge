@@ -99,10 +99,7 @@ def connect_database(conf):
         if connections[connection_id]['params_id'] == connection_params_id:
             return connections[connection_id]
         else:
-            try:
-                connections[connection_id]['engine'].dispose()
-            except Exception:
-                pass
+            disconnect_database(conf)
 
     if conf.get('engine') == 'sqlite':
         engine = create_engine(engine_url)
@@ -157,11 +154,24 @@ def connect_database(conf):
     }
 
 
-def connect_database_from_settings():
-    if settings.DATABASE_ENGINE == 'none':
-        return
+def disconnect_database(conf):
+    global connections
 
-    return connect_database({
+    connection_id = get_connection_id(conf)
+
+    if connection_id in connections:
+        try:
+            connections[connection_id]['engine'].dispose()
+            del connections[connection_id]
+            return True
+        except Exception:
+            pass
+
+    return False
+
+
+def get_settings_conf():
+    return {
         'engine': settings.DATABASE_ENGINE,
         'host': settings.DATABASE_HOST,
         'port': settings.DATABASE_PORT,
@@ -173,54 +183,70 @@ def connect_database_from_settings():
         'only': settings.DATABASE_ONLY,
         'except': settings.DATABASE_EXCEPT,
         'schema': settings.DATABASE_SCHEMA
-    })
+    }
 
 
-def get_connection(request):
+def get_request_conf(bridge_settings_encoded):
+    from jet_bridge_base.utils.crypt import decrypt
+
+    try:
+        secret_key = settings.TOKEN.replace('-', '').lower()
+        bridge_settings = json.loads(decrypt(bridge_settings_encoded, secret_key))
+    except Exception:
+        bridge_settings = {}
+
+    return {
+        'engine': bridge_settings.get('database_engine'),
+        'host': bridge_settings.get('database_host'),
+        'port': bridge_settings.get('database_port'),
+        'name': bridge_settings.get('database_name'),
+        'user': bridge_settings.get('database_user'),
+        'password': bridge_settings.get('database_password'),
+        'extra': bridge_settings.get('database_extra'),
+        'connections': bridge_settings.get('database_connections'),
+        'only': bridge_settings.get('database_only'),
+        'except': bridge_settings.get('database_except'),
+        'schema': bridge_settings.get('database_schema'),
+    }
+
+
+def get_conf(request):
     bridge_settings_encoded = request.headers.get('X_BRIDGE_SETTINGS')
 
     if bridge_settings_encoded:
-        from jet_bridge_base.utils.crypt import decrypt
-
-        try:
-            secret_key = settings.TOKEN.replace('-', '').lower()
-            bridge_settings = json.loads(decrypt(bridge_settings_encoded, secret_key))
-        except Exception:
-            bridge_settings = {}
-
-        return connect_database({
-            'engine': bridge_settings.get('database_engine'),
-            'host': bridge_settings.get('database_host'),
-            'port': bridge_settings.get('database_port'),
-            'name': bridge_settings.get('database_name'),
-            'user': bridge_settings.get('database_user'),
-            'password': bridge_settings.get('database_password'),
-            'extra': bridge_settings.get('database_extra'),
-            'connections': bridge_settings.get('database_connections'),
-            'only': bridge_settings.get('database_only'),
-            'except': bridge_settings.get('database_except'),
-            'schema': bridge_settings.get('database_schema'),
-        })
+        return get_request_conf(bridge_settings_encoded)
     else:
-        return connect_database_from_settings()
+        return get_settings_conf()
+
+
+def connect_database_from_settings():
+    return connect_database(get_settings_conf())
+
+
+def get_request_connection(request):
+    return connect_database(get_conf(request))
 
 
 def create_session(request):
-    connection = get_connection(request)
+    connection = get_request_connection(request)
     if not connection:
         return
     return connection['Session']()
 
 
 def get_mapped_base(request):
-    connection = get_connection(request)
+    connection = get_request_connection(request)
     if not connection:
         return
     return connection['MappedBase']
 
 
 def get_engine(request):
-    connection = get_connection(request)
+    connection = get_request_connection(request)
     if not connection:
         return
     return connection['engine']
+
+
+def dispose_connection(request):
+    return disconnect_database(get_request_conf(request))
