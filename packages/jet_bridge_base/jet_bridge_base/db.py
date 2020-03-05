@@ -152,6 +152,7 @@ def connect_database(conf):
         'MappedBase': MappedBase,
         'params_id': connection_params_id
     }
+    return connections[connection_id]
 
 
 def disconnect_database(conf):
