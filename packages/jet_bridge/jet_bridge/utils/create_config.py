@@ -224,14 +224,14 @@ def create_config(config_not_set):
                 default=database_password or settings.DATABASE_PASSWORD or ''
             )
 
-        engine_url = build_engine_url(
-            database_engine,
-            database_host,
-            database_port,
-            database_name,
-            database_user,
-            database_password
-        )
+        engine_url = build_engine_url({
+            'engine': database_engine,
+            'host': database_host,
+            'port': database_port,
+            'name': database_name,
+            'user': database_user,
+            'password': database_password
+        })
 
         if not engine_url:
             continue
