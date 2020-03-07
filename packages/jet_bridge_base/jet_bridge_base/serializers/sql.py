@@ -59,4 +59,11 @@ class SqlsSerializer(Serializer):
 
     def execute(self, data):
         serializer = SqlSerializer(context=self.context)
-        return map(lambda x: serializer.execute(x), data['queries'])
+
+        def map_query(query):
+            try:
+                return serializer.execute(query)
+            except SqlError as e:
+                return {'error': str(e.detail)}
+
+        return map(map_query, data['queries'])
