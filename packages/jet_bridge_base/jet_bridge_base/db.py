@@ -58,7 +58,7 @@ def build_engine_url(conf):
     elif conf.get('engine') == 'mysql':
         url.append('?charset=utf8')
     elif conf.get('engine') == 'mssql+pyodbc':
-        url.append('?driver=SQL+Server+Native+Client+11.0')
+        url.append('?driver=FreeTDS')
 
     return ''.join(url)
 
