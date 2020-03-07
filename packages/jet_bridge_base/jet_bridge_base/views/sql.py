@@ -20,4 +20,4 @@ class SqlView(APIView):
         try:
             return JSONResponse(serializer.execute(serializer.validated_data))
         except SqlError as e:
-            return JSONResponse({'error': e.detail.string}, status=HTTP_400_BAD_REQUEST)
+            return JSONResponse({'error': str(e.detail)}, status=HTTP_400_BAD_REQUEST)
