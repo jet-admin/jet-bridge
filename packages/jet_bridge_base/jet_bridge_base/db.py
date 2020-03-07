@@ -252,4 +252,4 @@ def get_engine(request):
 
 
 def dispose_connection(request):
-    return disconnect_database(get_request_conf(request))
+    return disconnect_database(get_conf(request))
