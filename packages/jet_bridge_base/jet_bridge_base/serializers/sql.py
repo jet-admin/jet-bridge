@@ -11,6 +11,7 @@ from jet_bridge_base.serializers.serializer import Serializer
 
 class SqlSerializer(Serializer):
     query = fields.CharField()
+    timezone = fields.CharField(required=False)
     params = SqlParamsSerializers(required=False)
 
     def validate_query(self, value):
@@ -33,6 +34,12 @@ class SqlSerializer(Serializer):
 
         query = data['query']
         params = data.get('params', [])
+
+        if 'timezone' in data:
+            try:
+                session.execute('SET TIME ZONE :tz', {'tz': data['timezone']})
+            except SQLAlchemyError:
+                pass
 
         try:
             result = session.execute(
