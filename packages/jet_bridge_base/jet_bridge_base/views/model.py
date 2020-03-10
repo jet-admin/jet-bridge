@@ -44,7 +44,8 @@ class ModelViewSet(ModelAPIViewMixin):
                 'aggregate': 'r',
                 'group': 'r',
                 'reorder': 'w',
-                'reset_order': 'w'
+                'reset_order': 'w',
+                'get_siblings': 'r'
             }.get(self.action, 'w')
         }
 
