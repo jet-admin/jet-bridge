@@ -42,7 +42,7 @@ class BaseRouteView(generic.View):
         self.view.request = Request(
             self.request.method.upper(),
             self.request.scheme,
-            self.request._get_raw_host(),
+            self.request.get_host(),
             self.request.path,
             self.kwargs,
             self.request.get_full_path(),
