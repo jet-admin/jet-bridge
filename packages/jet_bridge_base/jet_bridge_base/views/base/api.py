@@ -78,9 +78,9 @@ class BaseAPIView(object):
         else:
             if settings.DEBUG:
                 ctx = {
-                    'path': self.request.path,
-                    'full_path': self.request.protocol + '://' + self.request.host + self.request.path,
-                    'method': self.request.method,
+                    'path': self.request.path if self.request else None,
+                    'full_path': self.request.protocol + '://' + self.request.host + self.request.path if self.request else None,
+                    'method': self.request.method if self.request else None,
                     'type': configuration.get_type(),
                     'version': configuration.get_version(),
                     'current_datetime': datetime.now().strftime('%c'),
