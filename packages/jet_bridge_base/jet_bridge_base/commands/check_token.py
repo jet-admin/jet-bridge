@@ -13,7 +13,7 @@ def check_token_command(api_url):
             logger.warning('[!] Your server token is not activated')
             logger.warning('[!] Token: {}'.format(settings.TOKEN))
 
-            if settings.AUTO_OPEN_REGISTER and api_url.startswith('http'):
+            if settings.DATABASE_ENGINE != 'none' and settings.AUTO_OPEN_REGISTER and api_url.startswith('http'):
                 register_url = '{}register/'.format(api_url)
 
                 if settings.TOKEN:

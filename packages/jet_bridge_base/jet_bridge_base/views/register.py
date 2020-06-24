@@ -4,10 +4,10 @@ from jet_bridge_base import settings
 from jet_bridge_base.responses.base import Response
 from jet_bridge_base.responses.redirect import RedirectResponse
 from jet_bridge_base.status import HTTP_400_BAD_REQUEST
-from jet_bridge_base.views.base.api import APIView
+from jet_bridge_base.views.base.api import BaseAPIView
 
 
-class RegisterView(APIView):
+class RegisterView(BaseAPIView):
 
     def get(self, *args, **kwargs):
         if not settings.PROJECT:
