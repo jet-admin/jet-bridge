@@ -29,6 +29,7 @@ class Field(object):
         self.read_only = kwargs.pop('read_only', False)
         self.write_only = kwargs.pop('write_only', False)
         self.many = kwargs.pop('many', False)
+        self.default = kwargs.pop('default', empty)
 
         messages = {}
         for cls in reversed(self.__class__.__mro__):
@@ -38,6 +39,11 @@ class Field(object):
     def validate(self, value):
         return value
 
+    def get_default(self):
+        if callable(self.default):
+            return self.default()
+        return self.default
+
     def get_value(self, data):
         try:
             if isinstance(data, Mapping):
@@ -45,7 +51,10 @@ class Field(object):
             else:
                 field_value = getattr(data, self.field_name)
         except (KeyError, AttributeError):
-            return empty
+            if self.default is not empty:
+                return self.get_default()
+            else:
+                return empty
 
         if not getattr(self, 'many', False) and isinstance(field_value, list):
             field_value = field_value[0]
