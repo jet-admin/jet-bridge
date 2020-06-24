@@ -11,6 +11,7 @@ from jet_bridge_base.views.file_upload import FileUploadView
 from jet_bridge_base.views.message import MessageView
 from jet_bridge_base.views.model import ModelViewSet
 from jet_bridge_base.views.model_description import ModelDescriptionView
+from jet_bridge_base.views.proxy_request import ProxyRequestView
 from jet_bridge_base.views.register import RegisterView
 from jet_bridge_base.views.reload import ReloadView
 from jet_bridge_base.views.sql import SqlView
@@ -37,6 +38,7 @@ def make_app():
         (r'/api/file_upload/', view_handler(FileUploadView)),
         (r'/api/image_resize/', view_handler(ImageResizeView)),
         (r'/api/reload/', view_handler(ReloadView)),
+        (r'/api/proxy_request/', view_handler(ProxyRequestView)),
         (r'/media/(.*)', tornado.web.StaticFileHandler, {'path': settings.MEDIA_ROOT}),
     ]
     urls += router.urls

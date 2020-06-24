@@ -6,6 +6,7 @@ from jet_bridge_base.views.image_resize import ImageResizeView
 from jet_bridge_base.views.message import MessageView
 from jet_bridge_base.views.model import ModelViewSet
 from jet_bridge_base.views.model_description import ModelDescriptionView
+from jet_bridge_base.views.proxy_request import ProxyRequestView
 from jet_bridge_base.views.register import RegisterView
 from jet_bridge_base.views.reload import ReloadView
 from jet_bridge_base.views.sql import SqlView
@@ -30,6 +31,7 @@ def init_urls():
         url(r'^file_upload/', route_view(FileUploadView).as_view(), name='file-upload'),
         url(r'^image_resize/', route_view(ImageResizeView).as_view(), name='image-resize'),
         url(r'^reload/', route_view(ReloadView).as_view(), name='reload'),
+        url(r'^proxy_request/', route_view(ProxyRequestView).as_view(), name='proxy-request'),
     ]
 
     api_urls = router.urls + extra_urls
