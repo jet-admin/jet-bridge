@@ -80,7 +80,30 @@ def get_resource_secret_tokens(project, resource, token):
         'User-Agent': '{} v{}'.format(configuration.get_type(), configuration.get_version())
     }
 
-    r = requests.request('GET', url,headers=headers)
+    r = requests.request('GET', url, headers=headers)
+    success = 200 <= r.status_code < 300
+
+    if not success:
+        return []
+
+    return r.json()
+
+
+def get_secret_tokens(project, resource, token, user_token):
+    if not token:
+        return []
+
+    url = api_method_url('projects/{}/secret_tokens/'.format(project))
+    headers = {
+        'Authorization': 'ProjectToken {}'.format(token),
+        'User-Agent': '{} v{}'.format(configuration.get_type(), configuration.get_version())
+    }
+    data = {
+        'resource': resource,
+        'user_token': user_token
+    }
+
+    r = requests.request('POST', url, headers=headers, data=data)
     success = 200 <= r.status_code < 300
 
     if not success:
