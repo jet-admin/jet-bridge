@@ -51,7 +51,7 @@ def project_auth(token, project_token, permission=None):
     success = 200 <= r.status_code < 300
 
     if not success:
-        logger.error('Project Auth request error: %d %s', r.status_code, r.reason)
+        logger.error('Project Auth request error: %d %s %s', r.status_code, r.reason, r.text)
         return {
             'result': False
         }
@@ -68,3 +68,22 @@ def project_auth(token, project_token, permission=None):
         'result': True,
         'warning': result.get('warning')
     }
+
+
+def get_resource_secret_tokens(project, resource, token):
+    if not token:
+        return []
+
+    url = api_method_url('projects/{}/resources/{}/secret_tokens/'.format(project, resource))
+    headers = {
+        'Authorization': 'ProjectToken {}'.format(token),
+        'User-Agent': '{} v{}'.format(configuration.get_type(), configuration.get_version())
+    }
+
+    r = requests.request('GET', url,headers=headers)
+    success = 200 <= r.status_code < 300
+
+    if not success:
+        return []
+
+    return r.json()

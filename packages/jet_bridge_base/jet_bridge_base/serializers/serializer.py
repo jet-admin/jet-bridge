@@ -70,6 +70,13 @@ class Serializer(Field):
 
     def run_validation(self, value):
         value = self.to_internal_value(value)
+
+        try:
+            value = self.validate(value)
+            assert value is not None, '.validate() should return the validated data'
+        except ValidationError as e:
+            raise e
+
         return value
 
     def is_valid(self, raise_exception=False):
@@ -136,6 +143,9 @@ class Serializer(Field):
             return self.to_representation(self.instance)
         elif self.validated_data is not None:
             return self.to_representation(self.validated_data)
+
+    def validate(self, attrs):
+        return attrs
 
     def update(self, instance, validated_data):
         raise NotImplementedError('`update()` must be implemented.')

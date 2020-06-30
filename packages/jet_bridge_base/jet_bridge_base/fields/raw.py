@@ -1,7 +1,7 @@
 from jet_bridge_base.fields.field import Field
 
 
-class AnyField(Field):
+class RawField(Field):
 
     def to_internal_value_item(self, value):
         return value
