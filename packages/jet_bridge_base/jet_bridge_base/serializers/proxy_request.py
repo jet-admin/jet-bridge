@@ -29,7 +29,7 @@ class ProxyRequestSerializer(Serializer):
             names = attrs['secret_tokens'].split(',')
             instances = {}
 
-            for item in get_resource_secret_tokens('geex_board', 'google_sheets123', settings.TOKEN):
+            for item in get_resource_secret_tokens(attrs['project'], attrs['resource'], settings.TOKEN):
                 instances[item['name']] = item
 
             for name in names:
