@@ -3,7 +3,7 @@ from jet_bridge_base import fields, settings
 from jet_bridge_base.exceptions.validation_error import ValidationError
 from jet_bridge_base.responses.base import Response
 from jet_bridge_base.serializers.serializer import Serializer
-from jet_bridge_base.utils.backend import get_resource_secret_tokens
+from jet_bridge_base.utils.backend import get_resource_secret_tokens, get_secret_tokens
 
 
 class ProxyRequestSerializer(Serializer):
@@ -29,14 +29,19 @@ class ProxyRequestSerializer(Serializer):
             names = attrs['secret_tokens'].split(',')
             instances = {}
 
-            for item in get_resource_secret_tokens('geex_board', 'google_sheets123', settings.TOKEN):
-                instances[item['name']] = item
+            request = self.context.get('request')
+            token_prefix = 'Token '
+            authorization = request.headers.get('AUTHORIZATION', '')
+            user_token = authorization[len(token_prefix):] if authorization.startswith(token_prefix) else None
+
+            for item in get_secret_tokens(attrs['project'], attrs['resource'], settings.TOKEN, user_token):
+                instances[item['name']] = item['value']
 
             for name in names:
                 if name not in instances:
-                    raise ValidationError('Secret token "{}" not found'.format(name))
+                    instances[name] = ''
 
-            attrs['secret_tokens'] = instances.values()
+            attrs['secret_tokens'] = instances
 
         if isinstance(attrs['headers'], dict):
             attrs['headers'] = dict([[key, str(value)] for key, value in attrs['headers'].items()])
@@ -79,14 +84,7 @@ class ProxyRequestSerializer(Serializer):
             query_params = self.params_dict_to_list(query_params)
 
         if 'secret_tokens' in self.validated_data:
-            replaces = dict(
-                filter(
-                    lambda x: x[1] is not None,
-                    map(lambda x: [x['name'], x['value']], self.validated_data['secret_tokens'])
-                )
-            )
-
-            url, headers, query_params, body = self.interpolate(url, headers, query_params, body, '{-%s-}', replaces)
+            url, headers, query_params, body = self.interpolate(url, headers, query_params, body, '{-%s-}', self.validated_data['secret_tokens'])
 
         if 'context' in self.validated_data:
             url, headers, query_params, body = self.interpolate(url, headers, query_params, body, '{{%s}}', self.validated_data['context'])
