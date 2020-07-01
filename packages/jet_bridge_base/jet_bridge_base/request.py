@@ -1,5 +1,7 @@
 import json
 
+from six import string_types
+
 from jet_bridge_base.exceptions.missing_argument_error import MissingArgumentError
 
 _ARG_DEFAULT = object()
@@ -38,7 +40,7 @@ class Request(object):
         if content_type.startswith('application/json'):
             data = self.body
 
-            if not isinstance(data, str):
+            if not isinstance(data, string_types):
                 data = data.decode('utf-8', 'surrogatepass')
 
             self.data = json.loads(data) if data else {}
