@@ -1,6 +1,8 @@
 from __future__ import absolute_import
 import json
 
+from six import string_types
+
 from jet_bridge_base.fields.field import Field
 
 
@@ -10,7 +12,7 @@ class JSONField(Field):
     }
 
     def to_internal_value_item(self, value):
-        if isinstance(value, str):
+        if isinstance(value, string_types):
             try:
                 return json.loads(value)
             except ValueError:
