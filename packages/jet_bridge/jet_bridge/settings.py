@@ -1,3 +1,4 @@
+import json
 import os
 
 from tornado.options import define, options
@@ -45,7 +46,7 @@ define('database_only', default=None, type=str)
 define('database_except', default=None, type=str)
 define('database_schema', default=None, type=str)
 
-define('sso_applications', default={}, type=dict)
+define('sso_applications', default='{}', type=str)
 define('allow_origin', default='*')
 
 required_options = [
@@ -112,7 +113,10 @@ DATABASE_ONLY = options.database_only.split(',') if options.database_only else N
 DATABASE_EXCEPT = options.database_except.split(',') if options.database_except else None
 DATABASE_SCHEMA = options.database_schema
 
-SSO_APPLICATIONS = options.sso_applications
+try:
+    SSO_APPLICATIONS = json.loads(options.sso_applications)
+except:
+    SSO_APPLICATIONS = {}
 
 ALLOW_ORIGIN = options.allow_origin
 
