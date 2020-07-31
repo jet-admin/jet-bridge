@@ -26,6 +26,7 @@ DATABASE_ONLY = None
 DATABASE_EXCEPT = None
 DATABASE_SCHEMA = None
 
+SSO_APPLICATIONS = {}
 
 def set_settings(settings):
     for key, value in settings.items():

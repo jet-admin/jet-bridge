@@ -32,7 +32,9 @@ class BaseViewHandler(tornado.web.RequestHandler):
             self.request_headers(),
             self.request.body,
             self.request.body_arguments,
-            self.request_files()
+            self.request_files(),
+            self.request,
+            self
         )
 
         self.view.before_dispatch()

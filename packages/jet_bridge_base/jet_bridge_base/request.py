@@ -21,7 +21,9 @@ class Request(object):
             headers=None,
             body=None,
             body_arguments=None,
-            files=None
+            files=None,
+            original_request=None,
+            original_handler=None
     ):
         self.method = method
         self.protocol = protocol
@@ -34,6 +36,8 @@ class Request(object):
         self.body = body
         self.body_arguments = body_arguments or {}
         self.files = files or {}
+        self.original_request = original_request
+        self.original_handler = original_handler
 
         content_type = self.headers.get('CONTENT_TYPE', '')
 

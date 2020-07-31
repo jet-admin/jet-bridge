@@ -60,6 +60,21 @@ class Configuration(object):
     def media_url(self, path, request):
         pass
 
+    def session_set(self, request, name, value):
+        pass
+
+    def session_get(self, request, name, default=None):
+        pass
+
+    def session_clear(self, request, name):
+        pass
+
+    def clean_sso_application_name(self, name):
+        return name.lower().replace('-', '')
+
+    def clean_sso_applications(self, applications):
+        return dict(map(lambda x: (self.clean_sso_application_name(x[0]), x[1]), applications.items()))
+
 
 configuration = Configuration()
 
