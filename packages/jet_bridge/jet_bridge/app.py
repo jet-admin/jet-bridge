@@ -28,7 +28,7 @@ def make_app():
     router.register('/api/models/(?P<model>[^/]+)/', view_handler(ModelViewSet))
 
     urls = [
-        (r'/', TemporaryRedirectHandler, {'url': "/api/"}),
+        (r'/', TemporaryRedirectHandler, {'url': '/api/'}),
         (r'/register/', view_handler(RegisterView)),
         (r'/api/', view_handler(ApiView)),
         (r'/api/register/', view_handler(RegisterView)),
