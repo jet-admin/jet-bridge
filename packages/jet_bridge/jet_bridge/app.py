@@ -6,6 +6,8 @@ import tornado.web
 from jet_bridge.handlers.temporary_redirect import TemporaryRedirectHandler
 from jet_bridge_base import settings as base_settings
 from jet_bridge_base.views.api import ApiView
+from jet_bridge_base.views.external_auth.complete import ExternalAuthCompleteView
+from jet_bridge_base.views.external_auth.login import ExternalAuthLoginView
 from jet_bridge_base.views.image_resize import ImageResizeView
 from jet_bridge_base.views.file_upload import FileUploadView
 from jet_bridge_base.views.message import MessageView
@@ -28,7 +30,7 @@ def make_app():
     router.register('/api/models/(?P<model>[^/]+)/', view_handler(ModelViewSet))
 
     urls = [
-        (r'/', TemporaryRedirectHandler, {'url': "/api/"}),
+        (r'/', TemporaryRedirectHandler, {'url': '/api/'}),
         (r'/register/', view_handler(RegisterView)),
         (r'/api/', view_handler(ApiView)),
         (r'/api/register/', view_handler(RegisterView)),
@@ -40,6 +42,8 @@ def make_app():
         (r'/api/reload/', view_handler(ReloadView)),
         (r'/api/proxy_request/', view_handler(ProxyRequestView)),
         (r'/media/(.*)', tornado.web.StaticFileHandler, {'path': settings.MEDIA_ROOT}),
+        (r'/api/external_auth/login/(?P<app>[^/]+)/', view_handler(ExternalAuthLoginView)),
+        (r'/api/external_auth/complete/(?P<app>[^/]+)/', view_handler(ExternalAuthCompleteView)),
     ]
     urls += router.urls
 
@@ -51,5 +55,6 @@ def make_app():
         debug=settings.DEBUG,
         default_handler_class=NotFoundHandler,
         template_path=os.path.join(base_settings.BASE_DIR, 'templates'),
-        autoreload=settings.DEBUG
+        autoreload=settings.DEBUG,
+        cookie_secret=settings.TOKEN
     )

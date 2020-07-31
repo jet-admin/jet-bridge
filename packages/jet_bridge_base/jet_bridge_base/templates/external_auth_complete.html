@@ -1,0 +1,29 @@
+<div id="context" style="display: none">{{context}}</div>
+
+<script>
+    const contextStr = document.getElementById('context').textContent;
+    const context = JSON.parse(contextStr);
+
+    function submit() {
+        const form = document.createElement('form');
+
+        form.method = 'POST';
+        form.action = context['url'];
+
+        Object.keys(context['data']).forEach(key => {
+            const value = context['data'][key];
+            const input = document.createElement('input');
+
+            input.type = 'hidden';
+            input.name = key;
+            input.value = value;
+
+            form.appendChild(input);
+        });
+
+        document.body.appendChild(form);
+        form.submit();
+    }
+
+    submit();
+</script>

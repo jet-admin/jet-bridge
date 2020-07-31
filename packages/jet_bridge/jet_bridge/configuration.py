@@ -34,7 +34,9 @@ class JetBridgeConfiguration(Configuration):
             'DATABASE_CONNECTIONS': settings.CONNECTIONS,
             'DATABASE_ONLY': settings.DATABASE_ONLY,
             'DATABASE_EXCEPT': settings.DATABASE_EXCEPT,
-            'DATABASE_SCHEMA': settings.DATABASE_SCHEMA
+            'DATABASE_SCHEMA': settings.DATABASE_SCHEMA,
+            'SSO_APPLICATIONS': self.clean_sso_applications(settings.SSO_APPLICATIONS),
+            'ALLOW_ORIGIN': settings.ALLOW_ORIGIN
         }
 
     def media_get_available_name(self, path):
@@ -97,3 +99,19 @@ class JetBridgeConfiguration(Configuration):
             url = request.protocol + "://" + request.host + '/media/' + path
 
         return url
+
+    def session_get(self, request, name, default=None):
+        value = request.original_handler.get_secure_cookie(name)
+        if value is None:
+            return default
+        else:
+            return value.decode()
+
+    def session_set(self, request, name, value):
+        if value is None:
+            self.session_clear(request, name)
+        else:
+            request.original_handler.set_secure_cookie(name, value)
+
+    def session_clear(self, request, name):
+        request.original_handler.clear_cookie(name)
