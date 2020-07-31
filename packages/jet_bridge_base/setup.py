@@ -18,7 +18,7 @@ def get_install_requires():
         'requests',
         'Pillow',
         'dateparser',
-        '-e git+https://github.com/f1nality/social-core.git@patch-1#egg=social-auth-core',
+        'social-core',
         'prompt_toolkit==2.0.9',
     ]
 
