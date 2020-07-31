@@ -46,6 +46,7 @@ define('database_except', default=None, type=str)
 define('database_schema', default=None, type=str)
 
 define('sso_applications', default={}, type=dict)
+define('allow_origin', default='*')
 
 required_options = [
     'address',
@@ -112,5 +113,7 @@ DATABASE_EXCEPT = options.database_except.split(',') if options.database_except 
 DATABASE_SCHEMA = options.database_schema
 
 SSO_APPLICATIONS = options.sso_applications
+
+ALLOW_ORIGIN = options.allow_origin
 
 POSSIBLE_HOST = os.environ.get('POSSIBLE_HOST')

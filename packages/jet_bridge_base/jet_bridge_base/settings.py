@@ -28,6 +28,8 @@ DATABASE_SCHEMA = None
 
 SSO_APPLICATIONS = {}
 
+ALLOW_ORIGIN = '*'
+
 def set_settings(settings):
     for key, value in settings.items():
         setattr(CURRENT_MODULE, key, value)

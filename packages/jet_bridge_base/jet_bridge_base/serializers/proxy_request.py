@@ -1,5 +1,9 @@
+import json
+import re
+
 import requests
 from jet_bridge_base import fields, settings
+from jet_bridge_base.configuration import configuration
 from jet_bridge_base.exceptions.validation_error import ValidationError
 from jet_bridge_base.responses.base import Response
 from jet_bridge_base.serializers.serializer import Serializer
@@ -18,6 +22,61 @@ class ProxyRequestSerializer(Serializer):
     secret_tokens = fields.CharField(required=False)
     context = fields.JSONField(required=False)
 
+    def resolve_secret_tokens(self, names, project, resource):
+        request = self.context.get('request')
+        instances = {}
+        unresolved = names[:]
+
+        for name in unresolved:
+            regex = re.search('sso\.(?P<sso>\w+)\.(?P<token>\w+)', name)
+
+            if not regex:
+                continue
+
+            matches = regex.groupdict()
+
+            if matches['token'] != 'access_token':
+                continue
+
+            app = configuration.clean_sso_application_name(matches['sso'])
+            config = settings.SSO_APPLICATIONS.get(app)
+
+            if not config:
+                continue
+
+            extra_data_key = '_'.join(['extra_data', app])
+
+            try:
+                extra_data_str = configuration.session_get(request, extra_data_key)
+                extra_data = json.loads(json.loads(extra_data_str))
+
+                if matches['token'] not in extra_data:
+                    continue
+
+                value = extra_data.get(matches['token'])
+
+                instances[name] = value
+            except Exception:
+                pass
+
+        unresolved = list(filter(lambda x: x not in instances.keys(), unresolved))
+
+        if len(unresolved):
+            token_prefix = 'Token '
+            authorization = request.headers.get('AUTHORIZATION', '')
+            user_token = authorization[len(token_prefix):] if authorization.startswith(token_prefix) else None
+
+            for item in get_secret_tokens(project, resource, settings.TOKEN, user_token):
+                if item['name'] not in unresolved:
+                    continue
+                instances[item['name']] = item['value']
+
+        for name in unresolved:
+            if name not in instances:
+                instances[name] = ''
+
+        return instances
+
     def validate(self, attrs):
         if 'resource' in attrs:
             if 'project' not in attrs:
@@ -27,21 +86,8 @@ class ProxyRequestSerializer(Serializer):
             if 'resource' not in attrs:
                 raise ValidationError('"resource" is required when specifying "secret_tokens"')
             names = attrs['secret_tokens'].split(',')
-            instances = {}
 
-            request = self.context.get('request')
-            token_prefix = 'Token '
-            authorization = request.headers.get('AUTHORIZATION', '')
-            user_token = authorization[len(token_prefix):] if authorization.startswith(token_prefix) else None
-
-            for item in get_secret_tokens(attrs['project'], attrs['resource'], settings.TOKEN, user_token):
-                instances[item['name']] = item['value']
-
-            for name in names:
-                if name not in instances:
-                    instances[name] = ''
-
-            attrs['secret_tokens'] = instances
+            attrs['secret_tokens'] = self.resolve_secret_tokens(names, attrs['project'], attrs['resource'])
 
         if isinstance(attrs['headers'], dict):
             attrs['headers'] = dict([[key, str(value)] for key, value in attrs['headers'].items()])

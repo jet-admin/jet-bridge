@@ -35,7 +35,8 @@ class JetBridgeConfiguration(Configuration):
             'DATABASE_ONLY': settings.DATABASE_ONLY,
             'DATABASE_EXCEPT': settings.DATABASE_EXCEPT,
             'DATABASE_SCHEMA': settings.DATABASE_SCHEMA,
-            'SSO_APPLICATIONS': settings.SSO_APPLICATIONS
+            'SSO_APPLICATIONS': self.clean_sso_applications(settings.SSO_APPLICATIONS),
+            'ALLOW_ORIGIN': settings.ALLOW_ORIGIN
         }
 
     def media_get_available_name(self, path):
