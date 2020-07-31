@@ -18,7 +18,7 @@ def get_install_requires():
         'requests',
         'Pillow',
         'dateparser',
-        'social-core',
+        'social-auth-core',
         'prompt_toolkit==2.0.9',
     ]
 
