@@ -1,4 +1,5 @@
 import json
+import time
 
 from jet_bridge_base.configuration import configuration
 from jet_bridge_base.external_auth.storage import User
@@ -15,6 +16,7 @@ def save_extra_data(backend, user, response, details, strategy, *args, **kwargs)
         'expires': extra_data.get('expires'),
         'auth_time': extra_data.get('auth_time'),
         'refresh_token': extra_data.get('refresh_token'),
+        'token_updated': int(time.time())
     }
 
     strategy.session_set(extra_data_key, json.dumps(data))
