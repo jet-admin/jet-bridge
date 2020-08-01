@@ -14,6 +14,7 @@ RUN apk add --no-cache \
     gdal-dev==3.0.3-r0 \
     geos-dev==3.8.0-r0 \
     proj-dev==6.2.1-r0
+RUN apk add  libffi-dev
 
 #RUN addgroup -S jet && adduser -S -G jet jet
 RUN pip install psycopg2==2.8.4 mysqlclient==1.4.6 pyodbc==4.0.30 GeoAlchemy2==0.6.2 Shapely==1.6.4

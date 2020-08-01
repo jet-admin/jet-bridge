@@ -1,13 +1,18 @@
 import json
 import re
+import time
 
 import requests
+from social_core.backends.base import BaseAuth
+from social_core.utils import module_member
+
 from jet_bridge_base import fields, settings
 from jet_bridge_base.configuration import configuration
 from jet_bridge_base.exceptions.validation_error import ValidationError
+from jet_bridge_base.external_auth.utils import load_strategy
 from jet_bridge_base.responses.base import Response
 from jet_bridge_base.serializers.serializer import Serializer
-from jet_bridge_base.utils.backend import get_resource_secret_tokens, get_secret_tokens
+from jet_bridge_base.utils.backend import get_secret_tokens
 
 
 class ProxyRequestSerializer(Serializer):
@@ -21,6 +26,60 @@ class ProxyRequestSerializer(Serializer):
     resource = fields.CharField(required=False)
     secret_tokens = fields.CharField(required=False)
     context = fields.JSONField(required=False)
+
+    def get_access_token(self, app, config, extra_data):
+        handler = self.context.get('handler')
+        strategy = load_strategy(handler, config)
+
+        backend_path = config.get('backend_path')
+        Backend = module_member(backend_path)
+
+        if not issubclass(Backend, BaseAuth):
+            return extra_data.get('access_token')
+
+        backend = Backend(strategy, None)
+
+        refresh_token = extra_data.get('refresh_token') or extra_data.get('access_token')
+
+        expires_on = None
+        params_expires_on = extra_data.get('expires_on')
+        params_token_updated = extra_data.get('token_updated')
+        params_expires_in = extra_data.get('expires') or extra_data.get('expires_in')
+
+        try:
+            if params_expires_on:
+                expires_on = int(params_expires_on)
+            elif params_expires_in and params_token_updated:
+                expires_on = int(params_token_updated) + int(params_expires_in)
+        except (ValueError, TypeError):
+            pass
+
+        try:
+            if refresh_token and (not expires_on or expires_on <= int(time.time())):
+                response = backend.refresh_token(token=refresh_token)
+                if not backend.EXTRA_DATA or len(backend.EXTRA_DATA) == 0:
+                    backend.GET_ALL_EXTRA_DATA = True
+                new_extra_data = backend.extra_data(user=None, uid=None, response=response, details={})
+                access_token = new_extra_data.get('access_token')
+
+                new_extra_data = {
+                    'expires_on': new_extra_data.get('expires_on'),
+                    'access_token': new_extra_data.get('access_token'),
+                    'expires': new_extra_data.get('expires'),
+                    'auth_time': new_extra_data.get('auth_time'),
+                    'refresh_token': new_extra_data.get('refresh_token'),
+                    'token_updated': int(time.time())
+                }
+
+                request = self.context.get('request')
+                extra_data_key = '_'.join(['extra_data', app])
+                configuration.session_set(request, extra_data_key, json.dumps(new_extra_data))
+
+                return access_token
+        except Exception:
+            pass
+
+        return extra_data.get('access_token')
 
     def resolve_secret_tokens(self, names, project, resource):
         request = self.context.get('request')
@@ -48,14 +107,15 @@ class ProxyRequestSerializer(Serializer):
 
             try:
                 extra_data_str = configuration.session_get(request, extra_data_key)
-                extra_data = json.loads(json.loads(extra_data_str))
+                extra_data = json.loads(extra_data_str)
 
                 if matches['token'] not in extra_data:
                     continue
 
-                value = extra_data.get(matches['token'])
-
-                instances[name] = value
+                if matches['token'] == 'access_token':
+                    instances[name] = self.get_access_token(app, config, extra_data)
+                else:
+                    instances[name] = extra_data.get(matches['token'])
             except Exception:
                 pass
 
@@ -150,6 +210,7 @@ class ProxyRequestSerializer(Serializer):
                 'Access-Control-Allow-Methods',
                 'Access-Control-Allow-Headers',
                 'Access-Control-Expose-Headers',
+                'Access-Control-Allow-Credentials',
                 'Connection',
                 'Content-Encoding',
                 'Content-Length',

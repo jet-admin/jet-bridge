@@ -12,7 +12,7 @@ class ProxyRequestView(BaseAPIView):
         return self.make_request(self.request.data, *args, **kwargs)
 
     def make_request(self, data, *args, **kwargs):
-        serializer = ProxyRequestSerializer(data=data, context={'request': self.request})
+        serializer = ProxyRequestSerializer(data=data, context={'request': self.request, 'handler': self})
         serializer.is_valid(raise_exception=True)
         result = serializer.submit()
         return result
