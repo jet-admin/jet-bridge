@@ -5,6 +5,10 @@ from jet_bridge_base.utils.common import get_random_string
 
 from jet_bridge import settings, VERSION
 
+from six.moves.http_cookies import Morsel
+
+Morsel._reserved[str('samesite')] = str('SameSite')
+
 
 class JetBridgeConfiguration(Configuration):
 
@@ -111,7 +115,7 @@ class JetBridgeConfiguration(Configuration):
         if value is None:
             self.session_clear(request, name)
         else:
-            request.original_handler.set_secure_cookie(name, value)
+            request.original_handler.set_secure_cookie(name, value, samesite='None', secure=True)
 
     def session_clear(self, request, name):
         request.original_handler.clear_cookie(name)
