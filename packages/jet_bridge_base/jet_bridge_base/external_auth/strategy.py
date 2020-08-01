@@ -1,5 +1,3 @@
-import json
-
 from social_core.utils import build_absolute_uri
 from social_core.strategy import BaseStrategy
 
@@ -51,11 +49,11 @@ class JetBridgeStrategy(BaseStrategy):
     def session_get(self, name, default=None):
         value = configuration.session_get(self.request, name, default)
         if value:
-            return json.loads(value)
+            return value
         return default
 
     def session_set(self, name, value):
-        configuration.session_set(self.request, name, json.dumps(value))
+        configuration.session_set(self.request, name, value)
 
     def session_pop(self, name):
         value = self.session_get(name)

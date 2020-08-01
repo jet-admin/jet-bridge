@@ -107,7 +107,7 @@ class ProxyRequestSerializer(Serializer):
 
             try:
                 extra_data_str = configuration.session_get(request, extra_data_key)
-                extra_data = json.loads(json.loads(extra_data_str))
+                extra_data = json.loads(extra_data_str)
 
                 if matches['token'] not in extra_data:
                     continue
