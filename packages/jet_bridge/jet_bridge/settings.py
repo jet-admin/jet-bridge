@@ -115,7 +115,8 @@ DATABASE_SCHEMA = options.database_schema
 
 try:
     SSO_APPLICATIONS = json.loads(options.sso_applications)
-except:
+except Exception as e:
+    logger.error('SSO_APPLICATIONS parsing failed', exc_info=e)
     SSO_APPLICATIONS = {}
 
 ALLOW_ORIGIN = options.allow_origin
