@@ -1,6 +1,7 @@
 from social_core.utils import build_absolute_uri
 from social_core.strategy import BaseStrategy
 
+from jet_bridge_base import settings
 from jet_bridge_base.configuration import configuration
 from jet_bridge_base.responses.redirect import RedirectResponse
 from jet_bridge_base.utils.common import merge_two_dicts
@@ -64,7 +65,12 @@ class JetBridgeStrategy(BaseStrategy):
         pass
 
     def build_absolute_uri(self, path=None):
+        if settings.BASE_URL is None:
+            base_url = '{0}://{1}'.format(self.request.protocol, self.request.host)
+        else:
+            base_url = settings.BASE_URL
+
         return build_absolute_uri(
-            '{0}://{1}'.format(self.request.protocol, self.request.host),
+            base_url,
             path
         )

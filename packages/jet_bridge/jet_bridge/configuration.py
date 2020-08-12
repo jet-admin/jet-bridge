@@ -28,6 +28,7 @@ class JetBridgeConfiguration(Configuration):
             'PROJECT': settings.PROJECT,
             'TOKEN': settings.TOKEN,
             'CORS_HEADERS': settings.CORS_HEADERS,
+            'BASE_URL': settings.BASE_URL,
             'DATABASE_ENGINE': settings.DATABASE_ENGINE,
             'DATABASE_HOST': settings.DATABASE_HOST,
             'DATABASE_PORT': settings.DATABASE_PORT,

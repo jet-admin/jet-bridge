@@ -27,6 +27,7 @@ define('auto_open_register', default=True, help='open token register automatical
 define('project', help='project', type=str)
 define('token', help='token', type=str)
 define('cors_headers', default=True, help='add CORS headers', type=bool)
+define('base_url', help='base URL', type=str)
 
 define('web_base_url', default='https://app.jetadmin.io', help='Jet Admin frontend application base URL')
 define('api_base_url', default='https://api.jetadmin.io/api', help='Jet Admin API base URL')
@@ -94,6 +95,7 @@ USE_DEFAULT_CONFIG = options.use_default_config.lower().split(',')
 PROJECT = options.project
 TOKEN = options.token
 CORS_HEADERS = options.cors_headers
+BASE_URL = options.base_url
 
 WEB_BASE_URL = options.web_base_url
 API_BASE_URL = options.api_base_url
