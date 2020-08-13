@@ -34,6 +34,9 @@ class ModelDescriptionView(APIView):
                 params['related_model'] = {
                     'model': foreign_key.column.table.name
                 }
+                table_primary_key = foreign_key.column.table.primary_key.columns.keys()[0]
+                if foreign_key.column.name != table_primary_key:
+                    params['custom_primary_key'] = foreign_key.column.name
 
             result = {
                 'name': column.name,
