@@ -59,6 +59,8 @@ class ModelSerializer(Serializer):
 
                 if column.primary_key and column.autoincrement:
                     kwargs['read_only'] = True
+                if column.autoincrement or column.default or column.server_default or column.nullable:
+                    kwargs['required'] = False
 
                 field = date_type(**kwargs)
                 field.field_name = field_name
