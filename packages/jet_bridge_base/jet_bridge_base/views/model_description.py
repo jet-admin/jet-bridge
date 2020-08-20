@@ -38,11 +38,14 @@ class ModelDescriptionView(APIView):
                 if foreign_key.column.name != table_primary_key:
                     params['custom_primary_key'] = foreign_key.column.name
 
+            optional = column.autoincrement or column.default or column.server_default or column.nullable
+
             result = {
                 'name': column.name,
                 'db_column': column.name,
                 'field': data_type,
                 'filterable': True,
+                'required': not optional,
                 'null': column.nullable,
                 'editable': column.name not in non_editable,
                 'params': params
