@@ -14,12 +14,33 @@ class BasePermission(object):
 
 
 class HasProjectPermissions(BasePermission):
-    token_prefix = 'Token '
-    project_token_prefix = 'ProjectToken '
+    user_token_prefix = 'Token'
+    project_token_prefix = 'ProjectToken'
+
+    def parse_token(self, value):
+        try:
+            type, data = value.split(' ', 2)
+            items = data.split(';')
+
+            if len(items) == 0:
+                return
+
+            try:
+                params = dict(map(lambda x: x.split('=', 2), items[1:]))
+            except ValueError:
+                params = {}
+
+            return {
+                'type': type,
+                'value': items[0],
+                'params': params
+            }
+        except ValueError:
+            pass
 
     def has_permission(self, view):
         # return True
-        token = view.request.headers.get('AUTHORIZATION')
+        token = self.parse_token(view.request.headers.get('AUTHORIZATION'))
         permission = view.required_project_permission() if hasattr(view, 'required_project_permission') else None
 
         if not token:
@@ -40,19 +61,15 @@ class HasProjectPermissions(BasePermission):
         else:
             project_token = settings.TOKEN
 
-        if token[:len(self.token_prefix)] == self.token_prefix:
-            token = token[len(self.token_prefix):]
-
-            result = project_auth(token, project_token, permission)
+        if token['type'] == self.user_token_prefix:
+            result = project_auth(token['value'], project_token, permission, token['params'])
 
             # if result.get('warning'):
             #     view.headers['X-Application-Warning'] = result['warning']
 
             return result['result']
-        elif token[:len(self.project_token_prefix)] == self.project_token_prefix:
-            token = token[len(self.project_token_prefix):]
-
-            result = project_auth(token, project_token, permission)
+        elif token['type'] == self.project_token_prefix:
+            result = project_auth(token['value'], project_token, permission, token['params'])
 
             # if result.get('warning'):
             #     view.headers['X-Application-Warning'] = result['warning']

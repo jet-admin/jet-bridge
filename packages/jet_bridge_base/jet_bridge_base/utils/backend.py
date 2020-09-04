@@ -29,7 +29,7 @@ def is_token_activated(project_token):
     return bool(result.get('activated'))
 
 
-def project_auth(token, project_token, permission=None):
+def project_auth(token, project_token, permission=None, params=None):
     if not project_token:
         return {
             'result': False
@@ -46,6 +46,10 @@ def project_auth(token, project_token, permission=None):
 
     if permission:
         data.update(permission)
+
+    if params:
+        if 'project_child' in params:
+            data['project_child'] = params['project_child']
 
     r = requests.request('POST', url, data=data, headers=headers)
     success = 200 <= r.status_code < 300
