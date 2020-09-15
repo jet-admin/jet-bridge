@@ -35,7 +35,7 @@ class HasProjectPermissions(BasePermission):
                 'value': items[0],
                 'params': params
             }
-        except ValueError:
+        except (ValueError, AttributeError):
             pass
 
     def has_permission(self, view):

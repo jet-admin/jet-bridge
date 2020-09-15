@@ -32,6 +32,10 @@ class ModelGroupFilter(CharFilter):
         else:
             x_func = x_column
 
-        qs = qs.session.query(x_func.label('group'), y_func.label('y_func')).group_by('group').order_by('group').all()
+        whereclause = qs.whereclause
+        qs = qs.session.query(x_func.label('group'), y_func.label('y_func'))
 
-        return qs
+        if whereclause is not None:
+            qs = qs.filter(whereclause)
+
+        return qs.group_by('group').order_by('group').all()
