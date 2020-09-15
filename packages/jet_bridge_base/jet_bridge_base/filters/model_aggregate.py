@@ -25,6 +25,10 @@ class ModelAggregateFilter(CharFilter):
         else:
             return qs.filter(sql.false())
 
-        qs = qs.session.query(y_func).one()
+        whereclause = qs.whereclause
+        qs = qs.session.query(y_func)
 
-        return qs
+        if whereclause is not None:
+            qs = qs.filter(whereclause)
+
+        return qs.one()
