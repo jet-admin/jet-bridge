@@ -31,4 +31,4 @@ class ModelAggregateFilter(CharFilter):
         if whereclause is not None:
             qs = qs.filter(whereclause)
 
-        return qs.one()
+        return qs

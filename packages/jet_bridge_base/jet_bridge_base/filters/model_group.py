@@ -38,4 +38,4 @@ class ModelGroupFilter(CharFilter):
         if whereclause is not None:
             qs = qs.filter(whereclause)
 
-        return qs.group_by('group').order_by('group').all()
+        return qs.group_by('group').order_by('group')

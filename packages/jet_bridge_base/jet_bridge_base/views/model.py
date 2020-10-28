@@ -1,4 +1,5 @@
 from sqlalchemy import inspect
+from tornado import gen
 
 from jet_bridge_base.db import get_mapped_base
 from jet_bridge_base.exceptions.not_found import NotFound
@@ -12,6 +13,7 @@ from jet_bridge_base.serializers.model import get_model_serializer
 from jet_bridge_base.serializers.model_group import ModelGroupSerializer
 from jet_bridge_base.serializers.reorder import get_reorder_serializer
 from jet_bridge_base.serializers.reset_order import get_reset_order_serializer
+from jet_bridge_base.utils.async import as_future
 from jet_bridge_base.utils.queryset import apply_default_ordering
 from jet_bridge_base.utils.siblings import get_model_siblings
 from jet_bridge_base.views.mixins.model import ModelAPIViewMixin
@@ -81,6 +83,7 @@ class ModelViewSet(ModelAPIViewMixin):
         return queryset
 
     @action(methods=['get'], detail=False)
+    @gen.coroutine
     def aggregate(self, *args, **kwargs):
         queryset = self.filter_queryset(self.get_queryset())
 
@@ -94,10 +97,10 @@ class ModelViewSet(ModelAPIViewMixin):
 
         filter_instance = ModelAggregateFilter()
         filter_instance.model = self.model
-        queryset = filter_instance.filter(queryset, {
+        queryset = yield as_future(filter_instance.filter(queryset, {
             'y_func': y_func,
             'y_column': y_column
-        })
+        }).one)
 
         result = y_serializer.to_representation(queryset[0])  # TODO: Refactor serializer
 
@@ -106,6 +109,7 @@ class ModelViewSet(ModelAPIViewMixin):
         })
 
     @action(methods=['get'], detail=False)
+    @gen.coroutine
     def group(self, *args, **kwargs):
         queryset = self.filter_queryset(self.get_queryset())
 
@@ -124,12 +128,12 @@ class ModelViewSet(ModelAPIViewMixin):
 
         filter_instance = ModelGroupFilter()
         filter_instance.model = self.model
-        queryset = filter_instance.filter(queryset, {
+        queryset = yield as_future(filter_instance.filter(queryset, {
             'x_column': x_column,
             'x_lookup': x_lookup_name,
             'y_func': y_func,
             'y_column': y_column
-        })
+        }).all)
         serializer = ModelGroupSerializer(
             instance=queryset,
             many=True,
