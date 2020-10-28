@@ -33,9 +33,7 @@ class PageNumberPagination(Pagination):
         self.page_size = page_size
         self.handler = handler
 
-        queryset = queryset.offset((page_number - 1) * page_size).limit(page_size)
-
-        return list(queryset)
+        return queryset.offset((page_number - 1) * page_size).limit(page_size)
 
     def get_pages_count(self):
         return int(math.ceil(self.count / self.page_size))

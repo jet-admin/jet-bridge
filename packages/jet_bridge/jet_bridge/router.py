@@ -1,3 +1,7 @@
+import tornado
+from tornado import gen
+from tornado.concurrent import Future
+
 
 class Router(object):
     routes = [
@@ -28,10 +32,12 @@ class Router(object):
 
         for method, method_action in actions.items():
             def create_action_method(action):
+                @gen.coroutine
                 def action_method(inner_self, *args, **kwargs):
                     inner_self.view.action = action
                     inner_self.before_dispatch()
                     response = inner_self.view.dispatch(action, *args, **kwargs)
+                    response = (yield response) if isinstance(response, Future) else response
                     inner_self.write_response(response)
 
                 return action_method
