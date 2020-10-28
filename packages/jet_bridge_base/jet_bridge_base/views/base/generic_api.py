@@ -1,4 +1,7 @@
+from tornado import gen
+
 from jet_bridge_base.paginators.page_number import PageNumberPagination
+from jet_bridge_base.utils.async import as_future
 from jet_bridge_base.views.base.api import APIView
 
 
@@ -17,6 +20,7 @@ class GenericAPIView(APIView):
     def get_queryset(self):
         raise NotImplementedError
 
+    @gen.coroutine
     def get_object(self):
         queryset = self.filter_queryset(self.get_queryset())
         lookup_url_kwarg = self.lookup_url_kwarg or 'pk'
@@ -25,7 +29,7 @@ class GenericAPIView(APIView):
             raise AssertionError()
 
         model_field = getattr(self.get_model(), self.lookup_field)
-        obj = queryset.filter(getattr(model_field, '__eq__')(self.request.path_kwargs[lookup_url_kwarg])).first()
+        obj = yield as_future(queryset.filter(getattr(model_field, '__eq__')(self.request.path_kwargs[lookup_url_kwarg])).first)
 
         self.check_object_permissions(obj)
 
