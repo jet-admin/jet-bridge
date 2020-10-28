@@ -1,8 +1,10 @@
 import six
 from sqlalchemy import inspect
+from tornado import gen
 
 from jet_bridge_base import fields
 from jet_bridge_base.serializers.serializer import Serializer
+from jet_bridge_base.utils.async import as_future
 from jet_bridge_base.utils.exceptions import validation_error_from_database_error
 
 data_types = [
@@ -72,23 +74,25 @@ class ModelSerializer(Serializer):
         ModelClass = self.meta.model
         return ModelClass(**validated_data)
 
+    @gen.coroutine
     def create(self, validated_data):
         instance = self.create_instance(validated_data)
         self.session.add(instance)
 
         try:
-            self.session.commit()
+            yield as_future(self.session.commit)
         except Exception as e:
             raise validation_error_from_database_error(e, self.model)
 
         return instance
 
+    @gen.coroutine
     def update(self, instance, validated_data):
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
 
         try:
-            self.session.commit()
+            yield as_future(self.session.commit)
         except Exception as e:
             raise validation_error_from_database_error(e, self.model)
 

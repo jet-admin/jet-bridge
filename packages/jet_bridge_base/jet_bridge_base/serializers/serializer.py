@@ -1,5 +1,7 @@
 from collections import OrderedDict, Mapping, Iterable
 import six
+from tornado import gen
+from tornado.concurrent import Future
 
 from jet_bridge_base.exceptions.validation_error import ValidationError
 from jet_bridge_base.fields.field import Field, empty
@@ -153,6 +155,7 @@ class Serializer(Field):
     def create(self, validated_data):
         raise NotImplementedError('`create()` must be implemented.')
 
+    @gen.coroutine
     def save(self, **kwargs):
         if self.errors:
             raise AssertionError('You cannot call `.save()` on a serializer with invalid data.')
@@ -163,13 +166,16 @@ class Serializer(Field):
         )
 
         if self.instance is not None:
-            self.instance = self.update(self.instance, validated_data)
+            result = yield self.update(self.instance, validated_data)
+            self.instance = (yield result) if isinstance(result, Future) else result
 
             if self.instance is None:
                 raise AssertionError('`update()` did not return an object instance.')
 
         else:
-            self.instance = self.create(validated_data)
+            result = yield self.create(validated_data)
+            self.instance = (yield result) if isinstance(result, Future) else result
+
             if self.instance is None:
                 raise AssertionError('`create()` did not return an object instance.')
 
