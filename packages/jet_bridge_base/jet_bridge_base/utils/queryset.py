@@ -1,9 +1,11 @@
 from sqlalchemy import inspect, desc
 from sqlalchemy.sql import operators, text
 from sqlalchemy.sql.elements import AnnotatedColumnElement, UnaryExpression
+from tornado import gen
 
 from jet_bridge_base import settings
 from jet_bridge_base.db import get_engine
+from jet_bridge_base.utils.async import as_future
 
 
 def get_queryset_model(queryset):
@@ -46,6 +48,7 @@ def queryset_count_optimized_for_mysql(request, db_table):
         return int(row[8])
 
 
+@gen.coroutine
 def queryset_count_optimized(request, queryset):
     result = None
 
@@ -62,4 +65,4 @@ def queryset_count_optimized(request, queryset):
     if result is not None and result >= 10000:
         return result
 
-    return queryset.count()
+    return (yield as_future(queryset.count))

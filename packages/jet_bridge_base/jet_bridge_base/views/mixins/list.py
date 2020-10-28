@@ -11,7 +11,7 @@ class ListAPIViewMixin(object):
         queryset = self.filter_queryset(self.get_queryset())
 
         paginate = not self.request.get_argument('_no_pagination', False)
-        page = self.paginate_queryset(queryset) if paginate else None
+        page = (yield self.paginate_queryset(queryset)) if paginate else None
         if page is not None:
             page = yield as_future(page.all)
             serializer = self.get_serializer(instance=page, many=True)
