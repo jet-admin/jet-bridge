@@ -128,9 +128,6 @@ class BaseAPIView(object):
 
 
 class APIView(BaseAPIView):
-    request = None
-    session = None
-    permission_classes = []
 
     def before_dispatch(self):
         super(APIView, self).before_dispatch()
