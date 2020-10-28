@@ -145,24 +145,26 @@ class ModelViewSet(ModelAPIViewMixin):
         return JSONResponse(serializer.representation_data)
 
     @action(methods=['post'], detail=False)
+    @gen.coroutine
     def reorder(self, *args, **kwargs):
         queryset = self.filter_queryset(self.get_queryset())
         ReorderSerializer = get_reorder_serializer(self.get_model(), queryset, self.session)
 
         serializer = ReorderSerializer(data=self.request.data)
         serializer.is_valid(raise_exception=True)
-        serializer.save()
+        yield serializer.save()
 
         return JSONResponse(serializer.representation_data)
 
     @action(methods=['post'], detail=False)
+    @gen.coroutine
     def reset_order(self, *args, **kwargs):
         queryset = self.filter_queryset(self.get_queryset())
         ResetOrderSerializer = get_reset_order_serializer(self.get_model(), queryset, self.session)
 
         serializer = ResetOrderSerializer(data=self.request.data)
         serializer.is_valid(raise_exception=True)
-        serializer.save()
+        yield serializer.save()
 
         return JSONResponse(serializer.representation_data)
 
