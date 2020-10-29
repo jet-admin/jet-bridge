@@ -5,7 +5,6 @@ from jet_bridge_base.request import Request
 from jet_bridge_base.responses.redirect import RedirectResponse
 from jet_bridge_base.responses.template import TemplateResponse
 from jet_bridge_base.status import HTTP_204_NO_CONTENT
-from jet_bridge_base.utils.async import as_future
 
 
 class BaseViewHandler(tornado.web.RequestHandler):
