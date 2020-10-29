@@ -1,4 +1,5 @@
 import tornado.web
+from tornado import gen
 
 from jet_bridge_base.request import Request
 from jet_bridge_base.responses.redirect import RedirectResponse
@@ -78,29 +79,34 @@ class BaseViewHandler(tornado.web.RequestHandler):
         self.set_status(HTTP_204_NO_CONTENT)
         self.finish()
 
+    @gen.coroutine
     def get(self, *args, **kwargs):
         self.before_dispatch()
-        response = self.view.dispatch('get', *args, **kwargs)
+        response = yield self.view.dispatch('get', *args, **kwargs)
         self.write_response(response)
 
+    @gen.coroutine
     def post(self, *args, **kwargs):
         self.before_dispatch()
-        response = self.view.dispatch('post', *args, **kwargs)
+        response = yield self.view.dispatch('post', *args, **kwargs)
         self.write_response(response)
 
+    @gen.coroutine
     def put(self, *args, **kwargs):
         self.before_dispatch()
-        response = self.view.dispatch('put', *args, **kwargs)
+        response = yield self.view.dispatch('put', *args, **kwargs)
         self.write_response(response)
 
+    @gen.coroutine
     def patch(self, *args, **kwargs):
         self.before_dispatch()
-        response = self.view.dispatch('patch', *args, **kwargs)
+        response = yield self.view.dispatch('patch', *args, **kwargs)
         self.write_response(response)
 
+    @gen.coroutine
     def delete(self, *args, **kwargs):
         self.before_dispatch()
-        response = self.view.dispatch('delete', *args, **kwargs)
+        response = yield self.view.dispatch('delete', *args, **kwargs)
         self.write_response(response)
 
 

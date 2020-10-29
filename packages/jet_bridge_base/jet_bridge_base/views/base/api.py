@@ -3,6 +3,8 @@ from datetime import datetime
 import sys
 
 import six
+from tornado import gen
+from tornado.concurrent import Future
 
 from jet_bridge_base import settings
 from jet_bridge_base.configuration import configuration
@@ -118,10 +120,13 @@ class BaseAPIView(object):
             else:
                 return TemplateResponse('500.html', status=500)
 
+    @gen.coroutine
     def dispatch(self, action, *args, **kwargs):
         if not hasattr(self, action):
             raise NotFound()
-        return getattr(self, action)(*args, **kwargs)
+        response = getattr(self, action)(*args, **kwargs)
+        response = (yield response) if isinstance(response, Future) else response
+        return response
 
     def build_absolute_uri(self, url):
         return self.request.protocol + "://" + self.request.host + url
