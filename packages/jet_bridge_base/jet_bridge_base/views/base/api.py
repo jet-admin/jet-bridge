@@ -4,7 +4,6 @@ import sys
 
 import six
 from tornado import gen
-from tornado.concurrent import Future
 
 from jet_bridge_base import settings
 from jet_bridge_base.configuration import configuration
