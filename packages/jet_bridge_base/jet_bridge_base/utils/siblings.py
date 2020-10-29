@@ -1,12 +1,9 @@
 from sqlalchemy import inspect, func
 from sqlalchemy.orm import load_only
-from tornado import gen
 
-from jet_bridge_base.utils.async import as_future
 from jet_bridge_base.utils.queryset import apply_default_ordering, queryset_count_optimized
 
 
-@gen.coroutine
 def get_row_number(Model, queryset, instance):
     mapper = inspect(Model)
     pk = mapper.primary_key[0].name
@@ -17,10 +14,9 @@ def get_row_number(Model, queryset, instance):
     ).subquery()
 
     rest = queryset.session.query(subqquery.c.__inner__row).filter(subqquery.c.__inner__pk == getattr(instance, pk))
-    return (yield as_future(rest.scalar))
+    return rest.scalar()
 
 
-@gen.coroutine
 def get_row_siblings(Model, queryset, row_number):
     mapper = inspect(Model)
     pk = mapper.primary_key[0].name
@@ -29,7 +25,7 @@ def get_row_siblings(Model, queryset, row_number):
     offset = row_number - 2 if has_prev else row_number - 1
     limit = 3 if has_prev else 2
 
-    rows = yield as_future(queryset.options(load_only(pk)).limit(limit).offset(offset).all)
+    rows = queryset.options(load_only(pk)).limit(limit).offset(offset).all()
 
     if has_prev:
         next_index = 2
@@ -53,17 +49,16 @@ def get_row_siblings(Model, queryset, row_number):
     }
 
 
-@gen.coroutine
 def get_model_siblings(request, Model, instance, queryset):
-    count = yield queryset_count_optimized(request, queryset)
+    count = queryset_count_optimized(request, queryset)
 
     if count > 10000:
         return {}
 
     queryset = apply_default_ordering(queryset)
-    row_number = yield get_row_number(Model, queryset, instance)
+    row_number = get_row_number(Model, queryset, instance)
 
     if not row_number:
         return {}
 
-    return (yield get_row_siblings(Model, queryset, row_number))
+    return get_row_siblings(Model, queryset, row_number)

@@ -167,10 +167,9 @@ class ModelViewSet(ModelAPIViewMixin):
         return JSONResponse(serializer.representation_data)
 
     @action(methods=['get'], detail=True)
-    @gen.coroutine
     def get_siblings(self, *args, **kwargs):
         queryset = self.filter_queryset(self.get_queryset())
-        obj = yield self.get_object()
-        result = yield get_model_siblings(self.request, self.model, obj, queryset)
+        obj = self.get_object()
+        result = get_model_siblings(self.request, self.model, obj, queryset)
 
         return JSONResponse(result)
