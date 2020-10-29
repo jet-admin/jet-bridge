@@ -125,7 +125,7 @@ class BaseAPIView(object):
         if not hasattr(self, action):
             raise NotFound()
         response = yield as_future(lambda: getattr(self, action)(*args, **kwargs))
-        return response
+        raise gen.Return(response)
 
     def build_absolute_uri(self, url):
         return self.request.protocol + "://" + self.request.host + url
