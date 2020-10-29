@@ -15,7 +15,7 @@ def get_install_requires():
     install_requires = [
         'tornado==5.1.1',
         'six',
-        'jet-bridge-base==0.8.9',
+        'jet-bridge-base==0.9.0',
     ]
 
     return install_requires
