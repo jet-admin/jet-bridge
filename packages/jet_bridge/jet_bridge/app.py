@@ -4,6 +4,7 @@ import tornado.ioloop
 import tornado.web
 
 from jet_bridge.handlers.temporary_redirect import TemporaryRedirectHandler
+from jet_bridge_base.utils.async import set_max_workers
 from jet_bridge_base import settings as base_settings
 from jet_bridge_base.views.api import ApiView
 from jet_bridge_base.views.external_auth.complete import ExternalAuthCompleteView
@@ -49,6 +50,9 @@ def make_app():
 
     if settings.MEDIA_STORAGE == media.MEDIA_STORAGE_FILE:
         urls.append((r'/media/(.*)', tornado.web.StaticFileHandler, {'path': settings.MEDIA_ROOT}))
+
+    if settings.THREADS is not None:
+        set_max_workers(settings.THREADS)
 
     return tornado.web.Application(
         handlers=urls,
