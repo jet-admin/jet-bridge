@@ -16,6 +16,7 @@ from jet_bridge_base.exceptions.validation_error import ValidationError
 from jet_bridge_base.responses.json import JSONResponse
 from jet_bridge_base.responses.template import TemplateResponse
 from jet_bridge_base.logger import logger
+from jet_bridge_base.utils.async import as_future
 from jet_bridge_base.utils.exceptions import serialize_validation_error
 
 
@@ -124,8 +125,7 @@ class BaseAPIView(object):
     def dispatch(self, action, *args, **kwargs):
         if not hasattr(self, action):
             raise NotFound()
-        response = getattr(self, action)(*args, **kwargs)
-        response = (yield response) if isinstance(response, Future) else response
+        response = yield as_future(lambda: getattr(self, action)(*args, **kwargs))
         return response
 
     def build_absolute_uri(self, url):

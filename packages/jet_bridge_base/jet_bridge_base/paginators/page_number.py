@@ -1,8 +1,6 @@
 from collections import OrderedDict
 import math
 
-from tornado import gen
-
 from jet_bridge_base.exceptions.missing_argument_error import MissingArgumentError
 from jet_bridge_base.paginators.pagination import Pagination
 from jet_bridge_base.responses.json import JSONResponse
@@ -21,7 +19,6 @@ class PageNumberPagination(Pagination):
     page_size = None
     handler = None
 
-    @gen.coroutine
     def paginate_queryset(self, queryset, handler):
         page_number = self.get_page_number(handler)
         if not page_number:
@@ -31,7 +28,7 @@ class PageNumberPagination(Pagination):
         if not page_size:
             return None
 
-        self.count = yield queryset_count_optimized(handler.request, queryset)
+        self.count = queryset_count_optimized(handler.request, queryset)
         self.page_number = page_number
         self.page_size = page_size
         self.handler = handler
