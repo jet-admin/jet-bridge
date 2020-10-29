@@ -97,7 +97,7 @@ class ModelViewSet(ModelAPIViewMixin):
         queryset = filter_instance.filter(queryset, {
             'y_func': y_func,
             'y_column': y_column
-        })
+        }).one()
 
         result = y_serializer.to_representation(queryset[0])  # TODO: Refactor serializer
 
@@ -166,5 +166,6 @@ class ModelViewSet(ModelAPIViewMixin):
     def get_siblings(self, *args, **kwargs):
         queryset = self.filter_queryset(self.get_queryset())
         obj = self.get_object()
+        result = get_model_siblings(self.request, self.model, obj, queryset)
 
-        return JSONResponse(get_model_siblings(self.request, self.model, obj, queryset))
+        return JSONResponse(result)

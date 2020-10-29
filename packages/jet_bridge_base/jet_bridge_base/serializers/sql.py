@@ -47,14 +47,14 @@ class SqlSerializer(Serializer):
                 params
             )
 
-            rows = list(map(lambda x: x.itervalues(), result))
+            rows = list(map(lambda x: list(x.itervalues()), result))
 
             def map_column(x):
                 if x == '?column?':
                     return
                 return x
 
-            return {'data': rows, 'columns': map(map_column, result.keys())}
+            return {'data': rows, 'columns': list(map(map_column, result.keys()))}
         except (SQLAlchemyError, TypeError) as e:
             raise SqlError(e)
         finally:
@@ -73,4 +73,4 @@ class SqlsSerializer(Serializer):
             except SqlError as e:
                 return {'error': str(e.detail)}
 
-        return map(map_query, data['queries'])
+        return list(map(map_query, data['queries']))

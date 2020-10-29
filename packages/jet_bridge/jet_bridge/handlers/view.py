@@ -1,4 +1,5 @@
 import tornado.web
+from tornado import gen
 
 from jet_bridge_base.request import Request
 from jet_bridge_base.responses.redirect import RedirectResponse
@@ -46,6 +47,7 @@ class BaseViewHandler(tornado.web.RequestHandler):
         for name, value in self.view.default_headers().items():
             self.set_header(name, value)
 
+    @gen.coroutine
     def write_response(self, response):
         if isinstance(response, RedirectResponse):
             self.redirect(response.url, status=response.status)
@@ -58,11 +60,12 @@ class BaseViewHandler(tornado.web.RequestHandler):
             self.set_status(response.status)
 
         if isinstance(response, TemplateResponse):
-            self.render(response.template, **(response.data or {}))
+            yield self.render(response.template, **(response.data or {}))
             return
 
-        self.finish(response.render())
+        yield self.finish(response.render())
 
+    @gen.coroutine
     def write_error(self, status_code, **kwargs):
         exc_type = exc = traceback = None
 
@@ -72,36 +75,41 @@ class BaseViewHandler(tornado.web.RequestHandler):
             exc = Exception()
 
         response = self.view.error_response(exc_type, exc, traceback)
-        self.write_response(response)
+        yield self.write_response(response)
 
     def options(self, *args, **kwargs):
         self.set_status(HTTP_204_NO_CONTENT)
         self.finish()
 
+    @gen.coroutine
     def get(self, *args, **kwargs):
         self.before_dispatch()
-        response = self.view.dispatch('get', *args, **kwargs)
-        self.write_response(response)
+        response = yield self.view.dispatch('get', *args, **kwargs)
+        yield self.write_response(response)
 
+    @gen.coroutine
     def post(self, *args, **kwargs):
         self.before_dispatch()
-        response = self.view.dispatch('post', *args, **kwargs)
-        self.write_response(response)
+        response = yield self.view.dispatch('post', *args, **kwargs)
+        yield self.write_response(response)
 
+    @gen.coroutine
     def put(self, *args, **kwargs):
         self.before_dispatch()
-        response = self.view.dispatch('put', *args, **kwargs)
-        self.write_response(response)
+        response = yield self.view.dispatch('put', *args, **kwargs)
+        yield self.write_response(response)
 
+    @gen.coroutine
     def patch(self, *args, **kwargs):
         self.before_dispatch()
-        response = self.view.dispatch('patch', *args, **kwargs)
-        self.write_response(response)
+        response = yield self.view.dispatch('patch', *args, **kwargs)
+        yield self.write_response(response)
 
+    @gen.coroutine
     def delete(self, *args, **kwargs):
         self.before_dispatch()
-        response = self.view.dispatch('delete', *args, **kwargs)
-        self.write_response(response)
+        response = yield self.view.dispatch('delete', *args, **kwargs)
+        yield self.write_response(response)
 
 
 def view_handler(cls):

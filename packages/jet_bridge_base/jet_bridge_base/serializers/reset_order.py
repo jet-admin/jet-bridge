@@ -44,8 +44,9 @@ def get_reset_order_serializer(Model, queryset, session):
                 qs = qs.order_by(*order_by)
 
             i = 1
+            items = qs.options(load_only(ordering_field)).all()
 
-            for instance in qs.options(load_only(ordering_field)):
+            for instance in items:
                 setattr(instance, ordering_field, i)
                 i += 1
 

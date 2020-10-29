@@ -1,3 +1,4 @@
+from jet_bridge_base.exceptions.not_found import NotFound
 from jet_bridge_base.paginators.page_number import PageNumberPagination
 from jet_bridge_base.views.base.api import APIView
 
@@ -26,6 +27,9 @@ class GenericAPIView(APIView):
 
         model_field = getattr(self.get_model(), self.lookup_field)
         obj = queryset.filter(getattr(model_field, '__eq__')(self.request.path_kwargs[lookup_url_kwarg])).first()
+
+        if obj is None:
+            raise NotFound
 
         self.check_object_permissions(obj)
 

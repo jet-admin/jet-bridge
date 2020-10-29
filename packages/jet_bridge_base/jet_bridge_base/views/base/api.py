@@ -3,6 +3,7 @@ from datetime import datetime
 import sys
 
 import six
+from tornado import gen
 
 from jet_bridge_base import settings
 from jet_bridge_base.configuration import configuration
@@ -14,6 +15,7 @@ from jet_bridge_base.exceptions.validation_error import ValidationError
 from jet_bridge_base.responses.json import JSONResponse
 from jet_bridge_base.responses.template import TemplateResponse
 from jet_bridge_base.logger import logger
+from jet_bridge_base.utils.async import as_future
 from jet_bridge_base.utils.exceptions import serialize_validation_error
 
 
@@ -118,19 +120,18 @@ class BaseAPIView(object):
             else:
                 return TemplateResponse('500.html', status=500)
 
+    @gen.coroutine
     def dispatch(self, action, *args, **kwargs):
         if not hasattr(self, action):
             raise NotFound()
-        return getattr(self, action)(*args, **kwargs)
+        response = yield as_future(lambda: getattr(self, action)(*args, **kwargs))
+        return response
 
     def build_absolute_uri(self, url):
         return self.request.protocol + "://" + self.request.host + url
 
 
 class APIView(BaseAPIView):
-    request = None
-    session = None
-    permission_classes = []
 
     def before_dispatch(self):
         super(APIView, self).before_dispatch()

@@ -170,6 +170,7 @@ class Serializer(Field):
 
         else:
             self.instance = self.create(validated_data)
+
             if self.instance is None:
                 raise AssertionError('`create()` did not return an object instance.')
 
