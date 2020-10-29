@@ -39,6 +39,7 @@ class Router(object):
                     response = inner_self.view.dispatch(action, *args, **kwargs)
                     response = (yield response) if isinstance(response, Future) else response
                     yield inner_self.write_response(response)
+                    raise gen.Return()
 
                 return action_method
 

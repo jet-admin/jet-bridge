@@ -1,14 +1,14 @@
 FROM python:3.7.6-alpine3.11
 
 RUN apk add --no-cache \
-    mariadb-dev==10.4.12-r0 \
+    mariadb-dev==10.4.15-r0 \
     jpeg-dev==8-r6 \
     zlib-dev==1.2.11-r3 \
-    gcc==9.2.0-r3 \
-    g++==9.2.0-r3 \
-    musl-dev==1.1.24-r1 \
-    postgresql-dev==12.2-r0 \
-    postgresql-libs==12.2-r0 \
+    gcc==9.3.0-r0 \
+    g++==9.3.0-r0 \
+    musl-dev==1.1.24-r2 \
+    postgresql-dev==12.4-r0 \
+    postgresql-libs==12.4-r0 \
     unixodbc-dev==2.3.7-r2 \
     freetds-dev==1.1.20-r0 \
     gdal-dev==3.0.3-r0 \

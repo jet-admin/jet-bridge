@@ -1,6 +1,5 @@
 import multiprocessing
 from concurrent.futures import Executor, ThreadPoolExecutor
-from typing import Optional
 
 from tornado.concurrent import Future, chain_future
 from tornado.ioloop import IOLoop

@@ -64,6 +64,7 @@ class BaseViewHandler(tornado.web.RequestHandler):
             return
 
         yield self.finish(response.render())
+        raise gen.Return()
 
     @gen.coroutine
     def write_error(self, status_code, **kwargs):
@@ -76,6 +77,7 @@ class BaseViewHandler(tornado.web.RequestHandler):
 
         response = self.view.error_response(exc_type, exc, traceback)
         yield self.write_response(response)
+        raise gen.Return()
 
     def options(self, *args, **kwargs):
         self.set_status(HTTP_204_NO_CONTENT)
@@ -86,30 +88,35 @@ class BaseViewHandler(tornado.web.RequestHandler):
         self.before_dispatch()
         response = yield self.view.dispatch('get', *args, **kwargs)
         yield self.write_response(response)
+        raise gen.Return()
 
     @gen.coroutine
     def post(self, *args, **kwargs):
         self.before_dispatch()
         response = yield self.view.dispatch('post', *args, **kwargs)
         yield self.write_response(response)
+        raise gen.Return()
 
     @gen.coroutine
     def put(self, *args, **kwargs):
         self.before_dispatch()
         response = yield self.view.dispatch('put', *args, **kwargs)
         yield self.write_response(response)
+        raise gen.Return()
 
     @gen.coroutine
     def patch(self, *args, **kwargs):
         self.before_dispatch()
         response = yield self.view.dispatch('patch', *args, **kwargs)
         yield self.write_response(response)
+        raise gen.Return()
 
     @gen.coroutine
     def delete(self, *args, **kwargs):
         self.before_dispatch()
         response = yield self.view.dispatch('delete', *args, **kwargs)
         yield self.write_response(response)
+        raise gen.Return()
 
 
 def view_handler(cls):
