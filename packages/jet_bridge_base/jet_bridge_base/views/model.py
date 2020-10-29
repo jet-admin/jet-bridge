@@ -1,5 +1,4 @@
 from sqlalchemy import inspect
-from tornado import gen
 
 from jet_bridge_base.db import get_mapped_base
 from jet_bridge_base.exceptions.not_found import NotFound
@@ -13,7 +12,6 @@ from jet_bridge_base.serializers.model import get_model_serializer
 from jet_bridge_base.serializers.model_group import ModelGroupSerializer
 from jet_bridge_base.serializers.reorder import get_reorder_serializer
 from jet_bridge_base.serializers.reset_order import get_reset_order_serializer
-from jet_bridge_base.utils.async import as_future
 from jet_bridge_base.utils.queryset import apply_default_ordering
 from jet_bridge_base.utils.siblings import get_model_siblings
 from jet_bridge_base.views.mixins.model import ModelAPIViewMixin
@@ -143,26 +141,24 @@ class ModelViewSet(ModelAPIViewMixin):
         return JSONResponse(serializer.representation_data)
 
     @action(methods=['post'], detail=False)
-    @gen.coroutine
     def reorder(self, *args, **kwargs):
         queryset = self.filter_queryset(self.get_queryset())
         ReorderSerializer = get_reorder_serializer(self.get_model(), queryset, self.session)
 
         serializer = ReorderSerializer(data=self.request.data)
         serializer.is_valid(raise_exception=True)
-        yield serializer.save()
+        serializer.save()
 
         return JSONResponse(serializer.representation_data)
 
     @action(methods=['post'], detail=False)
-    @gen.coroutine
     def reset_order(self, *args, **kwargs):
         queryset = self.filter_queryset(self.get_queryset())
         ResetOrderSerializer = get_reset_order_serializer(self.get_model(), queryset, self.session)
 
         serializer = ResetOrderSerializer(data=self.request.data)
         serializer.is_valid(raise_exception=True)
-        yield serializer.save()
+        serializer.save()
 
         return JSONResponse(serializer.representation_data)
 

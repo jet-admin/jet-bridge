@@ -1,9 +1,7 @@
 from sqlalchemy import inspect
-from tornado import gen
 
 from jet_bridge_base import fields
 from jet_bridge_base.serializers.serializer import Serializer
-from jet_bridge_base.utils.async import as_future
 
 
 def get_reorder_serializer(Model, queryset, session):
@@ -15,7 +13,6 @@ def get_reorder_serializer(Model, queryset, session):
         item = fields.IntegerField()
         segment_by_ordering_field = fields.BooleanField(default=False)
 
-        @gen.coroutine
         def save(self):
             mapper = inspect(Model)
 
@@ -28,8 +25,8 @@ def get_reorder_serializer(Model, queryset, session):
                 segment_from = self.validated_data['segment_from']
                 segment_to = self.validated_data['segment_to']
             else:
-                segment_from_instance = yield as_future(queryset.filter(primary_key == self.validated_data['segment_from']).first)
-                segment_to_instance = yield as_future(queryset.filter(primary_key == self.validated_data['segment_to']).first)
+                segment_from_instance = queryset.filter(primary_key == self.validated_data['segment_from']).first()
+                segment_to_instance = queryset.filter(primary_key == self.validated_data['segment_to']).first()
 
                 segment_from = getattr(segment_from_instance, ordering_field)
                 segment_to = getattr(segment_to_instance, ordering_field)
@@ -59,6 +56,6 @@ def get_reorder_serializer(Model, queryset, session):
                     {ordering_field: segment_to}
                 )
 
-            yield as_future(session.commit)
+            session.commit()
 
     return ReorderSerializer

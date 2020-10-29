@@ -1,10 +1,8 @@
 from sqlalchemy import desc, case
 from sqlalchemy.orm import load_only
-from tornado import gen
 
 from jet_bridge_base import fields
 from jet_bridge_base.serializers.serializer import Serializer
-from jet_bridge_base.utils.async import as_future
 
 
 def get_reset_order_serializer(Model, queryset, session):
@@ -13,7 +11,6 @@ def get_reset_order_serializer(Model, queryset, session):
         ordering = fields.CharField(required=False, allow_null=True)
         value_ordering = fields.CharField(required=False, allow_null=True)
 
-        @gen.coroutine
         def save(self):
             ordering_field = self.validated_data['ordering_field']
             ordering = self.validated_data.get('ordering')
@@ -47,12 +44,12 @@ def get_reset_order_serializer(Model, queryset, session):
                 qs = qs.order_by(*order_by)
 
             i = 1
-            items = yield as_future(qs.options(load_only(ordering_field)).all)
+            items = qs.options(load_only(ordering_field)).all()
 
             for instance in items:
                 setattr(instance, ordering_field, i)
                 i += 1
 
-            yield as_future(session.commit)
+            session.commit()
 
     return ResetOrderSerializer
