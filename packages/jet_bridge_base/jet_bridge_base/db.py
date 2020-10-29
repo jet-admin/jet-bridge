@@ -104,7 +104,7 @@ def connect_database(conf):
     if conf.get('engine') == 'sqlite':
         engine = create_engine(engine_url)
     else:
-        engine = create_engine(engine_url, pool_size=conf.get('connections'), max_overflow=10, pool_recycle=1)
+        engine = create_engine(engine_url, pool_size=conf.get('connections'), max_overflow=10, pool_recycle=300)
 
     Session = scoped_session(sessionmaker(bind=engine))
 
