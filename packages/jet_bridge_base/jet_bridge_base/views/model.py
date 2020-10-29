@@ -83,7 +83,6 @@ class ModelViewSet(ModelAPIViewMixin):
         return queryset
 
     @action(methods=['get'], detail=False)
-    @gen.coroutine
     def aggregate(self, *args, **kwargs):
         queryset = self.filter_queryset(self.get_queryset())
 
@@ -97,10 +96,10 @@ class ModelViewSet(ModelAPIViewMixin):
 
         filter_instance = ModelAggregateFilter()
         filter_instance.model = self.model
-        queryset = yield as_future(filter_instance.filter(queryset, {
+        queryset = filter_instance.filter(queryset, {
             'y_func': y_func,
             'y_column': y_column
-        }).one)
+        }).one()
 
         result = y_serializer.to_representation(queryset[0])  # TODO: Refactor serializer
 
@@ -109,7 +108,6 @@ class ModelViewSet(ModelAPIViewMixin):
         })
 
     @action(methods=['get'], detail=False)
-    @gen.coroutine
     def group(self, *args, **kwargs):
         queryset = self.filter_queryset(self.get_queryset())
 
@@ -128,12 +126,12 @@ class ModelViewSet(ModelAPIViewMixin):
 
         filter_instance = ModelGroupFilter()
         filter_instance.model = self.model
-        queryset = yield as_future(filter_instance.filter(queryset, {
+        queryset = filter_instance.filter(queryset, {
             'x_column': x_column,
             'x_lookup': x_lookup_name,
             'y_func': y_func,
             'y_column': y_column
-        }).all)
+        })
         serializer = ModelGroupSerializer(
             instance=queryset,
             many=True,
