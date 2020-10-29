@@ -12,16 +12,16 @@ from jet_bridge_base.views.external_auth.login import REDIRECT_URI_KEY, AUTH_URI
 
 class ExternalAuthCompleteView(ExternalAuthMixin, BaseAPIView):
 
-    def get(self, *args, **kwargs):
+    def get(self, request, *args, **kwargs):
         backend = kwargs.get('app')
-        return self._complete(backend)
+        return self._complete(request, backend)
 
-    def post(self, *args, **kwargs):
+    def post(self, request, *args, **kwargs):
         backend = kwargs.get('app')
-        return self._complete(backend)
+        return self._complete(request, backend)
 
-    def _complete(self, app):
-        self.init_auth(app)
+    def _complete(self, request, app):
+        self.init_auth(request, app)
 
         # Hack for passing SSO
         setattr(self.backend, 'sso', app)
@@ -31,9 +31,9 @@ class ExternalAuthCompleteView(ExternalAuthMixin, BaseAPIView):
         )
 
         success = result and result.get('auth')
-        auth_uri = configuration.session_get(self.request, AUTH_URI_KEY, '/api/')
-        project = configuration.session_get(self.request, PROJECT_KEY)
-        redirect_uri = configuration.session_get(self.request, REDIRECT_URI_KEY)
+        auth_uri = configuration.session_get(request, AUTH_URI_KEY, '/api/')
+        project = configuration.session_get(request, PROJECT_KEY)
+        redirect_uri = configuration.session_get(request, REDIRECT_URI_KEY)
 
         data = {
             'sso': app,

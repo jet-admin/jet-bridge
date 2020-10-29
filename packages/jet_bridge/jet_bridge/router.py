@@ -39,8 +39,11 @@ class Router(object):
                     inner_self.view.action = action
 
                     def execute():
-                        inner_self.before_dispatch()
-                        return inner_self.view.dispatch(action, *args, **kwargs)
+                        request = inner_self.get_request()
+                        inner_self.before_dispatch(request)
+                        result = inner_self.view.dispatch(action, request, *args, **kwargs)
+                        inner_self.after_dispatch(request)
+                        return result
 
                     response = yield as_future(execute)
 

@@ -7,8 +7,8 @@ from jet_bridge_base.views.base.api import APIView
 class MessageView(APIView):
     permission_classes = (HasProjectPermissions,)
 
-    def post(self, *args, **kwargs):
-        serializer = MessageSerializer(data=self.request.data)
+    def post(self, request, *args, **kwargs):
+        serializer = MessageSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
         result = serializer.save()

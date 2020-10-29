@@ -11,7 +11,6 @@ class FilterClass(object):
     def __init__(self, *args, **kwargs):
         self.meta = getattr(self, 'Meta', None)
         if 'context' in kwargs:
-            self.request = kwargs['context'].get('request', None)
             self.handler = kwargs['context'].get('handler', None)
         self.update_filters()
 
@@ -34,7 +33,7 @@ class FilterClass(object):
                             field_name=column.key,
                             model=Model,
                             lookup=lookup,
-                            request=self.request,
+                            # request=self.request,
                             handler=self.handler
                         )
                         filters.append(instance)
@@ -44,20 +43,19 @@ class FilterClass(object):
         for filter_name, filter_item in declared_filters:
             filter_item.name = filter_name
             filter_item.model = Model
-            filter_item.request = self.request
             filter_item.handler = self.handler
             filters.append(filter_item)
 
         self.filters = filters
 
-    def filter_queryset(self, queryset):
+    def filter_queryset(self, request, queryset):
         for item in self.filters:
-            if self.handler and item.name:
+            if item.name:
                 argument_name = '{}__{}'.format(item.name, item.lookup)
-                value = self.handler.request.get_argument(argument_name, None)
+                value = request.get_argument(argument_name, None)
 
                 if value is None and item.lookup == lookups.DEFAULT_LOOKUP:
-                    value = self.handler.request.get_argument(item.name, None)
+                    value = request.get_argument(item.name, None)
             else:
                 value = None
 

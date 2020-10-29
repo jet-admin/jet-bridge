@@ -15,10 +15,10 @@ class ModelDescriptionView(APIView):
     serializer_class = ModelDescriptionSerializer
     permission_classes = (HasProjectPermissions,)
 
-    def get_queryset(self):
+    def get_queryset(self, request):
         non_editable = ['id']
         hidden = ['__jet__token']
-        MappedBase = get_mapped_base(self.request)
+        MappedBase = get_mapped_base(request)
 
         def map_column(column):
             params = {}
@@ -132,7 +132,7 @@ class ModelDescriptionView(APIView):
 
         return list(map(map_table, MappedBase.classes))
 
-    def get(self, *args, **kwargs):
-        queryset = self.get_queryset()
+    def get(self, request, *args, **kwargs):
+        queryset = self.get_queryset(request)
         serializer = self.serializer_class(instance=queryset, many=True)
         return JSONResponse(serializer.representation_data)

@@ -17,7 +17,7 @@ class ExternalAuthMixin(object):
         backend_paths = list(map(lambda x: x.get('backend_path'), settings.SSO_APPLICATIONS.values()))
         self.backends = load_backends_classes(backend_paths)
 
-    def init_auth(self, app):
+    def init_auth(self, request, app):
         redirect_uri = self.redirect_uri(app)
 
         try:
@@ -29,7 +29,7 @@ class ExternalAuthMixin(object):
         backend_path = config.get('backend_path')
         Backend = self.backends.get(backend_path)
 
-        self.strategy = load_strategy(self, config)
+        self.strategy = load_strategy(self, request, config)
         self.backend = Backend(self.strategy, redirect_uri)
 
     def redirect_uri(self, app):

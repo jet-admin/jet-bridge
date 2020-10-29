@@ -22,8 +22,8 @@ class BaseViewHandler(tornado.web.RequestHandler):
 
         return dict(map(map_file, self.request.files.items()))
 
-    def before_dispatch(self):
-        self.view.request = Request(
+    def get_request(self):
+        return Request(
             self.request.method.upper(),
             self.request.protocol,
             self.request.host,
@@ -39,7 +39,11 @@ class BaseViewHandler(tornado.web.RequestHandler):
             self
         )
 
-        self.view.before_dispatch()
+    def before_dispatch(self, request):
+        self.view.before_dispatch(request)
+
+    def after_dispatch(self, request):
+        self.view.after_dispatch(request)
 
     def on_finish(self):
         self.view.on_finish()
@@ -70,13 +74,14 @@ class BaseViewHandler(tornado.web.RequestHandler):
     @gen.coroutine
     def write_error(self, status_code, **kwargs):
         exc_type = exc = traceback = None
+        request = self.get_request()
 
         if kwargs.get('exc_info'):
             exc_type, exc, traceback = kwargs['exc_info']
         else:
             exc = Exception()
 
-        response = self.view.error_response(exc_type, exc, traceback)
+        response = self.view.error_response(request, exc_type, exc, traceback)
         yield self.write_response(response)
         raise gen.Return()
 
@@ -86,9 +91,14 @@ class BaseViewHandler(tornado.web.RequestHandler):
 
     @gen.coroutine
     def dispatch(self, action, *args, **kwargs):
+        request = self.get_request()
+
         def execute():
-            self.before_dispatch()
-            return self.view.dispatch(action, *args, **kwargs)
+            self.before_dispatch(request)
+            result = self.view.dispatch(action, request, *args, **kwargs)
+            self.after_dispatch(request)
+            return result
+
         response = yield as_future(execute)
         yield self.write_response(response)
         raise gen.Return()

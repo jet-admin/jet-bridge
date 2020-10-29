@@ -7,16 +7,16 @@ from jet_bridge_base.views.base.api import APIView
 class ReloadView(APIView):
     permission_classes = (HasProjectPermissions,)
 
-    def required_project_permission(self):
+    def required_project_permission(self, request):
         return {
             'permission_type': 'project',
             'permission_object': 'project_settings',
             'permission_actions': ''
         }
 
-    def post(self, *args, **kwargs):
-        result = dispose_connection(self.request)
-        get_request_connection(self.request)
+    def post(self, request, *args, **kwargs):
+        result = dispose_connection(request)
+        get_request_connection(request)
         return JSONResponse({
             'success': result
         })

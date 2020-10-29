@@ -6,18 +6,18 @@ from jet_bridge_base.utils.exceptions import validation_error_from_database_erro
 
 class DestroyAPIViewMixin(object):
 
-    def delete(self, *args, **kwargs):
-        instance = self.get_object()
-        self.perform_destroy(instance)
+    def delete(self, request, *args, **kwargs):
+        instance = self.get_object(request)
+        self.perform_destroy(request, instance)
         return JSONResponse(status=status.HTTP_204_NO_CONTENT)
 
-    def perform_destroy(self, instance):
-        configuration.on_model_pre_delete(self.request.path_kwargs['model'], instance)
-        self.session.delete(instance)
+    def perform_destroy(self, request, instance):
+        configuration.on_model_pre_delete(request.path_kwargs['model'], instance)
+        request.session.delete(instance)
 
         try:
-            self.session.commit()
+            request.session.commit()
         except Exception as e:
             raise validation_error_from_database_error(e, self.model)
 
-        configuration.on_model_post_delete(self.request.path_kwargs['model'], instance)
+        configuration.on_model_post_delete(request.path_kwargs['model'], instance)
