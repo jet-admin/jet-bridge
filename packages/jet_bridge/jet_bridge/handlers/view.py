@@ -5,6 +5,7 @@ from jet_bridge_base.request import Request
 from jet_bridge_base.responses.redirect import RedirectResponse
 from jet_bridge_base.responses.template import TemplateResponse
 from jet_bridge_base.status import HTTP_204_NO_CONTENT
+from jet_bridge_base.utils.async_exec import as_future
 
 
 class BaseViewHandler(tornado.web.RequestHandler):
@@ -84,39 +85,28 @@ class BaseViewHandler(tornado.web.RequestHandler):
         self.finish()
 
     @gen.coroutine
+    def dispatch(self, action, *args, **kwargs):
+        def execute():
+            self.before_dispatch()
+            return self.view.dispatch(action, *args, **kwargs)
+        response = yield as_future(execute)
+        yield self.write_response(response)
+        raise gen.Return()
+
     def get(self, *args, **kwargs):
-        self.before_dispatch()
-        response = yield self.view.dispatch('get', *args, **kwargs)
-        yield self.write_response(response)
-        raise gen.Return()
+        return self.dispatch('get', *args, **kwargs)
 
-    @gen.coroutine
     def post(self, *args, **kwargs):
-        self.before_dispatch()
-        response = yield self.view.dispatch('post', *args, **kwargs)
-        yield self.write_response(response)
-        raise gen.Return()
+        return self.dispatch('post', *args, **kwargs)
 
-    @gen.coroutine
     def put(self, *args, **kwargs):
-        self.before_dispatch()
-        response = yield self.view.dispatch('put', *args, **kwargs)
-        yield self.write_response(response)
-        raise gen.Return()
+        return self.dispatch('put', *args, **kwargs)
 
-    @gen.coroutine
     def patch(self, *args, **kwargs):
-        self.before_dispatch()
-        response = yield self.view.dispatch('patch', *args, **kwargs)
-        yield self.write_response(response)
-        raise gen.Return()
+        return self.dispatch('patch', *args, **kwargs)
 
-    @gen.coroutine
     def delete(self, *args, **kwargs):
-        self.before_dispatch()
-        response = yield self.view.dispatch('delete', *args, **kwargs)
-        yield self.write_response(response)
-        raise gen.Return()
+        return self.dispatch('delete', *args, **kwargs)
 
 
 def view_handler(cls):
