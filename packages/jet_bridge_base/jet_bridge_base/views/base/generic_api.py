@@ -12,49 +12,49 @@ class GenericAPIView(APIView):
     lookup_url_kwarg = None
     action = None
 
-    def get_model(self):
+    def get_model(self, request):
         raise NotImplementedError
 
-    def get_queryset(self):
+    def get_queryset(self, request):
         raise NotImplementedError
 
-    def get_object(self):
-        queryset = self.filter_queryset(self.get_queryset())
+    def get_object(self, request):
+        queryset = self.filter_queryset(request, self.get_queryset(request))
         lookup_url_kwarg = self.lookup_url_kwarg or 'pk'
 
-        if lookup_url_kwarg not in self.request.path_kwargs:
+        if lookup_url_kwarg not in request.path_kwargs:
             raise AssertionError()
 
-        model_field = getattr(self.get_model(), self.lookup_field)
-        obj = queryset.filter(getattr(model_field, '__eq__')(self.request.path_kwargs[lookup_url_kwarg])).first()
+        model_field = getattr(self.get_model(request), self.lookup_field)
+        obj = queryset.filter(getattr(model_field, '__eq__')(request.path_kwargs[lookup_url_kwarg])).first()
 
         if obj is None:
             raise NotFound
 
-        self.check_object_permissions(obj)
+        self.check_object_permissions(request, obj)
 
         return obj
 
-    def get_filter(self, *args, **kwargs):
-        filter_class = self.get_filter_class()
+    def get_filter(self, request, *args, **kwargs):
+        filter_class = self.get_filter_class(request)
         if not filter_class:
             return
         kwargs['context'] = self.filter_context()
         return filter_class(*args, **kwargs)
 
-    def get_filter_class(self):
+    def get_filter_class(self, request):
         return self.filter_class
 
     def filter_context(self):
         return {
-            'request': self.request,
+            # 'request': self.request,
             'handler': self
         }
 
-    def filter_queryset(self, queryset):
-        filter_instance = self.get_filter()
+    def filter_queryset(self, request, queryset):
+        filter_instance = self.get_filter(request)
         if filter_instance:
-            queryset = filter_instance.filter_queryset(queryset)
+            queryset = filter_instance.filter_queryset(request, queryset)
         return queryset
 
     @property
@@ -66,29 +66,29 @@ class GenericAPIView(APIView):
                 self._paginator = self.pagination_class()
         return self._paginator
 
-    def paginate_queryset(self, queryset):
+    def paginate_queryset(self, request, queryset):
         if self.paginator is None:
             return None
-        return self.paginator.paginate_queryset(queryset, self)
+        return self.paginator.paginate_queryset(request, queryset, self)
 
-    def get_paginated_response(self, data):
+    def get_paginated_response(self, request, data):
         if self.paginator is None:
             raise AssertionError()
-        return self.paginator.get_paginated_response(data)
+        return self.paginator.get_paginated_response(request, data)
 
-    def get_serializer(self, *args, **kwargs):
-        serializer_class = self.get_serializer_class()
-        kwargs['context'] = self.get_serializer_context()
+    def get_serializer(self, request, *args, **kwargs):
+        serializer_class = self.get_serializer_class(request)
+        kwargs['context'] = self.get_serializer_context(request)
         return serializer_class(*args, **kwargs)
 
-    def get_serializer_class(self):
+    def get_serializer_class(self, request):
         return self.serializer_class
 
-    def get_serializer_context(self):
+    def get_serializer_context(self, request):
         return {
-            'request': self.request,
+            'request': request,
             'view': self,
-            'session': self.session
+            'session': request.session
         }
 
     def write_error(self, status_code, **kwargs):

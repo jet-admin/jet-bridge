@@ -2,6 +2,8 @@ import tornado
 from tornado import gen
 from tornado.concurrent import Future
 
+from jet_bridge_base.utils.async_exec import as_future
+
 
 class Router(object):
     routes = [
@@ -35,9 +37,16 @@ class Router(object):
                 @gen.coroutine
                 def action_method(inner_self, *args, **kwargs):
                     inner_self.view.action = action
-                    inner_self.before_dispatch()
-                    response = inner_self.view.dispatch(action, *args, **kwargs)
-                    response = (yield response) if isinstance(response, Future) else response
+
+                    def execute():
+                        request = inner_self.get_request()
+                        inner_self.before_dispatch(request)
+                        result = inner_self.view.dispatch(action, request, *args, **kwargs)
+                        inner_self.after_dispatch(request)
+                        return result
+
+                    response = yield as_future(execute)
+
                     yield inner_self.write_response(response)
                     raise gen.Return()
 

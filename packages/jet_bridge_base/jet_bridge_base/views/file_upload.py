@@ -9,11 +9,11 @@ from jet_bridge_base.views.base.api import APIView
 class FileUploadView(APIView):
     permission_classes = (HasProjectPermissions,)
 
-    def post(self, *args, **kwargs):
+    def post(self, request, *args, **kwargs):
         # TODO: Move to serializer
-        original_filename, file = self.request.files.get('file', None)
-        path = self.request.get_body_argument('path')
-        filename = self.request.get_body_argument('filename', original_filename)
+        original_filename, file = request.files.get('file', None)
+        path = request.get_body_argument('path')
+        filename = request.get_body_argument('filename', original_filename)
 
         upload_path = os.path.join(path, filename)
         upload_path = configuration.media_get_available_name(upload_path)
@@ -24,5 +24,5 @@ class FileUploadView(APIView):
 
         return JSONResponse({
             'uploaded_path': upload_path,
-            'uploaded_url': configuration.media_url(upload_path, self.request)
+            'uploaded_url': configuration.media_url(upload_path, request)
         })

@@ -9,6 +9,8 @@ _ARG_DEFAULT = object()
 
 class Request(object):
 
+    session = None
+
     def __init__(
             self,
             method=None,

@@ -6,8 +6,8 @@ STRATEGY_PATH = 'jet_bridge_base.external_auth.strategy.JetBridgeStrategy'
 STORAGE_PATH = 'jet_bridge_base.external_auth.storage.JetBridgeStorage'
 
 
-def load_strategy(request_handler, config):
-    return get_strategy(STRATEGY_PATH, STORAGE_PATH, request_handler, config)
+def load_strategy(request_handler, request, config):
+    return get_strategy(STRATEGY_PATH, STORAGE_PATH, request_handler, request, config)
 
 
 def load_backends_classes(backend_paths):

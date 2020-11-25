@@ -20,7 +20,7 @@ def apply_default_ordering(queryset):
         if isinstance(x, AnnotatedColumnElement):
             return x.name == pk
         elif isinstance(x, UnaryExpression):
-            return x.element.name == pk and x.modifier == operators.desc_op
+            return hasattr(x.element, 'name') and x.element.name == pk and x.modifier == operators.desc_op
         return False
 
     if ordering is None or not any(map(is_pk, ordering)):

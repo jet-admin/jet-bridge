@@ -21,19 +21,19 @@ class ModelViewSet(ModelAPIViewMixin):
     model = None
     permission_classes = (HasProjectPermissions, ReadOnly)
 
-    def before_dispatch(self):
-        super(ModelViewSet, self).before_dispatch()
-        mapper = inspect(self.get_model())
+    def before_dispatch(self, request):
+        super(ModelViewSet, self).before_dispatch(request)
+        mapper = inspect(self.get_model(request))
         self.lookup_field = mapper.primary_key[0].name
 
     def on_finish(self):
         super(ModelViewSet, self).on_finish()
         self.model = None
 
-    def required_project_permission(self):
+    def required_project_permission(self, request):
         return {
             'permission_type': 'model',
-            'permission_object': self.request.path_kwargs['model'],
+            'permission_object': request.path_kwargs['model'],
             'permission_actions': {
                 'create': 'w',
                 'update': 'w',
@@ -49,45 +49,45 @@ class ModelViewSet(ModelAPIViewMixin):
             }.get(self.action, 'w')
         }
 
-    def get_model(self):
-        MappedBase = get_mapped_base(self.request)
+    def get_model(self, request):
+        MappedBase = get_mapped_base(request)
 
         if self.model:
             return self.model
 
-        if self.request.path_kwargs['model'] not in MappedBase.classes:
+        if request.path_kwargs['model'] not in MappedBase.classes:
             raise NotFound
 
-        self.model = MappedBase.classes[self.request.path_kwargs['model']]
+        self.model = MappedBase.classes[request.path_kwargs['model']]
 
         return self.model
 
-    def get_serializer_class(self):
-        Model = self.get_model()
+    def get_serializer_class(self, request):
+        Model = self.get_model(request)
         return get_model_serializer(Model)
 
-    def get_filter_class(self):
-        return get_model_filter_class(self.request, self.get_model())
+    def get_filter_class(self, request):
+        return get_model_filter_class(request, self.get_model(request))
 
-    def get_queryset(self):
-        Model = self.get_model()
+    def get_queryset(self, request):
+        Model = self.get_model(request)
 
-        return self.session.query(Model)
+        return request.session.query(Model)
 
-    def filter_queryset(self, queryset):
-        queryset = super(ModelViewSet, self).filter_queryset(queryset)
+    def filter_queryset(self, request, queryset):
+        queryset = super(ModelViewSet, self).filter_queryset(request, queryset)
         if self.action == 'list':
             queryset = apply_default_ordering(queryset)
         return queryset
 
     @action(methods=['get'], detail=False)
-    def aggregate(self, *args, **kwargs):
-        queryset = self.filter_queryset(self.get_queryset())
+    def aggregate(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(request, self.get_queryset(request))
 
-        y_func = self.request.get_argument('_y_func').lower()
-        y_column = self.request.get_argument('_y_column', self.lookup_field)
+        y_func = request.get_argument('_y_func').lower()
+        y_column = request.get_argument('_y_column', self.lookup_field)
 
-        model_serializer = self.get_serializer()
+        model_serializer = self.get_serializer(request)
 
         y_serializers = list(filter(lambda x: x.field_name == y_column, model_serializer.fields))
         y_serializer = y_serializers[0]
@@ -106,15 +106,15 @@ class ModelViewSet(ModelAPIViewMixin):
         })
 
     @action(methods=['get'], detail=False)
-    def group(self, *args, **kwargs):
-        queryset = self.filter_queryset(self.get_queryset())
+    def group(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(request, self.get_queryset(request))
 
-        x_column = self.request.get_argument('_x_column')
-        x_lookup_name = self.request.get_argument('_x_lookup', None)
-        y_func = self.request.get_argument('_y_func').lower()
-        y_column = self.request.get_argument('_y_column', self.lookup_field)
+        x_column = request.get_argument('_x_column')
+        x_lookup_name = request.get_argument('_x_lookup', None)
+        y_func = request.get_argument('_y_func').lower()
+        y_column = request.get_argument('_y_column', self.lookup_field)
 
-        model_serializer = self.get_serializer()
+        model_serializer = self.get_serializer(request)
 
         # x_serializers = list(filter(lambda x: x.field_name == x_column, model_serializer.fields))
         # x_serializer = x_serializers[0]
@@ -141,31 +141,31 @@ class ModelViewSet(ModelAPIViewMixin):
         return JSONResponse(serializer.representation_data)
 
     @action(methods=['post'], detail=False)
-    def reorder(self, *args, **kwargs):
-        queryset = self.filter_queryset(self.get_queryset())
-        ReorderSerializer = get_reorder_serializer(self.get_model(), queryset, self.session)
+    def reorder(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(request, self.get_queryset(request))
+        ReorderSerializer = get_reorder_serializer(self.get_model(request), queryset, request.session)
 
-        serializer = ReorderSerializer(data=self.request.data)
+        serializer = ReorderSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
 
         return JSONResponse(serializer.representation_data)
 
     @action(methods=['post'], detail=False)
-    def reset_order(self, *args, **kwargs):
-        queryset = self.filter_queryset(self.get_queryset())
-        ResetOrderSerializer = get_reset_order_serializer(self.get_model(), queryset, self.session)
+    def reset_order(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(request, self.get_queryset(request))
+        ResetOrderSerializer = get_reset_order_serializer(self.get_model(request), queryset, request.session)
 
-        serializer = ResetOrderSerializer(data=self.request.data)
+        serializer = ResetOrderSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
 
         return JSONResponse(serializer.representation_data)
 
     @action(methods=['get'], detail=True)
-    def get_siblings(self, *args, **kwargs):
-        queryset = self.filter_queryset(self.get_queryset())
-        obj = self.get_object()
-        result = get_model_siblings(self.request, self.model, obj, queryset)
+    def get_siblings(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(request, self.get_queryset(request))
+        obj = self.get_object(request)
+        result = get_model_siblings(request, self.model, obj, queryset)
 
         return JSONResponse(result)

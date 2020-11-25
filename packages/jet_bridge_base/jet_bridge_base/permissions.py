@@ -6,10 +6,10 @@ from jet_bridge_base.utils.backend import project_auth
 
 class BasePermission(object):
 
-    def has_permission(self, view):
+    def has_permission(self, view, request):
         return True
 
-    def has_object_permission(self, view, obj):
+    def has_object_permission(self, view, request, obj):
         return True
 
 
@@ -38,15 +38,15 @@ class HasProjectPermissions(BasePermission):
         except (ValueError, AttributeError):
             pass
 
-    def has_permission(self, view):
+    def has_permission(self, view, request):
         # return True
-        token = self.parse_token(view.request.headers.get('AUTHORIZATION'))
-        permission = view.required_project_permission() if hasattr(view, 'required_project_permission') else None
+        token = self.parse_token(request.headers.get('AUTHORIZATION'))
+        permission = view.required_project_permission(request) if hasattr(view, 'required_project_permission') else None
 
         if not token:
             return False
 
-        bridge_settings_encoded = view.request.headers.get('X_BRIDGE_SETTINGS')
+        bridge_settings_encoded = request.headers.get('X_BRIDGE_SETTINGS')
 
         if bridge_settings_encoded:
             from jet_bridge_base.utils.crypt import decrypt
@@ -81,7 +81,7 @@ class HasProjectPermissions(BasePermission):
 
 class ReadOnly(BasePermission):
 
-    def has_permission(self, view):
+    def has_permission(self, view, request):
         if not settings.READ_ONLY:
             return True
         if view.action in ['create', 'update', 'partial_update', 'destroy']:

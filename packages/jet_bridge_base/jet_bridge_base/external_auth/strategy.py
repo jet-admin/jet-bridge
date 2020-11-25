@@ -9,9 +9,9 @@ from jet_bridge_base.utils.common import merge_two_dicts
 
 class JetBridgeStrategy(BaseStrategy):
 
-    def __init__(self, storage, request_handler, config, tpl=None):
+    def __init__(self, storage, request_handler, request, config, tpl=None):
         self.request_handler = request_handler
-        self.request = request_handler.request
+        self.request = request
         self.config = config
         super(JetBridgeStrategy, self).__init__(storage, tpl)
 

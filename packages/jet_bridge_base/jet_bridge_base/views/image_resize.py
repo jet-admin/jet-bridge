@@ -20,13 +20,13 @@ class ImageResizeView(APIView):
             memory_file.seek(0)
             configuration.media_save(thumbnail_path, memory_file.read())
 
-    def get(self, *args, **kwargs):
+    def get(self, request, *args, **kwargs):
         # TODO: Move to serializer
         # TODO: Add options dependant cache name
 
-        path = self.request.get_argument('path')
-        max_width = self.request.get_argument('max_width', 320)
-        max_height = self.request.get_argument('max_height', 240)
+        path = request.get_argument('path')
+        max_width = request.get_argument('max_width', 320)
+        max_height = request.get_argument('max_height', 240)
         external_path = path.startswith('http://') or path.startswith('https://')
 
         try:
@@ -55,6 +55,6 @@ class ImageResizeView(APIView):
             # self.finish()
 
             # self.redirect(cache.url(path))
-            return RedirectResponse(cache.url(path, self.request))
+            return RedirectResponse(cache.url(path, request))
         except IOError as e:
             raise e

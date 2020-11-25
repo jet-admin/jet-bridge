@@ -3,7 +3,6 @@ from datetime import datetime
 import sys
 
 import six
-from tornado import gen
 
 from jet_bridge_base import settings
 from jet_bridge_base.configuration import configuration
@@ -15,22 +14,24 @@ from jet_bridge_base.exceptions.validation_error import ValidationError
 from jet_bridge_base.responses.json import JSONResponse
 from jet_bridge_base.responses.template import TemplateResponse
 from jet_bridge_base.logger import logger
-from jet_bridge_base.utils.async_exec import as_future
 from jet_bridge_base.utils.exceptions import serialize_validation_error
 
 
 class BaseAPIView(object):
-    request = None
-    session = None
+    # request = None
+    # session = None
     permission_classes = []
 
-    def before_dispatch(self):
-        method_override = self.request.headers.get('X_HTTP_METHOD_OVERRIDE')
+    def before_dispatch(self, request):
+        method_override = request.headers.get('X_HTTP_METHOD_OVERRIDE')
         if method_override is not None:
-            self.request.method = method_override
+            request.method = method_override
 
-        if self.request.method != 'OPTIONS':
-            self.check_permissions()
+        if request.method != 'OPTIONS':
+            self.check_permissions(request)
+
+    def after_dispatch(self, request):
+        pass
 
     def on_finish(self):
         pass
@@ -38,14 +39,14 @@ class BaseAPIView(object):
     def get_permissions(self):
         return [permission() for permission in self.permission_classes]
 
-    def check_permissions(self):
+    def check_permissions(self, request):
         for permission in self.get_permissions():
-            if not permission.has_permission(self):
+            if not permission.has_permission(self, request):
                 raise PermissionDenied(getattr(permission, 'message', 'forbidden'))
 
-    def check_object_permissions(self, obj):
+    def check_object_permissions(self, request, obj):
         for permission in self.get_permissions():
-            if not permission.has_object_permission(self, obj):
+            if not permission.has_object_permission(self, request, obj):
                 raise PermissionDenied(getattr(permission, 'message', 'forbidden'))
 
     def default_headers(self):
@@ -60,14 +61,14 @@ class BaseAPIView(object):
 
         return headers
 
-    def error_response(self, exc_type, exc, traceback):
+    def error_response(self, request, exc_type, exc, traceback):
         if isinstance(exc, PermissionDenied):
             return TemplateResponse('403.html', status=403, data={
-                'path': self.request.path,
+                'path': request.path,
             })
         elif isinstance(exc, NotFound):
             return TemplateResponse('404.html', status=404, data={
-                'path': self.request.path,
+                'path': request.path,
             })
         elif isinstance(exc, ValidationError):
             response = serialize_validation_error(exc)
@@ -80,9 +81,9 @@ class BaseAPIView(object):
         else:
             if settings.DEBUG:
                 ctx = {
-                    'path': self.request.path if self.request else None,
-                    'full_path': self.request.protocol + '://' + self.request.host + self.request.path if self.request else None,
-                    'method': self.request.method if self.request else None,
+                    'path': request.path if request else None,
+                    'full_path': request.protocol + '://' + request.host + request.path if request else None,
+                    'method': request.method if request else None,
                     'type': configuration.get_type(),
                     'version': configuration.get_version(),
                     'current_datetime': datetime.now().strftime('%c'),
@@ -120,30 +121,28 @@ class BaseAPIView(object):
             else:
                 return TemplateResponse('500.html', status=500)
 
-    @gen.coroutine
-    def dispatch(self, action, *args, **kwargs):
+    def dispatch(self, action, request, *args, **kwargs):
         if not hasattr(self, action):
             raise NotFound()
-        response = yield as_future(lambda: getattr(self, action)(*args, **kwargs))
-        raise gen.Return(response)
+        return getattr(self, action)(request, *args, **kwargs)
 
-    def build_absolute_uri(self, url):
-        return self.request.protocol + "://" + self.request.host + url
+    # def build_absolute_uri(self, request, url):
+    #     return request.protocol + '://' + request.host + url
 
 
 class APIView(BaseAPIView):
 
-    def before_dispatch(self):
-        super(APIView, self).before_dispatch()
+    def before_dispatch(self, request):
+        super(APIView, self).before_dispatch(request)
 
         try:
-            self.session = create_session(self.request)
+            request.session = create_session(request)
         except Exception as e:
             raise ValidationError(str(e))
 
-    def on_finish(self):
-        super(APIView, self).on_finish()
+    def after_dispatch(self, request):
+        super(APIView, self).after_dispatch(request)
 
-        if self.session:
-            self.session.close()
-            self.session = None
+        if request.session:
+            request.session.close()
+            request.session = None

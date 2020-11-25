@@ -19,16 +19,16 @@ class PageNumberPagination(Pagination):
     page_size = None
     handler = None
 
-    def paginate_queryset(self, queryset, handler):
-        page_number = self.get_page_number(handler)
+    def paginate_queryset(self, request, queryset, handler):
+        page_number = self.get_page_number(request, handler)
         if not page_number:
             return None
 
-        page_size = self.get_page_size(handler)
+        page_size = self.get_page_size(request, handler)
         if not page_size:
             return None
 
-        self.count = queryset_count_optimized(handler.request, queryset)
+        self.count = queryset_count_optimized(request, queryset)
         self.page_number = page_number
         self.page_size = page_size
         self.handler = handler
@@ -38,27 +38,27 @@ class PageNumberPagination(Pagination):
     def get_pages_count(self):
         return int(math.ceil(self.count / self.page_size))
 
-    def get_paginated_response(self, data):
+    def get_paginated_response(self, request, data):
         return JSONResponse(OrderedDict([
             ('count', self.count),
-            ('next', self.get_next_link()),
-            ('previous', self.get_previous_link()),
+            ('next', self.get_next_link(request)),
+            ('previous', self.get_previous_link(request)),
             ('results', data),
             ('num_pages', self.get_pages_count()),
             ('per_page', self.page_size),
         ]))
 
-    def get_page_number(self, handler):
+    def get_page_number(self, request, handler):
         try:
-            result = int(handler.request.get_argument(self.page_query_param))
+            result = int(request.get_argument(self.page_query_param))
             return max(result, 1)
         except (MissingArgumentError, ValueError):
             return 1
 
-    def get_page_size(self, handler):
+    def get_page_size(self, request, handler):
         if self.page_size_query_param:
             try:
-                result = int(handler.request.get_argument(self.page_size_query_param))
+                result = int(request.get_argument(self.page_size_query_param))
                 result = max(result, 1)
 
                 if self.max_page_size:
@@ -82,17 +82,17 @@ class PageNumberPagination(Pagination):
     def previous_page_number(self):
         return self.page_number - 1
 
-    def get_next_link(self):
+    def get_next_link(self, request):
         if not self.has_next():
             return None
-        url = self.handler.request.full_url()
+        url = request.full_url()
         page_number = self.next_page_number()
         return replace_query_param(url, self.page_query_param, page_number)
 
-    def get_previous_link(self):
+    def get_previous_link(self, request):
         if not self.has_previous():
             return None
-        url = self.handler.request.full_url()
+        url = request.full_url()
         page_number = self.previous_page_number()
         if page_number == 1:
             return remove_query_param(url, self.page_query_param)

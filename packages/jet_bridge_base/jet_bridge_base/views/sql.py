@@ -9,11 +9,11 @@ from jet_bridge_base.status import HTTP_400_BAD_REQUEST
 class SqlView(APIView):
     permission_classes = (HasProjectPermissions,)
 
-    def post(self, *args, **kwargs):
-        if 'queries' in self.request.data:
-            serializer = SqlsSerializer(data=self.request.data, context={'request': self.request})
+    def post(self, request, *args, **kwargs):
+        if 'queries' in request.data:
+            serializer = SqlsSerializer(data=request.data, context={'request': request})
         else:
-            serializer = SqlSerializer(data=self.request.data, context={'request': self.request})
+            serializer = SqlSerializer(data=request.data, context={'request': request})
 
         serializer.is_valid(raise_exception=True)
 

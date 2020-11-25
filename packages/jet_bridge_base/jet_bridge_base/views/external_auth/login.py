@@ -11,22 +11,22 @@ REDIRECT_URI_KEY = 'redirect_uri'
 
 class ExternalAuthLoginView(ExternalAuthMixin, BaseAPIView):
 
-    def get(self, *args, **kwargs):
+    def get(self, request, *args, **kwargs):
         app = kwargs.get('app')
-        return self._auth(app)
+        return self._auth(request, app)
 
-    def post(self, *args, **kwargs):
+    def post(self, request, *args, **kwargs):
         app = kwargs.get('app')
-        return self._auth(app)
+        return self._auth(request, app)
 
-    def _auth(self, app):
-        auth_uri = self.request.get_argument('auth_uri', None)
-        project = self.request.get_argument('project', None)
-        redirect_uri = self.request.get_argument('redirect_uri', None)
+    def _auth(self, request, app):
+        auth_uri = request.get_argument('auth_uri', None)
+        project = request.get_argument('project', None)
+        redirect_uri = request.get_argument('redirect_uri', None)
 
-        configuration.session_set(self.request, AUTH_URI_KEY, auth_uri)
-        configuration.session_set(self.request, PROJECT_KEY, project)
-        configuration.session_set(self.request, REDIRECT_URI_KEY, redirect_uri)
+        configuration.session_set(request, AUTH_URI_KEY, auth_uri)
+        configuration.session_set(request, PROJECT_KEY, project)
+        configuration.session_set(request, REDIRECT_URI_KEY, redirect_uri)
 
-        self.init_auth(app)
+        self.init_auth(request, app)
         return do_auth(self.backend)
