@@ -50,6 +50,10 @@ def get_reset_order_serializer(Model, queryset, session):
                 setattr(instance, ordering_field, i)
                 i += 1
 
-            session.commit()
+            try:
+                session.commit()
+            except Exception as e:
+                session.rollback()
+                raise e
 
     return ResetOrderSerializer
