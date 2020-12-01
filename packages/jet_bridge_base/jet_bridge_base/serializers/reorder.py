@@ -56,6 +56,10 @@ def get_reorder_serializer(Model, queryset, session):
                     {ordering_field: segment_to}
                 )
 
-            session.commit()
+            try:
+                session.commit()
+            except Exception as e:
+                session.rollback()
+                raise e
 
     return ReorderSerializer

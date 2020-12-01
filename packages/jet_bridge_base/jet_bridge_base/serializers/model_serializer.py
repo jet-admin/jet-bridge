@@ -79,6 +79,7 @@ class ModelSerializer(Serializer):
         try:
             self.session.commit()
         except Exception as e:
+            self.session.rollback()
             raise validation_error_from_database_error(e, self.model)
 
         return instance
@@ -90,6 +91,7 @@ class ModelSerializer(Serializer):
         try:
             self.session.commit()
         except Exception as e:
+            self.session.rollback()
             raise validation_error_from_database_error(e, self.model)
 
         return instance
