@@ -1,9 +1,9 @@
 from sqlalchemy import inspect, desc
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.sql import operators, text
 from sqlalchemy.sql.elements import AnnotatedColumnElement, UnaryExpression
 
 from jet_bridge_base import settings
-from jet_bridge_base.db import get_engine
 
 
 def get_queryset_model(queryset):
@@ -31,19 +31,23 @@ def apply_default_ordering(queryset):
 
 
 def queryset_count_optimized_for_postgresql(request, db_table):
-    engine = get_engine(request)
-    with engine.connect() as connection:
-        cursor = connection.execute(text('SELECT reltuples FROM pg_class WHERE relname = :db_table'), {'db_table': db_table})
+    try:
+        cursor = request.session.execute(text('SELECT reltuples FROM pg_class WHERE relname = :db_table'), {'db_table': db_table})
         row = cursor.fetchone()
         return int(row[0])
+    except SQLAlchemyError:
+        request.session.rollback()
+        raise
 
 
 def queryset_count_optimized_for_mysql(request, db_table):
-    engine = get_engine(request)
-    with engine.connect() as connection:
-        cursor = connection.execute(text('EXPLAIN SELECT COUNT(*) FROM `{}`'.format(db_table)))
+    try:
+        cursor = request.session.execute(text('EXPLAIN SELECT COUNT(*) FROM `{}`'.format(db_table)))
         row = cursor.fetchone()
         return int(row[8])
+    except SQLAlchemyError:
+        request.session.rollback()
+        raise
 
 
 def queryset_count_optimized(request, queryset):
@@ -62,4 +66,8 @@ def queryset_count_optimized(request, queryset):
     if result is not None and result >= 10000:
         return result
 
-    return queryset.count()
+    try:
+        return queryset.count()
+    except SQLAlchemyError:
+        queryset.session.rollback()
+        raise

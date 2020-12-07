@@ -1,4 +1,5 @@
 from sqlalchemy import desc, case
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import load_only
 
 from jet_bridge_base import fields
@@ -44,7 +45,12 @@ def get_reset_order_serializer(Model, queryset, session):
                 qs = qs.order_by(*order_by)
 
             i = 1
-            items = qs.options(load_only(ordering_field)).all()
+
+            try:
+                items = qs.options(load_only(ordering_field)).all()
+            except SQLAlchemyError:
+                queryset.session.rollback()
+                raise
 
             for instance in items:
                 setattr(instance, ordering_field, i)
@@ -52,8 +58,8 @@ def get_reset_order_serializer(Model, queryset, session):
 
             try:
                 session.commit()
-            except Exception as e:
+            except SQLAlchemyError:
                 session.rollback()
-                raise e
+                raise
 
     return ResetOrderSerializer

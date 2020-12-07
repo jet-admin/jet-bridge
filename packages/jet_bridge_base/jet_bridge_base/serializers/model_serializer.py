@@ -1,5 +1,6 @@
 import six
 from sqlalchemy import inspect
+from sqlalchemy.exc import SQLAlchemyError
 
 from jet_bridge_base import fields
 from jet_bridge_base.serializers.serializer import Serializer
@@ -78,7 +79,7 @@ class ModelSerializer(Serializer):
 
         try:
             self.session.commit()
-        except Exception as e:
+        except SQLAlchemyError as e:
             self.session.rollback()
             raise validation_error_from_database_error(e, self.model)
 
@@ -90,7 +91,7 @@ class ModelSerializer(Serializer):
 
         try:
             self.session.commit()
-        except Exception as e:
+        except SQLAlchemyError as e:
             self.session.rollback()
             raise validation_error_from_database_error(e, self.model)
 

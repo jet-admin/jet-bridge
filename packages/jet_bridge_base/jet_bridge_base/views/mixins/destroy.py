@@ -1,3 +1,5 @@
+from sqlalchemy.exc import SQLAlchemyError
+
 from jet_bridge_base import status
 from jet_bridge_base.configuration import configuration
 from jet_bridge_base.responses.json import JSONResponse
@@ -17,7 +19,7 @@ class DestroyAPIViewMixin(object):
 
         try:
             request.session.commit()
-        except Exception as e:
+        except SQLAlchemyError as e:
             request.session.rollback()
             raise validation_error_from_database_error(e, self.model)
 

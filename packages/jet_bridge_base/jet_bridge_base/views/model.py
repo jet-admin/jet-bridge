@@ -1,4 +1,5 @@
 from sqlalchemy import inspect
+from sqlalchemy.exc import SQLAlchemyError
 
 from jet_bridge_base.db import get_mapped_base
 from jet_bridge_base.exceptions.not_found import NotFound
@@ -94,10 +95,15 @@ class ModelViewSet(ModelAPIViewMixin):
 
         filter_instance = ModelAggregateFilter()
         filter_instance.model = self.model
-        queryset = filter_instance.filter(queryset, {
-            'y_func': y_func,
-            'y_column': y_column
-        }).one()
+
+        try:
+            queryset = filter_instance.filter(queryset, {
+                'y_func': y_func,
+                'y_column': y_column
+            }).one()
+        except SQLAlchemyError:
+            queryset.session.rollback()
+            raise
 
         result = y_serializer.to_representation(queryset[0])  # TODO: Refactor serializer
 
@@ -130,8 +136,15 @@ class ModelViewSet(ModelAPIViewMixin):
             'y_func': y_func,
             'y_column': y_column
         })
+
+        try:
+            instance = list(queryset)
+        except SQLAlchemyError:
+            queryset.session.rollback()
+            raise
+
         serializer = ModelGroupSerializer(
-            instance=queryset,
+            instance=instance,
             many=True,
             # TODO: Refactor serializer
             # group_serializer=x_serializer,

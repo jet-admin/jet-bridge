@@ -1,4 +1,5 @@
 from sqlalchemy import inspect
+from sqlalchemy.exc import SQLAlchemyError
 
 from jet_bridge_base import fields
 from jet_bridge_base.serializers.serializer import Serializer
@@ -58,7 +59,7 @@ def get_reorder_serializer(Model, queryset, session):
 
             try:
                 session.commit()
-            except Exception as e:
+            except SQLAlchemyError as e:
                 session.rollback()
                 raise e
 
