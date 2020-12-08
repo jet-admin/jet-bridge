@@ -19,7 +19,6 @@ from jet_bridge_base.views.mixins.model import ModelAPIViewMixin
 
 
 class ModelViewSet(ModelAPIViewMixin):
-    model = None
     permission_classes = (HasProjectPermissions, ReadOnly)
 
     def before_dispatch(self, request):
@@ -29,7 +28,6 @@ class ModelViewSet(ModelAPIViewMixin):
 
     def on_finish(self):
         super(ModelViewSet, self).on_finish()
-        self.model = None
 
     def required_project_permission(self, request):
         return {
@@ -53,15 +51,10 @@ class ModelViewSet(ModelAPIViewMixin):
     def get_model(self, request):
         MappedBase = get_mapped_base(request)
 
-        if self.model:
-            return self.model
-
         if request.path_kwargs['model'] not in MappedBase.classes:
             raise NotFound
 
-        self.model = MappedBase.classes[request.path_kwargs['model']]
-
-        return self.model
+        return MappedBase.classes[request.path_kwargs['model']]
 
     def get_serializer_class(self, request):
         Model = self.get_model(request)
