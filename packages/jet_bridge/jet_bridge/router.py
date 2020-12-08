@@ -36,10 +36,10 @@ class Router(object):
             def create_action_method(action):
                 @gen.coroutine
                 def action_method(inner_self, *args, **kwargs):
-                    inner_self.view.action = action
 
                     def execute():
                         request = inner_self.get_request()
+                        request.action = action
                         inner_self.before_dispatch(request)
                         result = inner_self.view.dispatch(action, request, *args, **kwargs)
                         inner_self.after_dispatch(request)

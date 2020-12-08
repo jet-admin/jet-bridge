@@ -45,7 +45,7 @@ class ModelViewSet(ModelAPIViewMixin):
                 'reorder': 'w',
                 'reset_order': 'w',
                 'get_siblings': 'r'
-            }.get(self.action, 'w')
+            }.get(request.action, 'w')
         }
 
     def get_model(self, request):
@@ -71,7 +71,7 @@ class ModelViewSet(ModelAPIViewMixin):
 
     def filter_queryset(self, request, queryset):
         queryset = super(ModelViewSet, self).filter_queryset(request, queryset)
-        if self.action == 'list':
+        if request.action == 'list':
             queryset = apply_default_ordering(queryset)
         return queryset
 

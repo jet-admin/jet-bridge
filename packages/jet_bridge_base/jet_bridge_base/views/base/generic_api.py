@@ -12,7 +12,6 @@ class GenericAPIView(APIView):
     _paginator = None
     lookup_field = 'id'
     lookup_url_kwarg = None
-    action = None
 
     def get_model(self, request):
         raise NotImplementedError

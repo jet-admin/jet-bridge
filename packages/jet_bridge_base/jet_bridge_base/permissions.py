@@ -84,6 +84,6 @@ class ReadOnly(BasePermission):
     def has_permission(self, view, request):
         if not settings.READ_ONLY:
             return True
-        if view.action in ['create', 'update', 'partial_update', 'destroy']:
+        if request.action in ['create', 'update', 'partial_update', 'destroy']:
             return False
         return True
