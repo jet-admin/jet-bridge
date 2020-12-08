@@ -68,7 +68,8 @@ class ModelViewSet(ModelAPIViewMixin):
         return get_model_serializer(Model)
 
     def get_filter_class(self, request):
-        return get_model_filter_class(request, self.get_model(request))
+        Model = self.get_model(request)
+        return get_model_filter_class(request, Model)
 
     def get_queryset(self, request):
         Model = self.get_model(request)
@@ -94,7 +95,7 @@ class ModelViewSet(ModelAPIViewMixin):
         y_serializer = y_serializers[0]
 
         filter_instance = ModelAggregateFilter()
-        filter_instance.model = self.model
+        filter_instance.model = self.get_model(request)
 
         try:
             queryset = filter_instance.filter(queryset, {
@@ -129,7 +130,7 @@ class ModelViewSet(ModelAPIViewMixin):
         # y_serializer = y_serializers[0]
 
         filter_instance = ModelGroupFilter()
-        filter_instance.model = self.model
+        filter_instance.model = self.get_model(request)
         queryset = filter_instance.filter(queryset, {
             'x_column': x_column,
             'x_lookup': x_lookup_name,
@@ -156,7 +157,8 @@ class ModelViewSet(ModelAPIViewMixin):
     @action(methods=['post'], detail=False)
     def reorder(self, request, *args, **kwargs):
         queryset = self.filter_queryset(request, self.get_queryset(request))
-        ReorderSerializer = get_reorder_serializer(self.get_model(request), queryset, request.session)
+        Model = self.get_model(request)
+        ReorderSerializer = get_reorder_serializer(Model, queryset, request.session)
 
         serializer = ReorderSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -167,7 +169,8 @@ class ModelViewSet(ModelAPIViewMixin):
     @action(methods=['post'], detail=False)
     def reset_order(self, request, *args, **kwargs):
         queryset = self.filter_queryset(request, self.get_queryset(request))
-        ResetOrderSerializer = get_reset_order_serializer(self.get_model(request), queryset, request.session)
+        Model = self.get_model(request)
+        ResetOrderSerializer = get_reset_order_serializer(Model, queryset, request.session)
 
         serializer = ResetOrderSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -179,6 +182,7 @@ class ModelViewSet(ModelAPIViewMixin):
     def get_siblings(self, request, *args, **kwargs):
         queryset = self.filter_queryset(request, self.get_queryset(request))
         obj = self.get_object(request)
-        result = get_model_siblings(request, self.model, obj, queryset)
+        Model = self.get_model(request)
+        result = get_model_siblings(request, Model, obj, queryset)
 
         return JSONResponse(result)

@@ -15,12 +15,13 @@ class DestroyAPIViewMixin(object):
 
     def perform_destroy(self, request, instance):
         configuration.on_model_pre_delete(request.path_kwargs['model'], instance)
+        Model = self.get_model(request)
         request.session.delete(instance)
 
         try:
             request.session.commit()
         except SQLAlchemyError as e:
             request.session.rollback()
-            raise validation_error_from_database_error(e, self.model)
+            raise validation_error_from_database_error(e, Model)
 
         configuration.on_model_post_delete(request.path_kwargs['model'], instance)
