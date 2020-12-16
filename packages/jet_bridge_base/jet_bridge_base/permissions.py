@@ -68,11 +68,21 @@ class HasProjectPermissions(BasePermission):
             return True
         elif user_permissions.get('super_group'):
             return True
-        permissions = user_permissions.get('permissions', [])
+
+        if 'permissions' in user_permissions:
+            permissions = decompress_data(user_permissions['permissions'])
+        else:
+            permissions = []
 
         view_permission_type = view_permissions.get('permission_type', '')
         view_permission_object = view_permissions.get('permission_object', '')
         view_permission_actions = view_permissions.get('permission_actions', '')
+
+        if user_permissions.get('read_only'):
+            if view_permission_type == 'model' and all(map(lambda x: x in ['r'], list(view_permission_actions))):
+                return True
+            else:
+                return False
 
         for item in permissions:
             item_type = item.get('permission_type', '')
@@ -84,6 +94,7 @@ class HasProjectPermissions(BasePermission):
                 continue
 
             return view_permission_actions in item_actions
+
         return False
 
     def has_permission(self, view, request):
@@ -106,20 +117,20 @@ class HasProjectPermissions(BasePermission):
                 bridge_settings = {}
 
             project_token = bridge_settings.get('token')
+            project = bridge_settings.get('project')
         else:
             project_token = settings.TOKEN
+            project = settings.PROJECT
 
         if token['type'] == self.jwt_token_prefix:
             JWT_VERIFY_KEY = '\n'.join([line.lstrip() for line in settings.JWT_VERIFY_KEY.split('\\n')])
             result = jwt.decode(token['value'], key=JWT_VERIFY_KEY, algorithms=['RS256'])
+            user_permissions = result.get('projects', {}).get(project)
 
-            if 'permissions' not in result:
+            if user_permissions is None:
                 return False
 
-            project = settings.PROJECT
-            user_permissions = decompress_data(result['permissions'])
-
-            return result.get('project') == project and self.has_view_permissions(view_permissions, user_permissions)
+            return self.has_view_permissions(view_permissions, user_permissions)
         elif token['type'] == self.user_token_prefix:
             result = project_auth(token['value'], project_token, view_permissions, token['params'])
 
