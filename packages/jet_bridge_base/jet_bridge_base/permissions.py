@@ -1,7 +1,20 @@
+import base64
+import gzip
 import json
+
+import jwt
 
 from jet_bridge_base import settings
 from jet_bridge_base.utils.backend import project_auth
+
+
+def decompress_data(value):
+    bytes = base64.b64decode(value)
+    data = gzip.decompress(bytes)
+    decoded = data.decode('utf-8')
+    result = json.loads(decoded)
+
+    return result
 
 
 class BasePermission(object):
@@ -16,32 +29,67 @@ class BasePermission(object):
 class HasProjectPermissions(BasePermission):
     user_token_prefix = 'Token'
     project_token_prefix = 'ProjectToken'
+    jwt_token_prefix = 'JWT'
 
     def parse_token(self, value):
-        try:
-            type, data = value.split(' ', 2)
-            items = data.split(';')
+        tokens = value.split(',')
+        result = {}
 
-            if len(items) == 0:
-                return
-
+        for token in tokens:
             try:
-                params = dict(map(lambda x: x.split('=', 2), items[1:]))
-            except ValueError:
-                params = {}
+                type, data = token.split(' ', 2)
+                items = data.split(';')
 
-            return {
-                'type': type,
-                'value': items[0],
-                'params': params
-            }
-        except (ValueError, AttributeError):
-            pass
+                if len(items) == 0:
+                    continue
+
+                try:
+                    params = dict(map(lambda x: x.split('=', 2), items[1:]))
+                except ValueError:
+                    params = {}
+
+                result[type] = {
+                    'type': type,
+                    'value': items[0],
+                    'params': params
+                }
+            except (ValueError, AttributeError):
+                pass
+
+        if self.jwt_token_prefix in result:
+            return result[self.jwt_token_prefix]
+        elif len(result):
+            return list(result.values())[0]
+
+    def has_view_permissions(self, view_permissions, user_permissions):
+        if not view_permissions:
+            return True
+        elif user_permissions.get('owner'):
+            return True
+        elif user_permissions.get('super_group'):
+            return True
+        permissions = user_permissions.get('permissions', [])
+
+        view_permission_type = view_permissions.get('permission_type', '')
+        view_permission_object = view_permissions.get('permission_object', '')
+        view_permission_actions = view_permissions.get('permission_actions', '')
+
+        for item in permissions:
+            item_type = item.get('permission_type', '')
+            item_object = item.get('permission_object', '')
+            item_object_model = item_object.split('.', 1)[-1:][0]
+            item_actions = item.get('permission_actions', '')
+
+            if item_type != view_permission_type or item_object_model != view_permission_object:
+                continue
+
+            return view_permission_actions in item_actions
+        return False
 
     def has_permission(self, view, request):
         # return True
         token = self.parse_token(request.headers.get('AUTHORIZATION'))
-        permission = view.required_project_permission(request) if hasattr(view, 'required_project_permission') else None
+        view_permissions = view.required_project_permission(request) if hasattr(view, 'required_project_permission') else None
 
         if not token:
             return False
@@ -61,15 +109,26 @@ class HasProjectPermissions(BasePermission):
         else:
             project_token = settings.TOKEN
 
-        if token['type'] == self.user_token_prefix:
-            result = project_auth(token['value'], project_token, permission, token['params'])
+        if token['type'] == self.jwt_token_prefix:
+            JWT_VERIFY_KEY = '\n'.join([line.lstrip() for line in settings.JWT_VERIFY_KEY.split('\\n')])
+            result = jwt.decode(token['value'], key=JWT_VERIFY_KEY, algorithms=['RS256'])
+
+            if 'permissions' not in result:
+                return False
+
+            project = settings.PROJECT
+            user_permissions = decompress_data(result['permissions'])
+
+            return result.get('project') == project and self.has_view_permissions(view_permissions, user_permissions)
+        elif token['type'] == self.user_token_prefix:
+            result = project_auth(token['value'], project_token, view_permissions, token['params'])
 
             # if result.get('warning'):
             #     view.headers['X-Application-Warning'] = result['warning']
 
             return result['result']
         elif token['type'] == self.project_token_prefix:
-            result = project_auth(token['value'], project_token, permission, token['params'])
+            result = project_auth(token['value'], project_token, view_permissions, token['params'])
 
             # if result.get('warning'):
             #     view.headers['X-Application-Warning'] = result['warning']
