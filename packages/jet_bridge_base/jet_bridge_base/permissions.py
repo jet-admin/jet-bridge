@@ -32,7 +32,7 @@ class HasProjectPermissions(BasePermission):
     jwt_token_prefix = 'JWT'
 
     def parse_token(self, value):
-        tokens = value.split(',')
+        tokens = value.split(',') if value else []
         result = {}
 
         for token in tokens:
