@@ -1,7 +1,21 @@
+import base64
+import gzip
 import json
+
+import jwt
+from jwt import PyJWTError
 
 from jet_bridge_base import settings
 from jet_bridge_base.utils.backend import project_auth
+
+
+def decompress_data(value):
+    bytes = base64.b64decode(value)
+    data = gzip.decompress(bytes)
+    decoded = data.decode('utf-8')
+    result = json.loads(decoded)
+
+    return result
 
 
 class BasePermission(object):
@@ -16,60 +30,114 @@ class BasePermission(object):
 class HasProjectPermissions(BasePermission):
     user_token_prefix = 'Token'
     project_token_prefix = 'ProjectToken'
+    jwt_token_prefix = 'JWT'
 
     def parse_token(self, value):
-        try:
-            type, data = value.split(' ', 2)
-            items = data.split(';')
+        tokens = value.split(',') if value else []
+        result = {}
 
-            if len(items) == 0:
-                return
-
+        for token in tokens:
             try:
-                params = dict(map(lambda x: x.split('=', 2), items[1:]))
-            except ValueError:
-                params = {}
+                type, data = token.split(' ', 2)
+                items = data.split(';')
 
-            return {
-                'type': type,
-                'value': items[0],
-                'params': params
-            }
-        except (ValueError, AttributeError):
-            pass
+                if len(items) == 0:
+                    continue
+
+                try:
+                    params = dict(map(lambda x: x.split('=', 2), items[1:]))
+                except ValueError:
+                    params = {}
+
+                result[type] = {
+                    'type': type,
+                    'value': items[0],
+                    'params': params
+                }
+            except (ValueError, AttributeError):
+                pass
+
+        if self.jwt_token_prefix in result:
+            return result[self.jwt_token_prefix]
+        elif len(result):
+            return list(result.values())[0]
+
+    def has_view_permissions(self, view_permissions, user_permissions):
+        if not view_permissions:
+            return True
+        elif user_permissions.get('owner'):
+            return True
+        elif user_permissions.get('super_group'):
+            return True
+
+        if 'permissions' in user_permissions:
+            permissions = decompress_data(user_permissions['permissions'])
+        else:
+            permissions = []
+
+        view_permission_type = view_permissions.get('permission_type', '')
+        view_permission_object = view_permissions.get('permission_object', '')
+        view_permission_actions = view_permissions.get('permission_actions', '')
+
+        if user_permissions.get('read_only'):
+            if view_permission_type == 'model' and all(map(lambda x: x in ['r'], list(view_permission_actions))):
+                return True
+            else:
+                return False
+
+        for item in permissions:
+            item_type = item.get('permission_type', '')
+            item_object = item.get('permission_object', '')
+            item_object_model = item_object.split('.', 1)[-1:][0]
+            item_actions = item.get('permission_actions', '')
+
+            if item_type != view_permission_type or item_object_model != view_permission_object:
+                continue
+
+            return view_permission_actions in item_actions
+
+        return False
 
     def has_permission(self, view, request):
         # return True
         token = self.parse_token(request.headers.get('AUTHORIZATION'))
-        permission = view.required_project_permission(request) if hasattr(view, 'required_project_permission') else None
+        view_permissions = view.required_project_permission(request) if hasattr(view, 'required_project_permission') else None
 
         if not token:
             return False
 
-        bridge_settings_encoded = request.headers.get('X_BRIDGE_SETTINGS')
+        bridge_settings = request.get_bridge_settings()
 
-        if bridge_settings_encoded:
-            from jet_bridge_base.utils.crypt import decrypt
-
-            try:
-                secret_key = settings.TOKEN.replace('-', '').lower()
-                bridge_settings = json.loads(decrypt(bridge_settings_encoded, secret_key))
-            except Exception:
-                bridge_settings = {}
-
+        if bridge_settings:
             project_token = bridge_settings.get('token')
+            project = bridge_settings.get('project')
         else:
             project_token = settings.TOKEN
+            project = settings.PROJECT
 
-        if token['type'] == self.user_token_prefix:
-            result = project_auth(token['value'], project_token, permission, token['params'])
+        if token['type'] == self.jwt_token_prefix:
+            JWT_VERIFY_KEY = '\n'.join([line.lstrip() for line in settings.JWT_VERIFY_KEY.split('\\n')])
+
+            try:
+                result = jwt.decode(token['value'], key=JWT_VERIFY_KEY, algorithms=['RS256'])
+            except PyJWTError:
+                return False
+
+            user_permissions = result.get('projects', {}).get(project)
+
+            if user_permissions is None:
+                return False
+
+            return self.has_view_permissions(view_permissions, user_permissions)
+        elif token['type'] == self.user_token_prefix:
+            result = project_auth(token['value'], project_token, view_permissions, token['params'])
 
             # if result.get('warning'):
             #     view.headers['X-Application-Warning'] = result['warning']
 
             return result['result']
         elif token['type'] == self.project_token_prefix:
-            result = project_auth(token['value'], project_token, permission, token['params'])
+            result = project_auth(token['value'], project_token, view_permissions, token['params'])
 
             # if result.get('warning'):
             #     view.headers['X-Application-Warning'] = result['warning']
@@ -84,6 +152,6 @@ class ReadOnly(BasePermission):
     def has_permission(self, view, request):
         if not settings.READ_ONLY:
             return True
-        if view.action in ['create', 'update', 'partial_update', 'destroy']:
+        if request.action in ['create', 'update', 'partial_update', 'destroy']:
             return False
         return True

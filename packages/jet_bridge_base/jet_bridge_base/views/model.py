@@ -1,4 +1,5 @@
 from sqlalchemy import inspect
+from sqlalchemy.exc import SQLAlchemyError
 
 from jet_bridge_base.db import get_mapped_base
 from jet_bridge_base.exceptions.not_found import NotFound
@@ -18,7 +19,6 @@ from jet_bridge_base.views.mixins.model import ModelAPIViewMixin
 
 
 class ModelViewSet(ModelAPIViewMixin):
-    model = None
     permission_classes = (HasProjectPermissions, ReadOnly)
 
     def before_dispatch(self, request):
@@ -28,7 +28,6 @@ class ModelViewSet(ModelAPIViewMixin):
 
     def on_finish(self):
         super(ModelViewSet, self).on_finish()
-        self.model = None
 
     def required_project_permission(self, request):
         return {
@@ -46,28 +45,24 @@ class ModelViewSet(ModelAPIViewMixin):
                 'reorder': 'w',
                 'reset_order': 'w',
                 'get_siblings': 'r'
-            }.get(self.action, 'w')
+            }.get(request.action, 'w')
         }
 
     def get_model(self, request):
         MappedBase = get_mapped_base(request)
 
-        if self.model:
-            return self.model
-
         if request.path_kwargs['model'] not in MappedBase.classes:
             raise NotFound
 
-        self.model = MappedBase.classes[request.path_kwargs['model']]
-
-        return self.model
+        return MappedBase.classes[request.path_kwargs['model']]
 
     def get_serializer_class(self, request):
         Model = self.get_model(request)
         return get_model_serializer(Model)
 
     def get_filter_class(self, request):
-        return get_model_filter_class(request, self.get_model(request))
+        Model = self.get_model(request)
+        return get_model_filter_class(request, Model)
 
     def get_queryset(self, request):
         Model = self.get_model(request)
@@ -76,7 +71,7 @@ class ModelViewSet(ModelAPIViewMixin):
 
     def filter_queryset(self, request, queryset):
         queryset = super(ModelViewSet, self).filter_queryset(request, queryset)
-        if self.action == 'list':
+        if request.action == 'list':
             queryset = apply_default_ordering(queryset)
         return queryset
 
@@ -93,11 +88,16 @@ class ModelViewSet(ModelAPIViewMixin):
         y_serializer = y_serializers[0]
 
         filter_instance = ModelAggregateFilter()
-        filter_instance.model = self.model
-        queryset = filter_instance.filter(queryset, {
-            'y_func': y_func,
-            'y_column': y_column
-        }).one()
+        filter_instance.model = self.get_model(request)
+
+        try:
+            queryset = filter_instance.filter(queryset, {
+                'y_func': y_func,
+                'y_column': y_column
+            }).one()
+        except SQLAlchemyError:
+            queryset.session.rollback()
+            raise
 
         result = y_serializer.to_representation(queryset[0])  # TODO: Refactor serializer
 
@@ -123,15 +123,22 @@ class ModelViewSet(ModelAPIViewMixin):
         # y_serializer = y_serializers[0]
 
         filter_instance = ModelGroupFilter()
-        filter_instance.model = self.model
+        filter_instance.model = self.get_model(request)
         queryset = filter_instance.filter(queryset, {
             'x_column': x_column,
             'x_lookup': x_lookup_name,
             'y_func': y_func,
             'y_column': y_column
         })
+
+        try:
+            instance = list(queryset)
+        except SQLAlchemyError:
+            queryset.session.rollback()
+            raise
+
         serializer = ModelGroupSerializer(
-            instance=queryset,
+            instance=instance,
             many=True,
             # TODO: Refactor serializer
             # group_serializer=x_serializer,
@@ -143,7 +150,8 @@ class ModelViewSet(ModelAPIViewMixin):
     @action(methods=['post'], detail=False)
     def reorder(self, request, *args, **kwargs):
         queryset = self.filter_queryset(request, self.get_queryset(request))
-        ReorderSerializer = get_reorder_serializer(self.get_model(request), queryset, request.session)
+        Model = self.get_model(request)
+        ReorderSerializer = get_reorder_serializer(Model, queryset, request.session)
 
         serializer = ReorderSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -154,7 +162,8 @@ class ModelViewSet(ModelAPIViewMixin):
     @action(methods=['post'], detail=False)
     def reset_order(self, request, *args, **kwargs):
         queryset = self.filter_queryset(request, self.get_queryset(request))
-        ResetOrderSerializer = get_reset_order_serializer(self.get_model(request), queryset, request.session)
+        Model = self.get_model(request)
+        ResetOrderSerializer = get_reset_order_serializer(Model, queryset, request.session)
 
         serializer = ResetOrderSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -166,6 +175,7 @@ class ModelViewSet(ModelAPIViewMixin):
     def get_siblings(self, request, *args, **kwargs):
         queryset = self.filter_queryset(request, self.get_queryset(request))
         obj = self.get_object(request)
-        result = get_model_siblings(request, self.model, obj, queryset)
+        Model = self.get_model(request)
+        result = get_model_siblings(request, Model, obj, queryset)
 
         return JSONResponse(result)

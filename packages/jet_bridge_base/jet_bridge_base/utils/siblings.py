@@ -1,4 +1,5 @@
 from sqlalchemy import inspect, func
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import load_only
 
 from jet_bridge_base.utils.queryset import apply_default_ordering, queryset_count_optimized
@@ -13,8 +14,12 @@ def get_row_number(Model, queryset, instance):
         func.row_number().over(order_by=queryset._order_by).label('__inner__row')
     ).subquery()
 
-    rest = queryset.session.query(subqquery.c.__inner__row).filter(subqquery.c.__inner__pk == getattr(instance, pk))
-    return rest.scalar()
+    try:
+        rest = queryset.session.query(subqquery.c.__inner__row).filter(subqquery.c.__inner__pk == getattr(instance, pk))
+        return rest.scalar()
+    except SQLAlchemyError:
+        queryset.session.rollback()
+        raise
 
 
 def get_row_siblings(Model, queryset, row_number):
@@ -25,7 +30,11 @@ def get_row_siblings(Model, queryset, row_number):
     offset = row_number - 2 if has_prev else row_number - 1
     limit = 3 if has_prev else 2
 
-    rows = queryset.options(load_only(pk)).limit(limit).offset(offset).all()
+    try:
+        rows = queryset.options(load_only(pk)).limit(limit).offset(offset).all()
+    except SQLAlchemyError:
+        queryset.session.rollback()
+        raise
 
     if has_prev:
         next_index = 2

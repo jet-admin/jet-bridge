@@ -29,6 +29,7 @@ class JetBridgeConfiguration(Configuration):
             'TOKEN': settings.TOKEN,
             'CORS_HEADERS': settings.CORS_HEADERS,
             'BASE_URL': settings.BASE_URL,
+            'JWT_VERIFY_KEY': settings.JWT_VERIFY_KEY,
             'DATABASE_ENGINE': settings.DATABASE_ENGINE,
             'DATABASE_HOST': settings.DATABASE_HOST,
             'DATABASE_PORT': settings.DATABASE_PORT,

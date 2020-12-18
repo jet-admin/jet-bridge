@@ -11,6 +11,7 @@ PROJECT = None
 TOKEN = None
 CORS_HEADERS = True
 BASE_URL = None
+JWT_VERIFY_KEY = '-----BEGIN PUBLIC KEY-----\nMIICIjANBgkqhkiG9w0BAQEFAAOCAg8AMIICCgKCAgEAyfJablscZmsh7eHisWHi\n/x2gJUjc9juL4VLkEpp6PH9Ah+wBtGmPF9nfoVlQsgH9hra63POiaLUzIwW/ewOl\njyPF0FJngsxreCxNs8lmd/WNXrcnazknFItkFFeXJuMTfoBPQGiZOmVYb14jmvkc\n9vMmeXYjrbT+95SVayN3E6DzLoHDhny4Mka1OsxvIP5s77s0dOo68TzoEfBVeuto\nI/dopG86DVu4wYVtYPITzJ4z47OFVPKCyYVyy5aR3+DUnmdK7xTRVr+iWmHpcr7e\nhoeVcL4CqAILZ0gd54kQmnHbg7Bu6x8JtQkiLU5TQvWzjiN00io4eydvIAkQTAaR\nmdd32O1vJbSHmLyCR2tEW/uV7P25naPUlkApxuLzh5C21S0XJxNJ/P07KSMymt5U\n1lWqt4CInpjAwMI8qs9MkEwJev5+yumxqIrDKcQLMR3TBLJZIb+rL1teCLOW28qB\nL6VSKhfKRIaXUdLpRwAcSuXraTzwa9oCCZa19tw3uizMeMFrCrv43YbyOsS9h7JQ\n8ixj/a1R/ud0fCrhXWUl7nKlz0b15koILLG1Ts+MUTmIaEnHTVEY74CfJVq7waw9\nx2kyzSzbsmMXvFkrVzTmyImTN631+gatU+npJ3vtcD9SooEZLOCLa4pb+DIsv9P1\nEeIEAh1VZC7s2qsQZsiYTG0CAwEAAQ==\n-----END PUBLIC KEY-----\n'
 
 WEB_BASE_URL = None
 API_BASE_URL = None
@@ -33,4 +34,6 @@ ALLOW_ORIGIN = '*'
 
 def set_settings(settings):
     for key, value in settings.items():
+        if value is None:
+            continue
         setattr(CURRENT_MODULE, key, value)

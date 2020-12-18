@@ -39,6 +39,7 @@ class SqlSerializer(Serializer):
             try:
                 session.execute('SET TIME ZONE :tz', {'tz': data['timezone']})
             except SQLAlchemyError:
+                session.rollback()
                 pass
 
         try:
@@ -55,7 +56,10 @@ class SqlSerializer(Serializer):
                 return x
 
             return {'data': rows, 'columns': list(map(map_column, result.keys()))}
-        except (SQLAlchemyError, TypeError) as e:
+        except SQLAlchemyError as e:
+            session.rollback()
+            raise SqlError(e)
+        except TypeError as e:
             raise SqlError(e)
         finally:
             session.close()

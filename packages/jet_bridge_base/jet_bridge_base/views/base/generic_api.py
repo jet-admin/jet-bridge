@@ -1,3 +1,5 @@
+from sqlalchemy.exc import SQLAlchemyError
+
 from jet_bridge_base.exceptions.not_found import NotFound
 from jet_bridge_base.paginators.page_number import PageNumberPagination
 from jet_bridge_base.views.base.api import APIView
@@ -10,7 +12,6 @@ class GenericAPIView(APIView):
     _paginator = None
     lookup_field = 'id'
     lookup_url_kwarg = None
-    action = None
 
     def get_model(self, request):
         raise NotImplementedError
@@ -26,7 +27,12 @@ class GenericAPIView(APIView):
             raise AssertionError()
 
         model_field = getattr(self.get_model(request), self.lookup_field)
-        obj = queryset.filter(getattr(model_field, '__eq__')(request.path_kwargs[lookup_url_kwarg])).first()
+
+        try:
+            obj = queryset.filter(getattr(model_field, '__eq__')(request.path_kwargs[lookup_url_kwarg])).first()
+        except SQLAlchemyError:
+            queryset.session.rollback()
+            raise
 
         if obj is None:
             raise NotFound

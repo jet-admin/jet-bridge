@@ -187,14 +187,11 @@ def get_settings_conf():
     }
 
 
-def get_request_conf(bridge_settings_encoded):
-    from jet_bridge_base.utils.crypt import decrypt
+def get_request_conf(request):
+    bridge_settings = request.get_bridge_settings()
 
-    try:
-        secret_key = settings.TOKEN.replace('-', '').lower()
-        bridge_settings = json.loads(decrypt(bridge_settings_encoded, secret_key))
-    except Exception:
-        bridge_settings = {}
+    if not bridge_settings:
+        return
 
     return {
         'engine': bridge_settings.get('database_engine'),
@@ -212,10 +209,10 @@ def get_request_conf(bridge_settings_encoded):
 
 
 def get_conf(request):
-    bridge_settings_encoded = request.headers.get('X_BRIDGE_SETTINGS')
+    request_conf = get_request_conf(request)
 
-    if bridge_settings_encoded:
-        return get_request_conf(bridge_settings_encoded)
+    if request_conf:
+        return request_conf
     else:
         return get_settings_conf()
 
