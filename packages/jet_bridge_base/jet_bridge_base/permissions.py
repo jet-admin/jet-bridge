@@ -3,6 +3,7 @@ import gzip
 import json
 
 import jwt
+from jwt import PyJWTError
 
 from jet_bridge_base import settings
 from jet_bridge_base.utils.backend import project_auth
@@ -124,7 +125,12 @@ class HasProjectPermissions(BasePermission):
 
         if token['type'] == self.jwt_token_prefix:
             JWT_VERIFY_KEY = '\n'.join([line.lstrip() for line in settings.JWT_VERIFY_KEY.split('\\n')])
-            result = jwt.decode(token['value'], key=JWT_VERIFY_KEY, algorithms=['RS256'])
+
+            try:
+                result = jwt.decode(token['value'], key=JWT_VERIFY_KEY, algorithms=['RS256'])
+            except PyJWTError:
+                return False
+
             user_permissions = result.get('projects', {}).get(project)
 
             if user_permissions is None:
