@@ -106,17 +106,9 @@ class HasProjectPermissions(BasePermission):
         if not token:
             return False
 
-        bridge_settings_encoded = request.headers.get('X_BRIDGE_SETTINGS')
+        bridge_settings = request.get_bridge_settings()
 
-        if bridge_settings_encoded:
-            from jet_bridge_base.utils.crypt import decrypt
-
-            try:
-                secret_key = settings.TOKEN.replace('-', '').lower()
-                bridge_settings = json.loads(decrypt(bridge_settings_encoded, secret_key))
-            except Exception:
-                bridge_settings = {}
-
+        if bridge_settings:
             project_token = bridge_settings.get('token')
             project = bridge_settings.get('project')
         else:

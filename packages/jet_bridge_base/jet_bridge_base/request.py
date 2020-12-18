@@ -2,6 +2,7 @@ import json
 
 from six import string_types
 
+from jet_bridge_base import settings
 from jet_bridge_base.exceptions.missing_argument_error import MissingArgumentError
 
 _ARG_DEFAULT = object()
@@ -10,6 +11,7 @@ _ARG_DEFAULT = object()
 class Request(object):
 
     session = None
+    bridge_settings = None
 
     def __init__(
             self,
@@ -92,3 +94,23 @@ class Request(object):
                 v = v.strip()
             values.append(v)
         return values
+
+    def get_bridge_settings(self):
+        if self.bridge_settings:
+            return self.bridge_settings
+
+        bridge_settings_encoded = self.headers.get('X_BRIDGE_SETTINGS')
+
+        if not bridge_settings_encoded:
+            return
+
+        from jet_bridge_base.utils.crypt import decrypt
+
+        try:
+            secret_key = settings.TOKEN.replace('-', '').lower()
+            decrypted = decrypt(bridge_settings_encoded, secret_key)
+            self.bridge_settings = json.loads(decrypted)
+            return self.bridge_settings
+        except Exception:
+            return
+
