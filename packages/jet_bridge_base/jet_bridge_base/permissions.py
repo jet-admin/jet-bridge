@@ -7,6 +7,7 @@ from jwt import PyJWTError
 
 from jet_bridge_base import settings
 from jet_bridge_base.utils.backend import project_auth
+from jet_bridge_base.utils.crypt import get_sha256_hash
 
 
 def decompress_data(value):
@@ -85,14 +86,25 @@ class HasProjectPermissions(BasePermission):
             else:
                 return False
 
+        token_hash = get_sha256_hash(settings.TOKEN.replace('-', '').lower())
+
         for item in permissions:
             item_type = item.get('permission_type', '')
             item_object = item.get('permission_object', '')
-            item_object_model = item_object.split('.', 1)[-1:][0]
             item_actions = item.get('permission_actions', '')
 
-            if item_type != view_permission_type or item_object_model != view_permission_object:
-                continue
+            if view_permission_type == 'model':
+                resource_token_hash = item.get('resource_token_hash', '')
+                item_object_model = item_object.split('.', 1)[-1:][0]
+
+                if resource_token_hash and resource_token_hash != token_hash:
+                    continue
+
+                if item_type != view_permission_type or item_object_model != view_permission_object:
+                    continue
+            else:
+                if item_type != view_permission_type or item_object != view_permission_object:
+                    continue
 
             return view_permission_actions in item_actions
 

@@ -3,7 +3,7 @@ from cryptography.fernet import Fernet
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
-
+from hashlib import sha256
 
 backend = default_backend()
 
@@ -22,3 +22,7 @@ def decrypt(message_encrypted, secret_key):
     key = base64.urlsafe_b64encode(kdf.derive(bytes(secret_key, encoding='utf8')))
     f = Fernet(key)
     return f.decrypt(bytes(message_payload, encoding='latin1')).decode('utf8')
+
+
+def get_sha256_hash(value):
+    return sha256(value.encode('utf-8')).hexdigest()
