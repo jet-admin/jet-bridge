@@ -30,6 +30,7 @@ class JetBridgeConfiguration(Configuration):
             'CORS_HEADERS': settings.CORS_HEADERS,
             'BASE_URL': settings.BASE_URL,
             'JWT_VERIFY_KEY': settings.JWT_VERIFY_KEY,
+            'ENVIRONMENT_TYPE': settings.ENVIRONMENT_TYPE,
             'DATABASE_ENGINE': settings.DATABASE_ENGINE,
             'DATABASE_HOST': settings.DATABASE_HOST,
             'DATABASE_PORT': settings.DATABASE_PORT,
