@@ -1,6 +1,8 @@
 from django.conf.urls import url
 
 from jet_bridge_base.views.api import ApiView
+from jet_bridge_base.views.external_auth.complete import ExternalAuthCompleteView
+from jet_bridge_base.views.external_auth.login import ExternalAuthLoginView
 from jet_bridge_base.views.file_upload import FileUploadView
 from jet_bridge_base.views.image_resize import ImageResizeView
 from jet_bridge_base.views.message import MessageView
@@ -32,6 +34,8 @@ def init_urls():
         url(r'^image_resize/', route_view(ImageResizeView).as_view(), name='image-resize'),
         url(r'^reload/', route_view(ReloadView).as_view(), name='reload'),
         url(r'^proxy_request/', route_view(ProxyRequestView).as_view(), name='proxy-request'),
+        url(r'^api/external_auth/login/(?P<app>[^/]+)/', route_view(ExternalAuthLoginView).as_view(), name='external-auth-login'),
+        url(r'^api/external_auth/complete/(?P<app>[^/]+)/', route_view(ExternalAuthCompleteView).as_view(), name='external-auth-complete'),
     ]
 
     api_urls = router.urls + extra_urls
