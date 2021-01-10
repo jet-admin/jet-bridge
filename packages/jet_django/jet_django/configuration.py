@@ -51,11 +51,15 @@ class JetDjangoConfiguration(Configuration):
         return {
             'DEBUG': django_settings.DEBUG,
             'READ_ONLY': settings.JET_READ_ONLY,
+            'AUTO_OPEN_REGISTER': settings.JET_AUTO_OPEN_REGISTER,
             'WEB_BASE_URL': settings.JET_BACKEND_WEB_BASE_URL,
             'API_BASE_URL': settings.JET_BACKEND_API_BASE_URL,
             'PROJECT': settings.JET_PROJECT,
             'TOKEN': settings.JET_TOKEN,
             'CORS_HEADERS': settings.JET_CORS_HEADERS,
+            'BASE_URL': settings.JET_BASE_URL,
+            'JWT_VERIFY_KEY': settings.JET_JWT_VERIFY_KEY,
+            'ENVIRONMENT_TYPE': settings.JET_ENVIRONMENT_TYPE,
             'DATABASE_ENGINE': settings.database_engine,
             'DATABASE_HOST': settings.database_settings.get('HOST'),
             'DATABASE_PORT': settings.database_settings.get('PORT'),
@@ -66,7 +70,9 @@ class JetDjangoConfiguration(Configuration):
             'DATABASE_CONNECTIONS': 1,
             'DATABASE_ONLY': settings.JET_DATABASE_ONLY,
             'DATABASE_EXCEPT': settings.JET_DATABASE_EXCEPT,
-            'DATABASE_SCHEMA': settings.JET_DATABASE_SCHEMA
+            'DATABASE_SCHEMA': settings.JET_DATABASE_SCHEMA,
+            'SSO_APPLICATIONS': self.clean_sso_applications(settings.JET_SSO_APPLICATIONS),
+            'ALLOW_ORIGIN': settings.JET_ALLOW_ORIGIN
         }
 
     def get_django_instance(self, model, instance):

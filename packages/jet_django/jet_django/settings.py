@@ -1,19 +1,38 @@
+import json
+
 from django.conf import settings
 from django.db import connection
 
-JET_BACKEND_API_BASE_URL = getattr(settings, 'JET_BACKEND_API_BASE_URL', 'https://api.jetadmin.io/api')
-JET_BACKEND_WEB_BASE_URL = getattr(settings, 'JET_BACKEND_WEB_BASE_URL', 'https://app.jetadmin.io')
+from jet_bridge_base.logger import logger
+
 JET_READ_ONLY = getattr(settings, 'JET_READ_ONLY', False)
-JET_REGISTER_TOKEN_ON_START = getattr(settings, 'JET_REGISTER_TOKEN_ON_START', True)
-JET_CORS_HEADERS = getattr(settings, 'JET_CORS_HEADERS', 'corsheaders' not in settings.INSTALLED_APPS)
-JET_MEDIA_FILE_STORAGE = getattr(settings, 'JET_MEDIA_FILE_STORAGE', settings.DEFAULT_FILE_STORAGE)
+JET_AUTO_OPEN_REGISTER = getattr(settings, 'JET_AUTO_OPEN_REGISTER', True)
 JET_PROJECT = getattr(settings, 'JET_PROJECT', None)
 JET_TOKEN = getattr(settings, 'JET_TOKEN', None)
+JET_CORS_HEADERS = getattr(settings, 'JET_CORS_HEADERS', 'corsheaders' not in settings.INSTALLED_APPS)
+JET_BASE_URL = getattr(settings, 'JET_BASE_URL', None)
+JET_JWT_VERIFY_KEY = getattr(settings, 'JET_JWT_VERIFY_KEY', None)
+JET_ENVIRONMENT_TYPE = getattr(settings, 'JET_ENVIRONMENT_TYPE', 'django')
+
+JET_BACKEND_API_BASE_URL = getattr(settings, 'JET_BACKEND_API_BASE_URL', 'https://api.jetadmin.io/api')
+JET_BACKEND_WEB_BASE_URL = getattr(settings, 'JET_BACKEND_WEB_BASE_URL', 'https://app.jetadmin.io')
+
+JET_MEDIA_FILE_STORAGE = getattr(settings, 'JET_MEDIA_FILE_STORAGE', settings.DEFAULT_FILE_STORAGE)
+
 JET_DJANGO_DATABASE = getattr(settings, 'JET_DJANGO_DATABASE', 'default')
 JET_DATABASE_EXTRA = getattr(settings, 'JET_DATABASE_EXTRA', None)
 JET_DATABASE_ONLY = getattr(settings, 'JET_DATABASE_ONLY', None)
 JET_DATABASE_EXCEPT = getattr(settings, 'JET_DATABASE_EXCEPT', None)
 JET_DATABASE_SCHEMA = getattr(settings, 'JET_DATABASE_SCHEMA', None)
+
+JET_SSO_APPLICATIONS = getattr(settings, 'JET_SSO_APPLICATIONS', '{}')
+JET_ALLOW_ORIGIN = getattr(settings, 'JET_ALLOW_ORIGIN', '*')
+
+try:
+    JET_SSO_APPLICATIONS = json.loads(JET_SSO_APPLICATIONS)
+except Exception as e:
+    logger.error('SSO_APPLICATIONS parsing failed', exc_info=e)
+    JET_SSO_APPLICATIONS = {}
 
 database_settings = settings.DATABASES.get(JET_DJANGO_DATABASE, {})
 database_engine = None
