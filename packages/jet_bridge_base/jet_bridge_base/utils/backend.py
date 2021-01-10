@@ -1,4 +1,5 @@
 import requests
+from requests import RequestException
 
 from jet_bridge_base import settings
 from jet_bridge_base.configuration import configuration
@@ -9,7 +10,7 @@ def api_method_url(method):
     return '{}/{}'.format(settings.API_BASE_URL, method)
 
 
-def is_token_activated(project_token):
+def is_project_token_activated(project_token):
     if not project_token:
         return False
 
@@ -27,6 +28,30 @@ def is_token_activated(project_token):
     result = r.json()
 
     return bool(result.get('activated'))
+
+
+def is_resource_token_activated(project_name, resource_token):
+    if not project_name or not resource_token:
+        return False
+
+    url = api_method_url('check_resource_token/')
+    headers = {
+        'User-Agent': '{} v{}'.format(configuration.get_type(), configuration.get_version())
+    }
+    data = {
+        'project': project_name,
+        'token': resource_token
+    }
+
+    r = requests.request('POST', url, headers=headers, data=data)
+
+    if 200 <= r.status_code < 300:
+        result = r.json()
+        return bool(result.get('activated'))
+    elif 400 <= r.status_code < 500:
+        return False
+    else:
+        raise RequestException()
 
 
 def project_auth(token, project_token, permission=None, params=None):

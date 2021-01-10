@@ -3,14 +3,15 @@ import webbrowser
 from requests import RequestException
 
 from jet_bridge_base import settings
-from jet_bridge_base.utils.backend import is_token_activated
+from jet_bridge_base.utils.backend import is_resource_token_activated
 from jet_bridge_base.logger import logger
 
 
 def check_token_command(api_url):
     try:
-        if not is_token_activated(settings.TOKEN):
-            logger.warning('[!] Your server token is not activated')
+        if not is_resource_token_activated(settings.PROJECT, settings.TOKEN):
+            logger.warning('[!] Your resource token is not activated')
+            logger.warning('[!] Project: {}'.format(settings.PROJECT))
             logger.warning('[!] Token: {}'.format(settings.TOKEN))
 
             if settings.DATABASE_ENGINE != 'none' and settings.AUTO_OPEN_REGISTER and api_url.startswith('http'):
