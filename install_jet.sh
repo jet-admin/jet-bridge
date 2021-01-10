@@ -211,6 +211,9 @@ run_instance() {
     echo "    Docker Container: ${CONTAINER_NAME}"
     echo "    Config File: ${CONFIG_FILE}"
     echo
+    echo "    Project: ${PROJECT}"
+    echo "    Token: ${TOKEN}"
+    echo
     echo "    Open ${REGISTER_URL} to finish installation"
     echo
 }
