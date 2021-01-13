@@ -63,7 +63,7 @@ class HasProjectPermissions(BasePermission):
         elif len(result):
             return list(result.values())[0]
 
-    def has_view_permissions(self, view_permissions, user_permissions):
+    def has_view_permissions(self, view_permissions, user_permissions, project_token):
         if not view_permissions:
             return True
         elif user_permissions.get('owner'):
@@ -86,7 +86,7 @@ class HasProjectPermissions(BasePermission):
             else:
                 return False
 
-        token_hash = get_sha256_hash(settings.TOKEN.replace('-', '').lower())
+        token_hash = get_sha256_hash(project_token.replace('-', '').lower())
 
         for item in permissions:
             item_type = item.get('permission_type', '')
@@ -140,7 +140,7 @@ class HasProjectPermissions(BasePermission):
             if user_permissions is None:
                 return False
 
-            return self.has_view_permissions(view_permissions, user_permissions)
+            return self.has_view_permissions(view_permissions, user_permissions, project_token)
         elif token['type'] == self.user_token_prefix:
             result = project_auth(token['value'], project_token, view_permissions, token['params'])
 
