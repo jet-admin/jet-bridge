@@ -6,7 +6,7 @@ set -e
 #
 # This script is meant for quick & easy install via:
 #
-#   sh <(curl -s https://app.jetadmin.io/install_jet.sh)
+#   sh <(curl -s https://app-dev.jetadmin.io/install_jet.sh)
 
 
 PROJECT=$1
@@ -95,7 +95,7 @@ fetch_latest_jet_bridge() {
     echo "    Fetching latest Jet Bridge image..."
     echo
 
-    docker pull jetadmin/jetbridge
+    docker pull jetadmin/jetbridge:dev
 }
 
 prepare_container() {
@@ -119,7 +119,7 @@ create_config() {
             -v ${PWD}:/jet \
             --entrypoint=/network-entrypoint.sh \
             --net=host \
-            jetadmin/jetbridge)
+            jetadmin/jetbridge:dev)
     fi
 
     if [ $POSSIBLE_HOST ]; then
@@ -137,7 +137,7 @@ create_config() {
         -e POSSIBLE_HOST=${POSSIBLE_HOST} \
         -e ARGS=config \
         --net=${NET} \
-        jetadmin/jetbridge
+        jetadmin/jetbridge:dev
 }
 
 run_instance() {
@@ -157,7 +157,7 @@ run_instance() {
         --net=${NET} \
         --restart=always \
         -d \
-        jetadmin/jetbridge \
+        jetadmin/jetbridge:dev \
         1> /dev/null
 
     BASE_URL="http://localhost:${PORT}/api/"
