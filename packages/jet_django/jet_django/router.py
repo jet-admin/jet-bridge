@@ -32,17 +32,19 @@ class Router(object):
         for method, method_action in actions.items():
             def create_action_method(action):
                 def action_method(inner_self, *args, **kwargs):
+                    request = inner_self.get_request()
+
                     try:
                         inner_self.view.action = action
-                        inner_self.before_dispatch()
-                        response = inner_self.view.dispatch(action, *args, **kwargs)
+                        inner_self.before_dispatch(request)
+                        response = inner_self.view.dispatch(action, request, *args, **kwargs)
                         return inner_self.write_response(response)
                     except Exception:
                         exc_type, exc, traceback = sys.exc_info()
-                        response = inner_self.view.error_response(exc_type, exc, traceback)
+                        response = inner_self.view.error_response(request, exc_type, exc, traceback)
                         return inner_self.write_response(response)
                     finally:
-                        inner_self.on_finish()
+                        inner_self.on_finish(request)
 
                 return action_method
 

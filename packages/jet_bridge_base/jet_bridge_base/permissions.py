@@ -7,6 +7,7 @@ from jwt import PyJWTError
 
 from jet_bridge_base import settings
 from jet_bridge_base.utils.backend import project_auth
+from jet_bridge_base.utils.crypt import get_sha256_hash
 
 
 def decompress_data(value):
@@ -62,7 +63,7 @@ class HasProjectPermissions(BasePermission):
         elif len(result):
             return list(result.values())[0]
 
-    def has_view_permissions(self, view_permissions, user_permissions):
+    def has_view_permissions(self, view_permissions, user_permissions, project_token):
         if not view_permissions:
             return True
         elif user_permissions.get('owner'):
@@ -85,14 +86,25 @@ class HasProjectPermissions(BasePermission):
             else:
                 return False
 
+        token_hash = get_sha256_hash(project_token.replace('-', '').lower())
+
         for item in permissions:
             item_type = item.get('permission_type', '')
             item_object = item.get('permission_object', '')
-            item_object_model = item_object.split('.', 1)[-1:][0]
             item_actions = item.get('permission_actions', '')
 
-            if item_type != view_permission_type or item_object_model != view_permission_object:
-                continue
+            if view_permission_type == 'model':
+                resource_token_hash = item.get('resource_token_hash', '')
+                item_object_model = item_object.split('.', 1)[-1:][0]
+
+                if resource_token_hash and resource_token_hash != token_hash:
+                    continue
+
+                if item_type != view_permission_type or item_object_model != view_permission_object:
+                    continue
+            else:
+                if item_type != view_permission_type or item_object != view_permission_object:
+                    continue
 
             return view_permission_actions in item_actions
 
@@ -128,7 +140,7 @@ class HasProjectPermissions(BasePermission):
             if user_permissions is None:
                 return False
 
-            return self.has_view_permissions(view_permissions, user_permissions)
+            return self.has_view_permissions(view_permissions, user_permissions, project_token)
         elif token['type'] == self.user_token_prefix:
             result = project_auth(token['value'], project_token, view_permissions, token['params'])
 

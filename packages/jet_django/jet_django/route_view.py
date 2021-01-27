@@ -37,9 +37,8 @@ class BaseRouteView(generic.View):
 
         return dict(map(map_file, self.request.FILES.dict().items()))
 
-    def before_dispatch(self):
-        self.view = self.view_cls()
-        self.view.request = Request(
+    def get_request(self):
+        return Request(
             self.request.method.upper(),
             self.request.scheme,
             self.request.get_host(),
@@ -50,12 +49,16 @@ class BaseRouteView(generic.View):
             self.request_headers(),
             self.request.body,
             dict(self.request.POST.lists()),
-            self.request_files()
+            self.request_files(),
+            self
         )
 
-        self.view.before_dispatch()
+    def before_dispatch(self, request):
+        self.view = self.view_cls()
+        self.view.before_dispatch(request)
 
-    def on_finish(self):
+    def on_finish(self, request):
+        self.view.after_dispatch(request)
         self.view.on_finish()
 
     def write_response(self, response):
@@ -105,17 +108,19 @@ class BaseRouteView(generic.View):
         response = self.view.dispatch('delete', *args, **kwargs)
         return self.write_response(response)
 
-    def dispatch(self, *args, **kwargs):
+    def dispatch(self, original_request, *args, **kwargs):
+        request = self.get_request()
+
         try:
-            self.before_dispatch()
-            response = super(BaseRouteView, self).dispatch(*args, **kwargs)
+            self.before_dispatch(request)
+            response = super(BaseRouteView, self).dispatch(request, *args, **kwargs)
             return response
         except Exception:
             exc_type, exc, traceback = sys.exc_info()
-            response = self.view.error_response(exc_type, exc, traceback)
+            response = self.view.error_response(request, exc_type, exc, traceback)
             return self.write_response(response)
         finally:
-            self.on_finish()
+            self.on_finish(request)
 
     @classmethod
     def as_view(cls, **initkwargs):
