@@ -249,7 +249,7 @@ class JetDjangoConfiguration(Configuration):
         return value
 
     def serialize_related_model(self, Model):
-        if not Model:
+        if not Model or not hasattr(Model, '_meta'):
             return
         return {
             'model': Model._meta.db_table,
