@@ -7,7 +7,7 @@ for Jet Admin – Admin panel framework for your application
 Description
 ===========
 
-* About Jet Admin: https://about.jetadmin.io
+* About Jet Admin: https://www.jetadmin.io
 * **Live Demo**: https://app.jetadmin.io/demo
 * Documentation: https://docs.jetadmin.io/
 * Support: support@jetadmin.io
