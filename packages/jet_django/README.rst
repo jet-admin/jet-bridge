@@ -12,7 +12,7 @@ Jet Bridge (Django)
 Description
 ===========
 
-* Jet Admin: https://about.jetadmin.io
+* Jet Admin: https://www.jetadmin.io
 * **Live Demo**: http://app.jetadmin.io/demo
 * Support: support@jetadmin.io
 
