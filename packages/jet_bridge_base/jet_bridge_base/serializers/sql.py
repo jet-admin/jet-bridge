@@ -55,7 +55,19 @@ class SqlSerializer(Serializer):
                     return
                 return x
 
-            return {'data': rows, 'columns': list(map(map_column, result.keys()))}
+            def map_row_column(x):
+                if isinstance(x, bytes):
+                    try:
+                        return x.decode('utf-8')
+                    except UnicodeDecodeError:
+                        return x.hex()
+                else:
+                    return x
+
+            def map_row(x):
+                return list(map(map_row_column, x))
+
+            return {'data': list(map(map_row, rows)), 'columns': list(map(map_column, result.keys()))}
         except SQLAlchemyError as e:
             session.rollback()
             raise SqlError(e)
