@@ -108,7 +108,7 @@ def connect_database(conf):
 
     Session = scoped_session(sessionmaker(bind=engine))
 
-    logger.info('Connected to database engine "{}"'.format(engine_url))
+    logger.info('Connecting to database "{}"...'.format(engine_url))
 
     Base.metadata.create_all(engine)
 

@@ -133,6 +133,7 @@ create_config() {
         -v ${PWD}:/jet \
         -e PROJECT=${PROJECT} \
         -e TOKEN=${TOKEN} \
+        -e ENVIRONMENT_TYPE=docker \
         ${DATABASE_HOST} \
         -e POSSIBLE_HOST=${POSSIBLE_HOST} \
         -e ARGS=config \
