@@ -119,7 +119,12 @@ def connect_database(conf):
             return False
         return True
 
-    metadata = MetaData(schema=conf.get('schema') if conf.get('schema') and conf.get('schema') != '' else None)
+    schema = conf.get('schema') if conf.get('schema') and conf.get('schema') != '' else None
+
+    if not schema and conf.get('engine', '').startswith('mssql'):
+        schema = 'dbo'
+
+    metadata = MetaData(schema=schema)
     metadata.reflect(engine, only=only)
     MappedBase = automap_base(metadata=metadata)
 
