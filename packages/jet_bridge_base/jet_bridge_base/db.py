@@ -125,6 +125,7 @@ def connect_database(conf):
         schema = 'dbo'
 
     metadata = MetaData(schema=schema)
+    logger.info('Getting schema for "{}"...'.format(engine_url))
     metadata.reflect(engine, only=only)
     MappedBase = automap_base(metadata=metadata)
 

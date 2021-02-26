@@ -1,4 +1,5 @@
 from jet_bridge_base.models import data_types
+from jet_bridge_base.logger import logger
 
 from sqlalchemy.sql import sqltypes
 
@@ -28,4 +29,5 @@ def map_data_type(value):
     for rule in reversed(map_data_types):
         if isinstance(value, rule['query']):
             return rule['date_type']
+    logger.warning('Unknown database type: {}'.format(str(value)))
     return default_data_type
