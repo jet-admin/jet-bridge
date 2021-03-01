@@ -83,6 +83,8 @@ class HasProjectPermissions(BasePermission):
         if user_permissions.get('read_only'):
             if view_permission_type == 'model' and all(map(lambda x: x in ['r'], list(view_permission_actions))):
                 return True
+            elif view_permission_type == 'project' and view_permission_object in ['project_settings']:
+                return True
             else:
                 return False
 
