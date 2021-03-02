@@ -15,6 +15,9 @@ DEFAULT_CONFIG_PATH = os.path.join('jet.conf')
 
 # Options
 
+DEFAULT_WEB_BASE_URL = 'https://app.jetadmin.io'
+DEFAULT_API_BASE_URL = 'https://api.jetadmin.io/api'
+
 define('address', default='0.0.0.0', help='server address')
 define('port', default=8888, help='server port', type=int)
 define('workers', default=1, help='number of workers', type=int)
@@ -33,8 +36,8 @@ define('base_url', help='base URL', type=str)
 define('jwt_verify_key', help='JWT verify key', type=str, default=None)
 define('environment_type', help='environment type', type=str, default=None)
 
-define('web_base_url', default='https://app.jetadmin.io', help='Jet Admin frontend application base URL')
-define('api_base_url', default='https://api.jetadmin.io/api', help='Jet Admin API base URL')
+define('web_base_url', default=DEFAULT_WEB_BASE_URL, help='Jet Admin frontend application base URL')
+define('api_base_url', default=DEFAULT_API_BASE_URL, help='Jet Admin API base URL')
 
 define('media_storage', default=media.MEDIA_STORAGE_FILE, help='media storage type')
 define('media_root', default='media', help='media root')

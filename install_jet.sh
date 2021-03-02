@@ -218,7 +218,7 @@ run_instance() {
     echo "    Token: ${TOKEN}"
 
     if [ -n "$ENVIRONMENT" ]; then
-      echo "    ENVIRONMENT: ${ENVIRONMENT}"
+      echo "    Environment: ${ENVIRONMENT}"
     fi
 
     echo
