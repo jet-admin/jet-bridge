@@ -11,6 +11,7 @@ set -e
 
 PROJECT=$1
 TOKEN=$2
+ENVIRONMENT=$3
 
 if [ "$(uname)" = "Darwin" ]; then
     MAC=1
@@ -82,7 +83,7 @@ check_is_docker_running() {
             echo "    [!] Try running this script with sudo:"
             echo
             echo "    curl -s https://app.jetadmin.io/install_jet.sh -o install_jet.sh"
-            echo "    sudo sh install_jet.sh ${PROJECT} ${TOKEN}"
+            echo "    sudo sh install_jet.sh ${PROJECT} ${TOKEN} ${ENVIRONMENT}"
             echo
         fi
 
@@ -133,6 +134,7 @@ create_config() {
         -v ${PWD}:/jet \
         -e PROJECT=${PROJECT} \
         -e TOKEN=${TOKEN} \
+        -e ENVIRONMENT=${ENVIRONMENT} \
         -e ENVIRONMENT_TYPE=docker \
         ${DATABASE_HOST} \
         -e POSSIBLE_HOST=${POSSIBLE_HOST} \
@@ -214,6 +216,11 @@ run_instance() {
     echo
     echo "    Project: ${PROJECT}"
     echo "    Token: ${TOKEN}"
+
+    if [ -n "$ENVIRONMENT" ]; then
+      echo "    ENVIRONMENT: ${ENVIRONMENT}"
+    fi
+
     echo
     echo "    Open ${REGISTER_URL} to finish installation"
     echo

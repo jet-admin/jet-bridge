@@ -56,6 +56,7 @@ class JetDjangoConfiguration(Configuration):
             'API_BASE_URL': settings.JET_BACKEND_API_BASE_URL,
             'PROJECT': settings.JET_PROJECT,
             'TOKEN': settings.JET_TOKEN,
+            'ENVIRONMENT': settings.JET_ENVIRONMENT,
             'CORS_HEADERS': settings.JET_CORS_HEADERS,
             'BASE_URL': settings.JET_BASE_URL,
             'JWT_VERIFY_KEY': settings.JET_JWT_VERIFY_KEY,

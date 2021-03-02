@@ -27,6 +27,7 @@ class JetBridgeConfiguration(Configuration):
             'API_BASE_URL': settings.API_BASE_URL,
             'PROJECT': settings.PROJECT,
             'TOKEN': settings.TOKEN,
+            'ENVIRONMENT': settings.ENVIRONMENT,
             'CORS_HEADERS': settings.CORS_HEADERS,
             'BASE_URL': settings.BASE_URL,
             'JWT_VERIFY_KEY': settings.JWT_VERIFY_KEY,
