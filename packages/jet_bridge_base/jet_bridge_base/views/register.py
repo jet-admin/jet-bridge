@@ -24,7 +24,10 @@ class RegisterView(BaseAPIView):
         else:
             web_base_url = settings.WEB_BASE_URL
 
-        url = '{}/builder/{}/resources/database/create/'.format(web_base_url, settings.PROJECT)
+        if settings.ENVIRONMENT:
+            url = '{}/builder/{}/{}/resources/database/create/'.format(web_base_url, settings.PROJECT, settings.ENVIRONMENT)
+        else:
+            url = '{}/builder/{}/resources/database/create/'.format(web_base_url, settings.PROJECT)
 
         parameters = [
             ['engine', settings.DATABASE_ENGINE],

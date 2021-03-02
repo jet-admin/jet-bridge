@@ -27,6 +27,7 @@ define('connections', default=50, help='connects', type=int)
 define('auto_open_register', default=True, help='open token register automatically', type=bool)
 define('project', help='project', type=str)
 define('token', help='token', type=str)
+define('environment', help='environment', type=str)
 define('cors_headers', default=True, help='add CORS headers', type=bool)
 define('base_url', help='base URL', type=str)
 define('jwt_verify_key', help='JWT verify key', type=str, default=None)
@@ -98,6 +99,7 @@ CONFIG = options.config
 USE_DEFAULT_CONFIG = options.use_default_config.lower().split(',')
 PROJECT = options.project
 TOKEN = options.token
+ENVIRONMENT = options.environment
 CORS_HEADERS = options.cors_headers
 BASE_URL = options.base_url
 JWT_VERIFY_KEY = options.jwt_verify_key
