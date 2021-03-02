@@ -136,6 +136,8 @@ create_config() {
         -e TOKEN=${TOKEN} \
         -e ENVIRONMENT=${ENVIRONMENT} \
         -e ENVIRONMENT_TYPE=docker \
+        -e WEB_BASE_URL=https://app-dev.jetadmin.io \
+        -e API_BASE_URL=https://api-dev.jetadmin.io/api \
         ${DATABASE_HOST} \
         -e POSSIBLE_HOST=${POSSIBLE_HOST} \
         -e ARGS=config \

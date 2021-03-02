@@ -281,6 +281,15 @@ def create_config(config_not_set):
         'DATABASE_PASSWORD': database_password
     }
 
+    if settings.ENVIRONMENT:
+        config_content['ENVIRONMENT'] = settings.ENVIRONMENT
+
+    if settings.WEB_BASE_URL and settings.WEB_BASE_URL != settings.DEFAULT_WEB_BASE_URL:
+        config_content['WEB_BASE_URL'] = settings.WEB_BASE_URL
+
+    if settings.API_BASE_URL and settings.API_BASE_URL != settings.DEFAULT_API_BASE_URL:
+        config_content['API_BASE_URL'] = settings.API_BASE_URL
+
     try:
         os.makedirs(os.path.dirname(config))
     except OSError:
