@@ -72,6 +72,9 @@ class JetDjangoConfiguration(Configuration):
             'DATABASE_ONLY': settings.JET_DATABASE_ONLY,
             'DATABASE_EXCEPT': settings.JET_DATABASE_EXCEPT,
             'DATABASE_SCHEMA': settings.JET_DATABASE_SCHEMA,
+            'COOKIE_SAMESITE': settings.JET_COOKIE_SAMESITE,
+            'COOKIE_SECURE': settings.JET_COOKIE_SECURE,
+            'COOKIE_DOMAIN': settings.JET_COOKIE_DOMAIN,
             'SSO_APPLICATIONS': self.clean_sso_applications(settings.JET_SSO_APPLICATIONS),
             'ALLOW_ORIGIN': settings.JET_ALLOW_ORIGIN
         }

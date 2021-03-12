@@ -54,6 +54,10 @@ define('database_only', default=None, type=str)
 define('database_except', default=None, type=str)
 define('database_schema', default=None, type=str)
 
+define('cookie_samesite', default='None', type=str)
+define('cookie_secure', default=True, type=bool)
+define('cookie_domain', default=None, type=str)
+
 define('sso_applications', default='{}', type=str)
 define('allow_origin', default='*')
 
@@ -125,6 +129,10 @@ DATABASE_EXTRA = options.database_extra
 DATABASE_ONLY = options.database_only.split(',') if options.database_only else None
 DATABASE_EXCEPT = options.database_except.split(',') if options.database_except else None
 DATABASE_SCHEMA = options.database_schema
+
+COOKIE_SAMESITE = options.cookie_samesite
+COOKIE_SECURE = options.cookie_secure
+COOKIE_DOMAIN = options.cookie_domain
 
 try:
     SSO_APPLICATIONS = json.loads(options.sso_applications)

@@ -26,6 +26,10 @@ JET_DATABASE_ONLY = getattr(settings, 'JET_DATABASE_ONLY', None)
 JET_DATABASE_EXCEPT = getattr(settings, 'JET_DATABASE_EXCEPT', None)
 JET_DATABASE_SCHEMA = getattr(settings, 'JET_DATABASE_SCHEMA', None)
 
+JET_COOKIE_SAMESITE = getattr(settings, 'JET_COOKIE_SAMESITE', 'None')
+JET_COOKIE_SECURE = getattr(settings, 'JET_COOKIE_SECURE', True)
+JET_COOKIE_DOMAIN = getattr(settings, 'JET_COOKIE_DOMAIN', None)
+
 JET_SSO_APPLICATIONS = getattr(settings, 'JET_SSO_APPLICATIONS', '{}')
 JET_ALLOW_ORIGIN = getattr(settings, 'JET_ALLOW_ORIGIN', '*')
 

@@ -43,6 +43,9 @@ class JetBridgeConfiguration(Configuration):
             'DATABASE_ONLY': settings.DATABASE_ONLY,
             'DATABASE_EXCEPT': settings.DATABASE_EXCEPT,
             'DATABASE_SCHEMA': settings.DATABASE_SCHEMA,
+            'COOKIE_SAMESITE': settings.COOKIE_SAMESITE,
+            'COOKIE_SECURE': settings.COOKIE_SECURE,
+            'COOKIE_DOMAIN': settings.COOKIE_DOMAIN,
             'SSO_APPLICATIONS': self.clean_sso_applications(settings.SSO_APPLICATIONS),
             'ALLOW_ORIGIN': settings.ALLOW_ORIGIN
         }
@@ -119,7 +122,13 @@ class JetBridgeConfiguration(Configuration):
         if value is None:
             self.session_clear(request, name)
         else:
-            request.original_handler.set_secure_cookie(name, value, samesite='None', secure=True)
+            request.original_handler.set_secure_cookie(
+                name,
+                value,
+                samesite=settings.COOKIE_SAMESITE,
+                secure=settings.COOKIE_SECURE,
+                domain=settings.COOKIE_DOMAIN
+            )
 
     def session_clear(self, request, name):
         request.original_handler.clear_cookie(name)
