@@ -104,13 +104,9 @@ def connect_database(conf):
     if conf.get('engine') == 'sqlite':
         engine = create_engine(engine_url)
     else:
-        engine = create_engine(engine_url, pool_size=conf.get('connections'), max_overflow=10, pool_recycle=300)
+        engine = create_engine(engine_url, pool_size=conf.get('connections'), max_overflow=10, pool_recycle=300, connect_args={'connect_timeout': 5})
 
     Session = scoped_session(sessionmaker(bind=engine))
-
-    logger.info('Connecting to database "{}"...'.format(engine_url))
-
-    Base.metadata.create_all(engine)
 
     def only(table, meta):
         if conf.get('only') is not None and table not in conf.get('only'):
@@ -124,41 +120,49 @@ def connect_database(conf):
     if not schema and conf.get('engine', '').startswith('mssql'):
         schema = 'dbo'
 
-    metadata = MetaData(schema=schema)
-    logger.info('Getting schema for "{}"...'.format(engine_url))
-    metadata.reflect(engine, only=only)
-    MappedBase = automap_base(metadata=metadata)
 
-    def name_for_scalar_relationship(base, local_cls, referred_cls, constraint):
-        rnd = get_random_string(4)
-        return referred_cls.__name__.lower() + '_jet_relation' + rnd
+    session = Session()
 
-    def name_for_collection_relationship(base, local_cls, referred_cls, constraint):
-        rnd = get_random_string(4)
-        return referred_cls.__name__.lower() + '_jet_collection' + rnd
+    logger.info('Connecting to database "{}"...'.format(engine_url))
 
-    def custom_generate_relationship(base, direction, return_fn, attrname, local_cls, referred_cls, **kw):
-        rnd = get_random_string(4)
-        attrname = attrname + '_jet_ref' + rnd
-        return generate_relationship(base, direction, return_fn, attrname, local_cls, referred_cls, **kw)
+    with session.connection() as connection:
+        metadata = MetaData(schema=schema, bind=connection)
+        logger.info('Getting schema for "{}"...'.format(engine_url))
+        metadata.reflect(engine, only=only)
+        logger.info('Connected to "{}"...'.format(engine_url))
 
-    MappedBase.prepare(
-        name_for_scalar_relationship=name_for_scalar_relationship,
-        name_for_collection_relationship=name_for_collection_relationship,
-        generate_relationship=custom_generate_relationship
-    )
+        MappedBase = automap_base(metadata=metadata)
 
-    for table_name, table in MappedBase.metadata.tables.items():
-        if len(table.primary_key.columns) == 0 and table_name not in MappedBase.classes:
-            logger.warning('Table "{}" does not have primary key and will be ignored'.format(table_name))
+        def name_for_scalar_relationship(base, local_cls, referred_cls, constraint):
+            rnd = get_random_string(4)
+            return referred_cls.__name__.lower() + '_jet_relation' + rnd
 
-    connections[connection_id] = {
-        'engine': engine,
-        'Session': Session,
-        'MappedBase': MappedBase,
-        'params_id': connection_params_id
-    }
-    return connections[connection_id]
+        def name_for_collection_relationship(base, local_cls, referred_cls, constraint):
+            rnd = get_random_string(4)
+            return referred_cls.__name__.lower() + '_jet_collection' + rnd
+
+        def custom_generate_relationship(base, direction, return_fn, attrname, local_cls, referred_cls, **kw):
+            rnd = get_random_string(4)
+            attrname = attrname + '_jet_ref' + rnd
+            return generate_relationship(base, direction, return_fn, attrname, local_cls, referred_cls, **kw)
+
+        MappedBase.prepare(
+            name_for_scalar_relationship=name_for_scalar_relationship,
+            name_for_collection_relationship=name_for_collection_relationship,
+            generate_relationship=custom_generate_relationship
+        )
+
+        for table_name, table in MappedBase.metadata.tables.items():
+            if len(table.primary_key.columns) == 0 and table_name not in MappedBase.classes:
+                logger.warning('Table "{}" does not have primary key and will be ignored'.format(table_name))
+
+        connections[connection_id] = {
+            'engine': engine,
+            'Session': Session,
+            'MappedBase': MappedBase,
+            'params_id': connection_params_id
+        }
+        return connections[connection_id]
 
 
 def disconnect_database(conf):
