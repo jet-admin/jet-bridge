@@ -24,8 +24,7 @@ def apply_default_ordering(queryset):
         return False
 
     if ordering is None or not any(map(is_pk, ordering)):
-        order_by = list(ordering or []) + [desc(pk)]
-        queryset = queryset.order_by(*order_by)
+        queryset = queryset.order_by(desc(pk))
 
     return queryset
 
