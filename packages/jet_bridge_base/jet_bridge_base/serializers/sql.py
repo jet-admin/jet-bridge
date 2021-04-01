@@ -73,6 +73,8 @@ class SqlSerializer(Serializer):
             raise SqlError(e)
         except TypeError as e:
             raise SqlError(e)
+        except Exception as e:
+            raise SqlError(e)
         finally:
             session.close()
 
