@@ -13,27 +13,34 @@ class SqlSerializer(Serializer):
     query = fields.CharField()
     timezone = fields.CharField(required=False)
     params = SqlParamsSerializers(required=False)
+    params_obj = fields.JSONField(required=False)
+    v = fields.IntegerField(default=1)
 
-    def validate_query(self, value):
+    def validate(self, attrs):
         forbidden = ['insert', 'update', 'delete', 'grant', 'show']
         for i in range(len(forbidden)):
             forbidden.append('({}'.format(forbidden[i]))
-        if any(map(lambda x: ' {} '.format(value.lower()).find(' {} '.format(x)) != -1, forbidden)):
-            raise ValidationError('forbidden query')
+        if any(map(lambda x: ' {} '.format(attrs['query'].lower()).find(' {} '.format(x)) != -1, forbidden)):
+            raise ValidationError({'query': 'forbidden query'})
 
-        i = 0
-        while value.find('%s') != -1:
-            value = value.replace('%s', ':param_{}'.format(i), 1)
-            i += 1
+        if attrs['v'] < 2:
+            i = 0
+            while attrs['query'].find('%s') != -1:
+                attrs['query'] = attrs['query'].replace('%s', ':param_{}'.format(i), 1)
+                i += 1
 
-        return value
+        return attrs
 
     def execute(self, data):
         request = self.context.get('request')
         session = create_session(request)
 
         query = data['query']
-        params = data.get('params', [])
+
+        if data['v'] >= 2:
+            params = data.get('params_obj', {})
+        else:
+            params = data.get('params', [])
 
         if 'timezone' in data:
             try:
