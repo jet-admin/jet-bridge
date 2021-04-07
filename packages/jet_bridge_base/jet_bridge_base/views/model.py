@@ -72,7 +72,8 @@ class ModelViewSet(ModelAPIViewMixin):
     def filter_queryset(self, request, queryset):
         queryset = super(ModelViewSet, self).filter_queryset(request, queryset)
         if request.action == 'list':
-            queryset = apply_default_ordering(queryset)
+            Model = self.get_model(request)
+            queryset = apply_default_ordering(Model, queryset)
         return queryset
 
     @action(methods=['get'], detail=False)

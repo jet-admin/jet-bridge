@@ -64,7 +64,7 @@ def get_model_siblings(request, Model, instance, queryset):
     if count > 10000:
         return {}
 
-    queryset = apply_default_ordering(queryset)
+    queryset = apply_default_ordering(Model, queryset)
     row_number = get_row_number(Model, queryset, instance)
 
     if not row_number:
