@@ -15,11 +15,12 @@ class SqlSerializer(Serializer):
     params = SqlParamsSerializers(required=False)
 
     def validate_query(self, value):
-        forbidden = ['insert', 'update', 'delete', 'grant', 'show']
-        for i in range(len(forbidden)):
-            forbidden.append('({}'.format(forbidden[i]))
-        if any(map(lambda x: ' {} '.format(value.lower()).find(' {} '.format(x)) != -1, forbidden)):
-            raise ValidationError('forbidden query')
+        # TODO allow any sql operations, maybe other serializer class for non select?
+        # forbidden = ['insert', 'update', 'delete', 'grant', 'show']
+        # for i in range(len(forbidden)):
+        #     forbidden.append('({}'.format(forbidden[i]))
+        # if any(map(lambda x: ' {} '.format(value.lower()).find(' {} '.format(x)) != -1, forbidden)):
+        #     raise ValidationError('forbidden query')
 
         i = 0
         while value.find('%s') != -1:
@@ -48,12 +49,10 @@ class SqlSerializer(Serializer):
                 params
             )
 
-            rows = list(map(lambda x: list(x.itervalues()), result))
+            if not result.returns_rows:
+                return {'data': [], 'columns': []}
 
-            def map_column(x):
-                if x == '?column?':
-                    return
-                return x
+            rows = result.fetchall()
 
             def map_row_column(x):
                 if isinstance(x, bytes):
@@ -67,13 +66,14 @@ class SqlSerializer(Serializer):
             def map_row(x):
                 return list(map(map_row_column, x))
 
-            return {'data': list(map(map_row, rows)), 'columns': list(map(map_column, result.keys()))}
+            return {'data': list(map(map_row, rows)), 'columns': list(result.keys())}
         except SQLAlchemyError as e:
             session.rollback()
             raise SqlError(e)
         except TypeError as e:
             raise SqlError(e)
         finally:
+            session.commit()
             session.close()
 
 
