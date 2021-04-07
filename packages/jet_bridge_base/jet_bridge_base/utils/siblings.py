@@ -2,16 +2,17 @@ from sqlalchemy import inspect, func
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import load_only
 
-from jet_bridge_base.utils.queryset import apply_default_ordering, queryset_count_optimized
+from jet_bridge_base.utils.queryset import apply_default_ordering, queryset_count_optimized, get_queryset_order_by
 
 
 def get_row_number(Model, queryset, instance):
     mapper = inspect(Model)
     pk = mapper.primary_key[0].name
+    ordering = get_queryset_order_by(queryset)
 
     subqquery = queryset.with_entities(
         mapper.primary_key[0].label('__inner__pk'),
-        func.row_number().over(order_by=queryset._order_by).label('__inner__row')
+        func.row_number().over(order_by=ordering).label('__inner__row')
     ).subquery()
 
     try:
