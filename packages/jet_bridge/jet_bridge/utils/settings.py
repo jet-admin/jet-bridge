@@ -23,7 +23,11 @@ def parse_environment(self, final=True):
 
 
 def parse_config_file(self, path, section, final=True):
-    config_parser = configparser.ConfigParser(interpolation=None)
+    try:
+        config_parser = configparser.ConfigParser(interpolation=None)
+    except TypeError:
+        config_parser = configparser.ConfigParser()
+
     if not config_parser.read(path):
         raise IOError('Config file at path "{}" not found'.format(path))
 

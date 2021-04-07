@@ -6,15 +6,19 @@ from sqlalchemy.sql.elements import AnnotatedColumnElement, UnaryExpression
 from jet_bridge_base import settings
 
 
-def get_queryset_model(queryset):
-    return queryset._primary_entity.entity_zero_or_selectable.entity
+def get_queryset_order_by(queryset):
+    if hasattr(queryset, '_order_by_clauses'):
+        return queryset._order_by_clauses
+    elif hasattr(queryset, '_order_by'):
+        return queryset._order_by
+    else:
+        return []
 
 
-def apply_default_ordering(queryset):
-    model = get_queryset_model(queryset)
-    mapper = inspect(model)
+def apply_default_ordering(Model, queryset):
+    mapper = inspect(Model)
     pk = mapper.primary_key[0].name
-    ordering = queryset._order_by if queryset._order_by else []
+    ordering = get_queryset_order_by(queryset)
 
     def is_pk(x):
         if isinstance(x, AnnotatedColumnElement):
