@@ -29,7 +29,8 @@ class ProxyRequestSerializer(Serializer):
 
     def get_access_token(self, app, config, extra_data):
         handler = self.context.get('handler')
-        strategy = load_strategy(handler, config)
+        request = self.context.get('request')
+        strategy = load_strategy(handler, request, config)
 
         backend_path = config.get('backend_path')
         Backend = module_member(backend_path)
