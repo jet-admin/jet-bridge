@@ -55,8 +55,6 @@ class SqlSerializer(Serializer):
                 params
             )
 
-            rows = list(map(lambda x: list(x.itervalues()), result))
-
             def map_column(x):
                 if x == '?column?':
                     return
@@ -71,10 +69,10 @@ class SqlSerializer(Serializer):
                 else:
                     return x
 
-            def map_row(x):
-                return list(map(map_row_column, x))
+            def map_row(row):
+                return list(map(lambda x: map_row_column(row[x]), row.keys()))
 
-            return {'data': list(map(map_row, rows)), 'columns': list(map(map_column, result.keys()))}
+            return {'data': list(map(map_row, result)), 'columns': list(map(map_column, result.keys()))}
         except SQLAlchemyError as e:
             session.rollback()
             raise SqlError(e)
