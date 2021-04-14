@@ -7,9 +7,9 @@ from jet_bridge_base import settings
 
 
 def get_queryset_order_by(queryset):
-    if hasattr(queryset, '_order_by_clauses'):
+    if hasattr(queryset, '_order_by_clauses') and queryset._order_by_clauses:
         return queryset._order_by_clauses
-    elif hasattr(queryset, '_order_by'):
+    elif hasattr(queryset, '_order_by') and queryset._order_by:
         return queryset._order_by
     else:
         return []
