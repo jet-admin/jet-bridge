@@ -62,22 +62,6 @@ define('cookie_compress', default=False, type=bool)
 define('sso_applications', default='{}', type=str)
 define('allow_origin', default='*')
 
-required_options = [
-    'address',
-    'port',
-    'project',
-    'token',
-    'database_engine',
-    'database_name',
-]
-
-required_options_without_default = [
-    # 'project',
-    # 'token',
-    'database_engine',
-    'database_name',
-]
-
 # Parse
 
 options.parse_command_line(final=False)
@@ -90,6 +74,24 @@ if options.config:
             logger.warning(e)
 
 parse_environment(options, final=True)
+
+required_options = [
+    'address',
+    'port',
+    'project',
+    'token',
+    'database_engine'
+]
+
+required_options_without_default = [
+    # 'project',
+    # 'token',
+    'database_engine'
+]
+
+if options.database_engine != 'none':
+    required_options.append('database_name')
+    required_options_without_default.append('database_name')
 
 missing_options = list(filter(lambda x: x not in options or options[x] is None, required_options))
 
