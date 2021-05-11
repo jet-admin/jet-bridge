@@ -47,14 +47,14 @@ class JetBridgeStrategy(BaseStrategy):
     def html(self, content):
         self.request_handler.write(content)
 
-    def session_get(self, name, default=None):
-        value = configuration.session_get(self.request, name, default)
+    def session_get(self, name, default=None, secure=True):
+        value = configuration.session_get(self.request, name, default, secure=secure)
         if value:
             return value
         return default
 
-    def session_set(self, name, value):
-        configuration.session_set(self.request, name, value)
+    def session_set(self, name, value, secure=True):
+        configuration.session_set(self.request, name, value, secure=secure)
 
     def session_pop(self, name):
         value = self.session_get(name)

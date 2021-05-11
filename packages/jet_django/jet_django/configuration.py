@@ -75,6 +75,7 @@ class JetDjangoConfiguration(Configuration):
             'COOKIE_SAMESITE': settings.JET_COOKIE_SAMESITE,
             'COOKIE_SECURE': settings.JET_COOKIE_SECURE,
             'COOKIE_DOMAIN': settings.JET_COOKIE_DOMAIN,
+            'COOKIE_COMPRESS': settings.JET_COOKIE_COMPRESS,
             'SSO_APPLICATIONS': self.clean_sso_applications(settings.JET_SSO_APPLICATIONS),
             'ALLOW_ORIGIN': settings.JET_ALLOW_ORIGIN
         }
