@@ -60,10 +60,10 @@ class Configuration(object):
     def media_url(self, path, request):
         pass
 
-    def session_set(self, request, name, value):
+    def session_set(self, request, name, value, secure=True):
         pass
 
-    def session_get(self, request, name, default=None):
+    def session_get(self, request, name, default=None, decode=True, secure=True):
         pass
 
     def session_clear(self, request, name):

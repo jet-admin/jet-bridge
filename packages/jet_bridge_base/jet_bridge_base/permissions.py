@@ -11,12 +11,21 @@ from jet_bridge_base.utils.crypt import get_sha256_hash
 
 
 def decompress_data(value):
-    bytes = base64.b64decode(value)
-    data = gzip.decompress(bytes)
-    decoded = data.decode('utf-8')
-    result = json.loads(decoded)
+    try:
+        bytes = base64.b64decode(value)
+        data = gzip.decompress(bytes)
+        return data.decode('utf-8')
+    except AttributeError:
+        return value.decode('zlib')
 
-    return result
+
+def compress_data(data):
+    try:
+        encoded = data.encode('utf-8')
+        bytes = gzip.compress(encoded)
+        return str(base64.b64encode(bytes), 'utf-8')
+    except AttributeError:
+        return data.encode('zlib')
 
 
 class BasePermission(object):
@@ -72,7 +81,8 @@ class HasProjectPermissions(BasePermission):
             return True
 
         if 'permissions' in user_permissions:
-            permissions = decompress_data(user_permissions['permissions'])
+            decoded = decompress_data(user_permissions['permissions'])
+            permissions = json.loads(decoded)
         else:
             permissions = []
 

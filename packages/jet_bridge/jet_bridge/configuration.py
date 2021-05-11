@@ -46,6 +46,7 @@ class JetBridgeConfiguration(Configuration):
             'COOKIE_SAMESITE': settings.COOKIE_SAMESITE,
             'COOKIE_SECURE': settings.COOKIE_SECURE,
             'COOKIE_DOMAIN': settings.COOKIE_DOMAIN,
+            'COOKIE_COMPRESS': settings.COOKIE_COMPRESS,
             'SSO_APPLICATIONS': self.clean_sso_applications(settings.SSO_APPLICATIONS),
             'ALLOW_ORIGIN': settings.ALLOW_ORIGIN
         }
@@ -111,18 +112,32 @@ class JetBridgeConfiguration(Configuration):
 
         return url
 
-    def session_get(self, request, name, default=None):
-        value = request.original_handler.get_secure_cookie(name)
+    def session_get(self, request, name, default=None, decode=True, secure=True):
+        if secure:
+            value = request.original_handler.get_secure_cookie(name)
+        else:
+            value = request.original_handler.get_cookie(name)
+
         if value is None:
             return default
-        else:
+        elif decode and secure:
             return value.decode()
+        else:
+            return value
 
-    def session_set(self, request, name, value):
+    def session_set(self, request, name, value, secure=True):
         if value is None:
             self.session_clear(request, name)
-        else:
+        elif secure:
             request.original_handler.set_secure_cookie(
+                name,
+                value,
+                samesite=settings.COOKIE_SAMESITE,
+                secure=settings.COOKIE_SECURE,
+                domain=settings.COOKIE_DOMAIN
+            )
+        else:
+            request.original_handler.set_cookie(
                 name,
                 value,
                 samesite=settings.COOKIE_SAMESITE,

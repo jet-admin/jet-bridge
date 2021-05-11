@@ -57,6 +57,7 @@ define('database_schema', default=None, type=str)
 define('cookie_samesite', default='None', type=str)
 define('cookie_secure', default=True, type=bool)
 define('cookie_domain', default=None, type=str)
+define('cookie_compress', default=False, type=bool)
 
 define('sso_applications', default='{}', type=str)
 define('allow_origin', default='*')
@@ -133,6 +134,7 @@ DATABASE_SCHEMA = options.database_schema
 COOKIE_SAMESITE = options.cookie_samesite
 COOKIE_SECURE = options.cookie_secure
 COOKIE_DOMAIN = options.cookie_domain
+COOKIE_COMPRESS = options.cookie_compress
 
 try:
     SSO_APPLICATIONS = json.loads(options.sso_applications)

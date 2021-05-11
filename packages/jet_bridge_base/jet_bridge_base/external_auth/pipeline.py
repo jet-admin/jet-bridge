@@ -1,8 +1,10 @@
 import json
 import time
 
+from jet_bridge_base import settings
 from jet_bridge_base.configuration import configuration
 from jet_bridge_base.external_auth.storage import User
+from jet_bridge_base.permissions import compress_data
 
 
 def save_extra_data(backend, user, response, details, strategy, *args, **kwargs):
@@ -19,7 +21,12 @@ def save_extra_data(backend, user, response, details, strategy, *args, **kwargs)
         'token_updated': int(time.time())
     }
 
-    strategy.session_set(extra_data_key, json.dumps(data))
+    extra_data_str = json.dumps(data)
+
+    if settings.COOKIE_COMPRESS:
+        extra_data_str = compress_data(extra_data_str)
+
+    strategy.session_set(extra_data_key, extra_data_str, secure=not settings.COOKIE_COMPRESS)
 
     return {
         'extra_data': extra_data
