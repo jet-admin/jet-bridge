@@ -10,7 +10,7 @@ from jet_bridge_base import fields, settings
 from jet_bridge_base.configuration import configuration
 from jet_bridge_base.exceptions.validation_error import ValidationError
 from jet_bridge_base.external_auth.utils import load_strategy
-from jet_bridge_base.permissions import decompress_data
+from jet_bridge_base.permissions import decompress_data, compress_data
 from jet_bridge_base.responses.base import Response
 from jet_bridge_base.serializers.serializer import Serializer
 from jet_bridge_base.utils.backend import get_secret_tokens
@@ -75,7 +75,13 @@ class ProxyRequestSerializer(Serializer):
 
                 request = self.context.get('request')
                 extra_data_key = '_'.join(['extra_data', app])
-                configuration.session_set(request, extra_data_key, json.dumps(new_extra_data))
+
+                new_extra_data_str = json.dumps(new_extra_data)
+
+                if settings.COOKIE_COMPRESS:
+                    new_extra_data_str = compress_data(new_extra_data_str)
+
+                configuration.session_set(request, extra_data_key, new_extra_data_str, secure=not settings.COOKIE_COMPRESS)
 
                 return access_token
         except Exception:
