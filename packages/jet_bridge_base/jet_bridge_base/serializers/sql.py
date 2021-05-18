@@ -1,4 +1,4 @@
-from sqlalchemy import text
+from sqlalchemy import text, select, column, func, desc
 from sqlalchemy.exc import SQLAlchemyError
 
 from jet_bridge_base import fields
@@ -6,11 +6,30 @@ from jet_bridge_base.db import create_session
 from jet_bridge_base.exceptions.sql import SqlError
 from jet_bridge_base.exceptions.validation_error import ValidationError
 from jet_bridge_base.fields.sql_params import SqlParamsSerializers
+from jet_bridge_base.filters import lookups
+from jet_bridge_base.filters.filter_for_dbfield import filter_for_data_type
 from jet_bridge_base.serializers.serializer import Serializer
+from jet_bridge_base.utils.db_types import map_query_type
+
+
+class ColumnSerializer(Serializer):
+    name = fields.CharField()
+    data_type = fields.CharField()
+
+
+class FilterItemSerializer(Serializer):
+    name = fields.CharField()
+    value = fields.CharField(required=False)
 
 
 class SqlSerializer(Serializer):
     query = fields.CharField()
+    offset = fields.IntegerField(required=False)
+    limit = fields.IntegerField(required=False)
+    order_by = fields.CharField(many=True, required=False)
+    count = fields.BooleanField(default=False)
+    columns = ColumnSerializer(many=True, required=False)
+    filters = FilterItemSerializer(many=True, required=False)
     timezone = fields.CharField(required=False)
     params = SqlParamsSerializers(required=False)
     params_obj = fields.JSONField(required=False)
@@ -31,6 +50,64 @@ class SqlSerializer(Serializer):
 
         return attrs
 
+    def filter_queryset(self, queryset, data):
+        filters_instances = []
+
+        for item in data.get('columns', []):
+            query_type = map_query_type(item['data_type'])()
+            filter_data = filter_for_data_type(query_type)
+            for lookup in filter_data['lookups']:
+                instance = filter_data['filter_class'](
+                    name=item['name'],
+                    column=column(item['name']),
+                    lookup=lookup
+                )
+                filters_instances.append(instance)
+
+        def get_filter_value(name):
+            filter_items = list(filter(lambda x: x['name'] == name, data.get('filters', [])))
+            return filter_items[0]['value'] if len(filter_items) else None
+
+        for item in filters_instances:
+            if item.name:
+                argument_name = '{}__{}'.format(item.name, item.lookup)
+                value = get_filter_value(argument_name)
+
+                if value is None and item.lookup == lookups.DEFAULT_LOOKUP:
+                    value = get_filter_value(item.name)
+            else:
+                value = None
+
+            queryset = item.filter(queryset, value)
+
+        return queryset
+
+    def paginate_queryset(self, queryset, data):
+        if 'offset' in data:
+            queryset = queryset.offset(data['offset'])
+
+        if 'limit' in data:
+            queryset = queryset.limit(data['limit'])
+
+        return queryset
+
+    def map_order_field(self, name):
+        descending = False
+        if name.startswith('-'):
+            name = name[1:]
+            descending = True
+        field = column(name)
+        if descending:
+            field = desc(field)
+        return field
+
+    def sort_queryset(self, queryset, data):
+        if 'order_by' in data:
+            order_by = list(map(lambda x: self.map_order_field(x), data['order_by']))
+            queryset = queryset.order_by(*order_by)
+
+        return queryset
+
     def execute(self, data):
         request = self.context.get('request')
         session = create_session(request)
@@ -49,11 +126,26 @@ class SqlSerializer(Serializer):
                 session.rollback()
                 pass
 
+        subquery = text(query).columns().subquery('__jet_q2')
+        count_rows = None
+
+        if data['count']:
+            try:
+                count_queryset = select([func.count()]).select_from(subquery)
+                count_queryset = self.filter_queryset(count_queryset, data)
+
+                count_result = session.execute(count_queryset, params)
+                count_rows = count_result.all()[0][0]
+            except Exception:
+                pass
+
         try:
-            result = session.execute(
-                text(query),
-                params
-            )
+            queryset = select(['*']).select_from(subquery)
+            queryset = self.filter_queryset(queryset, data)
+            queryset = self.paginate_queryset(queryset, data)
+            queryset = self.sort_queryset(queryset, data)
+
+            result = session.execute(queryset, params)
 
             def map_column(x):
                 if x == '?column?':
@@ -72,7 +164,12 @@ class SqlSerializer(Serializer):
             def map_row(row):
                 return list(map(lambda x: map_row_column(row[x]), row.keys()))
 
-            return {'data': list(map(map_row, result)), 'columns': list(map(map_column, result.keys()))}
+            response = {'data': list(map(map_row, result)), 'columns': list(map(map_column, result.keys()))}
+
+            if count_rows is not None:
+                response['count'] = count_rows
+
+            return response
         except SQLAlchemyError as e:
             session.rollback()
             raise SqlError(e)
