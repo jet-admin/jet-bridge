@@ -30,11 +30,9 @@ class FilterClass(object):
                     item = filter_for_data_type(column.type)
                     for lookup in item['lookups']:
                         instance = item['filter_class'](
-                            field_name=column.key,
-                            model=Model,
-                            lookup=lookup,
-                            # request=self.request,
-                            handler=self.handler
+                            name=column.key,
+                            column=column,
+                            lookup=lookup
                         )
                         filters.append(instance)
 
