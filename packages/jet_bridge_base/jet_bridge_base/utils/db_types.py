@@ -45,7 +45,7 @@ def map_data_type(value):
 
 
 def map_query_type(value):
-    for rule in reversed(map_data_types):
+    for rule in map_data_types:
         if rule['date_type'] == value:
             return rule['query']
     logger.warning('Unknown database type: {}'.format(str(value)))
