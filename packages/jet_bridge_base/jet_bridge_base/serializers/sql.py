@@ -1,4 +1,5 @@
-from sqlalchemy import text, select, column, func, desc
+from sqlalchemy import text, select, column, func, desc, or_, cast
+from sqlalchemy.sql import sqltypes
 from sqlalchemy.exc import SQLAlchemyError
 
 from jet_bridge_base import fields
@@ -7,6 +8,7 @@ from jet_bridge_base.exceptions.sql import SqlError
 from jet_bridge_base.exceptions.validation_error import ValidationError
 from jet_bridge_base.fields.sql_params import SqlParamsSerializers
 from jet_bridge_base.filters import lookups
+from jet_bridge_base.filters.filter import EMPTY_VALUES
 from jet_bridge_base.filters.filter_for_dbfield import filter_for_data_type
 from jet_bridge_base.serializers.serializer import Serializer
 from jet_bridge_base.utils.db_types import map_query_type
@@ -79,6 +81,23 @@ class SqlSerializer(Serializer):
                 value = None
 
             queryset = item.filter(queryset, value)
+
+        search = get_filter_value('_search')
+
+        if search not in EMPTY_VALUES:
+            def map_column(item):
+                field = column(item['name'])
+                query_type = map_query_type(item['data_type'])()
+
+                if isinstance(query_type, (sqltypes.Integer, sqltypes.Numeric)):
+                    return cast(field, sqltypes.String).__eq__(search)
+                elif isinstance(query_type, sqltypes.String):
+                    return field.ilike('%{}%'.format(search))
+                elif isinstance(query_type, sqltypes.JSON):
+                    return cast(field, sqltypes.String).ilike('%{}%'.format(search))
+
+            operators = list(filter(lambda x: x is not None, map(map_column, data.get('columns', []))))
+            queryset = queryset.filter(or_(*operators))
 
         return queryset
 
