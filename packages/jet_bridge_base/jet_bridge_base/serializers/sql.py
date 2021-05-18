@@ -87,7 +87,10 @@ class SqlSerializer(Serializer):
             queryset = queryset.offset(data['offset'])
 
         if 'limit' in data:
-            queryset = queryset.limit(data['limit'])
+            if data['limit']:
+                queryset = queryset.limit(data['limit'])
+        elif data['v'] >= 2:
+            queryset = queryset.limit(100)
 
         return queryset
 
