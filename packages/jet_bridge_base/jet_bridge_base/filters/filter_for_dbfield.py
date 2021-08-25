@@ -59,6 +59,7 @@ FILTER_FOR_DBFIELD = {
     sqltypes.BOOLEAN: {'filter_class': BooleanFilter, 'lookups': boolean_lookups},
     sqltypes.INTEGER: {'filter_class': IntegerFilter, 'lookups': number_lookups},
     sqltypes.SMALLINT: {'filter_class': IntegerFilter, 'lookups': number_lookups},
+    sqltypes.BIGINT: {'filter_class': IntegerFilter, 'lookups': number_lookups},
     sqltypes.NUMERIC: {'filter_class': IntegerFilter, 'lookups': number_lookups},
     sqltypes.DATETIME: {'filter_class': DateTimeFilter, 'lookups': datetime_lookups},
     sqltypes.TIMESTAMP: {'filter_class': DateTimeFilter, 'lookups': datetime_lookups},

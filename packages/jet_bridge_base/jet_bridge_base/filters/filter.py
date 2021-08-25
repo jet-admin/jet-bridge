@@ -7,19 +7,17 @@ from jet_bridge_base.filters import lookups
 EMPTY_VALUES = ([], (), {}, '', None)
 
 
-def json_icontains(qs, model, field_name, value):
-    model_field = getattr(model, field_name)
-    field_type = model_field.property.columns[0].type
+def json_icontains(qs, column, value):
+    field_type = column.property.columns[0].type
 
     if isinstance(field_type, JSONB):
-        return qs.filter(model_field.cast(Unicode).ilike('%{}%'.format(value)))
+        return qs.filter(column.cast(Unicode).ilike('%{}%'.format(value)))
     else:
-        return qs.filter(model_field.astext.ilike('%{}%'.format(value)))
+        return qs.filter(column.astext.ilike('%{}%'.format(value)))
 
 
-def coveredby(qs, model, field_name, value):
-    model_field = getattr(model, field_name)
-    return qs.filter(model_field.ST_CoveredBy(value))
+def coveredby(qs, column, value):
+    return qs.filter(column.ST_CoveredBy(value))
 
 
 class Filter(object):
@@ -39,19 +37,15 @@ class Filter(object):
         lookups.COVEREDBY: {'operator': False, 'func': coveredby}
     }
 
-    def __init__(self, field_name=None, model=None, lookup=lookups.DEFAULT_LOOKUP, request=None, handler=None):
-        self.field_name = field_name
-        self.name = field_name
-        self.model = model
+    def __init__(self, name=None, column=None, lookup=lookups.DEFAULT_LOOKUP):
+        self.name = name
+        self.column = column
         self.lookup = lookup
-        self.request = request
-        self.handler = handler
 
     def clean_value(self, value):
         return value
 
     def apply_lookup(self, qs, lookup, value):
-        model_field = getattr(self.model, self.field_name)
         lookup_operator = self.lookup_operators[lookup]
         operator = lookup_operator['operator']
         pre_process = lookup_operator.get('pre_process')
@@ -70,12 +64,12 @@ class Filter(object):
             value = post_process(value)
 
         if func:
-            return func(qs, self.model, self.field_name, value)
+            return func(qs, self.column, value)
         elif callable(operator):
             op = operator(value)
-            return qs.filter(getattr(model_field, op[0])(op[1]))
+            return qs.filter(getattr(self.column, op[0])(op[1]))
         else:
-            return qs.filter(getattr(model_field, operator)(value))
+            return qs.filter(getattr(self.column, operator)(value))
 
     def filter(self, qs, value):
         value = self.clean_value(value)

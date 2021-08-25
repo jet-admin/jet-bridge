@@ -17,6 +17,7 @@ map_data_types = [
     {'query': sqltypes.TIMESTAMP, 'date_type': data_types.DATE_TIME},
     {'query': sqltypes.JSON, 'date_type': data_types.JSON},
 ]
+default_query_type = sqltypes.VARCHAR
 default_data_type = data_types.TEXT
 
 try:
@@ -41,3 +42,11 @@ def map_data_type(value):
             return rule['date_type']
     logger.warning('Unknown database type: {}'.format(str(value)))
     return default_data_type
+
+
+def map_query_type(value):
+    for rule in map_data_types:
+        if rule['date_type'] == value:
+            return rule['query']
+    logger.warning('Unknown database type: {}'.format(str(value)))
+    return default_query_type
