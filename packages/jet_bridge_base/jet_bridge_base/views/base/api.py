@@ -22,7 +22,14 @@ class BaseAPIView(object):
     # session = None
     permission_classes = []
 
+    def log_request(self, request):
+        params = {'IP': request.get_ip(), 'SID': request.get_stick_session()}
+        params_str = ' '.join(map(lambda x: '='.join([x[0], x[1]]), filter(lambda x: x[1], params.items())))
+        logger.debug('{} {} {}'.format(request.method, request.full_url(), params_str))
+
     def before_dispatch(self, request):
+        self.log_request(request)
+
         method_override = request.headers.get('X_HTTP_METHOD_OVERRIDE')
         if method_override is not None:
             request.method = method_override
@@ -55,7 +62,7 @@ class BaseAPIView(object):
         if settings.CORS_HEADERS:
             headers['Access-Control-Allow-Origin'] = settings.ALLOW_ORIGIN
             headers['Access-Control-Allow-Methods'] = 'GET, POST, PUT, PATCH, DELETE, OPTIONS'
-            headers['Access-Control-Allow-Headers'] = 'Authorization,DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,X-Application-Warning,X-HTTP-Method-Override,X-Bridge-Settings'
+            headers['Access-Control-Allow-Headers'] = 'Authorization,DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,X-Application-Warning,X-HTTP-Method-Override,X-Bridge-Settings,X-Stick-Session'
             headers['Access-Control-Expose-Headers'] = 'Content-Length,Content-Range,Content-Disposition,Content-Type,X-Application-Warning'
             headers['Access-Control-Allow-Credentials'] = 'true'
 

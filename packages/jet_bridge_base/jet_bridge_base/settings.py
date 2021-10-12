@@ -1,5 +1,8 @@
 import os
 import sys
+import logging
+
+from jet_bridge_base.logger import set_logger_level
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 CURRENT_MODULE = sys.modules[__name__]
@@ -44,3 +47,6 @@ def set_settings(settings):
         if value is None:
             continue
         setattr(CURRENT_MODULE, key, value)
+
+    level = logging.DEBUG if DEBUG else logging.INFO
+    set_logger_level(level)

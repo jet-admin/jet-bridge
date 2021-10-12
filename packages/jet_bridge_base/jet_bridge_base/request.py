@@ -72,6 +72,12 @@ class Request(object):
     def get_body_arguments(self, name, strip=True):
         return self._get_arguments(name, self.body_arguments, strip)
 
+    def get_ip(self):
+        return self.headers.get('X_REAL_IP')
+
+    def get_stick_session(self):
+        return self.headers.get('X_STICK_SESSION')
+
     def _get_argument(self, name, default, source, strip=True):
         args = self._get_arguments(name, source, strip=strip)
         if not args:
