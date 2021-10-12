@@ -22,7 +22,14 @@ class BaseAPIView(object):
     # session = None
     permission_classes = []
 
+    def log_request(self, request):
+        params = {'IP': request.get_ip(), 'SID': request.get_stick_session()}
+        params_str = ' '.join(map(lambda x: '='.join([x[0], x[1]]), filter(lambda x: x[1], params.items())))
+        logger.debug('{} {} {}'.format(request.method, request.full_url(), params_str))
+
     def before_dispatch(self, request):
+        self.log_request(request)
+
         method_override = request.headers.get('X_HTTP_METHOD_OVERRIDE')
         if method_override is not None:
             request.method = method_override
