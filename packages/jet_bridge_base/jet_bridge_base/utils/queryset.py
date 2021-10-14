@@ -15,6 +15,13 @@ def get_queryset_order_by(queryset):
         return []
 
 
+def get_queryset_limit(queryset):
+    if hasattr(queryset, '_limit_clause') and queryset._limit_clause:
+        return queryset._limit_clause
+    elif hasattr(queryset, '_limit') and queryset._limit:
+        return queryset._limit
+
+
 def apply_default_ordering(Model, queryset):
     mapper = inspect(Model)
     pk = mapper.primary_key[0].name
