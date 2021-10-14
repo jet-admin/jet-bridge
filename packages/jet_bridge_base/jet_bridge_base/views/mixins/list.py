@@ -1,6 +1,7 @@
 from sqlalchemy.exc import SQLAlchemyError
 
 from jet_bridge_base.responses.json import JSONResponse
+from jet_bridge_base.utils.queryset import get_queryset_limit
 
 
 class ListAPIViewMixin(object):
@@ -19,7 +20,7 @@ class ListAPIViewMixin(object):
                 request.session.rollback()
                 raise
 
-        if queryset._limit is None:
+        if get_queryset_limit(queryset) is None:
             queryset = queryset.limit(10000)
 
         try:
