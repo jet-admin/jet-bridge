@@ -34,8 +34,11 @@ class ModelDescriptionView(APIView):
                 params['related_model'] = {
                     'model': foreign_key.column.table.name
                 }
-                table_primary_key = foreign_key.column.table.primary_key.columns.keys()[0]
-                if foreign_key.column.name != table_primary_key:
+
+                table_primary_keys = foreign_key.column.table.primary_key.columns.keys()
+                table_primary_key = table_primary_keys[0] if len(table_primary_keys) > 0 else None
+
+                if not table_primary_key or foreign_key.column.name != table_primary_key:
                     params['custom_primary_key'] = foreign_key.column.name
 
             optional = column.autoincrement or column.default or column.server_default or column.nullable
