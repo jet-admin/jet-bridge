@@ -30,6 +30,9 @@ engines = [
     },
     {
         'name': 'sqlite'
+    },
+    {
+        'name': 'none'
     }
 ]
 
@@ -141,7 +144,15 @@ def create_config(config_not_set):
     while True:
         print_formatted_text('')
 
-        if database_engine == 'sqlite':
+        if database_engine == 'none':
+            database_host = ''
+            database_port = ''
+            database_name = ''
+            database_user = ''
+            database_password = ''
+
+            break
+        elif database_engine == 'sqlite':
             prompts = 1
 
             database_name = prompt(
