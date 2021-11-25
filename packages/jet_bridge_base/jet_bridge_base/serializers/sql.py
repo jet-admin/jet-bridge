@@ -1,4 +1,5 @@
 from sqlalchemy import text, select, column, func, desc, or_, cast
+from sqlalchemy import sql
 from sqlalchemy.sql import sqltypes
 from sqlalchemy.exc import SQLAlchemyError
 
@@ -9,6 +10,7 @@ from jet_bridge_base.exceptions.validation_error import ValidationError
 from jet_bridge_base.fields.sql_params import SqlParamsSerializers
 from jet_bridge_base.filters import lookups
 from jet_bridge_base.filters.filter import EMPTY_VALUES
+from jet_bridge_base.filters.model_group import get_query_func_by_name, get_query_lookup_func_by_name
 from jet_bridge_base.filters.filter_for_dbfield import filter_for_data_type
 from jet_bridge_base.serializers.serializer import Serializer
 from jet_bridge_base.utils.db_types import map_query_type
@@ -24,6 +26,18 @@ class FilterItemSerializer(Serializer):
     value = fields.CharField(required=False)
 
 
+class AggregateSerializer(Serializer):
+    func = fields.CharField()
+    column = fields.CharField(required=False)
+
+
+class GroupSerializer(Serializer):
+    xColumn = fields.CharField()
+    xLookup = fields.CharField(required=False)
+    yColumn = fields.CharField(required=False)
+    yFunc = fields.CharField()
+
+
 class SqlSerializer(Serializer):
     query = fields.CharField()
     offset = fields.IntegerField(required=False)
@@ -32,6 +46,8 @@ class SqlSerializer(Serializer):
     count = fields.BooleanField(default=False)
     columns = ColumnSerializer(many=True, required=False)
     filters = FilterItemSerializer(many=True, required=False)
+    aggregate = AggregateSerializer(required=False)
+    group = GroupSerializer(required=False)
     timezone = fields.CharField(required=False)
     params = SqlParamsSerializers(required=False)
     params_obj = fields.JSONField(required=False)
@@ -51,6 +67,36 @@ class SqlSerializer(Serializer):
                 i += 1
 
         return attrs
+
+    def aggregate_queryset(self, subquery, data):
+        func_param = data['aggregate'].get('func').lower()
+        column_param = data['aggregate'].get('column')
+
+        y_column = column(column_param) if column_param is not None else None
+        y_func = get_query_func_by_name(func_param, y_column)
+
+        if y_func is None:
+            return subquery.filter(sql.false())
+        else:
+            return select([y_func]).select_from(subquery)
+
+    def group_queryset(self, subquery, data, session):
+        y_func_param = data['group'].get('yFunc').lower()
+        x_lookup_param = data['group'].get('xLookup')
+        x_column_param = data['group'].get('xColumn')
+        y_column_param = data['group'].get('yColumn')
+
+        x_column = column(x_column_param) if x_column_param is not None else None
+        y_column = column(y_column_param) if y_column_param is not None else None
+        y_func = get_query_func_by_name(y_func_param, y_column)
+
+        x_lookup = get_query_lookup_func_by_name(session, x_lookup_param, x_column)
+
+        if y_func is None:
+            return subquery.filter(sql.false())
+        else:
+            queryset = select([x_lookup.label('group'), y_func.label('y_func')]).select_from(subquery)
+            return queryset.group_by('group').order_by('group')
 
     def filter_queryset(self, queryset, data):
         filters_instances = []
@@ -162,10 +208,20 @@ class SqlSerializer(Serializer):
                 pass
 
         try:
-            queryset = select(['*']).select_from(subquery)
+            if 'aggregate' in data:
+                queryset = self.aggregate_queryset(subquery, data)
+            elif 'group' in data:
+                queryset = self.group_queryset(subquery, data, session)
+            else:
+                queryset = select(['*']).select_from(subquery)
+
             queryset = self.filter_queryset(queryset, data)
-            queryset = self.paginate_queryset(queryset, data)
-            queryset = self.sort_queryset(queryset, data)
+
+            if 'aggregate' not in data and 'group' not in data:
+                queryset = self.paginate_queryset(queryset, data)
+
+            if 'group' not in data:
+                queryset = self.sort_queryset(queryset, data)
 
             result = session.execute(queryset, params)
 

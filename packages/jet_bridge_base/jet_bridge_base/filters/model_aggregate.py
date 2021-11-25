@@ -2,6 +2,7 @@ from sqlalchemy import func, sql
 
 from jet_bridge_base.filters.char_filter import CharFilter
 from jet_bridge_base.filters.filter import EMPTY_VALUES
+from jet_bridge_base.filters.model_group import get_query_func_by_name
 
 
 class ModelAggregateFilter(CharFilter):
@@ -11,18 +12,9 @@ class ModelAggregateFilter(CharFilter):
             return qs
 
         y_column = getattr(self.model, value['y_column'])
+        y_func = get_query_func_by_name(value['y_func'], y_column)
 
-        if value['y_func'] == 'count':
-            y_func = func.count(y_column)
-        elif value['y_func'] == 'sum':
-            y_func = func.sum(y_column)
-        elif value['y_func'] == 'min':
-            y_func = func.min(y_column)
-        elif value['y_func'] == 'max':
-            y_func = func.max(y_column)
-        elif value['y_func'] == 'avg':
-            y_func = func.avg(y_column)
-        else:
+        if y_func is None:
             return qs.filter(sql.false())
 
         whereclause = qs.whereclause
