@@ -10,7 +10,7 @@ from jet_bridge_base.exceptions.validation_error import ValidationError
 from jet_bridge_base.fields.sql_params import SqlParamsSerializers
 from jet_bridge_base.filters import lookups
 from jet_bridge_base.filters.filter import EMPTY_VALUES
-from jet_bridge_base.filters.model_group import get_query_func_by_name
+from jet_bridge_base.filters.model_group import get_query_func_by_name, get_query_lookup_func_by_name
 from jet_bridge_base.filters.filter_for_dbfield import filter_for_data_type
 from jet_bridge_base.serializers.serializer import Serializer
 from jet_bridge_base.utils.db_types import map_query_type
@@ -80,7 +80,7 @@ class SqlSerializer(Serializer):
         else:
             return select([y_func]).select_from(subquery)
 
-    def group_queryset(self, subquery, data):
+    def group_queryset(self, subquery, data, session):
         y_func_param = data['group'].get('yFunc').lower()
         x_lookup_param = data['group'].get('xLookup')
         x_column_param = data['group'].get('xColumn')
@@ -90,10 +90,7 @@ class SqlSerializer(Serializer):
         y_column = column(y_column_param) if y_column_param is not None else None
         y_func = get_query_func_by_name(y_func_param, y_column)
 
-        if x_lookup_param and x_lookup_param in ['date']:
-            x_lookup = getattr(func, x_lookup_param)(x_column)
-        else:
-            x_lookup = x_column
+        x_lookup = get_query_lookup_func_by_name(session, x_lookup_param, x_column)
 
         if y_func is None:
             return subquery.filter(sql.false())
@@ -214,7 +211,7 @@ class SqlSerializer(Serializer):
             if 'aggregate' in data:
                 queryset = self.aggregate_queryset(subquery, data)
             elif 'group' in data:
-                queryset = self.group_queryset(subquery, data)
+                queryset = self.group_queryset(subquery, data, session)
             else:
                 queryset = select(['*']).select_from(subquery)
 
