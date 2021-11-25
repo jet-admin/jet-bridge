@@ -66,9 +66,10 @@ def queryset_count_optimized(request, queryset):
     if queryset.whereclause is None:
         try:
             table = queryset.statement.froms[0].name
-            if settings.DATABASE_ENGINE == 'postgresql':
+
+            if get_session_engine(queryset.session) == 'postgresql':
                 result = queryset_count_optimized_for_postgresql(request, table)
-            elif settings.DATABASE_ENGINE == 'mysql':
+            elif get_session_engine(queryset.session) == 'mysql':
                 result = queryset_count_optimized_for_mysql(request, table)
         except:
             pass
@@ -81,3 +82,6 @@ def queryset_count_optimized(request, queryset):
     except SQLAlchemyError:
         queryset.session.rollback()
         raise
+
+def get_session_engine(session):
+    return session.bind.engine.name
