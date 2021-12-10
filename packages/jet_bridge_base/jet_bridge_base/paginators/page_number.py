@@ -36,16 +36,17 @@ class PageNumberPagination(Pagination):
         return queryset.offset((page_number - 1) * page_size).limit(page_size)
 
     def get_pages_count(self):
-        return int(math.ceil(self.count / self.page_size))
+        return int(math.ceil(self.count / self.page_size)) if self.count is not None else None
 
     def get_paginated_response(self, request, data):
         return JSONResponse(OrderedDict([
             ('count', self.count),
-            ('next', self.get_next_link(request)),
+            ('next', self.get_next_link(request, data)),
             ('previous', self.get_previous_link(request)),
             ('results', data),
             ('num_pages', self.get_pages_count()),
             ('per_page', self.page_size),
+            ('has_more', self.has_next_potential(data)),
         ]))
 
     def get_page_number(self, request, handler):
@@ -71,7 +72,16 @@ class PageNumberPagination(Pagination):
         return self.default_page_size
 
     def has_next(self):
-        return self.page_number < self.get_pages_count()
+        pages_count = self.get_pages_count()
+        return self.page_number < pages_count if pages_count is not None else None
+
+    def has_next_potential(self, data):
+        has_next = self.has_next()
+        if has_next is False:
+            return has_next
+        elif has_next is None and len(data) == 0:
+            return False
+        return True
 
     def has_previous(self):
         return self.page_number > 1
@@ -82,8 +92,8 @@ class PageNumberPagination(Pagination):
     def previous_page_number(self):
         return self.page_number - 1
 
-    def get_next_link(self, request):
-        if not self.has_next():
+    def get_next_link(self, request, data):
+        if not self.has_next_potential(data):
             return None
         url = request.full_url()
         page_number = self.next_page_number()
