@@ -77,7 +77,7 @@ def queryset_count_optimized(request, queryset):
     if queryset.whereclause is None and table_size is not None:
         result = table_size
 
-    if table_size >= 10000:
+    if table_size is not None and table_size >= 10000:
         return result
 
     try:
