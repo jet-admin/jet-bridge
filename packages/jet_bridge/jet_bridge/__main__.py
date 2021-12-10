@@ -57,7 +57,7 @@ def main():
     if settings.WORKERS > 1 and settings.DEBUG:
         logger.warning('Multiple workers are not supported in DEBUG mode')
 
-    logger.info('Starting server at {}'.format(url))
+    logger.info('Starting server at {} (WORKERS: {})'.format(url, settings.THREADS))
 
     if settings.DEBUG:
         logger.warning('Server is running in DEBUG mode')
