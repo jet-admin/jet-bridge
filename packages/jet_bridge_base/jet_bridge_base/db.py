@@ -1,4 +1,5 @@
 import json
+from six.moves.urllib_parse import quote_plus
 
 from sqlalchemy import create_engine, MetaData
 from sqlalchemy.ext.automap import automap_base, generate_relationship
@@ -18,6 +19,8 @@ from jet_bridge_base.logger import logger
 
 connections = {}
 
+def url_encode(value):
+    return quote_plus(value)
 
 def build_engine_url(conf):
     if not conf.get('engine') or not conf.get('name'):
@@ -30,11 +33,11 @@ def build_engine_url(conf):
 
     if conf.get('engine') != 'sqlite':
         if conf.get('user'):
-            url.append(str(conf.get('user')))
+            url.append(url_encode(str(conf.get('user'))))
 
             if conf.get('password'):
                 url.append(':')
-                url.append(str(conf.get('password')))
+                url.append(url_encode(str(conf.get('password'))))
 
             if conf.get('host'):
                 url.append('@')
