@@ -37,9 +37,10 @@ class Filter(object):
         lookups.COVEREDBY: {'operator': False, 'func': coveredby}
     }
 
-    def __init__(self, name=None, column=None, lookup=lookups.DEFAULT_LOOKUP):
+    def __init__(self, name=None, column=None, exclude=False, lookup=lookups.DEFAULT_LOOKUP):
         self.name = name
         self.column = column
+        self.exclude = exclude
         self.lookup = lookup
 
     def clean_value(self, value):
@@ -67,9 +68,16 @@ class Filter(object):
             return func(qs, self.column, value)
         elif callable(operator):
             op = operator(value)
-            return qs.filter(getattr(self.column, op[0])(op[1]))
+
+            if self.exclude:
+                return qs.filter(~getattr(self.column, op[0])(op[1]))
+            else:
+                return qs.filter(getattr(self.column, op[0])(op[1]))
         else:
-            return qs.filter(getattr(self.column, operator)(value))
+            if self.exclude:
+                return qs.filter(~getattr(self.column, operator)(value))
+            else:
+                return qs.filter(getattr(self.column, operator)(value))
 
     def filter(self, qs, value):
         value = self.clean_value(value)

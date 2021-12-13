@@ -29,12 +29,14 @@ class FilterClass(object):
                 for column in columns:
                     item = filter_for_data_type(column.type)
                     for lookup in item['lookups']:
-                        instance = item['filter_class'](
-                            name=column.key,
-                            column=column,
-                            lookup=lookup
-                        )
-                        filters.append(instance)
+                        for exclude in [False, True]:
+                            instance = item['filter_class'](
+                                name=column.key,
+                                column=column,
+                                lookup=lookup,
+                                exclude=exclude
+                            )
+                            filters.append(instance)
 
         declared_filters = filter(lambda x: isinstance(x[1], Filter), map(lambda x: (x, getattr(self, x)), dir(self)))
 
@@ -50,6 +52,8 @@ class FilterClass(object):
         for item in self.filters:
             if item.name:
                 argument_name = '{}__{}'.format(item.name, item.lookup)
+                if item.exclude:
+                    argument_name = 'exclude__{}'.format(argument_name)
                 value = request.get_argument(argument_name, None)
 
                 if value is None and item.lookup == lookups.DEFAULT_LOOKUP:
