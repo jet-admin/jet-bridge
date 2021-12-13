@@ -105,12 +105,14 @@ class SqlSerializer(Serializer):
             query_type = map_query_type(item['data_type'])()
             filter_data = filter_for_data_type(query_type)
             for lookup in filter_data['lookups']:
-                instance = filter_data['filter_class'](
-                    name=item['name'],
-                    column=column(item['name']),
-                    lookup=lookup
-                )
-                filters_instances.append(instance)
+                for exclude in [False, True]:
+                    instance = filter_data['filter_class'](
+                        name=item['name'],
+                        column=column(item['name']),
+                        lookup=lookup,
+                        exclude=exclude
+                    )
+                    filters_instances.append(instance)
 
         def get_filter_value(name):
             filter_items = list(filter(lambda x: x['name'] == name, data.get('filters', [])))
@@ -119,6 +121,8 @@ class SqlSerializer(Serializer):
         for item in filters_instances:
             if item.name:
                 argument_name = '{}__{}'.format(item.name, item.lookup)
+                if item.exclude:
+                    argument_name = 'exclude__{}'.format(argument_name)
                 value = get_filter_value(argument_name)
 
                 if value is None and item.lookup == lookups.DEFAULT_LOOKUP:
