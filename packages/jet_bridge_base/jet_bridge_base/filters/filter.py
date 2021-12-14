@@ -37,11 +37,11 @@ class Filter(object):
         lookups.COVEREDBY: {'operator': False, 'func': coveredby}
     }
 
-    def __init__(self, name=None, column=None, exclude=False, lookup=lookups.DEFAULT_LOOKUP):
+    def __init__(self, name=None, column=None, lookup=lookups.DEFAULT_LOOKUP, exclude=False):
         self.name = name
         self.column = column
-        self.exclude = exclude
         self.lookup = lookup
+        self.exclude = exclude
 
     def clean_value(self, value):
         return value
