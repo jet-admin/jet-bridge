@@ -57,7 +57,10 @@ class FilterClass(object):
                 value = request.get_argument(argument_name, None)
 
                 if value is None and item.lookup == lookups.DEFAULT_LOOKUP:
-                    value = request.get_argument(item.name, None)
+                    argument_name = item.name
+                    if item.exclude:
+                        argument_name = 'exclude__{}'.format(argument_name)
+                    value = request.get_argument(argument_name, None)
             else:
                 value = None
 

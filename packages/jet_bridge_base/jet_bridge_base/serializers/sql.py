@@ -126,7 +126,10 @@ class SqlSerializer(Serializer):
                 value = get_filter_value(argument_name)
 
                 if value is None and item.lookup == lookups.DEFAULT_LOOKUP:
-                    value = get_filter_value(item.name)
+                    argument_name = item.name
+                    if item.exclude:
+                        argument_name = 'exclude__{}'.format(argument_name)
+                    value = get_filter_value(argument_name)
             else:
                 value = None
 
