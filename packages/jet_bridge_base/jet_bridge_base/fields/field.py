@@ -29,6 +29,7 @@ class Field(object):
         self.read_only = kwargs.pop('read_only', False)
         self.write_only = kwargs.pop('write_only', False)
         self.many = kwargs.pop('many', False)
+        self.allow_many = kwargs.pop('allow_many', False)
         self.default = kwargs.pop('default', empty)
 
         messages = {}
@@ -56,7 +57,7 @@ class Field(object):
             else:
                 return empty
 
-        if not getattr(self, 'many', False) and isinstance(field_value, list):
+        if not getattr(self, 'many', False) and not getattr(self, 'allow_many', False) and isinstance(field_value, list):
             field_value = field_value[0]
 
         if isinstance(field_value, bytes):
