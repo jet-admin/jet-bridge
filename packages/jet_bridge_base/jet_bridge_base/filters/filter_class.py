@@ -54,13 +54,13 @@ class FilterClass(object):
                 argument_name = '{}__{}'.format(item.name, item.lookup)
                 if item.exclude:
                     argument_name = 'exclude__{}'.format(argument_name)
-                value = request.get_argument(argument_name, None)
+                value = request.get_argument_safe(argument_name, None)
 
                 if value is None and item.lookup == lookups.DEFAULT_LOOKUP:
                     argument_name = item.name
                     if item.exclude:
                         argument_name = 'exclude__{}'.format(argument_name)
-                    value = request.get_argument(argument_name, None)
+                    value = request.get_argument_safe(argument_name, None)
             else:
                 value = None
 

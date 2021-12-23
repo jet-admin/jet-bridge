@@ -23,7 +23,7 @@ class ColumnSerializer(Serializer):
 
 class FilterItemSerializer(Serializer):
     name = fields.CharField()
-    value = fields.CharField(required=False)
+    value = fields.RawField(allow_many=True, required=False)
 
 
 class AggregateSerializer(Serializer):

@@ -1,5 +1,6 @@
 from sqlalchemy import Unicode
 from sqlalchemy.dialects.postgresql import JSONB
+from six import string_types
 
 from jet_bridge_base.fields import field, CharField, BooleanField
 from jet_bridge_base.filters import lookups
@@ -19,6 +20,16 @@ def json_icontains(qs, column, value):
 def coveredby(qs, column, value):
     return qs.filter(column.ST_CoveredBy(value))
 
+def safe_array(value):
+    if isinstance(value, list):
+        return value
+    elif isinstance(value, string_types):
+        if value != '':
+            return value.split(',')
+        else:
+            return []
+    else:
+        value
 
 class Filter(object):
     field_class = field
@@ -29,7 +40,7 @@ class Filter(object):
         lookups.LT: {'operator': '__lt__'},
         lookups.LTE: {'operator': '__le__'},
         lookups.ICONTAINS: {'operator': 'ilike', 'post_process': lambda x: '%{}%'.format(x)},
-        lookups.IN: {'operator': 'in_', 'field_class': CharField, 'field_kwargs': {'many': True}, 'pre_process': lambda x: filter(lambda f: f != '', x.split(','))},
+        lookups.IN: {'operator': 'in_', 'field_class': CharField, 'field_kwargs': {'many': True}, 'pre_process': lambda x: safe_array(x)},
         lookups.STARTS_WITH: {'operator': 'ilike', 'post_process': lambda x: '{}%'.format(x)},
         lookups.ENDS_WITH: {'operator': 'ilike', 'post_process': lambda x: '%{}'.format(x)},
         lookups.IS_NULL: {'operator': lambda x: ('__eq__', None) if x else ('isnot', None), 'field_class': BooleanField},

@@ -66,6 +66,18 @@ class Request(object):
     def get_arguments(self, name, strip=True):
         return self._get_arguments(name, self.query_arguments, strip)
 
+    def get_argument_safe(self, name, default=_ARG_DEFAULT):
+        values = self.get_arguments(name)
+
+        if len(values) == 0:
+            value = default
+        elif len(values) == 1:
+            value = values[0]
+        else:
+            value = values
+
+        return value
+
     def get_body_argument(self, name, default=_ARG_DEFAULT, strip=True):
         return self._get_argument(name, default, self.body_arguments, strip)
 
