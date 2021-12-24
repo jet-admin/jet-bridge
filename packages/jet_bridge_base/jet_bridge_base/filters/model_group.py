@@ -74,19 +74,31 @@ class ModelGroupFilter(CharFilter):
         if value in EMPTY_VALUES:
             return qs
 
-        x_column = getattr(self.model, value['x_column'])
+        x_columns = list(map(lambda x: getattr(self.model, x), value['x_columns']))
         y_column = getattr(self.model, value['y_column'])
         y_func = get_query_func_by_name(value['y_func'], y_column)
 
         if y_func is None:
             return qs.filter(sql.false())
 
-        x_lookup = get_query_lookup_func_by_name(qs.session, value['x_lookup'], x_column)
+        def group_name(i):
+            if i == 0:
+                return 'group'
+            else:
+                return 'group_{}'.format(i + 1)
+
+        def map_lookup(column, i):
+            lookup_name = value['x_lookups'][i] if i < len(value['x_lookups']) else None
+            lookup = get_query_lookup_func_by_name(qs.session, lookup_name, column)
+            return lookup.label(group_name(i))
+
+        x_lookups = list(map(lambda x: map_lookup(x[1], x[0]), enumerate(x_columns)))
+        x_lookup_names = list(map(lambda x: x.name, x_lookups))
 
         whereclause = qs.whereclause
-        qs = qs.session.query(x_lookup.label('group'), y_func.label('y_func'))
+        qs = qs.session.query(*x_lookups, y_func.label('y_func'))
 
         if whereclause is not None:
             qs = qs.filter(whereclause)
 
-        return qs.group_by('group').order_by('group')
+        return qs.group_by(*x_lookup_names).order_by(*x_lookup_names)
