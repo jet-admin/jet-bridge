@@ -38,6 +38,17 @@ class GroupSerializer(Serializer):
     yFunc = fields.CharField()
 
 
+class GroupsItemSerializer(Serializer):
+    xColumn = fields.CharField()
+    xLookup = fields.CharField(required=False)
+
+
+class GroupsSerializer(Serializer):
+    xColumns = GroupsItemSerializer(many=True)
+    yColumn = fields.CharField(required=False)
+    yFunc = fields.CharField()
+
+
 class SqlSerializer(Serializer):
     query = fields.CharField()
     offset = fields.IntegerField(required=False)
@@ -48,6 +59,7 @@ class SqlSerializer(Serializer):
     filters = FilterItemSerializer(many=True, required=False)
     aggregate = AggregateSerializer(required=False)
     group = GroupSerializer(required=False)
+    groups = GroupsSerializer(required=False)
     timezone = fields.CharField(required=False)
     params = SqlParamsSerializers(required=False)
     params_obj = fields.JSONField(required=False)
@@ -81,22 +93,43 @@ class SqlSerializer(Serializer):
             return select([y_func]).select_from(subquery)
 
     def group_queryset(self, subquery, data, session):
-        y_func_param = data['group'].get('yFunc').lower()
-        x_lookup_param = data['group'].get('xLookup')
-        x_column_param = data['group'].get('xColumn')
-        y_column_param = data['group'].get('yColumn')
+        def get_y_func(group):
+            y_func_param = group.get('yFunc').lower()
+            y_column_param = group.get('yColumn')
+            y_column = column(y_column_param) if y_column_param is not None else None
+            return get_query_func_by_name(y_func_param, y_column)
 
-        x_column = column(x_column_param) if x_column_param is not None else None
-        y_column = column(y_column_param) if y_column_param is not None else None
-        y_func = get_query_func_by_name(y_func_param, y_column)
-
-        x_lookup = get_query_lookup_func_by_name(session, x_lookup_param, x_column)
+        if 'groups' in data:
+            y_func = get_y_func(data['groups'])
+        elif 'group' in data:
+            y_func = get_y_func(data['group'])
+        else:
+            y_func = None
 
         if y_func is None:
             return subquery.filter(sql.false())
-        else:
-            queryset = select([x_lookup.label('group'), y_func.label('y_func')]).select_from(subquery)
-            return queryset.group_by('group').order_by('group')
+
+        def group_name(i):
+            if i == 0:
+                return 'group'
+            else:
+                return 'group_{}'.format(i + 1)
+
+        def map_group_column(group, i):
+            x_lookup_param = group.get('xLookup')
+            x_column_param = group.get('xColumn')
+            x_column = column(x_column_param) if x_column_param is not None else None
+            return get_query_lookup_func_by_name(session, x_lookup_param, x_column).label(group_name(i))
+
+        if 'groups' in data:
+            x_lookups = list(map(lambda x: map_group_column(x[1], x[0]), enumerate(data['groups']['xColumns'])))
+        elif 'group' in data:
+            x_lookups = [map_group_column(data['group'], 0)]
+
+        x_lookup_names = list(map(lambda x: x.name, x_lookups))
+
+        queryset = select([*x_lookups, y_func.label('y_func')]).select_from(subquery)
+        return queryset.group_by(*x_lookup_names).order_by(*x_lookup_names)
 
     def filter_queryset(self, queryset, data):
         filters_instances = []
@@ -217,17 +250,17 @@ class SqlSerializer(Serializer):
         try:
             if 'aggregate' in data:
                 queryset = self.aggregate_queryset(subquery, data)
-            elif 'group' in data:
+            elif 'groups' in data or 'group' in data:
                 queryset = self.group_queryset(subquery, data, session)
             else:
                 queryset = select(['*']).select_from(subquery)
 
             queryset = self.filter_queryset(queryset, data)
 
-            if 'aggregate' not in data and 'group' not in data:
+            if 'aggregate' not in data and 'group' not in data and 'groups' not in data:
                 queryset = self.paginate_queryset(queryset, data)
 
-            if 'group' not in data:
+            if 'group' not in data and 'groups' not in data:
                 queryset = self.sort_queryset(queryset, data)
 
             result = session.execute(queryset, params)
