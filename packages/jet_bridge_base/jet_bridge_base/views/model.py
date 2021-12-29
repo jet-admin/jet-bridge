@@ -110,8 +110,8 @@ class ModelViewSet(ModelAPIViewMixin):
     def group(self, request, *args, **kwargs):
         queryset = self.filter_queryset(request, self.get_queryset(request))
 
-        x_column = request.get_argument('_x_column')
-        x_lookup_name = request.get_argument('_x_lookup', None)
+        x_columns = request.get_arguments('_x_column')
+        x_lookup_names = request.get_arguments('_x_lookup', None)
         y_func = request.get_argument('_y_func').lower()
         y_column = request.get_argument('_y_column', self.lookup_field)
 
@@ -126,8 +126,8 @@ class ModelViewSet(ModelAPIViewMixin):
         filter_instance = ModelGroupFilter()
         filter_instance.model = self.get_model(request)
         queryset = filter_instance.filter(queryset, {
-            'x_column': x_column,
-            'x_lookup': x_lookup_name,
+            'x_columns': x_columns,
+            'x_lookups': x_lookup_names,
             'y_func': y_func,
             'y_column': y_column
         })
@@ -138,15 +138,16 @@ class ModelViewSet(ModelAPIViewMixin):
             queryset.session.rollback()
             raise
 
-        serializer = ModelGroupSerializer(
-            instance=instance,
-            many=True,
-            # TODO: Refactor serializer
-            # group_serializer=x_serializer,
-            # y_func_serializer=y_serializer
-        )
-
-        return JSONResponse(serializer.representation_data)
+        return JSONResponse(instance)
+        # serializer = ModelGroupSerializer(
+        #     instance=instance,
+        #     many=True,
+        #     # TODO: Refactor serializer
+        #     # group_serializer=x_serializer,
+        #     # y_func_serializer=y_serializer
+        # )
+        #
+        # return JSONResponse(serializer.representation_data)
 
     @action(methods=['post'], detail=False)
     def reorder(self, request, *args, **kwargs):
