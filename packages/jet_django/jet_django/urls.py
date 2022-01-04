@@ -12,6 +12,8 @@ from jet_bridge_base.views.proxy_request import ProxyRequestView
 from jet_bridge_base.views.register import RegisterView
 from jet_bridge_base.views.reload import ReloadView
 from jet_bridge_base.views.sql import SqlView
+from jet_bridge_base.views.table import TableView
+from jet_bridge_base.views.table_column import TableColumnView
 from jet_django.route_view import route_view
 
 from jet_django.router import Router
@@ -23,6 +25,8 @@ def init_urls():
     router = Router()
 
     router.register('models/(?P<model>[^/]+)/', route_view(ModelViewSet))
+    router.register('tables/(?P<table>[^/]+)/columns/', route_view(TableColumnView))
+    router.register('tables/', route_view(TableView))
 
     extra_urls = [
         url(r'^$', route_view(ApiView).as_view(), name='root'),

@@ -135,25 +135,7 @@ def connect_database(conf):
         logger.info('Connected to "{}"...'.format(engine_url))
 
         MappedBase = automap_base(metadata=metadata)
-
-        def name_for_scalar_relationship(base, local_cls, referred_cls, constraint):
-            rnd = get_random_string(4)
-            return referred_cls.__name__.lower() + '_jet_relation' + rnd
-
-        def name_for_collection_relationship(base, local_cls, referred_cls, constraint):
-            rnd = get_random_string(4)
-            return referred_cls.__name__.lower() + '_jet_collection' + rnd
-
-        def custom_generate_relationship(base, direction, return_fn, attrname, local_cls, referred_cls, **kw):
-            rnd = get_random_string(4)
-            attrname = attrname + '_jet_ref' + rnd
-            return generate_relationship(base, direction, return_fn, attrname, local_cls, referred_cls, **kw)
-
-        MappedBase.prepare(
-            name_for_scalar_relationship=name_for_scalar_relationship,
-            name_for_collection_relationship=name_for_collection_relationship,
-            generate_relationship=custom_generate_relationship
-        )
+        reload_mapped_base(MappedBase)
 
         for table_name, table in MappedBase.metadata.tables.items():
             if len(table.primary_key.columns) == 0 and table_name not in MappedBase.classes:
@@ -259,6 +241,28 @@ def get_engine(request):
     if not connection:
         return
     return connection['engine']
+
+
+def reload_mapped_base(MappedBase):
+    def name_for_scalar_relationship(base, local_cls, referred_cls, constraint):
+        rnd = get_random_string(4)
+        return referred_cls.__name__.lower() + '_jet_relation' + rnd
+
+    def name_for_collection_relationship(base, local_cls, referred_cls, constraint):
+        rnd = get_random_string(4)
+        return referred_cls.__name__.lower() + '_jet_collection' + rnd
+
+    def custom_generate_relationship(base, direction, return_fn, attrname, local_cls, referred_cls, **kw):
+        rnd = get_random_string(4)
+        attrname = attrname + '_jet_ref' + rnd
+        return generate_relationship(base, direction, return_fn, attrname, local_cls, referred_cls, **kw)
+
+    MappedBase.classes.clear()
+    MappedBase.prepare(
+        name_for_scalar_relationship=name_for_scalar_relationship,
+        name_for_collection_relationship=name_for_collection_relationship,
+        generate_relationship=custom_generate_relationship
+    )
 
 
 def dispose_connection(request):
