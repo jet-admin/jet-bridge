@@ -1,6 +1,7 @@
-from sqlalchemy import inspect
-from sqlalchemy.orm.base import ONETOMANY
-from sqlalchemy import String
+import re
+
+from sqlalchemy import inspect, String
+from sqlalchemy.sql.elements import TextClause
 
 from jet_bridge_base.db import get_mapped_base
 from jet_bridge_base.models import data_types
@@ -49,9 +50,17 @@ def map_column(column, editable):
     if isinstance(column.type, String):
         result['length'] = column.type.length
 
-    if column.default is not None:
-        result['default_type'] = 'value'
-        result['default_value'] = column.default
+    if column.server_default is not None:
+        if isinstance(column.server_default.arg, TextClause):
+            value = column.server_default.arg.text
+            regex = re.search("^'(?P<value>.+)'::(?P<type>.+)$", value)
+
+            if regex:
+                matches = regex.groupdict()
+                result['default_type'] = 'value'
+                result['default_value'] = matches['value']
+            elif value.lower() == 'now()':
+                result['default_type'] = 'datetime_now'
 
     return result
 

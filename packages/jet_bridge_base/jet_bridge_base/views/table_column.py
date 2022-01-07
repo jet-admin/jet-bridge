@@ -1,3 +1,5 @@
+from sqlalchemy import Column, text
+
 from jet_bridge_base import status
 from jet_bridge_base.db import get_mapped_base, get_engine, reload_mapped_base
 from jet_bridge_base.exceptions.not_found import NotFound
@@ -8,15 +10,28 @@ from jet_bridge_base.serializers.table import TableColumnSerializer
 from jet_bridge_base.utils.db_types import map_query_type
 from jet_bridge_base.views.base.api import APIView
 from jet_bridge_base.views.model_description import map_column
-from sqlalchemy import Column
-from sqlalchemy.exc import ProgrammingError
 
 
 def map_dto_column(column):
     column_kwargs = {}
+    autoincrement = False
+    server_default = None
+
+    if column.get('primary_key', False):
+        autoincrement = True
 
     if 'length' in column:
         column_kwargs['length'] = column['length']
+
+    if 'default_type' in column:
+        if column['default_type'] == 'value':
+            server_default = column['default_value']
+        elif column['default_type'] == 'datetime_now':
+            server_default = text('NOW()')
+        elif column['default_type'] == 'uuid':
+            server_default = text("uuid_generate_v4()")
+        elif column['default_type'] == 'auto_increment':
+            autoincrement = True
 
     column_type = map_query_type(column['field'])
 
@@ -29,8 +44,10 @@ def map_dto_column(column):
     return Column(
         column['name'],
         column_type,
+        autoincrement=autoincrement,
         primary_key=column.get('primary_key', False),
-        nullable=column.get('null', False)
+        nullable=column.get('null', False),
+        server_default=server_default
     )
 
 
@@ -91,7 +108,7 @@ class TableColumnView(APIView):
 
         try:
             self.perform_create(request, serializer)
-        except ProgrammingError as e:
+        except Exception as e:
             raise ValidationError(str(e))
 
         return JSONResponse(serializer.representation_data, status=status.HTTP_201_CREATED)
@@ -101,10 +118,10 @@ class TableColumnView(APIView):
         table = self.get_table(request)
         column = map_dto_column(serializer.validated_data)
 
-        column_name = column.compile(dialect=engine.dialect)
-        column_type = column.type.compile(engine.dialect)
+        ddl_compiler = engine.dialect.ddl_compiler(engine.dialect, None)
+        column_specification = ddl_compiler.get_column_specification(column)
 
-        engine.execute('''ALTER TABLE "{0}" ADD COLUMN "{1}" {2} NOT NULL'''.format(table.name, column_name, column_type))
+        engine.execute('''ALTER TABLE "{0}" ADD COLUMN {1}'''.format(table.name, column_specification))
 
         metadata.remove(table)
         metadata.reflect(bind=engine, only=[table.name])
@@ -132,7 +149,7 @@ class TableColumnView(APIView):
 
         try:
             self.perform_update(request, serializer)
-        except ProgrammingError as e:
+        except Exception as e:
             raise ValidationError(str(e))
 
         return JSONResponse(serializer.representation_data)
@@ -165,6 +182,14 @@ class TableColumnView(APIView):
             engine.execute('''ALTER TABLE "{0}" ALTER COLUMN "{1}" DROP NOT NULL'''.format(table.name, column_name))
         else:
             engine.execute('''ALTER TABLE "{0}" ALTER COLUMN "{1}" SET NOT NULL'''.format(table.name, column_name))
+
+        ddl_compiler = engine.dialect.ddl_compiler(engine.dialect, None)
+        default = ddl_compiler.get_column_default_string(column)
+
+        if default is not None:
+            engine.execute('''ALTER TABLE "{0}" ALTER COLUMN "{1}" SET DEFAULT {2}'''.format(table.name, column_name, default))
+        else:
+            engine.execute('''ALTER TABLE "{0}" ALTER COLUMN "{1}" DROP DEFAULT'''.format(table.name, column_name))
 
         if column_name != column.name:
             engine.execute('''ALTER TABLE "{0}" RENAME COLUMN "{1}" TO "{2}"'''.format(table.name, column_name, column.name))

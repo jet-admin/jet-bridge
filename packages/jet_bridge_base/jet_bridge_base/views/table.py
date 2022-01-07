@@ -8,7 +8,6 @@ from jet_bridge_base.serializers.table import TableSerializer
 from jet_bridge_base.views.base.api import APIView
 from jet_bridge_base.views.table_column import map_dto_column
 from sqlalchemy import Table
-from sqlalchemy.exc import InvalidRequestError, ProgrammingError
 
 
 class TableView(APIView):
@@ -41,7 +40,7 @@ class TableView(APIView):
 
         try:
             self.perform_create(request, serializer)
-        except (InvalidRequestError, ProgrammingError) as e:
+        except Exception as e:
             raise ValidationError(str(e))
 
         return JSONResponse(serializer.representation_data, status=status.HTTP_201_CREATED)
@@ -55,10 +54,15 @@ class TableView(APIView):
             metadata,
             *list(map(map_dto_column, data['columns']))
         )
-        table.create(bind=engine)
 
-        metadata.reflect(bind=engine, only=[data['name']])
-        self.update_base(request)
+        try:
+            table.create(bind=engine)
+
+            metadata.reflect(bind=engine, only=[data['name']])
+            self.update_base(request)
+        except Exception as e:
+            metadata.remove(table)
+            raise e
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object(request)

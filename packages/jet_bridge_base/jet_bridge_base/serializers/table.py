@@ -9,6 +9,8 @@ class TableColumnSerializer(Serializer):
     primary_key = fields.BooleanField(required=False)
     null = fields.BooleanField(required=False)
     length = fields.IntegerField(required=False)
+    default_type = fields.CharField(required=False)
+    default_value = fields.RawField(required=False)
 
 
 class TableSerializer(Serializer):
