@@ -14,6 +14,7 @@ class ModelDescriptionFieldSerializer(Serializer):
     required = fields_.BooleanField(required=False)
     default_type = fields_.CharField(required=False)
     default_value = fields_.RawField(required=False)
+    length = fields_.IntegerField(required=False)
 
 
 # class ModelDescriptionRelationSerializer(Serializer):
