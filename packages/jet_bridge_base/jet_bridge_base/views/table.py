@@ -52,7 +52,7 @@ class TableView(APIView):
         table = Table(
             data['name'],
             metadata,
-            *list(map(map_dto_column, data['columns']))
+            *list(map(lambda x: map_dto_column(x, metadata=metadata), data['columns']))
         )
 
         try:

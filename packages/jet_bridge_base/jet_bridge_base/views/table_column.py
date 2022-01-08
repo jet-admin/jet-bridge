@@ -1,4 +1,4 @@
-from sqlalchemy import Column, text
+from sqlalchemy import Column, text, ForeignKey
 
 from jet_bridge_base import status
 from jet_bridge_base.db import get_mapped_base, get_engine, reload_mapped_base
@@ -10,18 +10,18 @@ from jet_bridge_base.serializers.table import TableColumnSerializer
 from jet_bridge_base.utils.db_types import map_query_type
 from jet_bridge_base.views.base.api import APIView
 from jet_bridge_base.views.model_description import map_column
+from sqlalchemy.sql.ddl import AddConstraint
 
 
-def map_dto_column(column):
+def map_dto_column(column, metadata=None):
+    args = []
     column_kwargs = {}
     autoincrement = False
     server_default = None
+    column_type = map_query_type(column['field'])
 
     if column.get('primary_key', False):
         autoincrement = True
-
-    if 'length' in column:
-        column_kwargs['length'] = column['length']
 
     if 'default_type' in column:
         if column['default_type'] == 'value':
@@ -33,7 +33,10 @@ def map_dto_column(column):
         elif column['default_type'] == 'auto_increment':
             autoincrement = True
 
-    column_type = map_query_type(column['field'])
+    params = column.get('params')
+    if params:
+        if 'length' in params:
+            column_kwargs['length'] = params['length']
 
     if callable(column_type):
         try:
@@ -41,9 +44,27 @@ def map_dto_column(column):
         except TypeError:
             pass
 
+    if params:
+        if 'related_model' in params:
+            model = params['related_model'].get('model')
+            table = metadata.tables.get(model)
+
+            table_primary_keys = table.primary_key.columns.keys()
+            table_primary_key = table_primary_keys[0] if len(table_primary_keys) > 0 else None
+            related_column_name = params.get('custom_primary_key') or table_primary_key
+
+            try:
+                related_column = [x for x in table.columns if x.name == related_column_name][0]
+                column_type = related_column.type
+                foreign_key = ForeignKey(related_column)
+                args.append(foreign_key)
+            except IndexError:
+                pass
+
     return Column(
-        column['name'],
-        column_type,
+        *args,
+        name=column['name'],
+        type_=column_type,
         autoincrement=autoincrement,
         primary_key=column.get('primary_key', False),
         nullable=column.get('null', False),
@@ -116,12 +137,18 @@ class TableColumnView(APIView):
     def perform_create(self, request, serializer):
         metadata, engine = self.get_db(request)
         table = self.get_table(request)
-        column = map_dto_column(serializer.validated_data)
+        column = map_dto_column(serializer.validated_data, metadata=metadata)
+        column._set_parent(table)
 
         ddl_compiler = engine.dialect.ddl_compiler(engine.dialect, None)
         column_specification = ddl_compiler.get_column_specification(column)
 
         engine.execute('''ALTER TABLE "{0}" ADD COLUMN {1}'''.format(table.name, column_specification))
+
+        for foreign_key in column.foreign_keys:
+            if not foreign_key.constraint:
+                foreign_key._set_table(column, table)
+                engine.execute(AddConstraint(foreign_key.constraint))
 
         metadata.remove(table)
         metadata.reflect(bind=engine, only=[table.name])
@@ -144,24 +171,24 @@ class TableColumnView(APIView):
     def update(self, request, *args, **kwargs):
         partial = kwargs.pop('partial', False)
         instance = self.get_object(request)
-        serializer = TableColumnSerializer(instance=instance, data=request.data, partial=partial)
+        serializer = TableColumnSerializer(data=request.data, partial=partial)
         serializer.is_valid(raise_exception=True)
 
         try:
-            self.perform_update(request, serializer)
+            self.perform_update(request, instance, serializer)
         except Exception as e:
             raise ValidationError(str(e))
 
         return JSONResponse(serializer.representation_data)
 
-    def perform_update(self, request, serializer):
+    def perform_update(self, request, existing_column, serializer):
         metadata, engine = self.get_db(request)
         table = self.get_table(request)
-        existing_data = map_column(serializer.instance, True)
+        existing_data = map_column(existing_column, True)
         existing_dto = {
             'name': existing_data['name'],
             'field': existing_data['field'],
-            'primary_key': serializer.instance.table.primary_key.columns[0].name == existing_data['name']
+            'primary_key': existing_column.table.primary_key.columns[0].name == existing_data['name']
         }
 
         if 'length' in existing_data:
@@ -170,9 +197,10 @@ class TableColumnView(APIView):
         column = map_dto_column({
             **existing_dto,
             **serializer.validated_data
-        })
+        }, metadata=metadata)
+        column._set_parent(table)
 
-        column_name = serializer.instance.name
+        column_name = existing_column.name
         column_type = column.type.compile(engine.dialect)
 
         engine.execute('''ALTER TABLE "{0}" ALTER COLUMN "{1}" TYPE {2}'''.format(table.name, column_name, column_type))
@@ -190,6 +218,14 @@ class TableColumnView(APIView):
             engine.execute('''ALTER TABLE "{0}" ALTER COLUMN "{1}" SET DEFAULT {2}'''.format(table.name, column_name, default))
         else:
             engine.execute('''ALTER TABLE "{0}" ALTER COLUMN "{1}" DROP DEFAULT'''.format(table.name, column_name))
+
+        for foreign_key in column.foreign_keys:
+            if not foreign_key.constraint:
+                existing_foreign_keys = list(filter(lambda x: x.target_fullname == foreign_key.target_fullname, existing_column.foreign_keys))
+                if len(existing_foreign_keys):
+                    continue
+                foreign_key._set_table(column, table)
+                engine.execute(AddConstraint(foreign_key.constraint))
 
         if column_name != column.name:
             engine.execute('''ALTER TABLE "{0}" RENAME COLUMN "{1}" TO "{2}"'''.format(table.name, column_name, column.name))

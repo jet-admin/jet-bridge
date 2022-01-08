@@ -34,6 +34,9 @@ def map_column(column, editable):
         if not table_primary_key or foreign_key.column.name != table_primary_key:
             params['custom_primary_key'] = foreign_key.column.name
 
+    if isinstance(column.type, String):
+        params['length'] = column.type.length
+
     optional = column.autoincrement or column.default or column.server_default or column.nullable
 
     result = {
@@ -46,9 +49,6 @@ def map_column(column, editable):
         'editable': editable,
         'params': params
     }
-
-    if isinstance(column.type, String):
-        result['length'] = column.type.length
 
     if column.server_default is not None:
         if isinstance(column.server_default.arg, TextClause):

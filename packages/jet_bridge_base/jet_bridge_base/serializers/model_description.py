@@ -15,6 +15,8 @@ class ModelDescriptionFieldSerializer(Serializer):
     default_type = fields_.CharField(required=False)
     default_value = fields_.RawField(required=False)
     length = fields_.IntegerField(required=False)
+    related_model = fields_.JSONField(required=False)
+    custom_primary_key = fields_.CharField(required=False)
 
 
 # class ModelDescriptionRelationSerializer(Serializer):
