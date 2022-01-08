@@ -25,9 +25,10 @@ class TableView(APIView):
     def get_object(self, request):
         metadata, engine = self.get_db(request)
         pk = request.path_kwargs['pk']
-        obj = metadata.tables.get(pk)
 
-        if obj is None:
+        try:
+            obj = list(filter(lambda x: x.name == pk, metadata.tables.values()))[0]
+        except IndexError:
             raise NotFound
 
         self.check_object_permissions(request, obj)

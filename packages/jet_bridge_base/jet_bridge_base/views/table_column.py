@@ -47,14 +47,15 @@ def map_dto_column(column, metadata=None):
     if params:
         if 'related_model' in params:
             model = params['related_model'].get('model')
-            table = metadata.tables.get(model)
-
-            table_primary_keys = table.primary_key.columns.keys()
-            table_primary_key = table_primary_keys[0] if len(table_primary_keys) > 0 else None
-            related_column_name = params.get('custom_primary_key') or table_primary_key
 
             try:
+                table = list(filter(lambda x: x.name == model, metadata.tables.values()))[0]
+
+                table_primary_keys = table.primary_key.columns.keys()
+                table_primary_key = table_primary_keys[0] if len(table_primary_keys) > 0 else None
+                related_column_name = params.get('custom_primary_key') or table_primary_key
                 related_column = [x for x in table.columns if x.name == related_column_name][0]
+
                 column_type = related_column.type
                 foreign_key = ForeignKey(related_column)
                 args.append(foreign_key)
@@ -86,10 +87,11 @@ class TableColumnView(APIView):
 
     def get_table(self, request):
         metadata, engine = self.get_db(request)
-        table = request.path_kwargs['table']
-        obj = metadata.tables.get(table)
+        table_name = request.path_kwargs['table']
 
-        if obj is None:
+        try:
+            obj = list(filter(lambda x: x.name == table_name, metadata.tables.values()))[0]
+        except IndexError:
             raise NotFound
 
         self.check_object_permissions(request, obj)
@@ -99,9 +101,10 @@ class TableColumnView(APIView):
     def get_object(self, request):
         metadata, engine = self.get_db(request)
         table_name = request.path_kwargs['table']
-        table = metadata.tables.get(table_name)
 
-        if table is None:
+        try:
+            table = list(filter(lambda x: x.name == table_name, metadata.tables.values()))[0]
+        except IndexError:
             raise NotFound
 
         pk = request.path_kwargs['pk']
@@ -143,7 +146,8 @@ class TableColumnView(APIView):
         ddl_compiler = engine.dialect.ddl_compiler(engine.dialect, None)
         column_specification = ddl_compiler.get_column_specification(column)
 
-        engine.execute('''ALTER TABLE "{0}" ADD COLUMN {1}'''.format(table.name, column_specification))
+        table_name = ddl_compiler.preparer.format_table(table)
+        engine.execute('''ALTER TABLE {0} ADD COLUMN {1}'''.format(table_name, column_specification))
 
         for foreign_key in column.foreign_keys:
             if not foreign_key.constraint:
@@ -162,7 +166,10 @@ class TableColumnView(APIView):
     def perform_destroy(self, request, column):
         metadata, engine = self.get_db(request)
         table = self.get_table(request)
-        engine.execute('''ALTER TABLE "{0}" DROP COLUMN "{1}" '''.format(table.name, column.name))
+
+        ddl_compiler = engine.dialect.ddl_compiler(engine.dialect, None)
+        table_name = ddl_compiler.preparer.format_table(table)
+        engine.execute('''ALTER TABLE {0} DROP COLUMN "{1}" '''.format(table_name, column.name))
 
         metadata.remove(table)
         metadata.reflect(bind=engine, only=[table.name])
@@ -200,24 +207,26 @@ class TableColumnView(APIView):
         }, metadata=metadata)
         column._set_parent(table)
 
+        ddl_compiler = engine.dialect.ddl_compiler(engine.dialect, None)
+        table_name = ddl_compiler.preparer.format_table(table)
         column_name = existing_column.name
         column_type = column.type.compile(engine.dialect)
 
-        engine.execute('''ALTER TABLE "{0}" ALTER COLUMN "{1}" TYPE {2}'''.format(table.name, column_name, column_type))
-        # engine.execute('ALTER TABLE {0} ALTER COLUMN {1} TYPE {2} USING {1}::integer'.format(table.name, column_name, column_type))
+        engine.execute('''ALTER TABLE {0} ALTER COLUMN "{1}" TYPE {2}'''.format(table_name, column_name, column_type))
+        # engine.execute('ALTER TABLE {0} ALTER COLUMN {1} TYPE {2} USING {1}::integer'.format(table_name, column_name, column_type))
 
         if column.nullable:
-            engine.execute('''ALTER TABLE "{0}" ALTER COLUMN "{1}" DROP NOT NULL'''.format(table.name, column_name))
+            engine.execute('''ALTER TABLE {0} ALTER COLUMN "{1}" DROP NOT NULL'''.format(table_name, column_name))
         else:
-            engine.execute('''ALTER TABLE "{0}" ALTER COLUMN "{1}" SET NOT NULL'''.format(table.name, column_name))
+            engine.execute('''ALTER TABLE {0} ALTER COLUMN "{1}" SET NOT NULL'''.format(table_name, column_name))
 
         ddl_compiler = engine.dialect.ddl_compiler(engine.dialect, None)
         default = ddl_compiler.get_column_default_string(column)
 
         if default is not None:
-            engine.execute('''ALTER TABLE "{0}" ALTER COLUMN "{1}" SET DEFAULT {2}'''.format(table.name, column_name, default))
+            engine.execute('''ALTER TABLE {0} ALTER COLUMN "{1}" SET DEFAULT {2}'''.format(table_name, column_name, default))
         else:
-            engine.execute('''ALTER TABLE "{0}" ALTER COLUMN "{1}" DROP DEFAULT'''.format(table.name, column_name))
+            engine.execute('''ALTER TABLE {0} ALTER COLUMN "{1}" DROP DEFAULT'''.format(table_name, column_name))
 
         for foreign_key in column.foreign_keys:
             if not foreign_key.constraint:
@@ -228,7 +237,7 @@ class TableColumnView(APIView):
                 engine.execute(AddConstraint(foreign_key.constraint))
 
         if column_name != column.name:
-            engine.execute('''ALTER TABLE "{0}" RENAME COLUMN "{1}" TO "{2}"'''.format(table.name, column_name, column.name))
+            engine.execute('''ALTER TABLE {0} RENAME COLUMN "{1}" TO "{2}"'''.format(table_name, column_name, column.name))
 
         metadata.remove(table)
         metadata.reflect(bind=engine, only=[table.name])
