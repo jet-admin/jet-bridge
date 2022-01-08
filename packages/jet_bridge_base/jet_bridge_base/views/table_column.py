@@ -169,7 +169,8 @@ class TableColumnView(APIView):
 
         ddl_compiler = engine.dialect.ddl_compiler(engine.dialect, None)
         table_name = ddl_compiler.preparer.format_table(table)
-        engine.execute('''ALTER TABLE {0} DROP COLUMN "{1}" '''.format(table_name, column.name))
+        column_name = ddl_compiler.preparer.format_column(column)
+        engine.execute('''ALTER TABLE {0} DROP COLUMN {1} '''.format(table_name, column_name))
 
         metadata.remove(table)
         metadata.reflect(bind=engine, only=[table.name])
@@ -209,24 +210,25 @@ class TableColumnView(APIView):
 
         ddl_compiler = engine.dialect.ddl_compiler(engine.dialect, None)
         table_name = ddl_compiler.preparer.format_table(table)
-        column_name = existing_column.name
+        # column_name = existing_column.name
+        column_name = ddl_compiler.preparer.format_column(column)
+        existing_column_name = ddl_compiler.preparer.format_column(existing_column)
         column_type = column.type.compile(engine.dialect)
 
-        engine.execute('''ALTER TABLE {0} ALTER COLUMN "{1}" TYPE {2}'''.format(table_name, column_name, column_type))
-        # engine.execute('ALTER TABLE {0} ALTER COLUMN {1} TYPE {2} USING {1}::integer'.format(table_name, column_name, column_type))
+        engine.execute('''ALTER TABLE {0} ALTER COLUMN {1} TYPE {2}'''.format(table_name, existing_column_name, column_type))
+        # engine.execute('ALTER TABLE {0} ALTER COLUMN {1} TYPE {2} USING {1}::integer'.format(table_name, existing_column_name, column_type))
 
         if column.nullable:
-            engine.execute('''ALTER TABLE {0} ALTER COLUMN "{1}" DROP NOT NULL'''.format(table_name, column_name))
+            engine.execute('''ALTER TABLE {0} ALTER COLUMN {1} DROP NOT NULL'''.format(table_name, existing_column_name))
         else:
-            engine.execute('''ALTER TABLE {0} ALTER COLUMN "{1}" SET NOT NULL'''.format(table_name, column_name))
+            engine.execute('''ALTER TABLE {0} ALTER COLUMN {1} SET NOT NULL'''.format(table_name, existing_column_name))
 
-        ddl_compiler = engine.dialect.ddl_compiler(engine.dialect, None)
         default = ddl_compiler.get_column_default_string(column)
 
         if default is not None:
-            engine.execute('''ALTER TABLE {0} ALTER COLUMN "{1}" SET DEFAULT {2}'''.format(table_name, column_name, default))
+            engine.execute('''ALTER TABLE {0} ALTER COLUMN {1} SET DEFAULT {2}'''.format(table_name, existing_column_name, default))
         else:
-            engine.execute('''ALTER TABLE {0} ALTER COLUMN "{1}" DROP DEFAULT'''.format(table_name, column_name))
+            engine.execute('''ALTER TABLE {0} ALTER COLUMN {1} DROP DEFAULT'''.format(table_name, existing_column_name))
 
         for foreign_key in column.foreign_keys:
             if not foreign_key.constraint:
@@ -236,8 +238,8 @@ class TableColumnView(APIView):
                 foreign_key._set_table(column, table)
                 engine.execute(AddConstraint(foreign_key.constraint))
 
-        if column_name != column.name:
-            engine.execute('''ALTER TABLE {0} RENAME COLUMN "{1}" TO "{2}"'''.format(table_name, column_name, column.name))
+        if column_name != existing_column_name:
+            engine.execute('''ALTER TABLE {0} RENAME COLUMN {1} TO {2}'''.format(table_name, existing_column_name, column_name))
 
         metadata.remove(table)
         metadata.reflect(bind=engine, only=[table.name])
