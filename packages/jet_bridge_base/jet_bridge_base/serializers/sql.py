@@ -13,7 +13,7 @@ from jet_bridge_base.filters.filter import EMPTY_VALUES
 from jet_bridge_base.filters.model_group import get_query_func_by_name, get_query_lookup_func_by_name
 from jet_bridge_base.filters.filter_for_dbfield import filter_for_data_type
 from jet_bridge_base.serializers.serializer import Serializer
-from jet_bridge_base.utils.db_types import map_query_type
+from jet_bridge_base.utils.db_types import map_to_sql_type
 
 
 class ColumnSerializer(Serializer):
@@ -135,7 +135,7 @@ class SqlSerializer(Serializer):
         filters_instances = []
 
         for item in data.get('columns', []):
-            query_type = map_query_type(item['data_type'])()
+            query_type = map_to_sql_type(item['data_type'])()
             filter_data = filter_for_data_type(query_type)
             for lookup in filter_data['lookups']:
                 for exclude in [False, True]:
@@ -173,7 +173,7 @@ class SqlSerializer(Serializer):
         if search not in EMPTY_VALUES:
             def map_column(item):
                 field = column(item['name'])
-                query_type = map_query_type(item['data_type'])()
+                query_type = map_to_sql_type(item['data_type'])()
 
                 if isinstance(query_type, (sqltypes.Integer, sqltypes.Numeric)):
                     return cast(field, sqltypes.String).__eq__(search)

@@ -6,6 +6,7 @@ class ModelDescriptionFieldSerializer(Serializer):
     name = fields_.CharField()
     db_column = fields_.CharField()
     field = fields_.CharField()
+    db_field = fields_.CharField()
     filterable = fields_.BooleanField()
     null = fields_.BooleanField()
     editable = fields_.BooleanField()

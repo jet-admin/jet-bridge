@@ -9,7 +9,7 @@ from jet_bridge_base.permissions import HasProjectPermissions
 from jet_bridge_base.responses.json import JSONResponse
 from jet_bridge_base.serializers.model_description import ModelDescriptionSerializer
 from jet_bridge_base.utils.common import merge
-from jet_bridge_base.utils.db_types import map_data_type
+from jet_bridge_base.utils.db_types import sql_to_map_type, sql_to_db_type
 from jet_bridge_base.views.base.api import APIView
 
 
@@ -17,13 +17,18 @@ def map_column(column, editable):
     params = {}
 
     try:
-        data_type = map_data_type(column.type)
+        map_type = sql_to_map_type(column.type)
     except:
-        data_type = 'NullType'
+        map_type = 'NullType'
+
+    try:
+        db_type = sql_to_db_type(column.type)
+    except:
+        db_type = 'NullType'
 
     if column.foreign_keys:
         foreign_key = next(iter(column.foreign_keys))
-        data_type = data_types.FOREIGN_KEY
+        map_type = data_types.FOREIGN_KEY
         params['related_model'] = {
             'model': foreign_key.column.table.name
         }
@@ -42,7 +47,8 @@ def map_column(column, editable):
     result = {
         'name': column.name,
         'db_column': column.name,
-        'field': data_type,
+        'field': map_type,
+        'db_field': db_type,
         'filterable': True,
         'required': not optional,
         'null': column.nullable,

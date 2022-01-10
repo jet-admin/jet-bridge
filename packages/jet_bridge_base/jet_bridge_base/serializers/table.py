@@ -6,6 +6,7 @@ from jet_bridge_base.serializers.serializer import Serializer
 class TableColumnSerializer(Serializer):
     name = fields.CharField()
     field = fields.CharField()
+    db_field = fields.CharField(required=False)
     primary_key = fields.BooleanField(required=False)
     null = fields.BooleanField(required=False)
     default_type = fields.CharField(required=False)

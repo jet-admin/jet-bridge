@@ -7,7 +7,7 @@ from jet_bridge_base.exceptions.validation_error import ValidationError
 from jet_bridge_base.permissions import HasProjectPermissions
 from jet_bridge_base.responses.json import JSONResponse
 from jet_bridge_base.serializers.table import TableColumnSerializer
-from jet_bridge_base.utils.db_types import map_query_type
+from jet_bridge_base.utils.db_types import map_to_sql_type, db_to_sql_type
 from jet_bridge_base.views.base.api import APIView
 from jet_bridge_base.views.model_description import map_column
 from sqlalchemy.sql.ddl import AddConstraint
@@ -18,7 +18,7 @@ def map_dto_column(column, metadata=None):
     column_kwargs = {}
     autoincrement = False
     server_default = None
-    column_type = map_query_type(column['field'])
+    column_type = db_to_sql_type(column['db_field']) if 'db_field' in column else map_to_sql_type(column['field'])
 
     if column.get('primary_key', False):
         autoincrement = True
@@ -210,7 +210,7 @@ class TableColumnView(APIView):
 
         ddl_compiler = engine.dialect.ddl_compiler(engine.dialect, None)
         table_name = ddl_compiler.preparer.format_table(table)
-        # column_name = existing_column.name
+
         column_name = ddl_compiler.preparer.format_column(column)
         existing_column_name = ddl_compiler.preparer.format_column(existing_column)
         column_type = column.type.compile(engine.dialect)
