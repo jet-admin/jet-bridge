@@ -13,6 +13,32 @@ from jet_bridge_base.utils.db_types import sql_to_map_type, sql_to_db_type
 from jet_bridge_base.views.base.api import APIView
 
 
+def map_column_default(column):
+    if column.server_default is not None:
+        if isinstance(column.server_default.arg, TextClause):
+            value = column.server_default.arg.text
+            if value.lower() == 'now()':
+                return {
+                    'default_type': 'datetime_now'
+                }
+
+            value_regex = re.search("^'(?P<value>.+)'::(?P<type>.+)$", value)
+            if value_regex:
+                match = value_regex.groupdict()
+                return {
+                    'default_type': 'value',
+                    'default_value': match['value']
+                }
+
+            nextval_regex = re.search("^nextval\((?P<value>.+)\)$", value)
+            if nextval_regex:
+                match = nextval_regex.groupdict()
+                return {
+                    'default_type': 'sequence',
+                    'default_value': match['value']
+                }
+
+
 def map_column(column, editable):
     params = {}
 
@@ -56,17 +82,11 @@ def map_column(column, editable):
         'params': params
     }
 
-    if column.server_default is not None:
-        if isinstance(column.server_default.arg, TextClause):
-            value = column.server_default.arg.text
-            regex = re.search("^'(?P<value>.+)'::(?P<type>.+)$", value)
-
-            if regex:
-                matches = regex.groupdict()
-                result['default_type'] = 'value'
-                result['default_value'] = matches['value']
-            elif value.lower() == 'now()':
-                result['default_type'] = 'datetime_now'
+    server_default = map_column_default(column)
+    if server_default:
+        result['default_type'] = server_default['default_type']
+        if 'default_value' in server_default:
+            result['default_value'] = server_default['default_value']
 
     return result
 

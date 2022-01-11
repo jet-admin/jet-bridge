@@ -30,6 +30,8 @@ def map_dto_column(column, metadata=None):
             server_default = text('NOW()')
         elif column['default_type'] == 'uuid':
             server_default = text("uuid_generate_v4()")
+        elif column['default_type'] == 'sequence':
+            server_default = text("nextval({})".format(column['default_value']))
         elif column['default_type'] == 'auto_increment':
             autoincrement = True
 
