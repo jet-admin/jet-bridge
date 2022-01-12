@@ -218,7 +218,7 @@ class SqlSerializer(Serializer):
 
     def execute(self, data):
         request = self.context.get('request')
-        session = create_session(request)
+        session = request.session
 
         query = data['query']
 
