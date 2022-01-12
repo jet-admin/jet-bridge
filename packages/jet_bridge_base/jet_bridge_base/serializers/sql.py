@@ -244,6 +244,8 @@ class SqlSerializer(Serializer):
 
                 count_result = session.execute(count_queryset, params)
                 count_rows = count_result.all()[0][0]
+            except SQLAlchemyError:
+                session.rollback()
             except Exception:
                 pass
 
