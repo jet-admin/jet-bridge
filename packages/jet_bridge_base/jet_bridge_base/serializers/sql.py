@@ -119,7 +119,12 @@ class SqlSerializer(Serializer):
             x_lookup_param = group.get('xLookup')
             x_column_param = group.get('xColumn')
             x_column = column(x_column_param) if x_column_param is not None else None
-            return get_query_lookup_func_by_name(session, x_lookup_param, x_column).label(group_name(i))
+
+            lookup_params = x_lookup_param.split('_') if x_lookup_param else []
+            lookup_type = lookup_params[0] if len(lookup_params) >= 1 else None
+            lookup_param = lookup_params[1] if len(lookup_params) >= 2 else None
+
+            return get_query_lookup_func_by_name(session, lookup_type, lookup_param, x_column).label(group_name(i))
 
         if 'groups' in data:
             x_lookups = list(map(lambda x: map_group_column(x[1], x[0]), enumerate(data['groups']['xColumns'])))
