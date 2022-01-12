@@ -47,7 +47,7 @@ except ImportError:
 
 def sql_to_map_type(value):
     for rule in reversed(map_data_types):
-        if isinstance(value, rule['sql_type']) or rule['sql_type'] == value:
+        if isinstance(value, rule['sql_type']) or issubclass(value, rule['sql_type']):
             return rule['map_type']
     logger.warning('Unknown database type: {}'.format(str(value)))
     return default_map_type
