@@ -4,7 +4,7 @@ from sqlalchemy.sql import sqltypes
 from sqlalchemy.exc import SQLAlchemyError
 
 from jet_bridge_base import fields
-from jet_bridge_base.db import create_session
+from jet_bridge_base.db import create_session, get_type_code_to_sql_type
 from jet_bridge_base.exceptions.sql import SqlError
 from jet_bridge_base.exceptions.validation_error import ValidationError
 from jet_bridge_base.fields.sql_params import SqlParamsSerializers
@@ -13,7 +13,7 @@ from jet_bridge_base.filters.filter import EMPTY_VALUES
 from jet_bridge_base.filters.model_group import get_query_func_by_name, get_query_lookup_func_by_name
 from jet_bridge_base.filters.filter_for_dbfield import filter_for_data_type
 from jet_bridge_base.serializers.serializer import Serializer
-from jet_bridge_base.utils.db_types import map_to_sql_type
+from jet_bridge_base.utils.db_types import map_to_sql_type, sql_to_map_type
 
 
 class ColumnSerializer(Serializer):
@@ -282,7 +282,20 @@ class SqlSerializer(Serializer):
             def map_row(row):
                 return list(map(lambda x: map_row_column(row[x]), row.keys()))
 
-            response = {'data': list(map(map_row, result)), 'columns': list(map(map_column, result.keys()))}
+            def map_column_description(column):
+                sql_type = type_code_to_sql_type.get(column.type_code)
+                return column.name, {
+                    'field': sql_to_map_type(sql_type) if sql_type else None
+                }
+
+            type_code_to_sql_type = get_type_code_to_sql_type(request)
+            column_descriptions = dict(map(map_column_description, result.cursor.description))
+
+            response = {
+                'data': list(map(map_row, result)),
+                'columns': list(map(map_column, result.keys())),
+                'column_descriptions': column_descriptions
+            }
 
             if count_rows is not None:
                 response['count'] = count_rows

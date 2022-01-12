@@ -1,4 +1,6 @@
 import json
+
+from jet_bridge_base.utils.type_codes import fetch_type_code_to_sql_type
 from six.moves.urllib_parse import quote_plus
 
 from sqlalchemy import create_engine, MetaData
@@ -129,6 +131,9 @@ def connect_database(conf):
     logger.info('Connecting to database "{}"...'.format(engine_url))
 
     with session.connection() as connection:
+        logger.info('Getting db types for "{}"...'.format(engine_url))
+        type_code_to_sql_type = fetch_type_code_to_sql_type(session)
+
         metadata = MetaData(schema=schema, bind=connection)
         logger.info('Getting schema for "{}"...'.format(engine_url))
         metadata.reflect(engine, only=only)
@@ -145,7 +150,8 @@ def connect_database(conf):
             'engine': engine,
             'Session': Session,
             'MappedBase': MappedBase,
-            'params_id': connection_params_id
+            'params_id': connection_params_id,
+            'type_code_to_sql_type': type_code_to_sql_type
         }
         return connections[connection_id]
 
@@ -241,6 +247,13 @@ def get_engine(request):
     if not connection:
         return
     return connection['engine']
+
+
+def get_type_code_to_sql_type(request):
+    connection = get_request_connection(request)
+    if not connection:
+        return
+    return connection['type_code_to_sql_type']
 
 
 def reload_mapped_base(MappedBase):
