@@ -153,7 +153,9 @@ def connect_database(conf):
             'params_id': connection_params_id,
             'type_code_to_sql_type': type_code_to_sql_type
         }
-        return connections[connection_id]
+
+    session.close()
+    return connections[connection_id]
 
 
 def disconnect_database(conf):
