@@ -8,6 +8,7 @@ from jet_bridge_base.serializers.table import TableSerializer
 from jet_bridge_base.views.base.api import APIView
 from jet_bridge_base.views.table_column import map_dto_column
 from sqlalchemy import Table
+from sqlalchemy.exc import InternalError
 
 
 class TableView(APIView):
@@ -72,7 +73,11 @@ class TableView(APIView):
 
     def perform_destroy(self, request, table):
         metadata, engine = self.get_db(request)
-        table.drop(bind=engine)
+
+        try:
+            table.drop(bind=engine)
+        except InternalError as e:
+            raise ValidationError(str(e))
 
         metadata.remove(table)
         self.update_base(request)
