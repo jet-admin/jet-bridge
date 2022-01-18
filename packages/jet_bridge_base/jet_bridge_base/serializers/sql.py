@@ -290,7 +290,7 @@ class SqlSerializer(Serializer):
                 return list(map(lambda x: map_row_column(row[x]), row.keys()))
 
             def map_column_description(column):
-                sql_type = type_code_to_sql_type.get(column.type_code)
+                sql_type = type_code_to_sql_type.get(column.type_code) if hasattr(column, 'type_code') else None
                 return column.name, {
                     'field': sql_to_map_type(sql_type) if sql_type else None
                 }
