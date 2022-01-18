@@ -1,4 +1,6 @@
-from sqlalchemy import func, sql
+from jet_bridge_base.exceptions.validation_error import ValidationError
+from sqlalchemy import func, sql, inspect
+from sqlalchemy.sql import sqltypes
 
 from jet_bridge_base.filters.char_filter import CharFilter
 from jet_bridge_base.filters.filter import EMPTY_VALUES
@@ -43,12 +45,11 @@ strftime_options = {
     'year': '%Y-01-01'
 }
 
-def get_query_lookup_func_by_name(session, name, column):
-    lookup_params = name.split('_') if name else []
 
+def get_query_lookup_func_by_name(session, lookup_type, lookup_param, column):
     try:
-        if lookup_params[0] == 'date':
-            date_group = lookup_params[1]
+        if lookup_type == 'date':
+            date_group = lookup_param or 'day'
 
             if get_session_engine(session) == 'postgresql':
                 if date_group in date_trunc_options:
@@ -62,8 +63,8 @@ def get_query_lookup_func_by_name(session, name, column):
     except IndexError:
         pass
 
-    if name:
-        print('Unsupported lookup: {}'.format(name))
+    if lookup_type:
+        print('Unsupported lookup: {}'.format(lookup_type))
 
     return column
 
@@ -89,7 +90,17 @@ class ModelGroupFilter(CharFilter):
 
         def map_lookup(column, i):
             lookup_name = value['x_lookups'][i] if i < len(value['x_lookups']) else None
-            lookup = get_query_lookup_func_by_name(qs.session, lookup_name, column)
+            lookup_params = lookup_name.split('_') if lookup_name else []
+            lookup_type = lookup_params[0] if len(lookup_params) >= 1 else None
+            lookup_param = lookup_params[1] if len(lookup_params) >= 2 else None
+
+            if lookup_type == 'date':
+                mapper = inspect(self.model)
+                column = mapper.columns.get(column.name)
+                if column is not None and not isinstance(column.type, (sqltypes.DateTime, sqltypes.Date)):
+                    raise ValidationError('Can\'t apply date functions to non-date field: {}'.format(column.name))
+
+            lookup = get_query_lookup_func_by_name(qs.session, lookup_type, lookup_param, column)
             return lookup.label(group_name(i))
 
         x_lookups = list(map(lambda x: map_lookup(x[1], x[0]), enumerate(x_columns)))

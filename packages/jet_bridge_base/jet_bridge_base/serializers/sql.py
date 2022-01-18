@@ -4,7 +4,7 @@ from sqlalchemy.sql import sqltypes
 from sqlalchemy.exc import SQLAlchemyError
 
 from jet_bridge_base import fields
-from jet_bridge_base.db import create_session
+from jet_bridge_base.db import create_session, get_type_code_to_sql_type
 from jet_bridge_base.exceptions.sql import SqlError
 from jet_bridge_base.exceptions.validation_error import ValidationError
 from jet_bridge_base.fields.sql_params import SqlParamsSerializers
@@ -13,7 +13,7 @@ from jet_bridge_base.filters.filter import EMPTY_VALUES
 from jet_bridge_base.filters.model_group import get_query_func_by_name, get_query_lookup_func_by_name
 from jet_bridge_base.filters.filter_for_dbfield import filter_for_data_type
 from jet_bridge_base.serializers.serializer import Serializer
-from jet_bridge_base.utils.db_types import map_query_type
+from jet_bridge_base.utils.db_types import map_to_sql_type, sql_to_map_type
 
 
 class ColumnSerializer(Serializer):
@@ -119,7 +119,12 @@ class SqlSerializer(Serializer):
             x_lookup_param = group.get('xLookup')
             x_column_param = group.get('xColumn')
             x_column = column(x_column_param) if x_column_param is not None else None
-            return get_query_lookup_func_by_name(session, x_lookup_param, x_column).label(group_name(i))
+
+            lookup_params = x_lookup_param.split('_') if x_lookup_param else []
+            lookup_type = lookup_params[0] if len(lookup_params) >= 1 else None
+            lookup_param = lookup_params[1] if len(lookup_params) >= 2 else None
+
+            return get_query_lookup_func_by_name(session, lookup_type, lookup_param, x_column).label(group_name(i))
 
         if 'groups' in data:
             x_lookups = list(map(lambda x: map_group_column(x[1], x[0]), enumerate(data['groups']['xColumns'])))
@@ -135,7 +140,7 @@ class SqlSerializer(Serializer):
         filters_instances = []
 
         for item in data.get('columns', []):
-            query_type = map_query_type(item['data_type'])()
+            query_type = map_to_sql_type(item['data_type'])()
             filter_data = filter_for_data_type(query_type)
             for lookup in filter_data['lookups']:
                 for exclude in [False, True]:
@@ -173,7 +178,7 @@ class SqlSerializer(Serializer):
         if search not in EMPTY_VALUES:
             def map_column(item):
                 field = column(item['name'])
-                query_type = map_query_type(item['data_type'])()
+                query_type = map_to_sql_type(item['data_type'])()
 
                 if isinstance(query_type, (sqltypes.Integer, sqltypes.Numeric)):
                     return cast(field, sqltypes.String).__eq__(search)
@@ -218,7 +223,7 @@ class SqlSerializer(Serializer):
 
     def execute(self, data):
         request = self.context.get('request')
-        session = create_session(request)
+        session = request.session
 
         query = data['query']
 
@@ -244,6 +249,8 @@ class SqlSerializer(Serializer):
 
                 count_result = session.execute(count_queryset, params)
                 count_rows = count_result.all()[0][0]
+            except SQLAlchemyError:
+                session.rollback()
             except Exception:
                 pass
 
@@ -282,7 +289,20 @@ class SqlSerializer(Serializer):
             def map_row(row):
                 return list(map(lambda x: map_row_column(row[x]), row.keys()))
 
-            response = {'data': list(map(map_row, result)), 'columns': list(map(map_column, result.keys()))}
+            def map_column_description(column):
+                sql_type = type_code_to_sql_type.get(column.type_code)
+                return column.name, {
+                    'field': sql_to_map_type(sql_type) if sql_type else None
+                }
+
+            type_code_to_sql_type = get_type_code_to_sql_type(request)
+            column_descriptions = dict(map(map_column_description, result.cursor.description))
+
+            response = {
+                'data': list(map(map_row, result)),
+                'columns': list(map(map_column, result.keys())),
+                'column_descriptions': column_descriptions
+            }
 
             if count_rows is not None:
                 response['count'] = count_rows

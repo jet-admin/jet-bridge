@@ -69,6 +69,11 @@ class Serializer(Field):
         return list(filter(lambda x: not x.read_only, self.fields))
 
     def run_validation(self, value):
+        if value is empty:
+            if self.required:
+                # raise ValidationError('Field is required')
+                self.error('required')
+
         value = self.to_internal_value(value)
 
         try:

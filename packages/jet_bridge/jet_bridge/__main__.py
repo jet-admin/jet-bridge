@@ -50,14 +50,15 @@ def main():
     from jet_bridge.app import make_app
 
     app = make_app()
+    workers = settings.WORKERS if not settings.DEBUG else 1
     server = HTTPServer(app)
     server.bind(settings.PORT, settings.ADDRESS)
-    server.start(settings.WORKERS if not settings.DEBUG else 1)
+    server.start(workers)
 
     if settings.WORKERS > 1 and settings.DEBUG:
         logger.warning('Multiple workers are not supported in DEBUG mode')
 
-    logger.info('Starting server at {} (WORKERS: {})'.format(url, settings.THREADS))
+    logger.info('Starting server at {} (WORKERS: {})'.format(url, workers))
 
     if settings.DEBUG:
         logger.warning('Server is running in DEBUG mode')
