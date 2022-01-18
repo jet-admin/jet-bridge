@@ -1,5 +1,6 @@
 from jet_bridge_base.models import data_types
 from jet_bridge_base.logger import logger
+from jet_bridge_base.utils.classes import issubclass_safe
 
 from sqlalchemy.sql import sqltypes
 
@@ -47,7 +48,7 @@ except ImportError:
 
 def sql_to_map_type(value):
     for rule in reversed(map_data_types):
-        if isinstance(value, rule['sql_type']) or issubclass(value, rule['sql_type']):
+        if isinstance(value, rule['sql_type']) or issubclass_safe(value, rule['sql_type']):
             return rule['map_type']
     logger.warning('Unknown database type: {}'.format(str(value)))
     return default_map_type
