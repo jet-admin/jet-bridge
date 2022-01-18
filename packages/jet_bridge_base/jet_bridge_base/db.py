@@ -1,4 +1,6 @@
 import json
+
+from jet_bridge_base.utils.type_codes import fetch_type_code_to_sql_type
 from six.moves.urllib_parse import quote_plus
 
 from sqlalchemy import create_engine, MetaData
@@ -129,31 +131,16 @@ def connect_database(conf):
     logger.info('Connecting to database "{}"...'.format(engine_url))
 
     with session.connection() as connection:
+        logger.info('Getting db types for "{}"...'.format(engine_url))
+        type_code_to_sql_type = fetch_type_code_to_sql_type(session)
+
         metadata = MetaData(schema=schema, bind=connection)
         logger.info('Getting schema for "{}"...'.format(engine_url))
         metadata.reflect(engine, only=only)
         logger.info('Connected to "{}"...'.format(engine_url))
 
         MappedBase = automap_base(metadata=metadata)
-
-        def name_for_scalar_relationship(base, local_cls, referred_cls, constraint):
-            rnd = get_random_string(4)
-            return referred_cls.__name__.lower() + '_jet_relation' + rnd
-
-        def name_for_collection_relationship(base, local_cls, referred_cls, constraint):
-            rnd = get_random_string(4)
-            return referred_cls.__name__.lower() + '_jet_collection' + rnd
-
-        def custom_generate_relationship(base, direction, return_fn, attrname, local_cls, referred_cls, **kw):
-            rnd = get_random_string(4)
-            attrname = attrname + '_jet_ref' + rnd
-            return generate_relationship(base, direction, return_fn, attrname, local_cls, referred_cls, **kw)
-
-        MappedBase.prepare(
-            name_for_scalar_relationship=name_for_scalar_relationship,
-            name_for_collection_relationship=name_for_collection_relationship,
-            generate_relationship=custom_generate_relationship
-        )
+        reload_mapped_base(MappedBase)
 
         for table_name, table in MappedBase.metadata.tables.items():
             if len(table.primary_key.columns) == 0 and table_name not in MappedBase.classes:
@@ -163,9 +150,12 @@ def connect_database(conf):
             'engine': engine,
             'Session': Session,
             'MappedBase': MappedBase,
-            'params_id': connection_params_id
+            'params_id': connection_params_id,
+            'type_code_to_sql_type': type_code_to_sql_type
         }
-        return connections[connection_id]
+
+    session.close()
+    return connections[connection_id]
 
 
 def disconnect_database(conf):
@@ -259,6 +249,35 @@ def get_engine(request):
     if not connection:
         return
     return connection['engine']
+
+
+def get_type_code_to_sql_type(request):
+    connection = get_request_connection(request)
+    if not connection:
+        return
+    return connection['type_code_to_sql_type']
+
+
+def reload_mapped_base(MappedBase):
+    def name_for_scalar_relationship(base, local_cls, referred_cls, constraint):
+        rnd = get_random_string(4)
+        return referred_cls.__name__.lower() + '_jet_relation' + rnd
+
+    def name_for_collection_relationship(base, local_cls, referred_cls, constraint):
+        rnd = get_random_string(4)
+        return referred_cls.__name__.lower() + '_jet_collection' + rnd
+
+    def custom_generate_relationship(base, direction, return_fn, attrname, local_cls, referred_cls, **kw):
+        rnd = get_random_string(4)
+        attrname = attrname + '_jet_ref' + rnd
+        return generate_relationship(base, direction, return_fn, attrname, local_cls, referred_cls, **kw)
+
+    MappedBase.classes.clear()
+    MappedBase.prepare(
+        name_for_scalar_relationship=name_for_scalar_relationship,
+        name_for_collection_relationship=name_for_collection_relationship,
+        generate_relationship=custom_generate_relationship
+    )
 
 
 def dispose_connection(request):

@@ -18,6 +18,8 @@ from jet_bridge_base.views.proxy_request import ProxyRequestView
 from jet_bridge_base.views.register import RegisterView
 from jet_bridge_base.views.reload import ReloadView
 from jet_bridge_base.views.sql import SqlView
+from jet_bridge_base.views.table import TableView
+from jet_bridge_base.views.table_column import TableColumnView
 
 from jet_bridge import settings, media
 from jet_bridge.handlers.view import view_handler
@@ -29,6 +31,8 @@ def make_app():
     router = Router()
 
     router.register('/api/models/(?P<model>[^/]+)/', view_handler(ModelViewSet))
+    router.register('/api/tables/(?P<table>[^/]+)/columns/', view_handler(TableColumnView))
+    router.register('/api/tables/', view_handler(TableView))
 
     urls = [
         (r'/', TemporaryRedirectHandler, {'url': '/api/'}),

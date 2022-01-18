@@ -79,6 +79,8 @@ class Field(object):
 
     def to_internal_value(self, value):
         if self.many:
+            if value is empty:
+                return []
             return list(map(lambda x: self.to_internal_value_item(x), value))
         else:
             return self.to_internal_value_item(value)

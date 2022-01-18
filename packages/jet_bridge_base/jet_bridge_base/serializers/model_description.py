@@ -6,6 +6,7 @@ class ModelDescriptionFieldSerializer(Serializer):
     name = fields_.CharField()
     db_column = fields_.CharField()
     field = fields_.CharField()
+    db_field = fields_.CharField()
     filterable = fields_.BooleanField()
     null = fields_.BooleanField()
     editable = fields_.BooleanField()
@@ -14,6 +15,9 @@ class ModelDescriptionFieldSerializer(Serializer):
     required = fields_.BooleanField(required=False)
     default_type = fields_.CharField(required=False)
     default_value = fields_.RawField(required=False)
+    length = fields_.IntegerField(required=False)
+    related_model = fields_.JSONField(required=False)
+    custom_primary_key = fields_.CharField(required=False)
 
 
 # class ModelDescriptionRelationSerializer(Serializer):
