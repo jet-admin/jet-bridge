@@ -63,8 +63,8 @@ def get_query_lookup_func_by_name(session, lookup_type, lookup_param, column):
     except IndexError:
         pass
 
-    if name:
-        print('Unsupported lookup: {}'.format(name))
+    if lookup_type:
+        print('Unsupported lookup: {}'.format(lookup_type))
 
     return column
 
