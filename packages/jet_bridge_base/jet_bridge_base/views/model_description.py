@@ -15,7 +15,7 @@ from jet_bridge_base.views.base.api import APIView
 
 def map_column_default(column):
     if column.server_default is not None:
-        if isinstance(column.server_default.arg, TextClause):
+        if hasattr(column.server_default, 'arg') and isinstance(column.server_default.arg, TextClause):
             value = column.server_default.arg.text
             if value.lower() == 'now()':
                 return {
