@@ -21,6 +21,16 @@ def map_column_default(column):
                 return {
                     'default_type': 'datetime_now'
                 }
+            elif value.lower() == 'true':
+                return {
+                    'default_type': 'value',
+                    'default_value': True
+                }
+            elif value.lower() == 'false':
+                return {
+                    'default_type': 'value',
+                    'default_value': False
+                }
 
             value_regex = re.search("^'(?P<value>.+)'::(?P<type>.+)$", value)
             if value_regex:
