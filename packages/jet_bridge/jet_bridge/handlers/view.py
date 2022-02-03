@@ -1,4 +1,5 @@
 import tornado.web
+from jet_bridge_base.exceptions.request_error import RequestError
 from tornado import gen
 
 from jet_bridge_base.request import Request
@@ -74,12 +75,16 @@ class BaseViewHandler(tornado.web.RequestHandler):
     @gen.coroutine
     def write_error(self, status_code, **kwargs):
         exc_type = exc = traceback = None
-        request = self.get_request()
 
         if kwargs.get('exc_info'):
             exc_type, exc, traceback = kwargs['exc_info']
         else:
             exc = Exception()
+
+        try:
+            request = self.get_request()
+        except RequestError as e:
+            request = e.request
 
         response = self.view.error_response(request, exc_type, exc, traceback)
         yield self.write_response(response)

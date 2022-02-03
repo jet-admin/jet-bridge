@@ -1,5 +1,8 @@
 import json
+from json import JSONDecodeError
 
+from jet_bridge_base.exceptions.request_error import RequestError
+from jet_bridge_base.exceptions.validation_error import ValidationError
 from six import string_types
 
 from jet_bridge_base import settings
@@ -52,8 +55,10 @@ class Request(object):
 
             if not isinstance(data, string_types):
                 data = data.decode('utf-8', 'surrogatepass')
-
-            self.data = json.loads(data) if data else {}
+            try:
+                self.data = json.loads(data) if data else {}
+            except ValueError as e:
+                raise RequestError(self, 'Incorrect JSON body: {}'.format(e))
         else:
             self.data = self.body_arguments
 
