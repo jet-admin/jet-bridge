@@ -8,6 +8,7 @@ from django.views import generic
 from django.views.decorators.csrf import csrf_exempt
 
 from jet_bridge_base import settings as base_settings
+from jet_bridge_base.exceptions.request_error import RequestError
 from jet_bridge_base.request import Request
 from jet_bridge_base.responses.base import Response
 from jet_bridge_base.responses.optional_json import OptionalJSONResponse
@@ -109,7 +110,10 @@ class BaseRouteView(generic.View):
         return self.write_response(response)
 
     def dispatch(self, original_request, *args, **kwargs):
-        request = self.get_request()
+        try:
+            request = self.get_request()
+        except RequestError as e:
+            request = e.request
 
         try:
             self.before_dispatch(request)

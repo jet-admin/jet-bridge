@@ -26,6 +26,9 @@ def map_dto_column(column, metadata=None):
     if 'default_type' in column:
         if column['default_type'] == 'value':
             server_default = column['default_value']
+
+            if isinstance(server_default, bool):
+                server_default = '1' if server_default else '0'
         elif column['default_type'] == 'datetime_now':
             server_default = text('NOW()')
         elif column['default_type'] == 'uuid':
