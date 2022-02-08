@@ -289,6 +289,7 @@ class SqlSerializer(Serializer):
             def map_row(row):
                 return list(map(lambda x: map_row_column(row[x]), row.keys()))
 
+            cursor_description = result.cursor.description
             response = {
                 'data': list(map(map_row, result)),
                 'columns': list(map(map_column, result.keys()))
@@ -303,7 +304,7 @@ class SqlSerializer(Serializer):
                         'field': sql_to_map_type(sql_type) if sql_type else None
                     }
 
-                response['column_descriptions'] = dict(map(map_column_description, result.cursor.description))
+                response['column_descriptions'] = dict(map(map_column_description, cursor_description))
 
             if count_rows is not None:
                 response['count'] = count_rows
