@@ -289,21 +289,21 @@ class SqlSerializer(Serializer):
             def map_row(row):
                 return list(map(lambda x: map_row_column(row[x]), row.keys()))
 
-            def map_column_description(column):
-                name = column.name if hasattr(column, 'name') else ''
-                sql_type = type_code_to_sql_type.get(column.type_code) if hasattr(column, 'type_code') else None
-                return name, {
-                    'field': sql_to_map_type(sql_type) if sql_type else None
-                }
-
-            type_code_to_sql_type = get_type_code_to_sql_type(request)
-            column_descriptions = dict(map(map_column_description, result.cursor.description))
-
             response = {
                 'data': list(map(map_row, result)),
-                'columns': list(map(map_column, result.keys())),
-                'column_descriptions': column_descriptions
+                'columns': list(map(map_column, result.keys()))
             }
+
+            type_code_to_sql_type = get_type_code_to_sql_type(request)
+            if type_code_to_sql_type:
+                def map_column_description(column):
+                    name = column.name if hasattr(column, 'name') else ''
+                    sql_type = type_code_to_sql_type.get(column.type_code) if hasattr(column, 'type_code') else None
+                    return name, {
+                        'field': sql_to_map_type(sql_type) if sql_type else None
+                    }
+
+                response['column_descriptions'] = dict(map(map_column_description, result.cursor.description))
 
             if count_rows is not None:
                 response['count'] = count_rows
