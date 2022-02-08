@@ -50,5 +50,3 @@ def fetch_postgresql_type_code_to_sql_type(session):
 def fetch_type_code_to_sql_type(session):
     if get_session_engine(session) == 'postgresql':
         return fetch_postgresql_type_code_to_sql_type(session)
-    else:
-        return {}
