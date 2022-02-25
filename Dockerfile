@@ -18,7 +18,7 @@ RUN apk add --no-cache \
 
 #RUN addgroup -S jet && adduser -S -G jet jet
 ENV CRYPTOGRAPHY_DONT_BUILD_RUST=1
-RUN pip install psycopg2==2.8.4 mysqlclient==1.4.6 pyodbc==4.0.30 GeoAlchemy2==0.6.2 Shapely==1.6.4 cryptography==3.4.1 SQLAlchemy==1.4.23
+RUN pip install psycopg2==2.8.4 mysqlclient==1.4.6 pyodbc==4.0.30 GeoAlchemy2==0.6.2 Shapely==1.6.4 cryptography==3.4.1 SQLAlchemy==1.4.31
 RUN printf "[FreeTDS]\nDescription=FreeTDS Driver\nDriver=/usr/lib/libtdsodbc.so\n" > /etc/odbcinst.ini
 
 COPY packages /packages

@@ -11,6 +11,11 @@ class JSONField(Field):
         'invalid': 'not a valid JSON'
     }
 
+    def __init__(self, *args, **kwargs):
+        if 'allow_many' not in kwargs:
+            kwargs['allow_many'] = True
+        super(JSONField, self).__init__(*args, **kwargs)
+
     def to_internal_value_item(self, value):
         if isinstance(value, string_types):
             try:
