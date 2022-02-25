@@ -61,6 +61,7 @@ class SqlSerializer(Serializer):
     group = GroupSerializer(required=False)
     groups = GroupsSerializer(required=False)
     timezone = fields.CharField(required=False)
+    schema = fields.CharField(required=False)
     params = SqlParamsSerializers(required=False)
     params_obj = fields.JSONField(required=False)
     v = fields.IntegerField(default=1)
@@ -235,6 +236,13 @@ class SqlSerializer(Serializer):
         if 'timezone' in data:
             try:
                 session.execute('SET TIME ZONE :tz', {'tz': data['timezone']})
+            except SQLAlchemyError:
+                session.rollback()
+                pass
+
+        if 'schema' in data:
+            try:
+                session.execute('SET search_path TO :schema', {'schema': data['schema']})
             except SQLAlchemyError:
                 session.rollback()
                 pass
