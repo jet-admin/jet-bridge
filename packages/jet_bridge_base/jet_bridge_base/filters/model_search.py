@@ -17,10 +17,10 @@ def get_model_search_filter(Model):
             def map_column(column):
                 if isinstance(column.type, (sqlalchemy.Integer, sqlalchemy.Numeric)):
                     return cast(column, sqlalchemy.String).__eq__(value)
+                elif isinstance(column.type, (sqlalchemy.JSON, sqlalchemy.Enum)):
+                    return cast(column, sqlalchemy.String).ilike('%{}%'.format(value))
                 elif isinstance(column.type, sqlalchemy.String):
                     return column.ilike('%{}%'.format(value))
-                elif isinstance(column.type, sqlalchemy.JSON):
-                    return cast(column, sqlalchemy.String).ilike('%{}%'.format(value))
 
             operators = list(filter(lambda x: x is not None, map(map_column, mapper.columns)))
 
