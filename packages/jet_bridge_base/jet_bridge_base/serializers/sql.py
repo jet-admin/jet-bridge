@@ -183,10 +183,10 @@ class SqlSerializer(Serializer):
 
                 if isinstance(query_type, (sqltypes.Integer, sqltypes.Numeric)):
                     return cast(field, sqltypes.String).__eq__(search)
+                elif isinstance(query_type, (sqltypes.JSON, sqltypes.Enum)):
+                    return cast(field, sqltypes.String).ilike('%{}%'.format(search))
                 elif isinstance(query_type, sqltypes.String):
                     return field.ilike('%{}%'.format(search))
-                elif isinstance(query_type, sqltypes.JSON):
-                    return cast(field, sqltypes.String).ilike('%{}%'.format(search))
 
             operators = list(filter(lambda x: x is not None, map(map_column, data.get('columns', []))))
             queryset = queryset.filter(or_(*operators))
