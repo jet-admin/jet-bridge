@@ -54,6 +54,11 @@ define('database_only', default=None, type=str)
 define('database_except', default=None, type=str)
 define('database_schema', default=None, type=str)
 
+define('database_ssh_host', default=None, type=str)
+define('database_ssh_port', default=None, type=int)
+define('database_ssh_user', default=None, type=str)
+define('database_ssh_private_key', default=None, type=str)
+
 define('cookie_samesite', default='None', type=str)
 define('cookie_secure', default=True, type=bool)
 define('cookie_domain', default=None, type=str)
@@ -132,6 +137,11 @@ DATABASE_EXTRA = options.database_extra
 DATABASE_ONLY = options.database_only.split(',') if options.database_only else None
 DATABASE_EXCEPT = options.database_except.split(',') if options.database_except else None
 DATABASE_SCHEMA = options.database_schema
+
+DATABASE_SSH_HOST = options.database_ssh_host
+DATABASE_SSH_PORT = options.database_ssh_port
+DATABASE_SSH_USER = options.database_ssh_user
+DATABASE_SSH_PRIVATE_KEY = options.database_ssh_private_key
 
 COOKIE_SAMESITE = options.cookie_samesite
 COOKIE_SECURE = options.cookie_secure
