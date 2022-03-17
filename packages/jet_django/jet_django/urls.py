@@ -1,4 +1,7 @@
-from django.conf.urls import url
+try:
+    from django.conf.urls import url
+except ImportError:
+    from django.urls import path as url
 
 from jet_bridge_base.views.api import ApiView
 from jet_bridge_base.views.external_auth.complete import ExternalAuthCompleteView
