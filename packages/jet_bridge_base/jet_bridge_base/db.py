@@ -83,7 +83,11 @@ def get_connection_id(conf):
         conf.get('password'),
         conf.get('only'),
         conf.get('except'),
-        conf.get('schema')
+        conf.get('schema'),
+        conf.get('ssh_host'),
+        conf.get('ssh_port'),
+        conf.get('ssh_user'),
+        conf.get('ssh_private_key')
     ])
 
 
