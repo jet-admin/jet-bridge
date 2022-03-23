@@ -26,6 +26,11 @@ JET_DATABASE_ONLY = getattr(settings, 'JET_DATABASE_ONLY', None)
 JET_DATABASE_EXCEPT = getattr(settings, 'JET_DATABASE_EXCEPT', None)
 JET_DATABASE_SCHEMA = getattr(settings, 'JET_DATABASE_SCHEMA', None)
 
+JET_DATABASE_SSH_HOST = getattr(settings, 'JET_DATABASE_SSH_HOST', None)
+JET_DATABASE_SSH_PORT = getattr(settings, 'JET_DATABASE_SSH_PORT', None)
+JET_DATABASE_SSH_USER = getattr(settings, 'JET_DATABASE_SSH_USER', None)
+JET_DATABASE_SSH_PRIVATE_KEY = getattr(settings, 'JET_DATABASE_SSH_PRIVATE_KEY', None)
+
 JET_COOKIE_SAMESITE = getattr(settings, 'JET_COOKIE_SAMESITE', 'None')
 JET_COOKIE_SECURE = getattr(settings, 'JET_COOKIE_SECURE', True)
 JET_COOKIE_DOMAIN = getattr(settings, 'JET_COOKIE_DOMAIN', None)
