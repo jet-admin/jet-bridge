@@ -8,7 +8,7 @@ from sqlalchemy import create_engine, MetaData
 from sqlalchemy.ext.automap import automap_base, generate_relationship
 from sqlalchemy.orm import sessionmaker, scoped_session
 
-from jet_bridge_base.utils.common import get_random_string
+from jet_bridge_base.utils.common import get_random_string, merge
 
 try:
     from geoalchemy2 import types
@@ -105,13 +105,14 @@ def get_connection_tunnel(conf):
     from sshtunnel import SSHTunnelForwarder
     import paramiko
 
-    private_key = paramiko.RSAKey.from_private_key(StringIO(conf.get('ssh_private_key').replace('\\n', '\n')))
+    private_key_str = conf.get('ssh_private_key').replace('\\n', '\n')
+    private_key = paramiko.RSAKey.from_private_key(StringIO(private_key_str))
 
     server = SSHTunnelForwarder(
         ssh_address_or_host=(conf.get('ssh_host'), int(conf.get('ssh_port'))),
         ssh_username=conf.get('ssh_user'),
         ssh_pkey=private_key,
-        remote_bind_address=('127.0.0.1', int(conf.get('port')))
+        remote_bind_address=(conf.get('host'), int(conf.get('port')))
     )
     server.start()
 
@@ -169,7 +170,15 @@ def connect_database(conf):
 
     session = Session()
 
-    logger.info('Connecting to database "{}"...'.format(engine_url))
+    password_token = '__JET_DB_PASS__'
+    log_conf = merge(merge({}, conf), {'password': password_token})
+    log_address = build_engine_url(log_conf)
+    if log_address:
+        log_address = log_address.replace(password_token, '********')
+    if tunnel:
+        log_address += ' (via {}@{}:{})'.format(conf.get('ssh_user'), conf.get('ssh_host'), conf.get('ssh_port'))
+
+    logger.info('Connecting to database "{}"...'.format(log_address))
 
     with session.connection() as connection:
         logger.info('Getting db types for "{}"...'.format(engine_url))
