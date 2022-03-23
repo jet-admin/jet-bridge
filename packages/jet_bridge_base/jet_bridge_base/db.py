@@ -1,6 +1,7 @@
 import json
 
 from jet_bridge_base.utils.type_codes import fetch_type_code_to_sql_type
+from six import StringIO
 from six.moves.urllib_parse import quote_plus
 
 from sqlalchemy import create_engine, MetaData
@@ -18,13 +19,14 @@ from jet_bridge_base import settings
 from jet_bridge_base.models import Base
 from jet_bridge_base.logger import logger
 
-
 connections = {}
+
 
 def url_encode(value):
     return quote_plus(value)
 
-def build_engine_url(conf):
+
+def build_engine_url(conf, tunnel=None):
     if not conf.get('engine') or not conf.get('name'):
         return
 
@@ -34,6 +36,9 @@ def build_engine_url(conf):
     ]
 
     if conf.get('engine') != 'sqlite':
+        host = '127.0.0.1' if tunnel else conf.get('host')
+        port = tunnel.local_bind_port if tunnel else conf.get('port')
+
         if conf.get('user'):
             url.append(url_encode(str(conf.get('user'))))
 
@@ -41,15 +46,15 @@ def build_engine_url(conf):
                 url.append(':')
                 url.append(url_encode(str(conf.get('password'))))
 
-            if conf.get('host'):
+            if host:
                 url.append('@')
 
-        if conf.get('host'):
-            url.append(str(conf.get('host')))
+        if host:
+            url.append(str(host))
 
-            if conf.get('port'):
+            if port:
                 url.append(':')
-                url.append(str(conf.get('port')))
+                url.append(str(port))
 
             url.append('/')
 
@@ -78,7 +83,11 @@ def get_connection_id(conf):
         conf.get('password'),
         conf.get('only'),
         conf.get('except'),
-        conf.get('schema')
+        conf.get('schema'),
+        conf.get('ssh_host'),
+        conf.get('ssh_port'),
+        conf.get('ssh_user'),
+        conf.get('ssh_private_key')
     ])
 
 
@@ -89,13 +98,28 @@ def get_connection_params_id(conf):
     ])
 
 
+def get_connection_tunnel(conf):
+    if any(map(lambda x: not conf.get(x), ['ssh_host', 'ssh_port', 'ssh_user', 'ssh_private_key'])):
+        return
+
+    from sshtunnel import SSHTunnelForwarder
+    import paramiko
+
+    private_key = paramiko.RSAKey.from_private_key(StringIO(conf.get('ssh_private_key').replace('\\n', '\n')))
+
+    server = SSHTunnelForwarder(
+        ssh_address_or_host=(conf.get('ssh_host'), int(conf.get('ssh_port'))),
+        ssh_username=conf.get('ssh_user'),
+        ssh_pkey=private_key,
+        remote_bind_address=('127.0.0.1', int(conf.get('port')))
+    )
+    server.start()
+
+    return server
+
+
 def connect_database(conf):
     global connections
-
-    engine_url = build_engine_url(conf)
-
-    if not engine_url:
-        raise Exception('Database configuration is not set')
 
     connection_id = get_connection_id(conf)
     connection_params_id = get_connection_params_id(conf)
@@ -106,10 +130,27 @@ def connect_database(conf):
         else:
             disconnect_database(conf)
 
-    if conf.get('engine') == 'sqlite':
-        engine = create_engine(engine_url)
-    else:
-        engine = create_engine(engine_url, pool_size=conf.get('connections'), pool_pre_ping=True, max_overflow=1, pool_recycle=300, connect_args={'connect_timeout': 5})
+    tunnel = get_connection_tunnel(conf)
+    engine_url = build_engine_url(conf, tunnel)
+
+    if not engine_url:
+        raise Exception('Database configuration is not set')
+
+    def get_engine():
+        if conf.get('engine') == 'sqlite':
+            return create_engine(engine_url)
+        else:
+            return create_engine(
+                engine_url,
+                pool_size=conf.get('connections'),
+                pool_pre_ping=True,
+                max_overflow=1,
+                pool_recycle=300,
+                connect_args={'connect_timeout': 5}
+            )
+
+
+    engine = get_engine()
 
     Session = scoped_session(sessionmaker(bind=engine))
 
@@ -151,7 +192,8 @@ def connect_database(conf):
             'Session': Session,
             'MappedBase': MappedBase,
             'params_id': connection_params_id,
-            'type_code_to_sql_type': type_code_to_sql_type
+            'type_code_to_sql_type': type_code_to_sql_type,
+            'tunnel': tunnel
         }
 
     session.close()
@@ -166,6 +208,10 @@ def disconnect_database(conf):
     if connection_id in connections:
         try:
             connections[connection_id]['engine'].dispose()
+
+            if connections[connection_id]['tunnel']:
+                connections[connection_id]['tunnel'].close()
+
             del connections[connection_id]
             return True
         except Exception:
@@ -186,7 +232,11 @@ def get_settings_conf():
         'connections': settings.DATABASE_CONNECTIONS,
         'only': settings.DATABASE_ONLY,
         'except': settings.DATABASE_EXCEPT,
-        'schema': settings.DATABASE_SCHEMA
+        'schema': settings.DATABASE_SCHEMA,
+        'ssh_host': settings.DATABASE_SSH_HOST,
+        'ssh_port': settings.DATABASE_SSH_PORT,
+        'ssh_user': settings.DATABASE_SSH_USER,
+        'ssh_private_key': settings.DATABASE_SSH_PRIVATE_KEY
     }
 
 
@@ -208,6 +258,10 @@ def get_request_conf(request):
         'only': bridge_settings.get('database_only'),
         'except': bridge_settings.get('database_except'),
         'schema': bridge_settings.get('database_schema'),
+        'ssh_host': bridge_settings.get('database_ssh_host'),
+        'ssh_port': bridge_settings.get('database_ssh_port'),
+        'ssh_user': bridge_settings.get('database_ssh_user'),
+        'ssh_private_key': bridge_settings.get('database_ssh_private_key')
     }
 
 
