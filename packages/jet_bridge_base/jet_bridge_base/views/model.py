@@ -1,3 +1,6 @@
+from jet_bridge_base import status
+from jet_bridge_base.exceptions.validation_error import ValidationError
+from jet_bridge_base.utils.exceptions import serialize_validation_error
 from sqlalchemy import inspect
 from sqlalchemy.exc import SQLAlchemyError
 
@@ -75,6 +78,27 @@ class ModelViewSet(ModelAPIViewMixin):
             Model = self.get_model(request)
             queryset = apply_default_ordering(Model, queryset)
         return queryset
+
+    @action(methods=['post'], detail=False)
+    def bulk_create(self, request, *args, **kwargs):
+        if not isinstance(request.data, list):
+            return JSONResponse({'error': 'Request body should be an array'}, status=status.HTTP_400_BAD_REQUEST)
+
+        result = []
+
+        for item in request.data:
+            serializer = self.get_serializer(request, data=item)
+
+            try:
+                serializer.is_valid(raise_exception=True)
+                self.perform_create(request, serializer)
+                result.append({'success': True})
+            except ValidationError as e:
+                result.append({'success': False, 'errors': serialize_validation_error(e)})
+            except Exception as e:
+                result.append({'success': False, 'errors': {'non_field_errors': str(e)}})
+
+        return JSONResponse(result, status=status.HTTP_200_OK)
 
     @action(methods=['get'], detail=False)
     def aggregate(self, request, *args, **kwargs):
