@@ -35,7 +35,21 @@ def build_engine_url(conf, tunnel=None):
         '://'
     ]
 
-    if conf.get('engine') != 'sqlite':
+    if conf.get('engine') == 'sqlite':
+        url.append('/')
+        url.append(str(conf.get('name')))
+
+        if conf.get('extra'):
+            url.append('?')
+            url.append(str(conf.get('extra')))
+    elif conf.get('engine') == 'bigquery':
+        url.append(str(conf.get('name')))
+        url.append('?credentials_base64={}'.format(conf.get('password')))
+
+        if conf.get('extra'):
+            url.append('&')
+            url.append(str(conf.get('extra')))
+    else:
         host = '127.0.0.1' if tunnel else conf.get('host')
         port = tunnel.local_bind_port if tunnel else conf.get('port')
 
@@ -58,17 +72,15 @@ def build_engine_url(conf, tunnel=None):
 
             url.append('/')
 
-    if conf.get('engine') == 'sqlite':
-        url.append('/')
+        url.append(str(conf.get('name')))
 
-    url.append(str(conf.get('name')))
-
-    if conf.get('extra'):
-        url.append(str(conf.get('extra')))
-    elif conf.get('engine') == 'mysql':
-        url.append('?charset=utf8')
-    elif conf.get('engine') == 'mssql+pyodbc':
-        url.append('?driver=FreeTDS')
+        if conf.get('extra'):
+            url.append('?')
+            url.append(str(conf.get('extra')))
+        elif conf.get('engine') == 'mysql':
+            url.append('?charset=utf8')
+        elif conf.get('engine') == 'mssql+pyodbc':
+            url.append('?driver=FreeTDS')
 
     return ''.join(url)
 
@@ -140,6 +152,14 @@ def connect_database(conf):
     def get_engine():
         if conf.get('engine') == 'sqlite':
             return create_engine(engine_url)
+        elif conf.get('engine') == 'bigquery':
+            return create_engine(
+                engine_url,
+                pool_size=conf.get('connections'),
+                pool_pre_ping=True,
+                max_overflow=1,
+                pool_recycle=300
+            )
         else:
             return create_engine(
                 engine_url,

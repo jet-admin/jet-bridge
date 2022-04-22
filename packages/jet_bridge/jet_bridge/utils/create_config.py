@@ -29,6 +29,9 @@ engines = [
         'default_port': 1433
     },
     {
+        'name': 'bigquery'
+    },
+    {
         'name': 'sqlite'
     },
     {
@@ -169,6 +172,25 @@ def create_config(config_not_set):
             database_port = ''
             database_user = ''
             database_password = ''
+        elif database_engine == 'bigquery':
+            prompts = 5
+
+            database_name = prompt(
+                promt_message('<green><b>Enter your BigQuery project name</b></green>'),
+                validator=Validator.from_callable(
+                    is_not_empty,
+                    error_message='BigQuery project name is required',
+                    move_cursor_to_end=True
+                ),
+                default=database_name or settings.DATABASE_NAME or ''
+            )
+
+            print_formatted_text('')
+
+            database_password = prompt(
+                promt_message('<green><b>Enter your service account key</b></green>'),
+                default=database_password or settings.DATABASE_PASSWORD or ''
+            )
         else:
             prompts = 5
 
