@@ -181,13 +181,13 @@ def connect_database(conf):
     logger.info('Connecting to database "{}"...'.format(log_address))
 
     with session.connection() as connection:
-        logger.info('Getting db types for "{}"...'.format(engine_url))
+        logger.info('Getting db types for "{}"...'.format(log_address))
         type_code_to_sql_type = fetch_type_code_to_sql_type(session)
 
         metadata = MetaData(schema=schema, bind=connection)
-        logger.info('Getting schema for "{}"...'.format(engine_url))
+        logger.info('Getting schema for "{}"...'.format(log_address))
         metadata.reflect(engine, only=only)
-        logger.info('Connected to "{}"...'.format(engine_url))
+        logger.info('Connected to "{}"...'.format(log_address))
 
         MappedBase = automap_base(metadata=metadata)
         reload_mapped_base(MappedBase)
