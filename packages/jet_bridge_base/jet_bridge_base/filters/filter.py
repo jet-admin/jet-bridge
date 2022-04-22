@@ -1,3 +1,4 @@
+from jet_bridge_base.utils.queryset import get_session_engine
 from sqlalchemy import Unicode
 from sqlalchemy.dialects.postgresql import JSONB
 from six import string_types
@@ -65,6 +66,10 @@ class Filter(object):
         field_class = lookup_operator.get('field_class')
         field_kwargs = lookup_operator.get('field_kwargs', {})
         func = lookup_operator.get('func')
+
+        if get_session_engine(qs.session) == 'bigquery':
+            python_type = self.column.type.python_type
+            value = python_type(value)
 
         if pre_process:
             value = pre_process(value)
