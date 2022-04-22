@@ -1,5 +1,6 @@
 import json
 
+from jet_bridge_base.reflect import reflect
 from jet_bridge_base.utils.type_codes import fetch_type_code_to_sql_type
 from six import StringIO
 from six.moves.urllib_parse import quote_plus
@@ -206,7 +207,7 @@ def connect_database(conf):
 
         metadata = MetaData(schema=schema, bind=connection)
         logger.info('Getting schema for "{}"...'.format(log_address))
-        metadata.reflect(engine, only=only)
+        reflect(metadata, engine, only=only)
         logger.info('Connected to "{}"...'.format(log_address))
 
         MappedBase = automap_base(metadata=metadata)
