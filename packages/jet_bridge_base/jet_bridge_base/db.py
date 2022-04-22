@@ -1,3 +1,4 @@
+import base64
 import json
 
 from jet_bridge_base.reflect import reflect
@@ -45,11 +46,16 @@ def build_engine_url(conf, tunnel=None):
             url.append(str(conf.get('extra')))
     elif conf.get('engine') == 'bigquery':
         url.append(str(conf.get('name')))
-        url.append('?credentials_base64={}'.format(conf.get('password')))
 
-        if conf.get('extra'):
-            url.append('&')
-            url.append(str(conf.get('extra')))
+        try:
+            base64.b64decode(conf.get('password'))
+            url.append('?credentials_base64={}'.format(conf.get('password')))
+
+            if conf.get('extra'):
+                url.append('&')
+                url.append(str(conf.get('extra')))
+        except:
+            pass
     else:
         host = '127.0.0.1' if tunnel else conf.get('host')
         port = tunnel.local_bind_port if tunnel else conf.get('port')
