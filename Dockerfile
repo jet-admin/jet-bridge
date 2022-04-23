@@ -65,9 +65,9 @@ RUN mkdir /arrow \
     && cd /arrow/python \
     && python setup.py build_ext --build-type=release --with-parquet \
     && python setup.py install \
-    && rm -rf /arrow /tmp/apache-arrow.tar.gz \
-    && pip install sqlalchemy-bigquery==1.4.3
+    && rm -rf /arrow /tmp/apache-arrow.tar.gz
 
+RUN pip install sqlalchemy-bigquery==1.4.3
 RUN printf "[FreeTDS]\nDescription=FreeTDS Driver\nDriver=/usr/lib/libtdsodbc.so\n" > /etc/odbcinst.ini
 
 COPY packages /packages
