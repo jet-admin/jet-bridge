@@ -67,10 +67,6 @@ class Filter(object):
         field_kwargs = lookup_operator.get('field_kwargs', {})
         func = lookup_operator.get('func')
 
-        if get_session_engine(qs.session) == 'bigquery':
-            python_type = self.column.type.python_type
-            value = python_type(value)
-
         if pre_process:
             value = pre_process(value)
 
