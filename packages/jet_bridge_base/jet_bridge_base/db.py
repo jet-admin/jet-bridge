@@ -1,5 +1,7 @@
+import base64
 import json
 
+from jet_bridge_base.reflect import reflect
 from jet_bridge_base.utils.type_codes import fetch_type_code_to_sql_type
 from six import StringIO
 from six.moves.urllib_parse import quote_plus
@@ -35,7 +37,26 @@ def build_engine_url(conf, tunnel=None):
         '://'
     ]
 
-    if conf.get('engine') != 'sqlite':
+    if conf.get('engine') == 'sqlite':
+        url.append('/')
+        url.append(str(conf.get('name')))
+
+        if conf.get('extra'):
+            url.append('?')
+            url.append(str(conf.get('extra')))
+    elif conf.get('engine') == 'bigquery':
+        url.append(str(conf.get('name')))
+
+        try:
+            base64.b64decode(conf.get('password'))
+            url.append('?credentials_base64={}'.format(conf.get('password')))
+
+            if conf.get('extra'):
+                url.append('&')
+                url.append(str(conf.get('extra')))
+        except:
+            pass
+    else:
         host = '127.0.0.1' if tunnel else conf.get('host')
         port = tunnel.local_bind_port if tunnel else conf.get('port')
 
@@ -58,17 +79,15 @@ def build_engine_url(conf, tunnel=None):
 
             url.append('/')
 
-    if conf.get('engine') == 'sqlite':
-        url.append('/')
+        url.append(str(conf.get('name')))
 
-    url.append(str(conf.get('name')))
-
-    if conf.get('extra'):
-        url.append(str(conf.get('extra')))
-    elif conf.get('engine') == 'mysql':
-        url.append('?charset=utf8')
-    elif conf.get('engine') == 'mssql+pyodbc':
-        url.append('?driver=FreeTDS')
+        if conf.get('extra'):
+            url.append('?')
+            url.append(str(conf.get('extra')))
+        elif conf.get('engine') == 'mysql':
+            url.append('?charset=utf8')
+        elif conf.get('engine') == 'mssql+pyodbc':
+            url.append('?driver=FreeTDS')
 
     return ''.join(url)
 
@@ -140,6 +159,14 @@ def connect_database(conf):
     def get_engine():
         if conf.get('engine') == 'sqlite':
             return create_engine(engine_url)
+        elif conf.get('engine') == 'bigquery':
+            return create_engine(
+                engine_url,
+                pool_size=conf.get('connections'),
+                pool_pre_ping=True,
+                max_overflow=1,
+                pool_recycle=300
+            )
         else:
             return create_engine(
                 engine_url,
@@ -181,13 +208,13 @@ def connect_database(conf):
     logger.info('Connecting to database "{}"...'.format(log_address))
 
     with session.connection() as connection:
-        logger.info('Getting db types for "{}"...'.format(engine_url))
+        logger.info('Getting db types for "{}"...'.format(log_address))
         type_code_to_sql_type = fetch_type_code_to_sql_type(session)
 
         metadata = MetaData(schema=schema, bind=connection)
-        logger.info('Getting schema for "{}"...'.format(engine_url))
-        metadata.reflect(engine, only=only)
-        logger.info('Connected to "{}"...'.format(engine_url))
+        logger.info('Getting schema for "{}"...'.format(log_address))
+        reflect(metadata, engine, only=only)
+        logger.info('Connected to "{}"...'.format(log_address))
 
         MappedBase = automap_base(metadata=metadata)
         reload_mapped_base(MappedBase)
