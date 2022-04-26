@@ -1,3 +1,4 @@
+from jet_bridge_base.utils.queryset import get_session_engine
 from sqlalchemy import Unicode
 from sqlalchemy.dialects.postgresql import JSONB
 from six import string_types

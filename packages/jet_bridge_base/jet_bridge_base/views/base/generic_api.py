@@ -1,3 +1,4 @@
+from jet_bridge_base.utils.queryset import get_session_engine
 from sqlalchemy.exc import SQLAlchemyError
 
 from jet_bridge_base.exceptions.not_found import NotFound
@@ -29,7 +30,14 @@ class GenericAPIView(APIView):
         model_field = getattr(self.get_model(request), self.lookup_field)
 
         try:
-            obj = queryset.filter(getattr(model_field, '__eq__')(request.path_kwargs[lookup_url_kwarg])).first()
+            field_lookup = getattr(model_field, '__eq__')
+            lookup_value = request.path_kwargs[lookup_url_kwarg]
+
+            if get_session_engine(request.session) == 'bigquery':
+                python_type = model_field.expression.type.python_type
+                lookup_value = python_type(lookup_value)
+
+            obj = queryset.filter(field_lookup(lookup_value)).first()
         except SQLAlchemyError:
             queryset.session.rollback()
             raise

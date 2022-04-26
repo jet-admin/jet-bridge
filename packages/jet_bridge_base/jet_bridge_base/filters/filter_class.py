@@ -1,3 +1,4 @@
+from jet_bridge_base.utils.queryset import get_session_engine
 from sqlalchemy import inspect
 
 from jet_bridge_base.filters import lookups
@@ -49,18 +50,29 @@ class FilterClass(object):
         self.filters = filters
 
     def filter_queryset(self, request, queryset):
+        session = request.session
+
+        def get_filter_value(name, filters_instance=None):
+            value = request.get_argument_safe(name, None)
+
+            if filters_instance and value is not None and get_session_engine(session) == 'bigquery':
+                python_type = filters_instance.column.type.python_type
+                value = python_type(value)
+
+            return value
+
         for item in self.filters:
             if item.name:
                 argument_name = '{}__{}'.format(item.name, item.lookup)
                 if item.exclude:
                     argument_name = 'exclude__{}'.format(argument_name)
-                value = request.get_argument_safe(argument_name, None)
+                value = get_filter_value(argument_name, item)
 
                 if value is None and item.lookup == lookups.DEFAULT_LOOKUP:
                     argument_name = item.name
                     if item.exclude:
                         argument_name = 'exclude__{}'.format(argument_name)
-                    value = request.get_argument_safe(argument_name, None)
+                    value = get_filter_value(argument_name, item)
             else:
                 value = None
 

@@ -1,3 +1,4 @@
+from jet_bridge_base.utils.queryset import get_session_engine
 from sqlalchemy import text, select, column, func, desc, or_, cast
 from sqlalchemy import sql
 from sqlalchemy.sql import sqltypes
@@ -139,6 +140,8 @@ class SqlSerializer(Serializer):
 
     def filter_queryset(self, queryset, data):
         filters_instances = []
+        request = self.context.get('request')
+        session = request.session
 
         for item in data.get('columns', []):
             query_type = map_to_sql_type(item['data_type'])()
@@ -153,22 +156,32 @@ class SqlSerializer(Serializer):
                     )
                     filters_instances.append(instance)
 
-        def get_filter_value(name):
+        def get_filter_value(name, filters_instance=None):
             filter_items = list(filter(lambda x: x['name'] == name, data.get('filters', [])))
-            return filter_items[0]['value'] if len(filter_items) else None
+
+            if not len(filter_items):
+                return
+
+            value = filter_items[0]['value']
+
+            if filters_instance and value is not None and get_session_engine(session) == 'bigquery':
+                python_type = filters_instance.column.type.python_type
+                value = python_type(value)
+
+            return value
 
         for item in filters_instances:
             if item.name:
                 argument_name = '{}__{}'.format(item.name, item.lookup)
                 if item.exclude:
                     argument_name = 'exclude__{}'.format(argument_name)
-                value = get_filter_value(argument_name)
+                value = get_filter_value(argument_name, item)
 
                 if value is None and item.lookup == lookups.DEFAULT_LOOKUP:
                     argument_name = item.name
                     if item.exclude:
                         argument_name = 'exclude__{}'.format(argument_name)
-                    value = get_filter_value(argument_name)
+                    value = get_filter_value(argument_name, item)
             else:
                 value = None
 
