@@ -4,7 +4,7 @@ curl -X POST \
    --fail \
    -F token=7a9a02a3b7fa8c5ee4dd3ad5fa6a95 \
    -F ref=$DOCKER_TAG \
-   -F component="jet_bridge, jet_cloud" \
-   -F jet_bridge=true \
-   -F jet_cloud=true \
+   -F "variables[component]=jet_bridge, jet_cloud" \
+   -F "variables[jet_bridge]=true" \
+   -F "variables[jet_cloud]=true" \
    https://gitlab.com/api/v4/projects/26239898/trigger/pipeline
