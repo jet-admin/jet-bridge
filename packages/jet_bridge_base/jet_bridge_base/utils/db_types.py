@@ -9,6 +9,7 @@ map_data_types = [
     {'sql_type': sqltypes.CHAR, 'map_type': data_types.CHAR, 'db_type': data_types.FIXED_CHAR},
     {'sql_type': sqltypes.Unicode, 'map_type': data_types.CHAR, 'db_type': data_types.CHAR},
     {'sql_type': sqltypes.Text, 'map_type': data_types.TEXT, 'db_type': data_types.TEXT},
+    {'sql_type': sqltypes.Enum, 'map_type': data_types.SELECT, 'db_type': data_types.SELECT},
     {'sql_type': sqltypes.Boolean, 'map_type': data_types.BOOLEAN, 'db_type': data_types.BOOLEAN},
     {'sql_type': sqltypes.Integer, 'map_type': data_types.INTEGER, 'db_type': data_types.INTEGER},
     {'sql_type': sqltypes.SmallInteger, 'map_type': data_types.INTEGER, 'db_type': data_types.SMALL_INTEGER},
