@@ -1,6 +1,7 @@
 CHAR = 'CharField'
 FIXED_CHAR = 'FixedCharField'
 TEXT = 'TextField'
+SELECT = 'SelectField'
 BOOLEAN = 'BooleanField'
 INTEGER = 'IntegerField'
 BIG_INTEGER = 'BigIntegerField'

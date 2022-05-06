@@ -38,6 +38,12 @@ text_lookups = [
     lookups.IS_NULL,
 ]
 
+select_lookups = [
+    lookups.EXACT,
+    lookups.IN,
+    lookups.IS_NULL,
+]
+
 boolean_lookups = [
     lookups.EXACT,
     lookups.IN,
@@ -56,6 +62,7 @@ geography_lookups = [
 FILTER_FOR_DBFIELD = {
     sqltypes.VARCHAR: {'filter_class': CharFilter, 'lookups': text_lookups},
     sqltypes.TEXT: {'filter_class': CharFilter, 'lookups': text_lookups},
+    sqltypes.Enum: {'filter_class': CharFilter, 'lookups': select_lookups},
     sqltypes.BOOLEAN: {'filter_class': BooleanFilter, 'lookups': boolean_lookups},
     sqltypes.INTEGER: {'filter_class': IntegerFilter, 'lookups': number_lookups},
     sqltypes.SMALLINT: {'filter_class': IntegerFilter, 'lookups': number_lookups},

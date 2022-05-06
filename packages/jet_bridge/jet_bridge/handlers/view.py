@@ -1,6 +1,7 @@
 import tornado.web
 from jet_bridge_base.exceptions.request_error import RequestError
 from tornado import gen
+from six.moves.urllib_parse import parse_qs
 
 from jet_bridge_base.request import Request
 from jet_bridge_base.responses.redirect import RedirectResponse
@@ -24,6 +25,7 @@ class BaseViewHandler(tornado.web.RequestHandler):
         return dict(map(map_file, self.request.files.items()))
 
     def get_request(self):
+        query_arguments = parse_qs(self.request.query)
         return Request(
             self.request.method.upper(),
             self.request.protocol,
@@ -31,7 +33,7 @@ class BaseViewHandler(tornado.web.RequestHandler):
             self.request.path,
             self.path_kwargs,
             self.request.uri,
-            self.request.query_arguments,
+            query_arguments,
             self.request_headers(),
             self.request.body,
             self.request.body_arguments,
