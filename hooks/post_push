@@ -1,9 +1,15 @@
 #!/bin/bash
 
+if [[ $DOCKER_TAG == 'latest' ]]; then
+  REF='master'
+else
+  REF=$DOCKER_TAG
+fi
+
 curl -X POST \
    --fail \
    -F token=$BUILD_TRIGGER_TOKEN \
-   -F ref=$DOCKER_TAG \
+   -F ref=$REF \
    -F "variables[component]=jet_bridge, jet_cloud" \
    -F "variables[jet_bridge]=true" \
    -F "variables[jet_cloud]=true" \
