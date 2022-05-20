@@ -69,6 +69,7 @@ FILTER_FOR_DBFIELD = {
     sqltypes.BigInteger: {'filter_class': IntegerFilter, 'lookups': number_lookups},
     sqltypes.Numeric: {'filter_class': IntegerFilter, 'lookups': number_lookups},
     sqltypes.Float: {'filter_class': IntegerFilter, 'lookups': number_lookups},
+    sqltypes.Date: {'filter_class': DateTimeFilter, 'lookups': datetime_lookups},
     sqltypes.DateTime: {'filter_class': DateTimeFilter, 'lookups': datetime_lookups},
     sqltypes.TIMESTAMP: {'filter_class': DateTimeFilter, 'lookups': datetime_lookups},
     sqltypes.JSON: {'filter_class': CharFilter, 'lookups': json_lookups},

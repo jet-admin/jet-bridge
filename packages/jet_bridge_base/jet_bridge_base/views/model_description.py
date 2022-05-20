@@ -1,6 +1,6 @@
 import re
 
-from sqlalchemy import inspect, String, Enum
+from sqlalchemy import inspect, String, Enum, Date
 from sqlalchemy.sql.elements import TextClause
 
 from jet_bridge_base.db import get_mapped_base
@@ -74,6 +74,10 @@ def map_column(column, editable):
 
         if not table_primary_key or foreign_key.column.name != table_primary_key:
             params['custom_primary_key'] = foreign_key.column.name
+
+    if isinstance(column.type, Date):
+        params['date'] = True
+        params['time'] = False
 
     if isinstance(column.type, Enum):
         params['options'] = map(lambda x: {'name': x, 'value': x}, column.type.enums)
