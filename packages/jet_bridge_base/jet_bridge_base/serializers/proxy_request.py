@@ -24,7 +24,9 @@ class ProxyRequestSerializer(Serializer):
     body = fields.RawField(required=False)
 
     project = fields.CharField(required=False)
+    environment = fields.CharField(required=False)
     resource = fields.CharField(required=False)
+    draft = fields.BooleanField(required=False, default=False)
     secret_tokens = fields.CharField(required=False)
     context = fields.JSONField(required=False)
 
@@ -89,7 +91,7 @@ class ProxyRequestSerializer(Serializer):
 
         return extra_data.get('access_token')
 
-    def resolve_secret_tokens(self, names, project, resource):
+    def resolve_secret_tokens(self, names, project_name, environment_name, resource, draft):
         request = self.context.get('request')
         instances = {}
         unresolved = names[:]
@@ -139,7 +141,7 @@ class ProxyRequestSerializer(Serializer):
             authorization = request.headers.get('AUTHORIZATION', '')
             user_token = authorization[len(token_prefix):] if authorization.startswith(token_prefix) else None
 
-            for item in get_secret_tokens(project, resource, settings.TOKEN, user_token):
+            for item in get_secret_tokens(project_name, environment_name, resource, draft, settings.TOKEN, user_token):
                 if item['name'] not in unresolved:
                     continue
                 instances[item['name']] = item['value']
@@ -160,7 +162,13 @@ class ProxyRequestSerializer(Serializer):
                 raise ValidationError('"resource" is required when specifying "secret_tokens"')
             names = attrs['secret_tokens'].split(',')
 
-            attrs['secret_tokens'] = self.resolve_secret_tokens(names, attrs['project'], attrs['resource'])
+            attrs['secret_tokens'] = self.resolve_secret_tokens(
+                names,
+                attrs.get('project'),
+                attrs.get('environment'),
+                attrs.get('resource'),
+                attrs.get('draft')
+            )
 
         if isinstance(attrs['headers'], dict):
             attrs['headers'] = dict([[key, str(value)] for key, value in attrs['headers'].items()])
