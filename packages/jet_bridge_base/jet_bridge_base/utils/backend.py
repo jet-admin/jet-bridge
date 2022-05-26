@@ -118,11 +118,16 @@ def get_resource_secret_tokens(project, resource, token):
     return r.json()
 
 
-def get_secret_tokens(project, resource, token, user_token):
+def get_secret_tokens(project_name, environment_name, resource, draft, token, user_token):
     if not token:
         return []
 
-    url = api_method_url('projects/{}/secret_tokens/'.format(project))
+    if environment_name:
+        method_url = 'projects/{}/{}/secret_tokens/'.format(project_name, environment_name)
+    else:
+        method_url = 'projects/{}/secret_tokens/'.format(project_name)
+
+    url = api_method_url(method_url)
     headers = {
         'Authorization': 'ProjectToken {}'.format(token),
         'User-Agent': '{} v{}'.format(configuration.get_type(), configuration.get_version())
@@ -131,6 +136,9 @@ def get_secret_tokens(project, resource, token, user_token):
         'resource': resource,
         'user_token': user_token
     }
+
+    if draft:
+        data['draft'] = 1
 
     r = requests.request('POST', url, headers=headers, data=data)
     success = 200 <= r.status_code < 300
