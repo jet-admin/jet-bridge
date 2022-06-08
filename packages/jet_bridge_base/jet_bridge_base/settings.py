@@ -47,6 +47,11 @@ SSO_APPLICATIONS = {}
 
 ALLOW_ORIGIN = '*'
 
+TRACK_DATABASES = ''
+TRACK_DATABASES_ENDPOINT = ''
+TRACK_DATABASES_AUTH = ''
+
+
 def set_settings(settings):
     for key, value in settings.items():
         if value is None:

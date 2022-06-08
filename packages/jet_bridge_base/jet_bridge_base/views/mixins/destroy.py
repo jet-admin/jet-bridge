@@ -1,3 +1,4 @@
+from jet_bridge_base.utils.track import track_database_async
 from sqlalchemy.exc import SQLAlchemyError
 
 from jet_bridge_base import status
@@ -9,6 +10,8 @@ from jet_bridge_base.utils.exceptions import validation_error_from_database_erro
 class DestroyAPIViewMixin(object):
 
     def delete(self, request, *args, **kwargs):
+        track_database_async(request)
+
         instance = self.get_object(request)
         self.perform_destroy(request, instance)
         return JSONResponse(status=status.HTTP_204_NO_CONTENT)
