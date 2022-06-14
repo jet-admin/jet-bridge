@@ -39,6 +39,10 @@ JET_COOKIE_COMPRESS = getattr(settings, 'JET_COOKIE_COMPRESS', False)
 JET_SSO_APPLICATIONS = getattr(settings, 'JET_SSO_APPLICATIONS', '{}')
 JET_ALLOW_ORIGIN = getattr(settings, 'JET_ALLOW_ORIGIN', '*')
 
+JET_TRACK_DATABASES = getattr(settings, 'JET_TRACK_DATABASES', '')
+JET_TRACK_DATABASES_ENDPOINT = getattr(settings, 'JET_TRACK_DATABASES_ENDPOINT', '')
+JET_TRACK_DATABASES_AUTH = getattr(settings, 'JET_TRACK_DATABASES_AUTH', '')
+
 try:
     JET_SSO_APPLICATIONS = json.loads(JET_SSO_APPLICATIONS)
 except Exception as e:

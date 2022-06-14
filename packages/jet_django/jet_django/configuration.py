@@ -81,7 +81,10 @@ class JetDjangoConfiguration(Configuration):
             'COOKIE_DOMAIN': settings.JET_COOKIE_DOMAIN,
             'COOKIE_COMPRESS': settings.JET_COOKIE_COMPRESS,
             'SSO_APPLICATIONS': self.clean_sso_applications(settings.JET_SSO_APPLICATIONS),
-            'ALLOW_ORIGIN': settings.JET_ALLOW_ORIGIN
+            'ALLOW_ORIGIN': settings.JET_ALLOW_ORIGIN,
+            'TRACK_DATABASES': settings.JET_TRACK_DATABASES,
+            'TRACK_DATABASES_ENDPOINT': settings.JET_TRACK_DATABASES_ENDPOINT,
+            'TRACK_DATABASES_AUTH': settings.JET_TRACK_DATABASES_AUTH
         }
 
     def get_django_instance(self, model, instance):

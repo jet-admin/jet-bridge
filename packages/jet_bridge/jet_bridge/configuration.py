@@ -52,7 +52,10 @@ class JetBridgeConfiguration(Configuration):
             'COOKIE_DOMAIN': settings.COOKIE_DOMAIN,
             'COOKIE_COMPRESS': settings.COOKIE_COMPRESS,
             'SSO_APPLICATIONS': self.clean_sso_applications(settings.SSO_APPLICATIONS),
-            'ALLOW_ORIGIN': settings.ALLOW_ORIGIN
+            'ALLOW_ORIGIN': settings.ALLOW_ORIGIN,
+            'TRACK_DATABASES': settings.TRACK_DATABASES,
+            'TRACK_DATABASES_ENDPOINT': settings.TRACK_DATABASES_ENDPOINT,
+            'TRACK_DATABASES_AUTH': settings.TRACK_DATABASES_AUTH
         }
 
     def media_get_available_name(self, path):

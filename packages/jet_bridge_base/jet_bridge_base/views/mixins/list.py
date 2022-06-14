@@ -1,3 +1,4 @@
+from jet_bridge_base.utils.track import track_database_async
 from sqlalchemy.exc import SQLAlchemyError
 
 from jet_bridge_base.responses.json import JSONResponse
@@ -7,6 +8,8 @@ from jet_bridge_base.utils.queryset import get_queryset_limit
 class ListAPIViewMixin(object):
 
     def list(self, request, *args, **kwargs):
+        track_database_async(request)
+
         queryset = self.filter_queryset(request, self.get_queryset(request))
 
         paginate = not request.get_argument('_no_pagination', False)
