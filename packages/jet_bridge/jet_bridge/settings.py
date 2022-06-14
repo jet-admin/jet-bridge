@@ -67,6 +67,10 @@ define('cookie_compress', default=False, type=bool)
 define('sso_applications', default='{}', type=str)
 define('allow_origin', default='*')
 
+define('track_databases', default='')
+define('track_databases_endpoint', default='')
+define('track_databases_auth', default='')
+
 # Parse
 
 options.parse_command_line(final=False)
@@ -155,5 +159,9 @@ except Exception as e:
     SSO_APPLICATIONS = {}
 
 ALLOW_ORIGIN = options.allow_origin
+
+TRACK_DATABASES = options.track_databases
+TRACK_DATABASES_ENDPOINT = options.track_databases_endpoint
+TRACK_DATABASES_AUTH = options.track_databases_auth
 
 POSSIBLE_HOST = os.environ.get('POSSIBLE_HOST')
