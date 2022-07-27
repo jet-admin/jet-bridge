@@ -131,7 +131,8 @@ def get_connection_tunnel(conf):
         ssh_address_or_host=(conf.get('ssh_host'), int(conf.get('ssh_port'))),
         ssh_username=conf.get('ssh_user'),
         ssh_pkey=private_key,
-        remote_bind_address=(conf.get('host'), int(conf.get('port')))
+        remote_bind_address=(conf.get('host'), int(conf.get('port'))),
+        logger=logger
     )
     server.start()
 
