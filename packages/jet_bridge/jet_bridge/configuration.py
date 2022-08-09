@@ -55,7 +55,9 @@ class JetBridgeConfiguration(Configuration):
             'ALLOW_ORIGIN': settings.ALLOW_ORIGIN,
             'TRACK_DATABASES': settings.TRACK_DATABASES,
             'TRACK_DATABASES_ENDPOINT': settings.TRACK_DATABASES_ENDPOINT,
-            'TRACK_DATABASES_AUTH': settings.TRACK_DATABASES_AUTH
+            'TRACK_DATABASES_AUTH': settings.TRACK_DATABASES_AUTH,
+            'TRACK_MODELS_ENDPOINT': settings.TRACK_MODELS_ENDPOINT,
+            'TRACK_MODELS_AUTH': settings.TRACK_MODELS_AUTH
         }
 
     def media_get_available_name(self, path):

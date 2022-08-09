@@ -15,6 +15,9 @@ class Request(object):
 
     session = None
     bridge_settings = None
+    project = None
+    environment = None
+    resource_token = None
 
     def __init__(
             self,

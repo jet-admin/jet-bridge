@@ -152,6 +152,10 @@ class HasProjectPermissions(BasePermission):
             if user_permissions is None:
                 return False
 
+            request.project = result.get('project')
+            request.environment = result.get('environment')
+            request.resource_token = project_token
+
             return self.has_view_permissions(view_permissions, user_permissions, project_token)
         elif token['type'] == self.user_token_prefix:
             result = project_auth(token['value'], project_token, view_permissions, token['params'])

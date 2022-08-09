@@ -1,4 +1,5 @@
-from jet_bridge_base.utils.track import track_database_async
+from jet_bridge_base.utils.track_database import track_database_async
+from jet_bridge_base.utils.track_model import track_model_async
 from sqlalchemy.exc import SQLAlchemyError
 
 from jet_bridge_base import status
@@ -14,6 +15,11 @@ class DestroyAPIViewMixin(object):
 
         instance = self.get_object(request)
         self.perform_destroy(request, instance)
+
+        serializer = self.get_serializer(request, instance=instance)
+        representation_data = serializer.representation_data
+        track_model_async(request, kwargs.get('model'), 'delete', kwargs.get('pk'), representation_data)
+
         return JSONResponse(status=status.HTTP_204_NO_CONTENT)
 
     def perform_destroy(self, request, instance):
