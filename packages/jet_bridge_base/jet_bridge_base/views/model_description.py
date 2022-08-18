@@ -25,6 +25,10 @@ def map_column_default(column):
                 return {
                     'default_type': 'datetime_now'
                 }
+            elif value.lower() == 'uuid_generate_v4()':
+                return {
+                    'default_type': 'uuid'
+                }
             elif value.lower() == 'true':
                 return {
                     'default_type': 'value',
