@@ -35,6 +35,7 @@ except ImportError:
 
 try:
     from sqlalchemy.dialects import postgresql
+    map_data_types.append({'sql_type': postgresql.UUID, 'map_type': data_types.UUID, 'db_type': data_types.UUID})
     map_data_types.append({'sql_type': postgresql.DOUBLE_PRECISION, 'map_type': data_types.FLOAT, 'db_type': data_types.DOUBLE_PRECISION})
 except ImportError:
     pass

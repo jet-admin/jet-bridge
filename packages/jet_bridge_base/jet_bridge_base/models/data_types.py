@@ -1,6 +1,7 @@
 CHAR = 'CharField'
 FIXED_CHAR = 'FixedCharField'
 TEXT = 'TextField'
+UUID = 'UUIDField'
 SELECT = 'SelectField'
 BOOLEAN = 'BooleanField'
 INTEGER = 'IntegerField'
