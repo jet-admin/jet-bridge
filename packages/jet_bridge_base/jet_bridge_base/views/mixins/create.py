@@ -1,7 +1,8 @@
 from jet_bridge_base import status
 from jet_bridge_base.configuration import configuration
 from jet_bridge_base.responses.json import JSONResponse
-from jet_bridge_base.utils.track import track_database_async
+from jet_bridge_base.utils.track_database import track_database_async
+from jet_bridge_base.utils.track_model import track_model_async
 
 
 class CreateAPIViewMixin(object):
@@ -12,7 +13,11 @@ class CreateAPIViewMixin(object):
         serializer = self.get_serializer(request, data=request.data)
         serializer.is_valid(raise_exception=True)
         self.perform_create(request, serializer)
-        return JSONResponse(serializer.representation_data, status=status.HTTP_201_CREATED)
+
+        representation_data = serializer.representation_data
+        track_model_async(request, kwargs.get('model'), 'create', None, representation_data)
+
+        return JSONResponse(representation_data, status=status.HTTP_201_CREATED)
 
     def perform_create(self, request, serializer):
         serializer_instance = serializer.create_instance(serializer.validated_data)

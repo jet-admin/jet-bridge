@@ -51,6 +51,9 @@ TRACK_DATABASES = ''
 TRACK_DATABASES_ENDPOINT = ''
 TRACK_DATABASES_AUTH = ''
 
+TRACK_MODELS_ENDPOINT = ''
+TRACK_MODELS_AUTH = ''
+
 
 def set_settings(settings):
     for key, value in settings.items():

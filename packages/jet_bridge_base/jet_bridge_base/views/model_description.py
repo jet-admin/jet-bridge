@@ -13,6 +13,10 @@ from jet_bridge_base.utils.db_types import sql_to_map_type, sql_to_db_type
 from jet_bridge_base.views.base.api import APIView
 
 
+def is_column_optional(column):
+    return column.autoincrement or column.default or column.server_default or column.nullable
+
+
 def map_column_default(column):
     if column.server_default is not None:
         if hasattr(column.server_default, 'arg') and isinstance(column.server_default.arg, TextClause):
@@ -20,6 +24,10 @@ def map_column_default(column):
             if value.lower() == 'now()':
                 return {
                     'default_type': 'datetime_now'
+                }
+            elif value.lower() == 'uuid_generate_v4()':
+                return {
+                    'default_type': 'uuid'
                 }
             elif value.lower() == 'true':
                 return {
@@ -85,7 +93,7 @@ def map_column(column, editable):
     if isinstance(column.type, String):
         params['length'] = column.type.length
 
-    optional = column.autoincrement or column.default or column.server_default or column.nullable
+    optional = is_column_optional(column)
 
     result = {
         'name': column.name,
@@ -160,9 +168,11 @@ def map_column(column, editable):
 #
 #     return result
 
-def map_table(cls, hidden, non_editable):
+def map_table(cls, hidden):
     mapper = inspect(cls)
     name = mapper.selectable.name
+    primary_key = mapper.primary_key[0]
+    non_editable = []
 
     from jet_bridge_base.configuration import configuration
     additional = configuration.get_model_description(name)
@@ -173,7 +183,7 @@ def map_table(cls, hidden, non_editable):
         'fields': list(map(lambda x: map_column(x, x.name not in non_editable), mapper.columns)),
         'hidden': name in hidden or name in configuration.get_hidden_model_description(),
         # 'relations': table_relations(mapper) + table_m2m_relations(mapper),
-        'primary_key_field': mapper.primary_key[0].name
+        'primary_key_field': primary_key.name if primary_key is not None else None
     }
 
     if additional:
@@ -187,11 +197,10 @@ class ModelDescriptionView(APIView):
     permission_classes = (HasProjectPermissions,)
 
     def get_queryset(self, request):
-        non_editable = ['id']
         hidden = ['__jet__token']
         MappedBase = get_mapped_base(request)
 
-        return list(map(lambda x: map_table(x, hidden, non_editable), MappedBase.classes))
+        return list(map(lambda x: map_table(x, hidden), MappedBase.classes))
 
     def get(self, request, *args, **kwargs):
         queryset = self.get_queryset(request)

@@ -71,6 +71,9 @@ define('track_databases', default='')
 define('track_databases_endpoint', default='')
 define('track_databases_auth', default='')
 
+define('track_models_endpoint', default='')
+define('track_models_auth', default='')
+
 # Parse
 
 options.parse_command_line(final=False)
@@ -163,5 +166,8 @@ ALLOW_ORIGIN = options.allow_origin
 TRACK_DATABASES = options.track_databases
 TRACK_DATABASES_ENDPOINT = options.track_databases_endpoint
 TRACK_DATABASES_AUTH = options.track_databases_auth
+
+TRACK_MODELS_ENDPOINT = options.track_models_endpoint
+TRACK_MODELS_AUTH = options.track_models_auth
 
 POSSIBLE_HOST = os.environ.get('POSSIBLE_HOST')

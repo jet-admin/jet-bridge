@@ -1,4 +1,4 @@
-from jet_bridge_base.utils.track import track_database_async
+from jet_bridge_base.utils.track_database import track_database_async
 from sqlalchemy.exc import SQLAlchemyError
 
 from jet_bridge_base.responses.json import JSONResponse
