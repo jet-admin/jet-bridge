@@ -10,6 +10,7 @@ class ListAPIViewMixin(object):
     def list(self, request, *args, **kwargs):
         track_database_async(request)
 
+        self.apply_timezone(request)
         queryset = self.filter_queryset(request, self.get_queryset(request))
 
         paginate = not request.get_argument('_no_pagination', False)

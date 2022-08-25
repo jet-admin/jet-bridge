@@ -2,6 +2,8 @@ from sqlalchemy import inspect, desc
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.sql import operators, text
 from sqlalchemy.sql.elements import AnnotatedColumnElement, UnaryExpression
+import dateparser
+from datetime import datetime
 
 from jet_bridge_base import settings
 
@@ -86,5 +88,15 @@ def queryset_count_optimized(request, queryset):
         queryset.session.rollback()
         raise
 
+
 def get_session_engine(session):
     return session.bind.engine.name
+
+
+def apply_session_timezone(session, timezone):
+    if get_session_engine(session) == 'mysql':
+        session.execute('SET time_zone = :tz', {'tz': timezone})
+    elif get_session_engine(session) in ['postgresql', 'mssql']:
+        offset_hours = dateparser.parse(datetime.now().isoformat() + timezone).utcoffset().total_seconds() / 60 / 60
+        offset_hours_str = '{:+}'.format(offset_hours).replace(".0", "")
+        session.execute('SET TIME ZONE :tz', {'tz': offset_hours_str})

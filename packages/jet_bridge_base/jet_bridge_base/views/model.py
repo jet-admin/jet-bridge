@@ -84,6 +84,8 @@ class ModelViewSet(ModelAPIViewMixin):
         if not isinstance(request.data, list):
             return JSONResponse({'error': 'Request body should be an array'}, status=status.HTTP_400_BAD_REQUEST)
 
+        self.apply_timezone(request)
+
         result = []
 
         for item in request.data:
@@ -102,6 +104,7 @@ class ModelViewSet(ModelAPIViewMixin):
 
     @action(methods=['get'], detail=False)
     def aggregate(self, request, *args, **kwargs):
+        self.apply_timezone(request)
         queryset = self.filter_queryset(request, self.get_queryset(request))
 
         y_func = request.get_argument('_y_func').lower()
@@ -132,6 +135,7 @@ class ModelViewSet(ModelAPIViewMixin):
 
     @action(methods=['get'], detail=False)
     def group(self, request, *args, **kwargs):
+        self.apply_timezone(request)
         queryset = self.filter_queryset(request, self.get_queryset(request))
 
         x_columns = request.get_arguments('_x_column')
@@ -175,6 +179,7 @@ class ModelViewSet(ModelAPIViewMixin):
 
     @action(methods=['post'], detail=False)
     def reorder(self, request, *args, **kwargs):
+        self.apply_timezone(request)
         queryset = self.filter_queryset(request, self.get_queryset(request))
         Model = self.get_model(request)
         ReorderSerializer = get_reorder_serializer(Model, queryset, request.session)
@@ -187,6 +192,7 @@ class ModelViewSet(ModelAPIViewMixin):
 
     @action(methods=['post'], detail=False)
     def reset_order(self, request, *args, **kwargs):
+        self.apply_timezone(request)
         queryset = self.filter_queryset(request, self.get_queryset(request))
         Model = self.get_model(request)
         ResetOrderSerializer = get_reset_order_serializer(Model, queryset, request.session)
@@ -199,6 +205,7 @@ class ModelViewSet(ModelAPIViewMixin):
 
     @action(methods=['get'], detail=True)
     def get_siblings(self, request, *args, **kwargs):
+        self.apply_timezone(request)
         queryset = self.filter_queryset(request, self.get_queryset(request))
         obj = self.get_object(request)
         Model = self.get_model(request)

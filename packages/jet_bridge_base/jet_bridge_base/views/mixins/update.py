@@ -10,6 +10,7 @@ class UpdateAPIViewMixin(object):
         track_database_async(request)
 
         partial = kwargs.pop('partial', False)
+        self.apply_timezone(request)
         instance = self.get_object(request)
         serializer = self.get_serializer(request, instance=instance, data=request.data, partial=partial)
         serializer.is_valid(raise_exception=True)
