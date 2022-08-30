@@ -13,6 +13,7 @@ class DestroyAPIViewMixin(object):
     def delete(self, request, *args, **kwargs):
         track_database_async(request)
 
+        self.apply_timezone(request)
         instance = self.get_object(request)
         self.perform_destroy(request, instance)
 

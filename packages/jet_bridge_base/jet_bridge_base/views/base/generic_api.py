@@ -1,8 +1,8 @@
-from jet_bridge_base.utils.queryset import get_session_engine
 from sqlalchemy.exc import SQLAlchemyError
 
 from jet_bridge_base.exceptions.not_found import NotFound
 from jet_bridge_base.paginators.page_number import PageNumberPagination
+from jet_bridge_base.utils.queryset import get_session_engine, apply_session_timezone
 from jet_bridge_base.views.base.api import APIView
 
 
@@ -64,6 +64,14 @@ class GenericAPIView(APIView):
             # 'request': self.request,
             'handler': self
         }
+
+    def apply_timezone(self, request):
+        timezone = request.get_argument('tz', None)
+        if timezone is not None:
+            try:
+                apply_session_timezone(request.session, timezone)
+            except SQLAlchemyError:
+                request.session.rollback()
 
     def filter_queryset(self, request, queryset):
         filter_instance = self.get_filter(request)

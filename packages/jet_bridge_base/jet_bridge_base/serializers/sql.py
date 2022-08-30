@@ -1,4 +1,4 @@
-from jet_bridge_base.utils.queryset import get_session_engine
+from jet_bridge_base.utils.queryset import get_session_engine, apply_session_timezone
 from sqlalchemy import text, select, column, func, desc, or_, cast
 from sqlalchemy import sql
 from sqlalchemy.sql import sqltypes
@@ -246,9 +246,9 @@ class SqlSerializer(Serializer):
         else:
             params = data.get('params', [])
 
-        if 'timezone' in data:
+        if data.get('timezone') is not None:
             try:
-                session.execute('SET TIME ZONE :tz', {'tz': data['timezone']})
+                apply_session_timezone(session, data['timezone'])
             except SQLAlchemyError:
                 session.rollback()
                 pass
