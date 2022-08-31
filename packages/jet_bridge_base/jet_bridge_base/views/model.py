@@ -69,8 +69,14 @@ class ModelViewSet(ModelAPIViewMixin):
 
     def get_queryset(self, request):
         Model = self.get_model(request)
+        queryset = request.session.query(Model)
 
-        return request.session.query(Model)
+        mapper = inspect(Model)
+        auto_pk = getattr(mapper.tables[0], '__jet_auto_pk__') if len(mapper.tables) else None
+        if auto_pk:
+            queryset = queryset.filter(mapper.primary_key[0].isnot(None))
+
+        return queryset
 
     def filter_queryset(self, request, queryset):
         queryset = super(ModelViewSet, self).filter_queryset(request, queryset)

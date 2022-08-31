@@ -104,7 +104,8 @@ def reflect(
                     first_column.primary_key = True
                     args.append(first_column)
                     reflect_opts['extend_existing'] = True
-                    Table(name, metadata, *args, **reflect_opts)
+                    table = Table(name, metadata, *args, **reflect_opts)
+                    setattr(table, '__jet_auto_pk__', True)
 
 
             except exc.UnreflectableTableError as uerr:
