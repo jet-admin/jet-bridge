@@ -72,7 +72,7 @@ class ModelViewSet(ModelAPIViewMixin):
         queryset = request.session.query(Model)
 
         mapper = inspect(Model)
-        auto_pk = getattr(mapper.tables[0], '__jet_auto_pk__') if len(mapper.tables) else None
+        auto_pk = getattr(mapper.tables[0], '__jet_auto_pk__', False) if len(mapper.tables) else None
         if auto_pk:
             queryset = queryset.filter(mapper.primary_key[0].isnot(None))
 
