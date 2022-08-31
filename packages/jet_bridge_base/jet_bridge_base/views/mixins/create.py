@@ -10,6 +10,7 @@ class CreateAPIViewMixin(object):
     def create(self, request, *args, **kwargs):
         track_database_async(request)
 
+        self.apply_timezone(request)
         serializer = self.get_serializer(request, data=request.data)
         serializer.is_valid(raise_exception=True)
         self.perform_create(request, serializer)
