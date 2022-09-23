@@ -1,10 +1,13 @@
+import json
+
 import requests
 
 from jet_bridge_base import settings
+from jet_bridge_base.encoders import JSONEncoder
 from jet_bridge_base.utils.async_exec import as_future
 
 
-def track_model(request, model, action, uid, data):
+def track_model(request, model, action, uid, model_data):
     if not settings.TRACK_MODELS_ENDPOINT:
         return
 
@@ -12,14 +15,16 @@ def track_model(request, model, action, uid, data):
         return
 
     url = '{}/model_change'.format(settings.TRACK_MODELS_ENDPOINT)
-    headers = {}
+    headers = {
+        'Content-Type': 'application/json'
+    }
     data = {
         'project': request.project,
         'environment': request.environment,
         'resource_token': request.resource_token,
         'model': model,
         'action': action,
-        'data': data
+        'data': model_data
     }
 
     if uid is not None:
@@ -28,7 +33,8 @@ def track_model(request, model, action, uid, data):
     if settings.TRACK_MODELS_AUTH:
         headers['Authorization'] = settings.TRACK_MODELS_AUTH
 
-    requests.post(url, data, headers=headers)
+    data_str = json.dumps(data, cls=JSONEncoder)
+    requests.post(url, data=data_str, headers=headers)
 
 
 def track_model_async(request, model, action, uid, data):
