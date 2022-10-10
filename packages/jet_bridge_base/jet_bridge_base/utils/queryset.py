@@ -63,24 +63,21 @@ def queryset_count_optimized_for_mysql(request, db_table):
 
 
 def queryset_count_optimized(request, queryset):
-    result = None
-    table_size = None
+    if queryset.whereclause is None:
+        count_optimized = None
 
-    try:
-        table = queryset.statement.froms[0].name
+        try:
+            table = queryset.statement.froms[0].name
 
-        if get_session_engine(queryset.session) == 'postgresql':
-            table_size = queryset_count_optimized_for_postgresql(request, table)
-        elif get_session_engine(queryset.session) == 'mysql':
-            table_size = queryset_count_optimized_for_mysql(request, table)
-    except:
-        pass
+            if get_session_engine(queryset.session) == 'postgresql':
+                count_optimized = queryset_count_optimized_for_postgresql(request, table)
+            elif get_session_engine(queryset.session) == 'mysql':
+                count_optimized = queryset_count_optimized_for_mysql(request, table)
+        except:
+            pass
 
-    if queryset.whereclause is None and table_size is not None:
-        result = table_size
-
-    if table_size is not None and table_size >= 10000:
-        return result
+        if count_optimized is not None and count_optimized >= 10000:
+            return count_optimized
 
     try:
         return queryset.count()
