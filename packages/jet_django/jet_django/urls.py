@@ -4,6 +4,7 @@ from jet_bridge_base.views.api import ApiView
 from jet_bridge_base.views.external_auth.complete import ExternalAuthCompleteView
 from jet_bridge_base.views.external_auth.login import ExternalAuthLoginView
 from jet_bridge_base.views.file_upload import FileUploadView
+from jet_bridge_base.views.graphql import GraphQLView
 from jet_bridge_base.views.image_resize import ImageResizeView
 from jet_bridge_base.views.message import MessageView
 from jet_bridge_base.views.model import ModelViewSet
@@ -31,6 +32,7 @@ def init_urls():
     extra_urls = [
         url(r'^$', route_view(ApiView).as_view(), name='root'),
         url(r'^register/', route_view(RegisterView).as_view(), name='register'),
+        url(r'^graphql/', route_view(GraphQLView).as_view(), name='graphql'),
         url(r'^model_descriptions/', route_view(ModelDescriptionView).as_view(), name='model-descriptions'),
         url(r'^sql/', route_view(SqlView).as_view(), name='sql'),
         url(r'^messages/', route_view(MessageView).as_view(), name='message'),
