@@ -9,21 +9,18 @@ from jet_bridge_base.views.base.api import APIView
 
 class StringFiltersType(graphene.InputObjectType):
     eq = graphene.String()
-    ne = graphene.String()
     lt = graphene.String()
     lte = graphene.String()
     gt = graphene.String()
     gte = graphene.String()
     in_op = graphene.List(graphene.String, name='in')
-    notIn = graphene.List(graphene.String)
     contains = graphene.String()
-    iContains = graphene.String()
-    notContains = graphene.String()
-    iNotContains = graphene.String()
-    null = graphene.String()
-    notNull = graphene.String()
+    containsI = graphene.String()
+    isNull = graphene.String()
     startsWith = graphene.String()
+    startsWithI = graphene.String()
     endsWith = graphene.String()
+    endsWithI = graphene.String()
     and_op = graphene.String(name='and')
     or_op = graphene.String(name='or')
     not_op = graphene.String(name='not')
@@ -95,11 +92,14 @@ class GraphQLView(APIView):
             if 'startsWith' in column_filters:
                 value = column_filters.get('startsWith')
                 queryset = apply_operators(column.like('{}%'.format(value)))
+            if 'startsWithI' in column_filters:
+                value = column_filters.get('startsWithI')
+                queryset = apply_operators(column.ilike('{}%'.format(value)))
             if 'contains' in column_filters:
                 value = column_filters.get('contains')
                 queryset = apply_operators(column.like('%{}%'.format(value)))
-            if 'iContains' in column_filters:
-                value = column_filters.get('iContains')
+            if 'containsI' in column_filters:
+                value = column_filters.get('containsI')
                 queryset = apply_operators(column.ilike('%{}%'.format(value)))
             if 'relation' in column_filters:
                 foreign_key = next(iter(column.foreign_keys))
