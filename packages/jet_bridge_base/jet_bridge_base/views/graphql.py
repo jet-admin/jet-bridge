@@ -155,6 +155,8 @@ class GraphQLView(APIView):
         elif 'page' in pagination:
             queryset = queryset.offset((pagination['page'] - 1) * limit)
 
+        queryset = queryset.limit(limit)
+
         return queryset
 
     def get_model_attrs_type(self, mapper):
