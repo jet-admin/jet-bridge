@@ -40,6 +40,7 @@ class PaginationResponseType(graphene.ObjectType):
     limit = graphene.Int()
     offset = graphene.Int(required=False)
     page = graphene.Int(required=False)
+    hasMore = graphene.Boolean(required=False)
 
 
 class GraphQLView(APIView):
@@ -216,13 +217,20 @@ class GraphQLView(APIView):
                             if selection.name.value == 'pagination':
                                 count = queryset_count_optimized(request, queryset)
                                 limit = self.get_pagination_limit(pagination)
+                                offset = pagination.get('offset')
+                                page = pagination.get('page')
 
                                 result['pagination'] = {
                                     'count': count,
                                     'limit': limit,
-                                    'offset': pagination.get('offset'),
-                                    'page': pagination.get('page')
+                                    'offset': offset,
+                                    'page': page
                                 }
+
+                                if offset is not None:
+                                    result['pagination']['hasMore'] = offset + limit < count
+                                elif page is not None:
+                                    result['pagination']['hasMore'] = page * limit < count
 
                         return result
                     except Exception as e:
