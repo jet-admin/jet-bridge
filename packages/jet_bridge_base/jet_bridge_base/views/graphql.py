@@ -1,5 +1,6 @@
 import graphene
-from graphql.language import ast
+from jet_bridge_base.filters import lookups
+from jet_bridge_base.filters.filter_for_dbfield import filter_for_data_type
 from jet_bridge_base.serializers.model_serializer import get_column_data_type
 from sqlalchemy import inspect, desc, column as sqlcolumn
 
@@ -30,12 +31,9 @@ class StringFiltersType(graphene.InputObjectType):
     gt = graphene.String()
     gte = graphene.String()
     in_op = graphene.List(graphene.String, name='in')
-    contains = graphene.String()
     containsI = graphene.String()
     isNull = graphene.String()
-    startsWith = graphene.String()
     startsWithI = graphene.String()
-    endsWith = graphene.String()
     endsWithI = graphene.String()
     and_op = graphene.String(name='and')
     or_op = graphene.String(name='or')
@@ -91,50 +89,48 @@ class GraphQLView(APIView):
         return type('Model{}FiltersType_{}'.format(name, depth), (graphene.InputObjectType,), filter_attrs)
 
     def filter_queryset(self, queryset, mapper, filters, relationship=None):
-        def apply_operators(*operators):
-            if relationship:
-                return queryset.filter(relationship.has(*operators))
-            else:
-                return queryset.filter(*operators)
+        columns = dict(map(lambda x: (x.key, x), mapper.columns))
 
-        for column in mapper.columns:
-            if column.name not in filters:
+        for filter_name, filter_lookups in filters.items():
+            column = columns.get(filter_name)
+
+            if column is None:
                 continue
-            column_filters = filters.get(column.name)
 
-            if 'eq' in column_filters:
-                value = column_filters.get('eq')
-                queryset = apply_operators(column.__eq__(value))
-            if 'startsWith' in column_filters:
-                value = column_filters.get('startsWith')
-                queryset = apply_operators(column.like('{}%'.format(value)))
-            if 'startsWithI' in column_filters:
-                value = column_filters.get('startsWithI')
-                queryset = apply_operators(column.ilike('{}%'.format(value)))
-            if 'contains' in column_filters:
-                value = column_filters.get('contains')
-                queryset = apply_operators(column.like('%{}%'.format(value)))
-            if 'containsI' in column_filters:
-                value = column_filters.get('containsI')
-                queryset = apply_operators(column.ilike('%{}%'.format(value)))
-            if 'relation' in column_filters:
-                foreign_key = next(iter(column.foreign_keys))
-                relation_table = foreign_key.column.table
-                relationship = None
+            for lookup_name, lookup_value in filter_lookups.items():
+                if lookup_name == 'relation':
+                    foreign_key = next(iter(column.foreign_keys))
+                    relation_table = foreign_key.column.table
+                    relationship = None
 
-                for relation in mapper.relationships.values():
-                    if len(relation.local_columns) != 1:
-                        continue
-                    local_column = next(iter(relation.local_columns))
-                    if local_column is None:
-                        continue
-                    if local_column.name != column.name:
-                        continue
-                    relationship = relation.class_attribute
-                    break
+                    for relation in mapper.relationships.values():
+                        if len(relation.local_columns) != 1:
+                            continue
+                        local_column = next(iter(relation.local_columns))
+                        if local_column is None:
+                            continue
+                        if local_column.name != column.name:
+                            continue
+                        relationship = relation.class_attribute
+                        break
 
-                if relationship:
-                    queryset = self.filter_queryset(queryset, relation_table, column_filters.get('relation'), relationship)
+                    if relationship:
+                        queryset = self.filter_queryset(queryset, relation_table, lookup_value, relationship)
+                else:
+                    item = filter_for_data_type(column.type)
+                    lookup = lookups.by_gql(lookup_name)
+                    instance = item['filter_class'](
+                        name=column.key,
+                        column=column,
+                        lookup=lookup,
+                        exclude=False
+                    )
+                    criterion = instance.get_loookup_criterion(lookup_value)
+
+                    if relationship:
+                        queryset = queryset.filter(relationship.has(criterion))
+                    else:
+                        queryset = queryset.filter(criterion)
 
         return queryset
 
