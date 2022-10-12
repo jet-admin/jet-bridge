@@ -1,10 +1,26 @@
 import graphene
+from graphql.language import ast
+from jet_bridge_base.serializers.model_serializer import get_column_data_type
 from sqlalchemy import inspect, desc, column as sqlcolumn
 
 from jet_bridge_base.db import get_mapped_base
 from jet_bridge_base.responses.json import JSONResponse
 from jet_bridge_base.utils.queryset import queryset_count_optimized
 from jet_bridge_base.views.base.api import APIView
+
+
+class RawScalar(graphene.Scalar):
+    @staticmethod
+    def serialize(value):
+        return value
+
+    @staticmethod
+    def parse_literal(node, _variables=None):
+        return node.value
+
+    @staticmethod
+    def parse_value(value):
+        return value
 
 
 class StringFiltersType(graphene.InputObjectType):
@@ -165,14 +181,16 @@ class GraphQLView(APIView):
         def create_field_resolver(column):
             def resolver(parent, info):
                 value = getattr(parent, column.name)
-                return value
+                data_type = get_column_data_type(column)
+                field = data_type()
+                return field.to_representation(value)
 
             return resolver
 
         record_attrs = {}
 
         for column in mapper.columns:
-            record_attrs[column.name] = graphene.String()
+            record_attrs[column.name] = RawScalar()
             record_attrs['resolve_{}'.format(column.name)] = create_field_resolver(column)
 
         return type('Model{}RecordAttrsType'.format(name), (graphene.ObjectType,), record_attrs)
