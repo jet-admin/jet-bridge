@@ -7,19 +7,19 @@ from jet_bridge_base.serializers.serializer import Serializer
 from jet_bridge_base.utils.exceptions import validation_error_from_database_error
 
 data_types = [
-    {'query': 'VARCHAR', 'operator': 'startswith', 'date_type': fields.CharField},
-    {'query': 'TEXT', 'operator': 'equals', 'date_type': fields.CharField},
-    {'query': 'BOOLEAN', 'operator': 'equals', 'date_type': fields.BooleanField},
-    {'query': 'INTEGER[]', 'operator': 'startswith', 'date_type': fields.ArrayField},
-    {'query': 'INTEGER', 'operator': 'equals', 'date_type': fields.IntegerField},
-    {'query': 'SMALLINT', 'operator': 'equals', 'date_type': fields.IntegerField},
-    {'query': 'NUMERIC', 'operator': 'startswith', 'date_type': fields.CharField},
-    {'query': 'VARCHAR', 'operator': 'startswith', 'date_type': fields.CharField},
-    {'query': 'TIMESTAMP', 'operator': 'startswith', 'date_type': fields.DateTimeField},
-    {'query': 'DATETIME', 'operator': 'startswith', 'date_type': fields.DateTimeField},
-    {'query': 'JSON', 'operator': 'startswith', 'date_type': fields.JSONField},
-    {'query': 'geometry', 'operator': 'startswith', 'date_type': fields.WKTField},
-    {'query': 'geography', 'operator': 'startswith', 'date_type': fields.WKTField},
+    {'query': 'VARCHAR', 'operator': 'startswith', 'data_type': fields.CharField},
+    {'query': 'TEXT', 'operator': 'equals', 'data_type': fields.CharField},
+    {'query': 'BOOLEAN', 'operator': 'equals', 'data_type': fields.BooleanField},
+    {'query': 'INTEGER[]', 'operator': 'startswith', 'data_type': fields.ArrayField},
+    {'query': 'INTEGER', 'operator': 'equals', 'data_type': fields.IntegerField},
+    {'query': 'SMALLINT', 'operator': 'equals', 'data_type': fields.IntegerField},
+    {'query': 'NUMERIC', 'operator': 'startswith', 'data_type': fields.CharField},
+    {'query': 'VARCHAR', 'operator': 'startswith', 'data_type': fields.CharField},
+    {'query': 'TIMESTAMP', 'operator': 'startswith', 'data_type': fields.DateTimeField},
+    {'query': 'DATETIME', 'operator': 'startswith', 'data_type': fields.DateTimeField},
+    {'query': 'JSON', 'operator': 'startswith', 'data_type': fields.JSONField},
+    {'query': 'geometry', 'operator': 'startswith', 'data_type': fields.WKTField},
+    {'query': 'geography', 'operator': 'startswith', 'data_type': fields.WKTField},
 ]
 default_data_type = fields.CharField
 
@@ -32,9 +32,9 @@ def get_column_data_type(column):
 
     for rule in data_types:
         if rule['operator'] == 'equals' and data_type == rule['query']:
-            return rule['date_type']
+            return rule['data_type']
         elif rule['operator'] == 'startswith' and data_type[:len(rule['query'])] == rule['query']:
-            return rule['date_type']
+            return rule['data_type']
 
     return default_data_type
 
@@ -55,7 +55,7 @@ class ModelSerializer(Serializer):
 
             for field_name in self.meta.model_fields:
                 column = columns.get(field_name)
-                date_type = get_column_data_type(column)
+                data_type = get_column_data_type(column)
                 kwargs = {}
 
                 if column.primary_key and column.autoincrement:
@@ -63,7 +63,7 @@ class ModelSerializer(Serializer):
                 if column.autoincrement or column.default or column.server_default or column.nullable:
                     kwargs['required'] = False
 
-                field = date_type(**kwargs)
+                field = data_type(**kwargs)
                 field.field_name = field_name
                 result.append(field)
 
