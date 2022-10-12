@@ -245,7 +245,7 @@ class GraphQLView(APIView):
     def post(self, request, *args, **kwargs):
         Query = self.get_query_type(request)
 
-        schema = graphene.Schema(query=Query)
+        schema = graphene.Schema(query=Query, auto_camelcase=False)
 
         if 'query' not in request.data:
             return JSONResponse({})
