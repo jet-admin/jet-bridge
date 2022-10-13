@@ -1,6 +1,7 @@
 import graphene
 from jet_bridge_base.filters import lookups
 from jet_bridge_base.filters.filter_for_dbfield import filter_for_data_type
+from jet_bridge_base.filters.model_search import get_model_search_filter, search_queryset
 from jet_bridge_base.serializers.model_serializer import get_column_data_type
 from sqlalchemy import inspect, desc, column as sqlcolumn
 
@@ -30,6 +31,10 @@ class PaginationType(graphene.InputObjectType):
     limit = graphene.Int()
 
 
+class SearchType(graphene.InputObjectType):
+    query = graphene.String()
+
+
 class PaginationResponseType(graphene.ObjectType):
     count = graphene.Int()
     limit = graphene.Int()
@@ -54,7 +59,7 @@ class GraphQLView(APIView):
 
         return queryset
 
-    def filter_queryset(self, queryset, mapper, filters, relationship=None):
+    def filter_queryset(self, queryset, mapper, filters, search, relationship=None):
         columns = dict(map(lambda x: (x.key, x), mapper.columns))
 
         for filter_name, filter_lookups in filters.items():
@@ -81,7 +86,7 @@ class GraphQLView(APIView):
                         break
 
                     if relationship:
-                        queryset = self.filter_queryset(queryset, relation_table, lookup_value, relationship)
+                        queryset = self.filter_queryset(queryset, relation_table, lookup_value, None, relationship)
                 else:
                     item = filter_for_data_type(column.type)
                     lookup = lookups.by_gql.get(lookup_name)
@@ -97,6 +102,10 @@ class GraphQLView(APIView):
                         queryset = queryset.filter(relationship.has(criterion))
                     else:
                         queryset = queryset.filter(criterion)
+
+        if search is not None:
+            query = search['query']
+            queryset = search_queryset(queryset, mapper, query)
 
         return queryset
 
@@ -223,14 +232,14 @@ class GraphQLView(APIView):
             })
 
             def create_list_resolver(Model, mapper):
-                def resolver(parent, info, filters=None, sort=None, pagination=None):
+                def resolver(parent, info, filters=None, sort=None, pagination=None, search=None):
                     try:
                         filters = filters or {}
                         sort = sort or []
                         pagination = pagination or {}
                         queryset = self.get_queryset(request, Model)
 
-                        queryset = self.filter_queryset(queryset, mapper, filters)
+                        queryset = self.filter_queryset(queryset, mapper, filters, search)
                         queryset = self.sort_queryset(queryset, sort)
 
                         queryset_page = self.paginate_queryset(queryset, pagination)
@@ -269,7 +278,8 @@ class GraphQLView(APIView):
                 ModelListType,
                 filters=FiltersType(),
                 sort=graphene.List(graphene.String),
-                pagination=PaginationType()
+                pagination=PaginationType(),
+                search=SearchType()
             )
             query_attrs['resolve_{}'.format(name)] = create_list_resolver(Model, mapper)
 
