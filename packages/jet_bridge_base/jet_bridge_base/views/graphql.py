@@ -24,22 +24,6 @@ class RawScalar(graphene.Scalar):
         return value
 
 
-class StringFiltersType(graphene.InputObjectType):
-    eq = graphene.String()
-    lt = graphene.String()
-    lte = graphene.String()
-    gt = graphene.String()
-    gte = graphene.String()
-    in_op = graphene.List(graphene.String, name='in')
-    containsI = graphene.String()
-    isNull = graphene.String()
-    startsWithI = graphene.String()
-    endsWithI = graphene.String()
-    and_op = graphene.String(name='and')
-    or_op = graphene.String(name='or')
-    not_op = graphene.String(name='not')
-
-
 class PaginationType(graphene.InputObjectType):
     page = graphene.Int()
     offset = graphene.Int()
@@ -57,6 +41,8 @@ class PaginationResponseType(graphene.ObjectType):
 class GraphQLView(APIView):
     # serializer_class = ModelDescriptionSerializer
     # permission_classes = (HasProjectPermissions,)
+    model_filters_types = {}
+    model_columns_filters_types = {}
 
     def get_queryset(self, request, Model):
         queryset = request.session.query(Model)
@@ -67,26 +53,6 @@ class GraphQLView(APIView):
             queryset = queryset.filter(mapper.primary_key[0].isnot(None))
 
         return queryset
-
-    def get_model_filters_type(self, mapper, depth=1):
-        name = mapper.selectable.name
-        filter_attrs = {}
-
-        for column in mapper.columns:
-            if column.foreign_keys and depth <= 2 and column.name == 'owner_id':
-                foreign_key = next(iter(column.foreign_keys))
-                table = foreign_key.column.table
-
-                RelatedTableFiltersType = self.get_model_filters_type(table, depth + 1)
-                RelationFiltersType = type('Model{}{}RelationFiltersType_{}'.format(name, column.name, depth), (graphene.InputObjectType,), {
-                   'eq': graphene.String(),
-                   'relation': RelatedTableFiltersType()
-                })
-                filter_attrs[column.name] = RelationFiltersType()
-            else:
-                filter_attrs[column.name] = StringFiltersType()
-
-        return type('Model{}FiltersType_{}'.format(name, depth), (graphene.InputObjectType,), filter_attrs)
 
     def filter_queryset(self, queryset, mapper, filters, relationship=None):
         columns = dict(map(lambda x: (x.key, x), mapper.columns))
@@ -118,7 +84,7 @@ class GraphQLView(APIView):
                         queryset = self.filter_queryset(queryset, relation_table, lookup_value, relationship)
                 else:
                     item = filter_for_data_type(column.type)
-                    lookup = lookups.by_gql(lookup_name)
+                    lookup = lookups.by_gql.get(lookup_name)
                     instance = item['filter_class'](
                         name=column.key,
                         column=column,
@@ -170,6 +136,52 @@ class GraphQLView(APIView):
         queryset = queryset.limit(limit)
 
         return queryset
+
+    def get_model_filters_type(self, mapper, depth=1):
+        attrs = {}
+        with_relations = depth <= 4
+
+        for column in mapper.columns:
+            column_filters_type = self.get_model_field_filters_type(mapper, column, with_relations, depth)
+            attrs[column.name] = column_filters_type()
+
+        model_name = mapper.selectable.name
+        name = 'Model{}Depth{}NestedFiltersType'.format(model_name, depth) if with_relations \
+            else 'Model{}Depth{}FiltersType'.format(model_name, depth)
+
+        if name in self.model_filters_types:
+            return self.model_filters_types[name]
+
+        cls = type(name, (graphene.InputObjectType,), attrs)
+        self.model_filters_types[name] = cls
+        return cls
+
+    def get_model_field_filters_type(self, mapper, column, with_relations, depth=1):
+        item = filter_for_data_type(column.type)
+
+        attrs = {}
+
+        for lookup in item['lookups']:
+            gql_lookup = lookups.gql.get(lookup)
+            attrs[gql_lookup] = RawScalar()
+
+        if with_relations and column.foreign_keys:
+            foreign_key = next(iter(column.foreign_keys))
+            table = foreign_key.column.table
+
+            column_filters_type = self.get_model_filters_type(table, depth + 1)
+            attrs['relation'] = column_filters_type()
+
+        model_name = mapper.selectable.name
+        name = 'Model{}Column{}Depth{}NestedFiltersType'.format(model_name, column.name, depth) if with_relations \
+            else 'Model{}Column{}Depth{}FiltersType'.format(model_name, column.name, depth)
+
+        if name in self.model_columns_filters_types:
+            return self.model_columns_filters_types[name]
+
+        cls = type(name, (graphene.InputObjectType,), attrs)
+        self.model_columns_filters_types[name] = cls
+        return cls
 
     def get_model_attrs_type(self, mapper):
         name = mapper.selectable.name
