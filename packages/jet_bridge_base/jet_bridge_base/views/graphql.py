@@ -2,6 +2,7 @@ import graphene
 from jet_bridge_base.filters import lookups
 from jet_bridge_base.filters.filter_for_dbfield import filter_for_data_type
 from jet_bridge_base.filters.model_search import get_model_search_filter, search_queryset
+from jet_bridge_base.serializers.model import get_model_serializer
 from jet_bridge_base.serializers.model_serializer import get_column_data_type
 from sqlalchemy import inspect, desc, column as sqlcolumn
 
@@ -194,23 +195,12 @@ class GraphQLView(APIView):
 
     def get_model_attrs_type(self, mapper):
         name = mapper.selectable.name
-
-        def create_field_resolver(column):
-            def resolver(parent, info):
-                value = getattr(parent, column.name)
-                data_type = get_column_data_type(column)
-                field = data_type()
-                return field.to_representation(value)
-
-            return resolver
-
-        record_attrs = {}
+        attrs = {}
 
         for column in mapper.columns:
-            record_attrs[column.name] = RawScalar()
-            record_attrs['resolve_{}'.format(column.name)] = create_field_resolver(column)
+            attrs[column.name] = RawScalar()
 
-        return type('Model{}RecordAttrsType'.format(name), (graphene.ObjectType,), record_attrs)
+        return type('Model{}RecordAttrsType'.format(name), (graphene.ObjectType,), attrs)
 
     def get_query_type(self, request):
         MappedBase = get_mapped_base(request)
@@ -224,7 +214,8 @@ class GraphQLView(APIView):
             FiltersType = self.get_model_filters_type(mapper)
             ModelAttrsType = self.get_model_attrs_type(mapper)
             ModelType = type('Model{}ModelType'.format(name), (graphene.ObjectType,), {
-                'attrs': graphene.Field(ModelAttrsType)
+                'attrs': graphene.Field(ModelAttrsType),
+                'allAttrs': graphene.Field(RawScalar)
             })
             ModelListType = type('Model{}ModelListType'.format(name), (graphene.ObjectType,), {
                 'data': graphene.List(ModelType),
@@ -244,10 +235,18 @@ class GraphQLView(APIView):
 
                         queryset_page = self.paginate_queryset(queryset, pagination)
 
+                        serializer_class = get_model_serializer(Model)
+                        serializer_context = {}
+                        queryset_page_serialized = list(map(lambda x: serializer_class(
+                            instance=x,
+                            context=serializer_context
+                        ).representation_data, queryset_page))
+
                         result = {
                             'data': list(map(lambda x: {
-                                'attrs': x
-                            }, queryset_page))
+                                'attrs': x,
+                                'allAttrs': x
+                            }, queryset_page_serialized))
                         }
 
                         for selection in info.field_asts[0].selection_set.selections:
