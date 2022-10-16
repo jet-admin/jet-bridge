@@ -60,7 +60,7 @@ class GraphQLView(APIView):
 
         return queryset
 
-    def filter_queryset(self, queryset, mapper, filters, search, relationship=None):
+    def filter_queryset(self, MappedBase, queryset, mapper, filters, search, relationship=None):
         columns = dict(map(lambda x: (x.key, x), mapper.columns))
 
         for filter_name, filter_lookups in filters.items():
@@ -72,7 +72,6 @@ class GraphQLView(APIView):
             for lookup_name, lookup_value in filter_lookups.items():
                 if lookup_name == 'relation':
                     foreign_key = next(iter(column.foreign_keys))
-                    relation_table = foreign_key.column.table
                     relationship = None
 
                     for relation in mapper.relationships.values():
@@ -87,7 +86,16 @@ class GraphQLView(APIView):
                         break
 
                     if relationship:
-                        queryset = self.filter_queryset(queryset, relation_table, lookup_value, None, relationship)
+                        relation_mapper = None
+
+                        for cls in MappedBase.classes:
+                            cls_mapper = inspect(cls)
+                            if cls_mapper.tables[0] == foreign_key.column.table:
+                                relation_mapper = cls_mapper
+                                break
+
+                        if relation_mapper:
+                            queryset = self.filter_queryset(MappedBase, queryset, relation_mapper, lookup_value, None, relationship)
                 else:
                     item = filter_for_data_type(column.type)
                     lookup = lookups.by_gql.get(lookup_name)
@@ -230,7 +238,7 @@ class GraphQLView(APIView):
                         pagination = pagination or {}
                         queryset = self.get_queryset(request, Model)
 
-                        queryset = self.filter_queryset(queryset, mapper, filters, search)
+                        queryset = self.filter_queryset(MappedBase, queryset, mapper, filters, search)
                         queryset = self.sort_queryset(queryset, sort)
 
                         queryset_page = self.paginate_queryset(queryset, pagination)
