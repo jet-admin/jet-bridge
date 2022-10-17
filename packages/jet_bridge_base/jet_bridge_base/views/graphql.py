@@ -284,19 +284,23 @@ class GraphQLView(APIView):
                             }, queryset_page_serialized))
                         }
 
-                        for selection in info.field_asts[0].selection_set.selections:
-                            if selection.name.value == 'pagination':
-                                count = queryset_count_optimized(request, queryset)
-                                limit = self.get_pagination_limit(pagination)
-                                offset = pagination.get('offset')
-                                page = pagination.get('page')
+                        pagination_selections = self.get_selections(info, ['pagination']) or []
+                        pagination_names = list(map(lambda x: x.name.value, pagination_selections))
 
-                                result['pagination'] = {
-                                    'count': count,
-                                    'limit': limit,
-                                    'offset': offset,
-                                    'page': page
-                                }
+                        if len(pagination_names):
+                            limit = self.get_pagination_limit(pagination)
+                            offset = pagination.get('offset')
+                            page = pagination.get('page')
+
+                            result['pagination'] = {
+                                'limit': limit,
+                                'offset': offset,
+                                'page': page
+                            }
+
+                            if 'count' in pagination_names or 'hasMore' in pagination_names:
+                                count = queryset_count_optimized(request, queryset)
+                                result['pagination']['count'] = count
 
                                 if offset is not None:
                                     result['pagination']['hasMore'] = offset + limit < count
