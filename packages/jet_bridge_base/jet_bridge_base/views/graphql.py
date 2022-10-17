@@ -50,8 +50,11 @@ class GraphQLView(APIView):
     model_filters_types = {}
     model_columns_filters_types = {}
 
-    def get_queryset(self, request, Model):
-        queryset = request.session.query(Model)
+    def get_queryset(self, request, Model, only_columns=None):
+        if only_columns:
+            queryset = request.session.query(*only_columns)
+        else:
+            queryset = request.session.query(Model)
 
         mapper = inspect(Model)
         auto_pk = getattr(mapper.tables[0], '__jet_auto_pk__', False) if len(mapper.tables) else None
@@ -211,6 +214,21 @@ class GraphQLView(APIView):
 
         return type('Model{}RecordAttrsType'.format(name), (graphene.ObjectType,), attrs)
 
+    def get_selections(self, info, path):
+        i = 0
+        current_field = info.field_asts[0]
+
+        for path_item in path:
+            for selection in current_field.selection_set.selections:
+                if selection.name.value == path_item:
+                    if i == len(path) - 1:
+                        return selection.selection_set.selections
+                    else:
+                        current_field = selection
+                        break
+
+            i += 1
+
     def get_query_type(self, request):
         MappedBase = get_mapped_base(request)
 
@@ -237,7 +255,15 @@ class GraphQLView(APIView):
                         filters = filters or []
                         sort = sort or []
                         pagination = pagination or {}
-                        queryset = self.get_queryset(request, Model)
+
+                        field_selections = self.get_selections(info, ['data', 'attrs']) or []
+                        field_names = list(map(lambda x: x.name.value, field_selections))
+                        data_selections = self.get_selections(info, ['data']) or []
+                        data_names = list(map(lambda x: x.name.value, data_selections))
+                        only_columns = list(map(lambda x: getattr(Model, x), field_names)) \
+                            if len(field_names) and 'allAttrs' not in data_names else None
+
+                        queryset = self.get_queryset(request, Model, only_columns)
 
                         queryset = self.filter_queryset(MappedBase, queryset, mapper, filters, search)
                         queryset = self.sort_queryset(queryset, sort)
