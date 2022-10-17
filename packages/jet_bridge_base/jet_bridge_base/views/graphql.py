@@ -63,54 +63,55 @@ class GraphQLView(APIView):
     def filter_queryset(self, MappedBase, queryset, mapper, filters, search, relationship=None):
         columns = dict(map(lambda x: (x.key, x), mapper.columns))
 
-        for filter_name, filter_lookups in filters.items():
-            column = columns.get(filter_name)
+        for filters_item in filters:
+            for filter_name, filter_lookups in filters_item.items():
+                column = columns.get(filter_name)
 
-            if column is None:
-                continue
+                if column is None:
+                    continue
 
-            for lookup_name, lookup_value in filter_lookups.items():
-                if lookup_name == 'relation':
-                    foreign_key = next(iter(column.foreign_keys))
-                    relationship = None
+                for lookup_name, lookup_value in filter_lookups.items():
+                    if lookup_name == 'relation':
+                        foreign_key = next(iter(column.foreign_keys))
+                        relationship = None
 
-                    for relation in mapper.relationships.values():
-                        if len(relation.local_columns) != 1:
-                            continue
-                        local_column = next(iter(relation.local_columns))
-                        if local_column is None:
-                            continue
-                        if local_column.name != column.name:
-                            continue
-                        relationship = relation.class_attribute
-                        break
+                        for relation in mapper.relationships.values():
+                            if len(relation.local_columns) != 1:
+                                continue
+                            local_column = next(iter(relation.local_columns))
+                            if local_column is None:
+                                continue
+                            if local_column.name != column.name:
+                                continue
+                            relationship = relation.class_attribute
+                            break
 
-                    if relationship:
-                        relation_mapper = None
+                        if relationship:
+                            relation_mapper = None
 
-                        for cls in MappedBase.classes:
-                            cls_mapper = inspect(cls)
-                            if cls_mapper.tables[0] == foreign_key.column.table:
-                                relation_mapper = cls_mapper
-                                break
+                            for cls in MappedBase.classes:
+                                cls_mapper = inspect(cls)
+                                if cls_mapper.tables[0] == foreign_key.column.table:
+                                    relation_mapper = cls_mapper
+                                    break
 
-                        if relation_mapper:
-                            queryset = self.filter_queryset(MappedBase, queryset, relation_mapper, lookup_value, None, relationship)
-                else:
-                    item = filter_for_data_type(column.type)
-                    lookup = lookups.by_gql.get(lookup_name)
-                    instance = item['filter_class'](
-                        name=column.key,
-                        column=column,
-                        lookup=lookup,
-                        exclude=False
-                    )
-                    criterion = instance.get_loookup_criterion(lookup_value)
-
-                    if relationship:
-                        queryset = queryset.filter(relationship.has(criterion))
+                            if relation_mapper:
+                                queryset = self.filter_queryset(MappedBase, queryset, relation_mapper, lookup_value, None, relationship)
                     else:
-                        queryset = queryset.filter(criterion)
+                        item = filter_for_data_type(column.type)
+                        lookup = lookups.by_gql.get(lookup_name)
+                        instance = item['filter_class'](
+                            name=column.key,
+                            column=column,
+                            lookup=lookup,
+                            exclude=False
+                        )
+                        criterion = instance.get_loookup_criterion(lookup_value)
+
+                        if relationship:
+                            queryset = queryset.filter(relationship.has(criterion))
+                        else:
+                            queryset = queryset.filter(criterion)
 
         if search is not None:
             query = search['query']
@@ -168,11 +169,11 @@ class GraphQLView(APIView):
             else 'Model{}Depth{}FiltersType'.format(model_name, depth)
 
         if name in self.model_filters_types:
-            return self.model_filters_types[name]
+            return graphene.List(self.model_filters_types[name])
 
         cls = type(name, (graphene.InputObjectType,), attrs)
         self.model_filters_types[name] = cls
-        return cls
+        return graphene.List(cls)
 
     def get_model_field_filters_type(self, mapper, column, with_relations, depth=1):
         item = filter_for_data_type(column.type)
@@ -188,7 +189,7 @@ class GraphQLView(APIView):
             table = foreign_key.column.table
 
             column_filters_type = self.get_model_filters_type(table, depth + 1)
-            attrs['relation'] = column_filters_type()
+            attrs['relation'] = column_filters_type
 
         model_name = mapper.selectable.name
         name = 'Model{}Column{}Depth{}NestedFiltersType'.format(model_name, column.name, depth) if with_relations \
@@ -233,7 +234,7 @@ class GraphQLView(APIView):
             def create_list_resolver(Model, mapper):
                 def resolver(parent, info, filters=None, sort=None, pagination=None, search=None):
                     try:
-                        filters = filters or {}
+                        filters = filters or []
                         sort = sort or []
                         pagination = pagination or {}
                         queryset = self.get_queryset(request, Model)
@@ -283,7 +284,7 @@ class GraphQLView(APIView):
 
             query_attrs[name] = graphene.Field(
                 ModelListType,
-                filters=FiltersType(),
+                filters=FiltersType,
                 sort=graphene.List(graphene.String),
                 pagination=PaginationType(),
                 search=SearchType()
