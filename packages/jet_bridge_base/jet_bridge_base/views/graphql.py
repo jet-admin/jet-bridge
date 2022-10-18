@@ -1,3 +1,5 @@
+import re
+
 import graphene
 from jet_bridge_base.filters import lookups
 from jet_bridge_base.filters.filter_for_dbfield import filter_for_data_type
@@ -42,6 +44,17 @@ class PaginationResponseType(graphene.ObjectType):
     offset = graphene.Int(required=False)
     page = graphene.Int(required=False)
     hasMore = graphene.Boolean(required=False)
+
+
+def clean_name(name):
+    name = re.sub(r'[^_a-zA-Z0-9]', r'_', name)
+    name = re.sub(r'^(\d)', r'_\1', name)
+    return name
+
+
+def clean_keys(obj):
+    pairs = map(lambda x: [clean_name(x[0]), x[1]], obj.items())
+    return dict(pairs)
 
 
 class GraphQLView(APIView):
@@ -165,9 +178,10 @@ class GraphQLView(APIView):
 
         for column in mapper.columns:
             column_filters_type = self.get_model_field_filters_type(mapper, column, with_relations, depth)
-            attrs[column.name] = column_filters_type()
+            attr_name = clean_name(column.name)
+            attrs[attr_name] = column_filters_type()
 
-        model_name = mapper.selectable.name
+        model_name = clean_name(mapper.selectable.name)
         name = 'Model{}Depth{}NestedFiltersType'.format(model_name, depth) if with_relations \
             else 'Model{}Depth{}FiltersType'.format(model_name, depth)
 
@@ -194,9 +208,10 @@ class GraphQLView(APIView):
             column_filters_type = self.get_model_filters_type(table, depth + 1)
             attrs['relation'] = column_filters_type
 
-        model_name = mapper.selectable.name
-        name = 'Model{}Column{}Depth{}NestedFiltersType'.format(model_name, column.name, depth) if with_relations \
-            else 'Model{}Column{}Depth{}FiltersType'.format(model_name, column.name, depth)
+        model_name = clean_name(mapper.selectable.name)
+        column_name = clean_name(column.name)
+        name = 'Model{}Column{}Depth{}NestedFiltersType'.format(model_name, column_name, depth) if with_relations \
+            else 'Model{}Column{}Depth{}FiltersType'.format(model_name, column_name, depth)
 
         if name in self.model_columns_filters_types:
             return self.model_columns_filters_types[name]
@@ -206,11 +221,12 @@ class GraphQLView(APIView):
         return cls
 
     def get_model_attrs_type(self, mapper):
-        name = mapper.selectable.name
+        name = clean_name(mapper.selectable.name)
         attrs = {}
 
         for column in mapper.columns:
-            attrs[column.name] = RawScalar()
+            attr_name = clean_name(column.name)
+            attrs[attr_name] = RawScalar()
 
         return type('Model{}RecordAttrsType'.format(name), (graphene.ObjectType,), attrs)
 
@@ -236,7 +252,7 @@ class GraphQLView(APIView):
 
         for Model in MappedBase.classes:
             mapper = inspect(Model)
-            name = mapper.selectable.name
+            name = clean_name(mapper.selectable.name)
 
             FiltersType = self.get_model_filters_type(mapper)
             ModelAttrsType = self.get_model_attrs_type(mapper)
@@ -260,7 +276,8 @@ class GraphQLView(APIView):
                         field_names = list(map(lambda x: x.name.value, field_selections))
                         data_selections = self.get_selections(info, ['data']) or []
                         data_names = list(map(lambda x: x.name.value, data_selections))
-                        only_columns = list(map(lambda x: getattr(Model, x), field_names)) \
+                        model_attrs = dict(map(lambda x: [clean_name(x), getattr(Model, x)], dir(Model)))
+                        only_columns = list(map(lambda x: model_attrs.get(x), field_names)) \
                             if len(field_names) and 'allAttrs' not in data_names else None
 
                         queryset = self.get_queryset(request, Model, only_columns)
@@ -272,10 +289,10 @@ class GraphQLView(APIView):
 
                         serializer_class = get_model_serializer(Model)
                         serializer_context = {}
-                        queryset_page_serialized = list(map(lambda x: serializer_class(
+                        queryset_page_serialized = list(map(lambda x: clean_keys(serializer_class(
                             instance=x,
                             context=serializer_context
-                        ).representation_data, queryset_page))
+                        ).representation_data), queryset_page))
 
                         result = {
                             'data': list(map(lambda x: {
