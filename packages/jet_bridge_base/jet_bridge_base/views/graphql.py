@@ -337,7 +337,7 @@ class GraphQLView(APIView):
         query = request.data.get('query')
         result = schema.execute(query, variables={}, context_value={'session': request.session})
 
-        if result.invalid:
+        if result.errors is not None:
             return JSONResponse({'errors': map(lambda x: x.message, result.errors)})
 
         return JSONResponse({
