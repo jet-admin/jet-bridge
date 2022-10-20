@@ -61,6 +61,8 @@ class GraphQLView(APIView):
     # serializer_class = ModelDescriptionSerializer
     # permission_classes = (HasProjectPermissions,)
     model_filters_types = {}
+    model_lookups_types = {}
+    model_lookups_field_types = {}
     model_columns_filters_types = {}
 
     def get_queryset(self, request, Model, only_columns=None):
@@ -137,6 +139,104 @@ class GraphQLView(APIView):
             queryset = search_queryset(queryset, mapper, query)
 
         return queryset
+
+    def get_models_lookups(self, request, MappedBase, models, Model, mapper, lookups):
+        result = []
+
+        for lookup_item in lookups:
+            lookup_result = self.get_models_lookup(
+                lookup_item,
+                request,
+                MappedBase,
+                models,
+                Model,
+                mapper
+            )
+            result.append(lookup_result)
+
+        return result
+
+    def get_models_lookup(self, lookup_item, request, MappedBase, models, Model, mapper):
+        result = {}
+        columns = dict(map(lambda x: (x.key, x), mapper.columns))
+
+        for lookup_name, lookup_data in lookup_item.items():
+            column = columns.get(lookup_name)
+
+            if column is None:
+                continue
+
+            lookup_result = {}
+            lookup_values = sorted(set(map(lambda x: getattr(x, column.name), models)))
+
+            lookup_result['return'] = lookup_data.get('return', False)
+            lookup_result['return_list'] = lookup_data.get('return_list', False)
+            lookup_result['Model'] = Model
+            lookup_result['mapper'] = mapper
+            lookup_result['model_values'] = list(map(lambda x: {'instance': x, 'value': getattr(x, column.name)}, models))
+            lookup_result['source_column'] = column.name
+
+            if 'relation' in lookup_data:
+                foreign_key = next(iter(column.foreign_keys))
+                relation_model = None
+                relation_mapper = None
+                relation_column = None
+
+                for cls in MappedBase.classes:
+                    cls_mapper = inspect(cls)
+                    if cls_mapper.tables[0] == foreign_key.column.table:
+                        relation_model = cls
+                        relation_mapper = cls_mapper
+                        relation_column = getattr(relation_model, foreign_key.column.name)
+                        break
+
+                if relation_model is None:
+                    continue
+
+                related_models = list(request.session.query(relation_model).filter(relation_column.in_(lookup_values)).all())
+
+                lookup_result['related'] = self.get_models_lookup(
+                    lookup_data['relation'],
+                    request,
+                    MappedBase,
+                    related_models,
+                    relation_model,
+                    relation_mapper
+                )
+                lookup_result['related_column'] = foreign_key.column.name
+
+            result[lookup_name] = lookup_result
+
+        return result
+
+    def filter_lookup_models(self, lookup, instance_predicate=None):
+        result = {}
+
+        for lookup_name, lookup_data in lookup.items():
+            item_result = {}
+
+            model_values = lookup_data['model_values']
+
+            if instance_predicate:
+                model_values = list(filter(lambda x: instance_predicate(x['instance']), model_values))
+
+            values = list(map(lambda x: x['value'], model_values))
+
+            if lookup_data['return']:
+                if lookup_data['return_list']:
+                    item_result['value'] = values
+                else:
+                    item_result['value'] = values[0] if len(values) else None
+
+            if 'related' in lookup_data:
+                item_result['related'] = self.filter_lookup_models(
+                    lookup_data['related'],
+                    lambda x: getattr(x, lookup_data['related_column']) in values
+                )
+
+            result[lookup_name] = item_result
+
+        return result
 
     def sort_queryset(self, queryset, sort):
         def map_order_field(sorting):
@@ -223,6 +323,51 @@ class GraphQLView(APIView):
         self.model_columns_filters_types[name] = cls
         return cls
 
+    def get_model_lookups_type(self, mapper, depth=1):
+        attrs = {}
+        with_relations = depth <= 4
+
+        for column in mapper.columns:
+            column_lookups_type = self.get_model_lookups_field_type(mapper, column, with_relations, depth)
+            attr_name = clean_name(column.name)
+            attrs[attr_name] = column_lookups_type()
+
+        model_name = clean_name(mapper.selectable.name)
+        name = 'Model{}Depth{}NestedLookupsType'.format(model_name, depth) if with_relations \
+            else 'Model{}Depth{}LookupsType'.format(model_name, depth)
+
+        if name in self.model_lookups_types:
+            return self.model_lookups_types[name]
+
+        cls = type(name, (graphene.InputObjectType,), attrs)
+        self.model_lookups_types[name] = cls
+        return cls
+
+    def get_model_lookups_field_type(self, mapper, column, with_relations, depth=1):
+        attrs = {
+            'return': graphene.Boolean(),
+            'return_list': graphene.Boolean()
+        }
+
+        model_name = clean_name(mapper.selectable.name)
+        column_name = clean_name(column.name)
+        name = 'Model{}Column{}Depth{}NestedLookupsFieldType'.format(model_name, column_name, depth) if with_relations \
+            else 'Model{}Column{}Depth{}LookupsFieldType'.format(model_name, column_name, depth)
+
+        if name in self.model_lookups_types:
+            return self.model_lookups_field_types[name]
+
+        if with_relations and column.foreign_keys:
+            foreign_key = next(iter(column.foreign_keys))
+            table = foreign_key.column.table
+
+            lookups_type = self.get_model_lookups_type(table, depth + 1)
+            attrs['relation'] = lookups_type()
+
+        cls = type(name, (graphene.InputObjectType,), attrs)
+        self.model_lookups_field_types[name] = cls
+        return cls
+
     def get_model_attrs_type(self, mapper):
         name = clean_name(mapper.selectable.name)
         attrs = {}
@@ -258,10 +403,12 @@ class GraphQLView(APIView):
             name = clean_name(mapper.selectable.name)
 
             FiltersType = self.get_model_filters_type(mapper)
+            LookupsType = self.get_model_lookups_type(mapper)
             ModelAttrsType = self.get_model_attrs_type(mapper)
             ModelType = type('Model{}ModelType'.format(name), (graphene.ObjectType,), {
                 'attrs': graphene.Field(ModelAttrsType),
-                'allAttrs': graphene.Field(RawScalar)
+                'allAttrs': graphene.Field(RawScalar),
+                'lookups': graphene.List(RawScalar)
             })
             ModelListType = type('Model{}ModelListType'.format(name), (graphene.ObjectType,), {
                 'data': graphene.List(ModelType),
@@ -269,9 +416,10 @@ class GraphQLView(APIView):
             })
 
             def create_list_resolver(Model, mapper):
-                def resolver(parent, info, filters=None, sort=None, pagination=None, search=None):
+                def resolver(parent, info, filters=None, lookups=None, sort=None, pagination=None, search=None):
                     try:
                         filters = filters or []
+                        lookups = lookups or []
                         sort = sort or []
                         pagination = pagination or {}
 
@@ -293,16 +441,24 @@ class GraphQLView(APIView):
 
                         serializer_class = get_model_serializer(Model)
                         serializer_context = {}
-                        queryset_page_serialized = list(map(lambda x: clean_keys(serializer_class(
-                            instance=x,
-                            context=serializer_context
-                        ).representation_data), queryset_page))
+
+                        queryset_page_lookups = self.get_models_lookups(request, MappedBase, queryset_page, Model, mapper, lookups)
+
+                        def map_queryset_page_item(item):
+                            serialized = serializer_class(instance=item, context=serializer_context).representation_data
+                            serialized = clean_keys(serialized)
+
+                            return {
+                                'attrs': serialized,
+                                'allAttrs': serialized,
+                                'lookups': list(map(
+                                    lambda x: self.filter_lookup_models(x, lambda instance: instance == item),
+                                    queryset_page_lookups
+                                ))
+                            }
 
                         result = {
-                            'data': list(map(lambda x: {
-                                'attrs': x,
-                                'allAttrs': x
-                            }, queryset_page_serialized))
+                            'data': list(map(map_queryset_page_item, queryset_page))
                         }
 
                         pagination_selections = self.get_selections(info, ['pagination']) or []
@@ -336,6 +492,7 @@ class GraphQLView(APIView):
             query_attrs[name] = graphene.Field(
                 ModelListType,
                 filters=FiltersType,
+                lookups=graphene.List(LookupsType),
                 sort=graphene.List(graphene.String),
                 pagination=PaginationType(),
                 search=SearchType()
