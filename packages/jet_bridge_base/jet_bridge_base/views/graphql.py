@@ -76,7 +76,7 @@ class GraphQLView(APIView):
 
         return queryset
 
-    def filter_queryset(self, MappedBase, queryset, mapper, filters, search, relationship=None):
+    def filter_queryset(self, MappedBase, queryset, mapper, filters, relationship=None):
         columns = dict(map(lambda x: (x.key, x), mapper.columns))
 
         for filters_item in filters:
@@ -112,7 +112,7 @@ class GraphQLView(APIView):
                                     break
 
                             if relation_mapper:
-                                queryset = self.filter_queryset(MappedBase, queryset, relation_mapper, lookup_value, None, relationship)
+                                queryset = self.filter_queryset(MappedBase, queryset, relation_mapper, lookup_value, relationship)
                     else:
                         item = filter_for_data_type(column.type)
                         lookup = lookups.by_gql.get(lookup_name)
@@ -129,6 +129,9 @@ class GraphQLView(APIView):
                         else:
                             queryset = queryset.filter(criterion)
 
+        return queryset
+
+    def search_queryset(self, queryset, mapper, search):
         if search is not None:
             query = search['query']
             queryset = search_queryset(queryset, mapper, query)
@@ -282,7 +285,8 @@ class GraphQLView(APIView):
 
                         queryset = self.get_queryset(request, Model, only_columns)
 
-                        queryset = self.filter_queryset(MappedBase, queryset, mapper, filters, search)
+                        queryset = self.filter_queryset(MappedBase, queryset, mapper, filters)
+                        queryset = self.search_queryset(queryset, mapper, search)
                         queryset = self.sort_queryset(queryset, sort)
 
                         queryset_page = self.paginate_queryset(queryset, pagination)
