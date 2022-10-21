@@ -1,9 +1,11 @@
 import re
 
 import graphene
+from jet_bridge_base.exceptions.permission_denied import PermissionDenied
 from jet_bridge_base.filters import lookups
 from jet_bridge_base.filters.filter_for_dbfield import filter_for_data_type
 from jet_bridge_base.filters.model_search import get_model_search_filter, search_queryset
+from jet_bridge_base.permissions import HasProjectPermissions
 from jet_bridge_base.serializers.model import get_model_serializer
 from jet_bridge_base.serializers.model_serializer import get_column_data_type
 from sqlalchemy import inspect, desc, column as sqlcolumn
@@ -58,12 +60,21 @@ def clean_keys(obj):
 
 
 class GraphQLView(APIView):
-    # serializer_class = ModelDescriptionSerializer
-    # permission_classes = (HasProjectPermissions,)
+    permission_classes = (HasProjectPermissions,)
     model_filters_types = {}
     model_lookups_types = {}
     model_lookups_field_types = {}
     model_columns_filters_types = {}
+
+    def before_dispatch_permissions_check(self, request):
+        pass
+
+    def required_project_permission(self, request):
+        return {
+            'permission_type': 'model',
+            'permission_object': request.context.get('model'),
+            'permission_actions': 'r'
+        }
 
     def get_queryset(self, request, Model, only_columns=None):
         if only_columns:
@@ -423,6 +434,11 @@ class GraphQLView(APIView):
                         sort = sort or []
                         pagination = pagination or {}
 
+                        request = info.context.get('request')
+
+                        request.context['model'] = mapper.selectable.name
+                        self.check_permissions(request)
+
                         field_selections = self.get_selections(info, ['data', 'attrs']) or []
                         field_names = list(map(lambda x: x.name.value, field_selections))
                         data_selections = self.get_selections(info, ['data']) or []
@@ -515,7 +531,10 @@ class GraphQLView(APIView):
         query = request.data.get('query')
         result = schema.execute(query, variables={}, context_value={'session': request.session})
 
-        if result.errors is not None:
+        if result.errors is not None and len(result.errors):
+            original_error = result.errors[0].original_error
+            if isinstance(original_error, PermissionDenied):
+                raise original_error
             return JSONResponse({'errors': map(lambda x: x.message, result.errors)})
 
         return JSONResponse({

@@ -34,6 +34,9 @@ class BaseAPIView(object):
         if method_override is not None:
             request.method = method_override
 
+        self.before_dispatch_permissions_check(request)
+
+    def before_dispatch_permissions_check(self, request):
         if request.method != 'OPTIONS':
             self.check_permissions(request)
 
