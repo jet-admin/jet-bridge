@@ -529,7 +529,10 @@ class GraphQLView(APIView):
             return JSONResponse({})
 
         query = request.data.get('query')
-        result = schema.execute(query, variables={}, context_value={'session': request.session})
+        result = schema.execute(query, variables={}, context_value={
+            'request': request,
+            'session': request.session
+        })
 
         if result.errors is not None and len(result.errors):
             original_error = result.errors[0].original_error
