@@ -375,8 +375,15 @@ class GraphQLView(APIView):
         return queryset
 
     def get_model_filters_type(self, MappedBase, mapper, depth=1):
-        attrs = {}
         with_relations = depth <= 4
+        model_name = clean_name(mapper.selectable.name)
+        cls_name = 'Model{}Depth{}NestedFiltersType'.format(model_name, depth) if with_relations \
+            else 'Model{}Depth{}FiltersType'.format(model_name, depth)
+
+        if cls_name in self.model_filters_types:
+            return graphene.List(self.model_filters_types[cls_name])
+
+        attrs = {}
 
         for column in mapper.columns:
             column_filters_type = self.get_model_field_filters_type(MappedBase, mapper, column, with_relations, depth)
@@ -392,21 +399,21 @@ class GraphQLView(APIView):
                 attr_name = clean_name(relationship.key)
                 attrs[attr_name] = relationship_filters_type()
 
-        model_name = clean_name(mapper.selectable.name)
-        name = 'Model{}Depth{}NestedFiltersType'.format(model_name, depth) if with_relations \
-            else 'Model{}Depth{}FiltersType'.format(model_name, depth)
-
-        if name in self.model_filters_types:
-            return graphene.List(self.model_filters_types[name])
-
-        cls = type(name, (graphene.InputObjectType,), attrs)
-        self.model_filters_types[name] = cls
+        cls = type(cls_name, (graphene.InputObjectType,), attrs)
+        self.model_filters_types[cls_name] = cls
         return graphene.List(cls)
 
     def get_model_field_filters_type(self, MappedBase, mapper, column, with_relations, depth=1):
-        item = filter_for_data_type(column.type)
+        model_name = clean_name(mapper.selectable.name)
+        column_name = clean_name(column.name)
+        cls_name = 'Model{}Column{}Depth{}NestedFiltersType'.format(model_name, column_name, depth) if with_relations \
+            else 'Model{}Column{}Depth{}FiltersType'.format(model_name, column_name, depth)
+
+        if cls_name in self.model_filters_field_types:
+            return self.model_filters_field_types[cls_name]
 
         attrs = {}
+        item = filter_for_data_type(column.type)
 
         for lookup in item['lookups']:
             gql_lookup = lookups.gql.get(lookup)
@@ -422,39 +429,38 @@ class GraphQLView(APIView):
                 column_filters_type = self.get_model_filters_type(MappedBase, relation_mapper, depth + 1)
                 attrs['relation'] = column_filters_type
 
-        model_name = clean_name(mapper.selectable.name)
-        column_name = clean_name(column.name)
-        name = 'Model{}Column{}Depth{}NestedFiltersType'.format(model_name, column_name, depth) if with_relations \
-            else 'Model{}Column{}Depth{}FiltersType'.format(model_name, column_name, depth)
-
-        if name in self.model_filters_field_types:
-            return self.model_filters_field_types[name]
-
-        cls = type(name, (graphene.InputObjectType,), attrs)
-        self.model_filters_field_types[name] = cls
+        cls = type(cls_name, (graphene.InputObjectType,), attrs)
+        self.model_filters_field_types[cls_name] = cls
         return cls
 
     def get_model_relationship_filters_type(self, MappedBase, mapper, relationship, with_relations, depth=1):
-        attrs = {}
-
         model_name = clean_name(mapper.selectable.name)
         relationship_key = clean_name(relationship.key)
-        name = 'Model{}Column{}Depth{}NestedRelationshipType'.format(model_name, relationship_key, depth) if with_relations \
+        cls_name = 'Model{}Column{}Depth{}NestedRelationshipType'.format(model_name, relationship_key, depth) if with_relations \
             else 'Model{}Column{}Depth{}RelationshipType'.format(model_name, relationship_key, depth)
 
-        if name in self.model_filters_relationship_types:
-            return self.model_filters_relationship_types[name]
+        if cls_name in self.model_filters_relationship_types:
+            return self.model_filters_relationship_types[cls_name]
+
+        attrs = {}
 
         lookups_type = self.get_model_filters_type(MappedBase, relationship.mapper, depth + 1)
         attrs['relation'] = lookups_type
 
-        cls = type(name, (graphene.InputObjectType,), attrs)
-        self.model_filters_relationship_types[name] = cls
+        cls = type(cls_name, (graphene.InputObjectType,), attrs)
+        self.model_filters_relationship_types[cls_name] = cls
         return cls
 
     def get_model_lookups_type(self, MappedBase, mapper, depth=1):
-        attrs = {}
         with_relations = depth <= 4
+        model_name = clean_name(mapper.selectable.name)
+        cls_name = 'Model{}Depth{}NestedLookupsType'.format(model_name, depth) if with_relations \
+            else 'Model{}Depth{}LookupsType'.format(model_name, depth)
+
+        if cls_name in self.model_lookups_types:
+            return self.model_lookups_types[cls_name]
+
+        attrs = {}
 
         for column in mapper.columns:
             column_lookups_type = self.get_model_field_lookups_type(MappedBase, mapper, column, with_relations, depth)
@@ -470,30 +476,23 @@ class GraphQLView(APIView):
                 attr_name = clean_name(relationship.key)
                 attrs[attr_name] = relationship_lookups_type()
 
-        model_name = clean_name(mapper.selectable.name)
-        name = 'Model{}Depth{}NestedLookupsType'.format(model_name, depth) if with_relations \
-            else 'Model{}Depth{}LookupsType'.format(model_name, depth)
-
-        if name in self.model_lookups_types:
-            return self.model_lookups_types[name]
-
-        cls = type(name, (graphene.InputObjectType,), attrs)
-        self.model_lookups_types[name] = cls
+        cls = type(cls_name, (graphene.InputObjectType,), attrs)
+        self.model_lookups_types[cls_name] = cls
         return cls
 
     def get_model_field_lookups_type(self, MappedBase, mapper, column, with_relations, depth=1):
+        model_name = clean_name(mapper.selectable.name)
+        column_name = clean_name(column.name)
+        cls_name = 'Model{}Column{}Depth{}NestedLookupsFieldType'.format(model_name, column_name, depth) if with_relations \
+            else 'Model{}Column{}Depth{}LookupsFieldType'.format(model_name, column_name, depth)
+
+        if cls_name in self.model_lookups_field_types:
+            return self.model_lookups_field_types[cls_name]
+
         attrs = {
             'return': graphene.Boolean(),
             'returnList': graphene.Boolean()
         }
-
-        model_name = clean_name(mapper.selectable.name)
-        column_name = clean_name(column.name)
-        name = 'Model{}Column{}Depth{}NestedLookupsFieldType'.format(model_name, column_name, depth) if with_relations \
-            else 'Model{}Column{}Depth{}LookupsFieldType'.format(model_name, column_name, depth)
-
-        if name in self.model_lookups_field_types:
-            return self.model_lookups_field_types[name]
 
         if with_relations and column.foreign_keys:
             foreign_key = get_set_first(column.foreign_keys)
@@ -506,28 +505,28 @@ class GraphQLView(APIView):
                 lookups_type = self.get_model_lookups_type(MappedBase, relation_mapper, depth + 1)
                 attrs['relation'] = lookups_type()
 
-        cls = type(name, (graphene.InputObjectType,), attrs)
-        self.model_lookups_field_types[name] = cls
+        cls = type(cls_name, (graphene.InputObjectType,), attrs)
+        self.model_lookups_field_types[cls_name] = cls
         return cls
 
     def get_model_relationship_lookups_type(self, MappedBase, mapper, relationship, with_relations, depth=1):
+        model_name = clean_name(mapper.selectable.name)
+        relationship_key = clean_name(relationship.key)
+        cls_name = 'Model{}Column{}Depth{}NestedLookupsRelationshipType'.format(model_name, relationship_key, depth) if with_relations \
+            else 'Model{}Column{}Depth{}LookupsRelationshipType'.format(model_name, relationship_key, depth)
+
+        if cls_name in self.model_lookups_relationship_types:
+            return self.model_lookups_relationship_types[cls_name]
+
         attrs = {
             'aggregate': AggregateType()
         }
 
-        model_name = clean_name(mapper.selectable.name)
-        relationship_key = clean_name(relationship.key)
-        name = 'Model{}Column{}Depth{}NestedLookupsRelationshipType'.format(model_name, relationship_key, depth) if with_relations \
-            else 'Model{}Column{}Depth{}LookupsRelationshipType'.format(model_name, relationship_key, depth)
-
-        if name in self.model_lookups_relationship_types:
-            return self.model_lookups_relationship_types[name]
-
         lookups_type = self.get_model_lookups_type(MappedBase, relationship.mapper, depth + 1)
         attrs['relation'] = lookups_type()
 
-        cls = type(name, (graphene.InputObjectType,), attrs)
-        self.model_lookups_relationship_types[name] = cls
+        cls = type(cls_name, (graphene.InputObjectType,), attrs)
+        self.model_lookups_relationship_types[cls_name] = cls
         return cls
 
     def get_model_attrs_type(self, mapper):
