@@ -351,23 +351,35 @@ def get_type_code_to_sql_type(request):
 
 def reload_mapped_base(MappedBase):
     def name_for_scalar_relationship(base, local_cls, referred_cls, constraint):
-        rnd = get_random_string(4)
-        return referred_cls.__name__.lower() + '_jet_relation' + rnd
+        foreign_key = constraint.elements[0] if len(constraint.elements) else None
+        if foreign_key:
+            name = '__'.join([foreign_key.parent.name, 'to', foreign_key.column.name])
+        else:
+            name = referred_cls.__name__.lower()
+
+        if name in constraint.parent.columns:
+            name = name + '_relation'
+            logger.warning("Already detected column name, using {}".format(name))
+
+        return name
 
     def name_for_collection_relationship(base, local_cls, referred_cls, constraint):
-        rnd = get_random_string(4)
-        return referred_cls.__name__.lower() + '_jet_collection' + rnd
+        foreign_key = constraint.elements[0] if len(constraint.elements) else None
+        if foreign_key:
+            name = '__'.join([foreign_key.parent.table.name, foreign_key.parent.name, 'to', foreign_key.column.name])
+        else:
+            name = referred_cls.__name__.lower()
 
-    def custom_generate_relationship(base, direction, return_fn, attrname, local_cls, referred_cls, **kw):
-        rnd = get_random_string(4)
-        attrname = attrname + '_jet_ref' + rnd
-        return generate_relationship(base, direction, return_fn, attrname, local_cls, referred_cls, **kw)
+        if name in constraint.parent.columns:
+            name = name + '_relation'
+            logger.warning("Already detected column name, using {}".format(name))
+
+        return name
 
     MappedBase.classes.clear()
     MappedBase.prepare(
         name_for_scalar_relationship=name_for_scalar_relationship,
-        name_for_collection_relationship=name_for_collection_relationship,
-        generate_relationship=custom_generate_relationship
+        name_for_collection_relationship=name_for_collection_relationship
     )
 
 

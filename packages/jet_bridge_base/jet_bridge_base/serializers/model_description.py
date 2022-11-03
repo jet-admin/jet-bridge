@@ -20,12 +20,12 @@ class ModelDescriptionFieldSerializer(Serializer):
     custom_primary_key = fields_.CharField(required=False)
 
 
-# class ModelDescriptionRelationSerializer(Serializer):
-#     name = fields_.CharField()
-#     related_model = fields_.JSONField()
-#     field = fields_.CharField()
-#     related_model_field = fields_.CharField()
-#     through = fields_.JSONField()
+class ModelDescriptionRelationSerializer(Serializer):
+    name = fields_.CharField()
+    direction = fields_.CharField()
+    local_field = fields_.CharField()
+    related_model = fields_.CharField()
+    related_field = fields_.CharField()
 
 
 class ModelDescriptionSerializer(Serializer):
@@ -34,7 +34,7 @@ class ModelDescriptionSerializer(Serializer):
     hidden = fields_.BooleanField()
     primary_key_field = fields_.CharField()
     fields = ModelDescriptionFieldSerializer(many=True)
-    # relations = ModelDescriptionRelationSerializer(many=True)
+    relations = ModelDescriptionRelationSerializer(many=True)
     verbose_name = fields_.CharField(required=False)
     verbose_name_plural = fields_.CharField(required=False)
     display_field = fields_.CharField(required=False)
