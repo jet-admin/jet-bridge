@@ -724,9 +724,11 @@ class GraphQLView(APIView):
         })
 
         if result.errors is not None and len(result.errors):
-            original_error = result.errors[0].original_error
-            if isinstance(original_error, PermissionDenied):
-                raise original_error
+            error = result.errors[0]
+            if hasattr(error, 'original_error'):
+                error = error.original_error
+            if isinstance(error, PermissionDenied):
+                raise error
             return JSONResponse({'errors': map(lambda x: x.message, result.errors)})
 
         return JSONResponse({
