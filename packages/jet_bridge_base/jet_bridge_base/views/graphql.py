@@ -1,15 +1,16 @@
 import re
-
 import graphene
+from jet_bridge_base.utils.common import get_set_first
+from sqlalchemy import inspect, desc, column as sqlcolumn
+from sqlalchemy.orm import ONETOMANY
+
 from jet_bridge_base.exceptions.permission_denied import PermissionDenied
 from jet_bridge_base.filters import lookups
 from jet_bridge_base.filters.filter_for_dbfield import filter_for_data_type
-from jet_bridge_base.filters.model_search import get_model_search_filter, search_queryset
+from jet_bridge_base.filters.model_group import get_query_func_by_name
+from jet_bridge_base.filters.model_search import search_queryset
 from jet_bridge_base.permissions import HasProjectPermissions
 from jet_bridge_base.serializers.model import get_model_serializer
-from jet_bridge_base.serializers.model_serializer import get_column_data_type
-from sqlalchemy import inspect, desc, column as sqlcolumn
-
 from jet_bridge_base.db import get_mapped_base
 from jet_bridge_base.responses.json import JSONResponse
 from jet_bridge_base.utils.queryset import queryset_count_optimized
@@ -40,6 +41,19 @@ class SearchType(graphene.InputObjectType):
     query = graphene.String()
 
 
+class AggregateFuncType(graphene.Enum):
+    Count = 'count'
+    Sum = 'sum'
+    Min = 'min'
+    Max = 'max'
+    Avg = 'avg'
+
+
+class AggregateType(graphene.InputObjectType):
+    func = AggregateFuncType()
+    attr = graphene.String(required=False)
+
+
 class PaginationResponseType(graphene.ObjectType):
     count = graphene.Int()
     limit = graphene.Int()
@@ -62,9 +76,11 @@ def clean_keys(obj):
 class GraphQLView(APIView):
     permission_classes = (HasProjectPermissions,)
     model_filters_types = {}
+    model_filters_field_types = {}
+    model_filters_relationship_types = {}
     model_lookups_types = {}
     model_lookups_field_types = {}
-    model_columns_filters_types = {}
+    model_lookups_relationship_types = {}
 
     def before_dispatch_permissions_check(self, request):
         pass
@@ -89,58 +105,77 @@ class GraphQLView(APIView):
 
         return queryset
 
-    def filter_queryset(self, MappedBase, queryset, mapper, filters, relationship=None):
-        columns = dict(map(lambda x: (x.key, x), mapper.columns))
+    def relation_criterion(self, relation_attrs, i, criterion):
+        relation_attr = relation_attrs[i]
+        if i == len(relation_attrs) - 1:
+            if relation_attr.prop.direction == ONETOMANY:
+                return relation_attr.any(criterion)
+            else:
+                return relation_attr.has(criterion)
+        else:
+            if relation_attr.prop.direction == ONETOMANY:
+                return relation_attr.any(self.relation_criterion(relation_attrs, i + 1, criterion))
+            else:
+                return relation_attr.has(self.relation_criterion(relation_attrs, i + 1, criterion))
+
+    def filter_queryset(self, MappedBase, queryset, mapper, filters, relation_attrs=None):
+        relation_attrs = relation_attrs or []
 
         for filters_item in filters:
             for filter_name, filter_lookups in filters_item.items():
-                column = columns.get(filter_name)
+                column = mapper.columns.get(filter_name)
+                filter_relationship = mapper.relationships.get(filter_name)
 
-                if column is None:
-                    continue
+                if filter_relationship is not None:
+                    for lookup_name, lookup_value in filter_lookups.items():
+                        if lookup_name == 'relation':
+                            relation_mapper = filter_relationship.mapper
+                            lookup_relation_attr = filter_relationship.class_attribute
+                            queryset = self.filter_queryset(MappedBase, queryset, relation_mapper, lookup_value, [*relation_attrs, lookup_relation_attr])
+                elif column is not None:
+                    for lookup_name, lookup_value in filter_lookups.items():
+                        if lookup_name == 'relation':
+                            foreign_key = get_set_first(column.foreign_keys)
+                            lookup_relation_attr = None
 
-                for lookup_name, lookup_value in filter_lookups.items():
-                    if lookup_name == 'relation':
-                        foreign_key = next(iter(column.foreign_keys))
-                        relationship = None
+                            for relationship in mapper.relationships.values():
+                                if len(relationship.local_columns) != 1:
+                                    continue
+                                local_column = get_set_first(relationship.local_columns)
+                                if local_column is None:
+                                    continue
+                                if local_column.name != column.name:
+                                    continue
+                                lookup_relation_attr = relationship.class_attribute
+                                break
 
-                        for relation in mapper.relationships.values():
-                            if len(relation.local_columns) != 1:
-                                continue
-                            local_column = next(iter(relation.local_columns))
-                            if local_column is None:
-                                continue
-                            if local_column.name != column.name:
-                                continue
-                            relationship = relation.class_attribute
-                            break
+                            if lookup_relation_attr:
+                                relation_mapper = None
 
-                        if relationship:
-                            relation_mapper = None
+                                for cls in MappedBase.classes:
+                                    cls_mapper = inspect(cls)
+                                    if cls_mapper.tables[0] == foreign_key.column.table:
+                                        relation_mapper = cls_mapper
+                                        break
 
-                            for cls in MappedBase.classes:
-                                cls_mapper = inspect(cls)
-                                if cls_mapper.tables[0] == foreign_key.column.table:
-                                    relation_mapper = cls_mapper
-                                    break
-
-                            if relation_mapper:
-                                queryset = self.filter_queryset(MappedBase, queryset, relation_mapper, lookup_value, relationship)
-                    else:
-                        item = filter_for_data_type(column.type)
-                        lookup = lookups.by_gql.get(lookup_name)
-                        instance = item['filter_class'](
-                            name=column.key,
-                            column=column,
-                            lookup=lookup,
-                            exclude=False
-                        )
-                        criterion = instance.get_loookup_criterion(lookup_value)
-
-                        if relationship:
-                            queryset = queryset.filter(relationship.has(criterion))
+                                if relation_mapper:
+                                    queryset = self.filter_queryset(MappedBase, queryset, relation_mapper, lookup_value, [*relation_attrs, lookup_relation_attr])
                         else:
-                            queryset = queryset.filter(criterion)
+                            item = filter_for_data_type(column.type)
+                            lookup = lookups.by_gql.get(lookup_name)
+                            instance = item['filter_class'](
+                                name=column.key,
+                                column=column,
+                                lookup=lookup,
+                                exclude=False
+                            )
+                            criterion = instance.get_loookup_criterion(lookup_value)
+
+                            if len(relation_attrs):
+                                relation_criterion = self.relation_criterion(relation_attrs, 0, criterion)
+                                queryset = queryset.filter(relation_criterion)
+                            else:
+                                queryset = queryset.filter(criterion)
 
         return queryset
 
@@ -169,54 +204,129 @@ class GraphQLView(APIView):
 
     def get_models_lookup(self, lookup_item, request, MappedBase, models, Model, mapper):
         result = {}
-        columns = dict(map(lambda x: (x.key, x), mapper.columns))
 
         for lookup_name, lookup_data in lookup_item.items():
-            column = columns.get(lookup_name)
+            column = mapper.columns.get(lookup_name)
+            relationship = mapper.relationships.get(lookup_name)
 
-            if column is None:
-                continue
+            if relationship is not None:
+                lookup_result = {}
+                local_column = get_set_first(relationship.local_columns)
+                lookup_values = sorted(set(map(lambda x: getattr(x, local_column.name), models)))
 
-            lookup_result = {}
-            lookup_values = sorted(set(map(lambda x: getattr(x, column.name), models)))
+                lookup_result['return'] = lookup_data.get('return', False)
+                lookup_result['return_list'] = lookup_data.get('returnList', False)
+                lookup_result['Model'] = Model
+                lookup_result['mapper'] = mapper
+                lookup_result['model_values'] = list(map(lambda x: {'instance': x, 'value': getattr(x, local_column.name)}, models))
+                lookup_result['source_column'] = local_column.name
 
-            lookup_result['return'] = lookup_data.get('return', False)
-            lookup_result['return_list'] = lookup_data.get('return_list', False)
-            lookup_result['Model'] = Model
-            lookup_result['mapper'] = mapper
-            lookup_result['model_values'] = list(map(lambda x: {'instance': x, 'value': getattr(x, column.name)}, models))
-            lookup_result['source_column'] = column.name
+                if 'aggregate' in lookup_data:
+                    relation_model = None
+                    relation_mapper = relationship.mapper
+                    relation_column = None
 
-            if 'relation' in lookup_data:
-                foreign_key = next(iter(column.foreign_keys))
-                relation_model = None
-                relation_mapper = None
-                relation_column = None
+                    for cls in MappedBase.classes:
+                        cls_mapper = inspect(cls)
+                        if cls_mapper.tables[0] == relationship.target:
+                            relation_model = cls
+                            relation_mapper = cls_mapper
+                            relation_column = get_set_first(relationship.remote_side)
+                            break
 
-                for cls in MappedBase.classes:
-                    cls_mapper = inspect(cls)
-                    if cls_mapper.tables[0] == foreign_key.column.table:
-                        relation_model = cls
-                        relation_mapper = cls_mapper
-                        relation_column = getattr(relation_model, foreign_key.column.name)
-                        break
+                    if relation_model is None:
+                        continue
 
-                if relation_model is None:
-                    continue
+                    if 'attr' in lookup_data['aggregate']:
+                        aggregate_column_name = lookup_data['aggregate']['attr']
+                    else:
+                        aggregate_column_name = relation_mapper.primary_key[0].name
 
-                related_models = list(request.session.query(relation_model).filter(relation_column.in_(lookup_values)).all())
+                    aggregate_column = getattr(relation_model, aggregate_column_name)
+                    aggregate_func = get_query_func_by_name(lookup_data['aggregate']['func'], aggregate_column)
 
-                lookup_result['related'] = self.get_models_lookup(
-                    lookup_data['relation'],
-                    request,
-                    MappedBase,
-                    related_models,
-                    relation_model,
-                    relation_mapper
-                )
-                lookup_result['related_column'] = foreign_key.column.name
+                    groups = request.session\
+                        .query(relation_column, aggregate_func)\
+                        .filter(relation_column.in_(lookup_values))\
+                        .group_by(relation_column)
+                    groups_dict = dict(groups)
 
-            result[lookup_name] = lookup_result
+                    lookup_result['aggregated_values'] = list(map(lambda x: {
+                        'instance': x,
+                        'value': groups_dict.get(getattr(x, local_column.name), 0)
+                    }, models))
+                    lookup_result['related_column'] = relation_column.name
+
+                if 'relation' in lookup_data:
+                    relation_model = None
+                    relation_mapper = relationship.mapper
+                    relation_column = None
+
+                    for cls in MappedBase.classes:
+                        cls_mapper = inspect(cls)
+                        if cls_mapper.tables[0] == relationship.target:
+                            relation_model = cls
+                            relation_mapper = cls_mapper
+                            relation_column = get_set_first(relationship.remote_side)
+                            break
+
+                    if relation_model is None:
+                        continue
+
+                    related_models = list(request.session.query(relation_model).filter(relation_column.in_(lookup_values)).all())
+
+                    lookup_result['related'] = self.get_models_lookup(
+                        lookup_data['relation'],
+                        request,
+                        MappedBase,
+                        related_models,
+                        relation_model,
+                        relation_mapper
+                    )
+                    lookup_result['related_column'] = relation_column.name
+
+                result[lookup_name] = lookup_result
+            elif column is not None:
+                lookup_result = {}
+                lookup_values = sorted(set(map(lambda x: getattr(x, column.name), models)))
+
+                lookup_result['return'] = lookup_data.get('return', False)
+                lookup_result['return_list'] = lookup_data.get('returnList', False)
+                lookup_result['Model'] = Model
+                lookup_result['mapper'] = mapper
+                lookup_result['model_values'] = list(map(lambda x: {'instance': x, 'value': getattr(x, column.name)}, models))
+                lookup_result['source_column'] = column.name
+
+                if 'relation' in lookup_data:
+                    foreign_key = get_set_first(column.foreign_keys)
+                    relation_model = None
+                    relation_mapper = None
+                    relation_column = None
+
+                    for cls in MappedBase.classes:
+                        cls_mapper = inspect(cls)
+                        if cls_mapper.tables[0] == foreign_key.column.table:
+                            relation_model = cls
+                            relation_mapper = cls_mapper
+                            relation_column = foreign_key.column
+                            break
+
+                    if relation_model is None:
+                        continue
+
+                    related_models = list(request.session.query(relation_model).filter(relation_column.in_(lookup_values)).all())
+
+                    lookup_result['related'] = self.get_models_lookup(
+                        lookup_data['relation'],
+                        request,
+                        MappedBase,
+                        related_models,
+                        relation_model,
+                        relation_mapper
+                    )
+                    lookup_result['related_column'] = foreign_key.column.name
+
+                result[lookup_name] = lookup_result
 
         return result
 
@@ -244,6 +354,13 @@ class GraphQLView(APIView):
                     lookup_data['related'],
                     lambda x: getattr(x, lookup_data['related_column']) in values
                 )
+
+            if 'aggregated_values' in lookup_data:
+                model_values = list(filter(
+                    lambda x: getattr(x['instance'], lookup_data['source_column']) in values,
+                    lookup_data['aggregated_values']
+                ))
+                item_result['aggregated'] = model_values[0]['value'] if len(model_values) else 0
 
             result[lookup_name] = item_result
 
@@ -286,14 +403,23 @@ class GraphQLView(APIView):
 
         return queryset
 
-    def get_model_filters_type(self, mapper, depth=1):
+    def get_model_filters_type(self, MappedBase, mapper, depth=1):
         attrs = {}
         with_relations = depth <= 4
 
         for column in mapper.columns:
-            column_filters_type = self.get_model_field_filters_type(mapper, column, with_relations, depth)
+            column_filters_type = self.get_model_field_filters_type(MappedBase, mapper, column, with_relations, depth)
             attr_name = clean_name(column.name)
             attrs[attr_name] = column_filters_type()
+
+        if with_relations:
+            for relationship in mapper.relationships:
+                if not relationship.direction == ONETOMANY:
+                    continue
+
+                relationship_filters_type = self.get_model_relationship_filters_type(MappedBase, mapper, relationship, with_relations, depth)
+                attr_name = clean_name(relationship.key)
+                attrs[attr_name] = relationship_filters_type()
 
         model_name = clean_name(mapper.selectable.name)
         name = 'Model{}Depth{}NestedFiltersType'.format(model_name, depth) if with_relations \
@@ -306,7 +432,7 @@ class GraphQLView(APIView):
         self.model_filters_types[name] = cls
         return graphene.List(cls)
 
-    def get_model_field_filters_type(self, mapper, column, with_relations, depth=1):
+    def get_model_field_filters_type(self, MappedBase, mapper, column, with_relations, depth=1):
         item = filter_for_data_type(column.type)
 
         attrs = {}
@@ -316,32 +442,67 @@ class GraphQLView(APIView):
             attrs[gql_lookup] = RawScalar()
 
         if with_relations and column.foreign_keys:
-            foreign_key = next(iter(column.foreign_keys))
-            table = foreign_key.column.table
+            foreign_key = get_set_first(column.foreign_keys)
 
-            column_filters_type = self.get_model_filters_type(table, depth + 1)
-            attrs['relation'] = column_filters_type
+            relation_mapper = None
+
+            for cls in MappedBase.classes:
+                cls_mapper = inspect(cls)
+                if cls_mapper.tables[0] == foreign_key.column.table:
+                    relation_mapper = cls_mapper
+                    break
+
+            if relation_mapper:
+                column_filters_type = self.get_model_filters_type(MappedBase, relation_mapper, depth + 1)
+                attrs['relation'] = column_filters_type
 
         model_name = clean_name(mapper.selectable.name)
         column_name = clean_name(column.name)
         name = 'Model{}Column{}Depth{}NestedFiltersType'.format(model_name, column_name, depth) if with_relations \
             else 'Model{}Column{}Depth{}FiltersType'.format(model_name, column_name, depth)
 
-        if name in self.model_columns_filters_types:
-            return self.model_columns_filters_types[name]
+        if name in self.model_filters_field_types:
+            return self.model_filters_field_types[name]
 
         cls = type(name, (graphene.InputObjectType,), attrs)
-        self.model_columns_filters_types[name] = cls
+        self.model_filters_field_types[name] = cls
         return cls
 
-    def get_model_lookups_type(self, mapper, depth=1):
+    def get_model_relationship_filters_type(self, MappedBase, mapper, relationship, with_relations, depth=1):
+        attrs = {}
+
+        model_name = clean_name(mapper.selectable.name)
+        relationship_key = clean_name(relationship.key)
+        name = 'Model{}Column{}Depth{}NestedRelationshipType'.format(model_name, relationship_key, depth) if with_relations \
+            else 'Model{}Column{}Depth{}RelationshipType'.format(model_name, relationship_key, depth)
+
+        if name in self.model_filters_relationship_types:
+            return self.model_filters_relationship_types[name]
+
+        lookups_type = self.get_model_filters_type(MappedBase, relationship.mapper, depth + 1)
+        attrs['relation'] = lookups_type
+
+        cls = type(name, (graphene.InputObjectType,), attrs)
+        self.model_filters_relationship_types[name] = cls
+        return cls
+
+    def get_model_lookups_type(self, MappedBase, mapper, depth=1):
         attrs = {}
         with_relations = depth <= 4
 
         for column in mapper.columns:
-            column_lookups_type = self.get_model_lookups_field_type(mapper, column, with_relations, depth)
+            column_lookups_type = self.get_model_field_lookups_type(MappedBase, mapper, column, with_relations, depth)
             attr_name = clean_name(column.name)
             attrs[attr_name] = column_lookups_type()
+
+        if with_relations:
+            for relationship in mapper.relationships:
+                if not relationship.direction == ONETOMANY:
+                    continue
+
+                relationship_lookups_type = self.get_model_relationship_lookups_type(MappedBase, mapper, relationship, with_relations, depth)
+                attr_name = clean_name(relationship.key)
+                attrs[attr_name] = relationship_lookups_type()
 
         model_name = clean_name(mapper.selectable.name)
         name = 'Model{}Depth{}NestedLookupsType'.format(model_name, depth) if with_relations \
@@ -354,10 +515,10 @@ class GraphQLView(APIView):
         self.model_lookups_types[name] = cls
         return cls
 
-    def get_model_lookups_field_type(self, mapper, column, with_relations, depth=1):
+    def get_model_field_lookups_type(self, MappedBase, mapper, column, with_relations, depth=1):
         attrs = {
             'return': graphene.Boolean(),
-            'return_list': graphene.Boolean()
+            'returnList': graphene.Boolean()
         }
 
         model_name = clean_name(mapper.selectable.name)
@@ -365,18 +526,46 @@ class GraphQLView(APIView):
         name = 'Model{}Column{}Depth{}NestedLookupsFieldType'.format(model_name, column_name, depth) if with_relations \
             else 'Model{}Column{}Depth{}LookupsFieldType'.format(model_name, column_name, depth)
 
-        if name in self.model_lookups_types:
+        if name in self.model_lookups_field_types:
             return self.model_lookups_field_types[name]
 
         if with_relations and column.foreign_keys:
-            foreign_key = next(iter(column.foreign_keys))
-            table = foreign_key.column.table
+            foreign_key = get_set_first(column.foreign_keys)
 
-            lookups_type = self.get_model_lookups_type(table, depth + 1)
-            attrs['relation'] = lookups_type()
+            relation_mapper = None
+
+            for cls in MappedBase.classes:
+                cls_mapper = inspect(cls)
+                if cls_mapper.tables[0] == foreign_key.column.table:
+                    relation_mapper = cls_mapper
+                    break
+
+            if relation_mapper:
+                lookups_type = self.get_model_lookups_type(MappedBase, relation_mapper, depth + 1)
+                attrs['relation'] = lookups_type()
 
         cls = type(name, (graphene.InputObjectType,), attrs)
         self.model_lookups_field_types[name] = cls
+        return cls
+
+    def get_model_relationship_lookups_type(self, MappedBase, mapper, relationship, with_relations, depth=1):
+        attrs = {
+            'aggregate': AggregateType()
+        }
+
+        model_name = clean_name(mapper.selectable.name)
+        relationship_key = clean_name(relationship.key)
+        name = 'Model{}Column{}Depth{}NestedLookupsRelationshipType'.format(model_name, relationship_key, depth) if with_relations \
+            else 'Model{}Column{}Depth{}LookupsRelationshipType'.format(model_name, relationship_key, depth)
+
+        if name in self.model_lookups_relationship_types:
+            return self.model_lookups_relationship_types[name]
+
+        lookups_type = self.get_model_lookups_type(MappedBase, relationship.mapper, depth + 1)
+        attrs['relation'] = lookups_type()
+
+        cls = type(name, (graphene.InputObjectType,), attrs)
+        self.model_lookups_relationship_types[name] = cls
         return cls
 
     def get_model_attrs_type(self, mapper):
@@ -413,8 +602,8 @@ class GraphQLView(APIView):
             mapper = inspect(Model)
             name = clean_name(mapper.selectable.name)
 
-            FiltersType = self.get_model_filters_type(mapper)
-            LookupsType = self.get_model_lookups_type(mapper)
+            FiltersType = self.get_model_filters_type(MappedBase, mapper)
+            LookupsType = self.get_model_lookups_type(MappedBase, mapper)
             ModelAttrsType = self.get_model_attrs_type(mapper)
             ModelType = type('Model{}ModelType'.format(name), (graphene.ObjectType,), {
                 'attrs': graphene.Field(ModelAttrsType),
