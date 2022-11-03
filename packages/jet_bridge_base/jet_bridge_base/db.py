@@ -230,7 +230,8 @@ def connect_database(conf):
             'MappedBase': MappedBase,
             'params_id': connection_params_id,
             'type_code_to_sql_type': type_code_to_sql_type,
-            'tunnel': tunnel
+            'tunnel': tunnel,
+            'cache': {}
         }
 
     session.close()
@@ -347,6 +348,26 @@ def get_type_code_to_sql_type(request):
     if not connection:
         return
     return connection['type_code_to_sql_type']
+
+
+def connection_cache_get(request, name, default=None):
+    connection = get_request_connection(request)
+    if not connection:
+        return
+    return connection['cache'].get(name, default)
+
+
+def connection_cache_set(request, name, value):
+    connection = get_request_connection(request)
+    if not connection:
+        return
+    connection['cache'][name] = value
+
+
+def reload_request_mapped_base(request):
+    MappedBase = get_mapped_base(request)
+    reload_mapped_base(MappedBase)
+    connection_cache_set(request, 'graphql_schema', None)
 
 
 def reload_mapped_base(MappedBase):

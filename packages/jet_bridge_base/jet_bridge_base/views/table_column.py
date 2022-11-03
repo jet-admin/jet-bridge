@@ -1,7 +1,7 @@
 from sqlalchemy import Column, text, ForeignKey
 
 from jet_bridge_base import status
-from jet_bridge_base.db import get_mapped_base, get_engine, reload_mapped_base
+from jet_bridge_base.db import get_mapped_base, get_engine, reload_request_mapped_base
 from jet_bridge_base.exceptions.not_found import NotFound
 from jet_bridge_base.exceptions.validation_error import ValidationError
 from jet_bridge_base.permissions import HasProjectPermissions
@@ -87,8 +87,7 @@ class TableColumnView(APIView):
         return MappedBase.metadata, engine
 
     def update_base(self, request):
-        MappedBase = get_mapped_base(request)
-        reload_mapped_base(MappedBase)
+        reload_request_mapped_base(request)
 
     def get_table(self, request):
         metadata, engine = self.get_db(request)
