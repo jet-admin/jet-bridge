@@ -150,15 +150,9 @@ class GraphQLView(APIView):
                                 break
 
                             if lookup_relation_attr:
-                                relation_mapper = None
-
-                                for cls in MappedBase.classes:
-                                    cls_mapper = inspect(cls)
-                                    if cls_mapper.tables[0] == foreign_key.column.table:
-                                        relation_mapper = cls_mapper
-                                        break
-
-                                if relation_mapper:
+                                relation_model = MappedBase.classes.get(foreign_key.column.table.name)
+                                if relation_model:
+                                    relation_mapper = inspect(relation_model)
                                     queryset = self.filter_queryset(MappedBase, queryset, relation_mapper, lookup_value, [*relation_attrs, lookup_relation_attr])
                         else:
                             item = filter_for_data_type(column.type)
@@ -222,20 +216,13 @@ class GraphQLView(APIView):
                 lookup_result['source_column'] = local_column.name
 
                 if 'aggregate' in lookup_data:
-                    relation_model = None
-                    relation_mapper = relationship.mapper
-                    relation_column = None
-
-                    for cls in MappedBase.classes:
-                        cls_mapper = inspect(cls)
-                        if cls_mapper.tables[0] == relationship.target:
-                            relation_model = cls
-                            relation_mapper = cls_mapper
-                            relation_column = get_set_first(relationship.remote_side)
-                            break
+                    relation_model = MappedBase.classes.get(relationship.target.name)
 
                     if relation_model is None:
                         continue
+
+                    relation_mapper = inspect(relation_model)
+                    relation_column = get_set_first(relationship.remote_side)
 
                     if 'attr' in lookup_data['aggregate']:
                         aggregate_column_name = lookup_data['aggregate']['attr']
@@ -258,21 +245,13 @@ class GraphQLView(APIView):
                     lookup_result['related_column'] = relation_column.name
 
                 if 'relation' in lookup_data:
-                    relation_model = None
-                    relation_mapper = relationship.mapper
-                    relation_column = None
-
-                    for cls in MappedBase.classes:
-                        cls_mapper = inspect(cls)
-                        if cls_mapper.tables[0] == relationship.target:
-                            relation_model = cls
-                            relation_mapper = cls_mapper
-                            relation_column = get_set_first(relationship.remote_side)
-                            break
+                    relation_model = MappedBase.classes.get(relationship.target.name)
 
                     if relation_model is None:
                         continue
 
+                    relation_mapper = inspect(relation_model)
+                    relation_column = get_set_first(relationship.remote_side)
                     related_models = list(request.session.query(relation_model).filter(relation_column.in_(lookup_values)).all())
 
                     lookup_result['related'] = self.get_models_lookup(
@@ -299,21 +278,13 @@ class GraphQLView(APIView):
 
                 if 'relation' in lookup_data:
                     foreign_key = get_set_first(column.foreign_keys)
-                    relation_model = None
-                    relation_mapper = None
-                    relation_column = None
-
-                    for cls in MappedBase.classes:
-                        cls_mapper = inspect(cls)
-                        if cls_mapper.tables[0] == foreign_key.column.table:
-                            relation_model = cls
-                            relation_mapper = cls_mapper
-                            relation_column = foreign_key.column
-                            break
+                    relation_model = MappedBase.classes.get(foreign_key.column.table.name)
 
                     if relation_model is None:
                         continue
 
+                    relation_mapper = inspect(relation_model)
+                    relation_column = foreign_key.column
                     related_models = list(request.session.query(relation_model).filter(relation_column.in_(lookup_values)).all())
 
                     lookup_result['related'] = self.get_models_lookup(
@@ -444,15 +415,10 @@ class GraphQLView(APIView):
         if with_relations and column.foreign_keys:
             foreign_key = get_set_first(column.foreign_keys)
 
-            relation_mapper = None
+            relation_model = MappedBase.classes.get(foreign_key.column.table.name)
 
-            for cls in MappedBase.classes:
-                cls_mapper = inspect(cls)
-                if cls_mapper.tables[0] == foreign_key.column.table:
-                    relation_mapper = cls_mapper
-                    break
-
-            if relation_mapper:
+            if relation_model:
+                relation_mapper = inspect(relation_model)
                 column_filters_type = self.get_model_filters_type(MappedBase, relation_mapper, depth + 1)
                 attrs['relation'] = column_filters_type
 
@@ -532,15 +498,11 @@ class GraphQLView(APIView):
         if with_relations and column.foreign_keys:
             foreign_key = get_set_first(column.foreign_keys)
 
-            relation_mapper = None
+            relation_model = MappedBase.classes.get(foreign_key.column.table.name)
 
-            for cls in MappedBase.classes:
-                cls_mapper = inspect(cls)
-                if cls_mapper.tables[0] == foreign_key.column.table:
-                    relation_mapper = cls_mapper
-                    break
+            if relation_model:
+                relation_mapper = inspect(relation_model)
 
-            if relation_mapper:
                 lookups_type = self.get_model_lookups_type(MappedBase, relation_mapper, depth + 1)
                 attrs['relation'] = lookups_type()
 
