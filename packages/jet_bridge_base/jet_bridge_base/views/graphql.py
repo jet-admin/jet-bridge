@@ -1,3 +1,5 @@
+from graphql import GraphQLError
+
 from jet_bridge_base.db import connection_cache_set, connection_cache_get
 from jet_bridge_base.exceptions.permission_denied import PermissionDenied
 from jet_bridge_base.permissions import HasProjectPermissions
@@ -18,6 +20,12 @@ class GraphQLView(APIView):
             'permission_object': request.context.get('model'),
             'permission_actions': 'r'
         }
+
+    def map_gql_error(self, error):
+        if isinstance(error, GraphQLError):
+            return error.message
+        else:
+            return str(error)
 
     def get(self, request, *args, **kwargs):
         return self.post(request, *args, **kwargs)
@@ -47,7 +55,7 @@ class GraphQLView(APIView):
                 error = error.original_error
             if isinstance(error, PermissionDenied):
                 raise error
-            return JSONResponse({'errors': map(lambda x: x.message, result.errors)})
+            return JSONResponse({'errors': map(lambda x: self.map_gql_error(x), result.errors)})
 
         return JSONResponse({
             'data': result.data
