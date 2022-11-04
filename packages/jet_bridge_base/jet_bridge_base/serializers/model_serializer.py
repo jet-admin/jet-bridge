@@ -18,6 +18,7 @@ data_types = [
     {'query': 'TIMESTAMP', 'operator': 'startswith', 'data_type': fields.DateTimeField},
     {'query': 'DATETIME', 'operator': 'startswith', 'data_type': fields.DateTimeField},
     {'query': 'JSON', 'operator': 'startswith', 'data_type': fields.JSONField},
+    {'query': 'ARRAY', 'operator': 'equals', 'data_type': fields.JSONField},
     {'query': 'geometry', 'operator': 'startswith', 'data_type': fields.WKTField},
     {'query': 'geography', 'operator': 'startswith', 'data_type': fields.WKTField},
 ]

@@ -21,6 +21,7 @@ map_data_types = [
     {'sql_type': sqltypes.DateTime, 'map_type': data_types.DATE_TIME, 'db_type': data_types.DATE_TIME},
     {'sql_type': sqltypes.TIMESTAMP, 'map_type': data_types.DATE_TIME, 'db_type': data_types.TIMESTAMP},
     {'sql_type': sqltypes.JSON, 'map_type': data_types.JSON, 'db_type': data_types.JSON},
+    {'sql_type': sqltypes.ARRAY, 'map_type': data_types.JSON, 'db_type': data_types.JSON},
 ]
 default_sql_type = sqltypes.VARCHAR
 default_map_type = data_types.CHAR

@@ -196,7 +196,7 @@ class SqlSerializer(Serializer):
 
                 if isinstance(query_type, (sqltypes.Integer, sqltypes.Numeric)):
                     return cast(field, sqltypes.String).__eq__(search)
-                elif isinstance(query_type, (sqltypes.JSON, sqltypes.Enum)):
+                elif isinstance(query_type, (sqltypes.JSON, sqltypes.ARRAY, sqltypes.Enum)):
                     return cast(field, sqltypes.String).ilike('%{}%'.format(search))
                 elif isinstance(query_type, sqltypes.String):
                     return field.ilike('%{}%'.format(search))

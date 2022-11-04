@@ -73,6 +73,7 @@ FILTER_FOR_DBFIELD = {
     sqltypes.DateTime: {'filter_class': DateTimeFilter, 'lookups': datetime_lookups},
     sqltypes.TIMESTAMP: {'filter_class': DateTimeFilter, 'lookups': datetime_lookups},
     sqltypes.JSON: {'filter_class': CharFilter, 'lookups': json_lookups},
+    sqltypes.ARRAY: {'filter_class': CharFilter, 'lookups': json_lookups},
     # sqlalchemy.TextField:                   {'filter_class': CharFilter},
     # sqlalchemy.BOOLEAN:                {'filter_class': BooleanFilter},
     # sqlalchemy.DateField:                   {'filter_class': DateFilter},
