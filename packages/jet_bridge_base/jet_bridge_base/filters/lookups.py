@@ -1,3 +1,6 @@
+import graphene
+
+from jet_bridge_base.utils.gql import RawScalar
 
 EXACT = 'exact'
 GT = 'gt'
@@ -26,6 +29,10 @@ by_gql = {
     'isNull': IS_NULL,
     'jsonContainsI': JSON_ICONTAINS,
     'coveredBy': COVEREDBY
+}
+
+gql_scalar = {
+    IN: graphene.List(RawScalar)
 }
 
 gql = dict(map(lambda x: (x[1], x[0]), by_gql.items()))

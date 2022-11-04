@@ -10,21 +10,8 @@ from jet_bridge_base.filters.model_group import get_query_func_by_name
 from jet_bridge_base.filters.model_search import search_queryset
 from jet_bridge_base.serializers.model import get_model_serializer
 from jet_bridge_base.utils.common import get_set_first, any_type_sorter
+from jet_bridge_base.utils.gql import RawScalar
 from jet_bridge_base.utils.queryset import queryset_count_optimized
-
-
-class RawScalar(graphene.Scalar):
-    @staticmethod
-    def serialize(value):
-        return value
-
-    @staticmethod
-    def parse_literal(node, _variables=None):
-        return node.value
-
-    @staticmethod
-    def parse_value(value):
-        return value
 
 
 class PaginationType(graphene.InputObjectType):
@@ -404,7 +391,8 @@ class GraphQLSchemaGenerator(object):
 
         for lookup in item['lookups']:
             gql_lookup = lookups.gql.get(lookup)
-            attrs[gql_lookup] = RawScalar()
+            gql_scalar = lookups.gql_scalar.get(lookup, RawScalar())
+            attrs[gql_lookup] = gql_scalar
 
         if with_relations and column.foreign_keys:
             foreign_key = get_set_first(column.foreign_keys)
