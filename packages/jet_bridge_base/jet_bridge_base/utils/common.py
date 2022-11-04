@@ -75,3 +75,9 @@ def merge_two_dicts(x, y):
 
 def get_set_first(value):
     return next(iter(value))
+
+
+def any_type_sorter(value):
+    if value is None:
+        return ''
+    return value
