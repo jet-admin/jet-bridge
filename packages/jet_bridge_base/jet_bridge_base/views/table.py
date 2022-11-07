@@ -20,7 +20,7 @@ class TableView(APIView):
         return MappedBase.metadata, engine
 
     def update_base(self, request):
-        reload_request_mapped_base(request, MappedBase)
+        reload_request_mapped_base(request)
 
     def get_object(self, request):
         metadata, engine = self.get_db(request)
