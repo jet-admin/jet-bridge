@@ -95,11 +95,15 @@ class GraphQLSchemaGenerator(object):
             else:
                 return relation_attr.has(self.relation_criterion(relation_attrs, i + 1, criterion))
 
-    def filter_queryset(self, MappedBase, queryset, mapper, filters, relation_attrs=None):
+    def filter_queryset(self, MappedBase, queryset, mapper, filters, relation_attrs=None, exclude=False):
         relation_attrs = relation_attrs or []
 
         for filters_item in filters:
             for filter_name, filter_lookups in filters_item.items():
+                if filter_name == '_not_':
+                    queryset = self.filter_queryset(MappedBase, queryset, mapper, filter_lookups, relation_attrs, exclude=True)
+                    continue
+
                 column = mapper.columns.get(filter_name)
                 filter_relationship = mapper.relationships.get(filter_name)
 
@@ -108,7 +112,7 @@ class GraphQLSchemaGenerator(object):
                         if lookup_name == 'relation':
                             relation_mapper = filter_relationship.mapper
                             lookup_relation_attr = filter_relationship.class_attribute
-                            queryset = self.filter_queryset(MappedBase, queryset, relation_mapper, lookup_value, [*relation_attrs, lookup_relation_attr])
+                            queryset = self.filter_queryset(MappedBase, queryset, relation_mapper, lookup_value, [*relation_attrs, lookup_relation_attr], exclude)
                 elif column is not None:
                     for lookup_name, lookup_value in filter_lookups.items():
                         if lookup_name == 'relation':
@@ -130,7 +134,7 @@ class GraphQLSchemaGenerator(object):
                                 relation_model = MappedBase.classes.get(foreign_key.column.table.name)
                                 if relation_model:
                                     relation_mapper = inspect(relation_model)
-                                    queryset = self.filter_queryset(MappedBase, queryset, relation_mapper, lookup_value, [*relation_attrs, lookup_relation_attr])
+                                    queryset = self.filter_queryset(MappedBase, queryset, relation_mapper, lookup_value, [*relation_attrs, lookup_relation_attr], exclude)
                         else:
                             item = filter_for_data_type(column.type)
                             lookup = lookups.by_gql.get(lookup_name)
@@ -144,8 +148,10 @@ class GraphQLSchemaGenerator(object):
 
                             if len(relation_attrs):
                                 relation_criterion = self.relation_criterion(relation_attrs, 0, criterion)
+                                relation_criterion = ~relation_criterion if exclude else relation_criterion
                                 queryset = queryset.filter(relation_criterion)
                             else:
+                                criterion = ~criterion if exclude else criterion
                                 queryset = queryset.filter(criterion)
 
         return queryset
@@ -368,6 +374,8 @@ class GraphQLSchemaGenerator(object):
                 relationship_filters_type = self.get_model_relationship_filters_type(MappedBase, mapper, relationship, with_relations, depth)
                 attr_name = clean_name(relationship.key)
                 attrs[attr_name] = relationship_filters_type()
+
+            attrs['_not_'] = self.get_model_filters_type(MappedBase, mapper, depth + 1)
 
         cls = type(cls_name, (graphene.InputObjectType,), attrs)
         self.model_filters_types[cls_name] = cls
