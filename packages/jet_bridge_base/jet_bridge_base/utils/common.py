@@ -80,4 +80,4 @@ def get_set_first(value):
 def any_type_sorter(value):
     if value is None:
         return ''
-    return value
+    return str(value)
