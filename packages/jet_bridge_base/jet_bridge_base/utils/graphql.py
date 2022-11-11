@@ -14,6 +14,10 @@ from jet_bridge_base.utils.gql import RawScalar
 from jet_bridge_base.utils.queryset import queryset_count_optimized
 
 
+class FieldSortType(graphene.InputObjectType):
+    descending = graphene.Boolean(required=False)
+
+
 class PaginationType(graphene.InputObjectType):
     page = graphene.Int()
     offset = graphene.Int()
@@ -63,6 +67,7 @@ class GraphQLSchemaGenerator(object):
     model_lookups_types = {}
     model_lookups_field_types = {}
     model_lookups_relationship_types = {}
+    model_sort_types = {}
 
     def get_queryset(self, request, Model, only_columns=None):
         if only_columns:
@@ -238,8 +243,6 @@ class GraphQLSchemaGenerator(object):
 
                 result[lookup_name] = lookup_result
             elif column is not None:
-
-
                 lookup_result = {}
                 lookup_values = sorted(set(map(lambda x: getattr(x, column.name), models)), key=any_type_sorter)
 
@@ -311,15 +314,8 @@ class GraphQLSchemaGenerator(object):
 
         return result
 
-    def map_sort_order_field(self, sorting):
-        parts = sorting.split(':', 1)
-
-        if len(parts) == 2:
-            name = parts[0]
-            descending = parts[1] == 'desc'
-        else:
-            name = parts[0]
-            descending = False
+    def map_sort_order_field(self, name, options):
+        descending = options.get('descending', False)
 
         field = sqlcolumn(name)
         if descending:
@@ -327,8 +323,8 @@ class GraphQLSchemaGenerator(object):
         return field
 
     def sort_queryset(self, queryset, sort):
-        if len(sort):
-            order_by = list(map(lambda x: self.map_sort_order_field(x), sort))
+        for item in sort:
+            order_by = list(map(lambda x: self.map_sort_order_field(x[0], x[1]), item.items()))
             queryset = queryset.order_by(*order_by)
 
         return queryset
@@ -504,6 +500,23 @@ class GraphQLSchemaGenerator(object):
         self.model_lookups_relationship_types[cls_name] = cls
         return cls
 
+    def get_model_sort_type(self, mapper):
+        model_name = clean_name(mapper.selectable.name)
+        cls_name = 'Model{}SortType'.format(model_name)
+
+        if cls_name in self.model_sort_types:
+            return graphene.List(self.model_sort_types[cls_name])
+
+        attrs = {}
+
+        for column in mapper.columns:
+            attr_name = clean_name(column.name)
+            attrs[attr_name] = FieldSortType()
+
+        cls = type(cls_name, (graphene.InputObjectType,), attrs)
+        self.model_sort_types[cls_name] = cls
+        return graphene.List(cls)
+
     def get_model_attrs_type(self, mapper):
         name = clean_name(mapper.selectable.name)
         attrs = {}
@@ -614,6 +627,7 @@ class GraphQLSchemaGenerator(object):
 
             FiltersType = self.get_model_filters_type(MappedBase, mapper)
             LookupsType = self.get_model_lookups_type(MappedBase, mapper)
+            SortType = self.get_model_sort_type(mapper)
             ModelAttrsType = self.get_model_attrs_type(mapper)
             ModelType = type('Model{}ModelType'.format(name), (graphene.ObjectType,), {
                 'attrs': graphene.Field(ModelAttrsType),
@@ -649,7 +663,7 @@ class GraphQLSchemaGenerator(object):
                 ModelListType,
                 filters=FiltersType,
                 lookups=graphene.List(LookupsType),
-                sort=graphene.List(graphene.String),
+                sort=SortType,
                 pagination=PaginationType(),
                 search=SearchType()
             )
