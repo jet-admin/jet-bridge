@@ -15,7 +15,7 @@ class Router(object):
             'detail': True
         },
         {
-            'path': '/',
+            'path': '',
             'regex': '',
             'method_mapping': {
                 'get': 'list',
