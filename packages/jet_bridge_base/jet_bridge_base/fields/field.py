@@ -1,4 +1,7 @@
-from collections import Mapping
+try:
+    from collections.abc import Mapping
+except ImportError:
+    from collections import Mapping
 
 from jet_bridge_base.exceptions.validation_error import ValidationError
 
