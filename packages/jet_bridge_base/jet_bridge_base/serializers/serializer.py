@@ -1,4 +1,9 @@
-from collections import OrderedDict, Mapping, Iterable
+try:
+    from collections.abc import Mapping, Iterable
+    from collections import OrderedDict
+except ImportError:
+    from collections import OrderedDict, Mapping, Iterable
+
 import six
 
 from jet_bridge_base.exceptions.validation_error import ValidationError

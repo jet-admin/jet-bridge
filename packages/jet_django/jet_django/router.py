@@ -1,11 +1,11 @@
 import sys
-from django.conf.urls import url
 
 
 class Router(object):
     routes = [
         {
-            'path': '(?P<pk>[^/]+)/',
+            'path': '<pk>/',
+            'regex': '(?P<pk>[^/]+)/',
             'method_mapping': {
                 'get': 'retrieve',
                 'put': 'update',
@@ -16,6 +16,7 @@ class Router(object):
         },
         {
             'path': '',
+            'regex': '',
             'method_mapping': {
                 'get': 'list',
                 'post': 'create'
@@ -25,7 +26,7 @@ class Router(object):
     ]
     urls = []
 
-    def add_handler(self, view, url_, actions):
+    def add_handler(self, view, path_, regex, actions):
         class ActionHandler(view):
             pass
 
@@ -51,9 +52,14 @@ class Router(object):
             func = create_action_method(method_action)
             setattr(ActionHandler, method, func)
 
-        self.urls.append(url(url_, ActionHandler.as_view()))
+        try:
+            from django.urls import path
+            self.urls.append(path(path_, ActionHandler.as_view()))
+        except ImportError:
+            from django.conf.urls import url
+            self.urls.append(url(regex, ActionHandler.as_view()))
 
-    def add_route_actions(self, view, route, prefix):
+    def add_route_actions(self, view, route, prefix_path, prefix_regex):
         viewset = view.view_cls
         actions = route['method_mapping']
         actions = dict(filter(lambda x: hasattr(viewset, x[1]), actions.items()))
@@ -61,10 +67,11 @@ class Router(object):
         if len(actions) == 0:
             return
 
-        url = '{}{}'.format(prefix, route['path'])
-        self.add_handler(view, url, actions)
+        path = '{}{}'.format(prefix_path, route['path'])
+        regex = '{}{}'.format(prefix_regex, route['regex'])
+        self.add_handler(view, path, regex, actions)
 
-    def add_route_extra_actions(self, view, route, prefix):
+    def add_route_extra_actions(self, view, route, prefix_path, prefix_regex):
         viewset = view.view_cls
         for attr in dir(viewset):
             method = getattr(viewset, attr)
@@ -80,12 +87,13 @@ class Router(object):
 
             extra_actions = dict(map(lambda x: (x, attr), bind_to_methods))
 
-            url = '{}{}{}/'.format(prefix, route['path'], attr)
-            self.add_handler(view, url, extra_actions)
+            path = '{}{}{}/'.format(prefix_path, route['path'], attr)
+            regex = '{}{}{}/'.format(prefix_regex, route['regex'], attr)
+            self.add_handler(view, path, regex, extra_actions)
 
-    def register(self, prefix, view):
+    def register(self, prefix_path, prefix_regex, view):
         for route in self.routes:
-            self.add_route_extra_actions(view, route, prefix)
+            self.add_route_extra_actions(view, route, prefix_path, prefix_regex)
 
         for route in self.routes:
-            self.add_route_actions(view, route, prefix)
+            self.add_route_actions(view, route, prefix_path, prefix_regex)
