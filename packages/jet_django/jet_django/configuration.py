@@ -66,7 +66,8 @@ class JetDjangoConfiguration(Configuration):
             'DATABASE_PORT': settings.database_settings.get('PORT'),
             'DATABASE_USER': settings.database_settings.get('USER'),
             'DATABASE_PASSWORD': settings.database_settings.get('PASSWORD'),
-            'DATABASE_NAME': settings.database_settings.get('NAME'),
+            'DATABASE_NAME': str(settings.database_settings['NAME'])
+                if settings.database_settings.get('NAME') is not None else None,
             'DATABASE_EXTRA': settings.JET_DATABASE_EXTRA,
             'DATABASE_CONNECTIONS': 1,
             'DATABASE_ONLY': settings.JET_DATABASE_ONLY,
