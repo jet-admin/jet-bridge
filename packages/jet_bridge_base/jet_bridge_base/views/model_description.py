@@ -1,6 +1,7 @@
 import re
 
 from sqlalchemy import inspect, String, Enum, Date
+from sqlalchemy.orm import ONETOMANY
 from sqlalchemy.sql.elements import TextClause
 
 from jet_bridge_base.db import get_mapped_base
@@ -8,7 +9,7 @@ from jet_bridge_base.models import data_types
 from jet_bridge_base.permissions import HasProjectPermissions
 from jet_bridge_base.responses.json import JSONResponse
 from jet_bridge_base.serializers.model_description import ModelDescriptionSerializer
-from jet_bridge_base.utils.common import merge
+from jet_bridge_base.utils.common import merge, get_set_first
 from jet_bridge_base.utils.db_types import sql_to_map_type, sql_to_db_type
 from jet_bridge_base.views.base.api import APIView
 
@@ -116,6 +117,21 @@ def map_column(column, editable):
     return result
 
 
+def map_relationship(relationship):
+    local_field = get_set_first(relationship.local_columns)
+    related_field = get_set_first(relationship.remote_side)
+
+    result = {
+        'name': relationship.key,
+        'direction': 'ONETOMANY',
+        'local_field': local_field.name,
+        'related_model': relationship.target.name,
+        'related_field': related_field.name
+    }
+
+    return result
+
+
 # def map_relation(relation):
 #     field = None
 #
@@ -181,6 +197,7 @@ def map_table(cls, hidden):
         'model': name,
         'db_table': name,
         'fields': list(map(lambda x: map_column(x, x.name not in non_editable), mapper.columns)),
+        'relations': list(map(lambda x: map_relationship(x), filter(lambda x: x.direction == ONETOMANY, mapper.relationships))),
         'hidden': name in hidden or name in configuration.get_hidden_model_description(),
         # 'relations': table_relations(mapper) + table_m2m_relations(mapper),
         'primary_key_field': primary_key.name if primary_key is not None else None

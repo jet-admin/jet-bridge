@@ -71,3 +71,13 @@ def merge_two_dicts(x, y):
     z = x.copy()
     z.update(y)
     return z
+
+
+def get_set_first(value):
+    return next(iter(value))
+
+
+def any_type_sorter(value):
+    if value is None:
+        return ''
+    return str(value)
