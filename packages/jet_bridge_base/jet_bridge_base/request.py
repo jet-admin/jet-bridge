@@ -18,6 +18,7 @@ class Request(object):
     project = None
     environment = None
     resource_token = None
+    context = {}
 
     def __init__(
             self,

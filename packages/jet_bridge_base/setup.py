@@ -20,6 +20,7 @@ def get_install_requires():
         'dateparser',
         'social-auth-core',
         'prompt_toolkit==2.0.9',
+        'graphene<3.0',
     ]
 
     try:

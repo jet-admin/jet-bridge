@@ -9,17 +9,18 @@ from jet_bridge_base.filters import lookups
 EMPTY_VALUES = ([], (), {}, '', None)
 
 
-def json_icontains(qs, column, value):
+def json_icontains(column, value):
     field_type = column.property.columns[0].type
 
     if isinstance(field_type, JSONB):
-        return qs.filter(column.cast(Unicode).ilike('%{}%'.format(value)))
+        return column.cast(Unicode).ilike('%{}%'.format(value))
     else:
-        return qs.filter(column.astext.ilike('%{}%'.format(value)))
+        return column.astext.ilike('%{}%'.format(value))
 
 
-def coveredby(qs, column, value):
-    return qs.filter(column.ST_CoveredBy(value))
+def coveredby(column, value):
+    return column.ST_CoveredBy(value)
+
 
 def safe_array(value):
     if isinstance(value, list):
@@ -31,6 +32,7 @@ def safe_array(value):
             return []
     else:
         value
+
 
 class Filter(object):
     field_class = field
@@ -58,8 +60,8 @@ class Filter(object):
     def clean_value(self, value):
         return value
 
-    def apply_lookup(self, qs, lookup, value):
-        lookup_operator = self.lookup_operators[lookup]
+    def get_loookup_criterion(self, value):
+        lookup_operator = self.lookup_operators[self.lookup]
         operator = lookup_operator['operator']
         pre_process = lookup_operator.get('pre_process')
         post_process = lookup_operator.get('post_process')
@@ -77,22 +79,26 @@ class Filter(object):
             value = post_process(value)
 
         if func:
-            return func(qs, self.column, value)
+            return func(self.column, value)
         elif callable(operator):
             op = operator(value)
 
             if self.exclude:
-                return qs.filter(~getattr(self.column, op[0])(op[1]))
+                return ~getattr(self.column, op[0])(op[1])
             else:
-                return qs.filter(getattr(self.column, op[0])(op[1]))
+                return getattr(self.column, op[0])(op[1])
         else:
             if self.exclude:
-                return qs.filter(~getattr(self.column, operator)(value))
+                return ~getattr(self.column, operator)(value)
             else:
-                return qs.filter(getattr(self.column, operator)(value))
+                return getattr(self.column, operator)(value)
+
+    def apply_lookup(self, qs, value):
+        criterion = self.get_loookup_criterion(value)
+        return qs.filter(criterion)
 
     def filter(self, qs, value):
         value = self.clean_value(value)
         if value in EMPTY_VALUES:
             return qs
-        return self.apply_lookup(qs, self.lookup, value)
+        return self.apply_lookup(qs, value)

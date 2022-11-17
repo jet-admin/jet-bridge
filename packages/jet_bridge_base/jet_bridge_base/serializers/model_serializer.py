@@ -56,7 +56,7 @@ class ModelSerializer(Serializer):
 
             for field_name in self.meta.model_fields:
                 column = columns.get(field_name)
-                date_type = get_column_data_type(column)
+                data_type = get_column_data_type(column)
                 kwargs = {}
 
                 if column.primary_key and column.autoincrement:
@@ -64,7 +64,7 @@ class ModelSerializer(Serializer):
                 if column.autoincrement or column.default or column.server_default or column.nullable:
                     kwargs['required'] = False
 
-                field = date_type(**kwargs)
+                field = data_type(**kwargs)
                 field.field_name = field_name
                 result.append(field)
 

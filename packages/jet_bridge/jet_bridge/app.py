@@ -9,6 +9,7 @@ from jet_bridge_base import settings as base_settings
 from jet_bridge_base.views.api import ApiView
 from jet_bridge_base.views.external_auth.complete import ExternalAuthCompleteView
 from jet_bridge_base.views.external_auth.login import ExternalAuthLoginView
+from jet_bridge_base.views.graphql import GraphQLView
 from jet_bridge_base.views.image_resize import ImageResizeView
 from jet_bridge_base.views.file_upload import FileUploadView
 from jet_bridge_base.views.message import MessageView
@@ -39,6 +40,7 @@ def make_app():
         (r'/register/', view_handler(RegisterView)),
         (r'/api/', view_handler(ApiView)),
         (r'/api/register/', view_handler(RegisterView)),
+        (r'/api/graphql/', view_handler(GraphQLView)),
         (r'/api/model_descriptions/', view_handler(ModelDescriptionView)),
         (r'/api/sql/', view_handler(SqlView)),
         (r'/api/messages/', view_handler(MessageView)),
