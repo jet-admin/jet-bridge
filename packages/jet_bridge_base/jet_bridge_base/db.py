@@ -376,7 +376,7 @@ def reload_mapped_base(MappedBase):
     def name_for_scalar_relationship(base, local_cls, referred_cls, constraint):
         foreign_key = constraint.elements[0] if len(constraint.elements) else None
         if foreign_key:
-            name = '__'.join([foreign_key.parent.name, 'to', foreign_key.column.name])
+            name = '__'.join([foreign_key.parent.name, 'to', foreign_key.column.table.name, foreign_key.column.name])
         else:
             name = referred_cls.__name__.lower()
 
