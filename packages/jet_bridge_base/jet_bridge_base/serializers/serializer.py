@@ -81,11 +81,18 @@ class Serializer(Field):
 
         value = self.to_internal_value(value)
 
-        try:
-            value = self.validate(value)
-            assert value is not None, '.validate() should return the validated data'
-        except ValidationError as e:
-            raise e
+        if self.many:
+            try:
+                value = list(map(lambda x: self.validate(x), value))
+                assert value is not None, '.validate() should return the validated data'
+            except ValidationError as e:
+                raise e
+        else:
+            try:
+                value = self.validate(value)
+                assert value is not None, '.validate() should return the validated data'
+            except ValidationError as e:
+                raise e
 
         return value
 

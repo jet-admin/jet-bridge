@@ -1,10 +1,11 @@
 import re
 
+from jet_bridge_base.utils.relations import relationship_direction_to_str
 from sqlalchemy import inspect, String, Enum, Date
-from sqlalchemy.orm import ONETOMANY
+from sqlalchemy.orm import MANYTOONE, ONETOMANY
 from sqlalchemy.sql.elements import TextClause
 
-from jet_bridge_base.db import get_mapped_base
+from jet_bridge_base.db import get_mapped_base, connection_cache_get, connection_storage_get
 from jet_bridge_base.models import data_types
 from jet_bridge_base.permissions import HasProjectPermissions
 from jet_bridge_base.responses.json import JSONResponse
@@ -120,13 +121,26 @@ def map_column(column, editable):
 def map_relationship(relationship):
     local_field = get_set_first(relationship.local_columns)
     related_field = get_set_first(relationship.remote_side)
+    direction = relationship_direction_to_str(relationship.direction)
 
     result = {
         'name': relationship.key,
-        'direction': 'ONETOMANY',
+        'direction': direction,
         'local_field': local_field.name,
         'related_model': relationship.target.name,
         'related_field': related_field.name
+    }
+
+    return result
+
+
+def map_relationship_override(override):
+    result = {
+        'name': override.get('name'),
+        'direction': override.get('direction'),
+        'local_field': override.get('local_field'),
+        'related_model': override.get('related_model'),
+        'related_field': override.get('related_field')
     }
 
     return result
@@ -184,7 +198,7 @@ def map_relationship(relationship):
 #
 #     return result
 
-def map_table(cls, hidden):
+def map_table(request, cls, hidden, draft):
     mapper = inspect(cls)
     name = mapper.selectable.name
     primary_key = mapper.primary_key[0]
@@ -193,11 +207,16 @@ def map_table(cls, hidden):
     from jet_bridge_base.configuration import configuration
     additional = configuration.get_model_description(name)
 
+    relationships_overrides_key = 'relation_overrides_draft' if draft else 'relation_overrides'
+    relationships_overrides = connection_storage_get(request, relationships_overrides_key, {})
+    model_relationships_overrides = relationships_overrides.get(name)
+
     result = {
         'model': name,
         'db_table': name,
         'fields': list(map(lambda x: map_column(x, x.name not in non_editable), mapper.columns)),
-        'relations': list(map(lambda x: map_relationship(x), filter(lambda x: x.direction == ONETOMANY, mapper.relationships))),
+        'relations': list(map(lambda x: map_relationship(x), filter(lambda x: x.direction in [MANYTOONE, ONETOMANY], mapper.relationships))),
+        'relation_overrides': list(map(lambda x: map_relationship_override(x), model_relationships_overrides)) if model_relationships_overrides else None,
         'hidden': name in hidden or name in configuration.get_hidden_model_description(),
         # 'relations': table_relations(mapper) + table_m2m_relations(mapper),
         'primary_key_field': primary_key.name if primary_key is not None else None
@@ -216,8 +235,9 @@ class ModelDescriptionView(APIView):
     def get_queryset(self, request):
         hidden = ['__jet__token']
         MappedBase = get_mapped_base(request)
+        draft = request.get_argument('draft', False)
 
-        return list(map(lambda x: map_table(x, hidden), MappedBase.classes))
+        return list(map(lambda x: map_table(request, x, hidden, draft), MappedBase.classes))
 
     def get(self, request, *args, **kwargs):
         queryset = self.get_queryset(request)

@@ -389,7 +389,12 @@ def connection_storage_set(request, name, value):
 def reload_request_mapped_base(request):
     MappedBase = get_mapped_base(request)
     reload_mapped_base(MappedBase)
+    reload_request_graphql_schema(request)
+
+
+def reload_request_graphql_schema(request):
     connection_cache_set(request, 'graphql_schema', None)
+    connection_cache_set(request, 'graphql_schema_draft', None)
 
 
 def reload_mapped_base(MappedBase):

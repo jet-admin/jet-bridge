@@ -31,14 +31,17 @@ class GraphQLView(APIView):
         return self.post(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
-        schema = connection_cache_get(request, 'graphql_schema')
+        draft = request.get_argument('draft', False)
+        schema_key = 'graphql_schema_draft' if draft else 'graphql_schema'
+
+        schema = connection_cache_get(request, schema_key)
         if schema is None:
             def before_resolve(request, mapper, *args, **kwargs):
                 request.context['model'] = mapper.selectable.name
                 self.check_permissions(request)
 
-            schema = GraphQLSchemaGenerator().get_schema(request, before_resolve=before_resolve)
-            connection_cache_set(request, 'graphql_schema', schema)
+            schema = GraphQLSchemaGenerator().get_schema(request, draft, before_resolve=before_resolve)
+            connection_cache_set(request, schema_key, schema)
 
         if 'query' not in request.data:
             return JSONResponse({})

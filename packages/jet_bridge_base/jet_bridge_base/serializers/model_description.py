@@ -35,6 +35,7 @@ class ModelDescriptionSerializer(Serializer):
     primary_key_field = fields_.CharField()
     fields = ModelDescriptionFieldSerializer(many=True)
     relations = ModelDescriptionRelationSerializer(many=True)
+    relation_overrides = ModelDescriptionRelationSerializer(many=True, required=False)
     verbose_name = fields_.CharField(required=False)
     verbose_name_plural = fields_.CharField(required=False)
     display_field = fields_.CharField(required=False)
