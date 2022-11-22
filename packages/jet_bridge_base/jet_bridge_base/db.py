@@ -2,6 +2,7 @@ import base64
 import json
 
 from jet_bridge_base.reflect import reflect
+from jet_bridge_base.utils.crypt import get_sha256_hash
 from jet_bridge_base.utils.type_codes import fetch_type_code_to_sql_type
 from six import StringIO
 from six.moves.urllib_parse import quote_plus
@@ -93,7 +94,7 @@ def build_engine_url(conf, tunnel=None):
 
 
 def get_connection_id(conf):
-    return json.dumps([
+    return get_sha256_hash(json.dumps([
         conf.get('engine'),
         conf.get('host'),
         conf.get('port'),
@@ -107,7 +108,7 @@ def get_connection_id(conf):
         conf.get('ssh_port'),
         conf.get('ssh_user'),
         conf.get('ssh_private_key')
-    ])
+    ]))
 
 
 def get_connection_params_id(conf):
@@ -225,6 +226,7 @@ def connect_database(conf):
                 logger.warning('Table "{}" does not have primary key and will be ignored'.format(table_name))
 
         connections[connection_id] = {
+            'id': connection_id,
             'engine': engine,
             'Session': Session,
             'MappedBase': MappedBase,
