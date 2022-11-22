@@ -1,6 +1,7 @@
 *.pyc
 *.DS_Store
 *.egg*
+*.db
 
 /.idea
 /packages/*/dist/
