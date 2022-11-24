@@ -9,6 +9,13 @@ class Storage(object):
     def __init__(self, path):
         self.path = path
 
+    def is_ok(self):
+        try:
+            with self.get_file():
+                return True
+        except Exception:
+            return False
+
     def get_file(self):
         return dbm.open(self.path, 'c')
 

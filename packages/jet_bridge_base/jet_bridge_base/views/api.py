@@ -1,5 +1,6 @@
 from jet_bridge_base.configuration import configuration
 from jet_bridge_base.responses.json import JSONResponse
+from jet_bridge_base.utils.storage import storage
 from jet_bridge_base.views.base.api import BaseAPIView
 
 
@@ -9,5 +10,6 @@ class ApiView(BaseAPIView):
         return JSONResponse({
             'version': configuration.get_version(),
             'type': configuration.get_type(),
+            'store_available': storage.is_ok(),
             'media_url_template': configuration.media_url('{}', request)
         })
