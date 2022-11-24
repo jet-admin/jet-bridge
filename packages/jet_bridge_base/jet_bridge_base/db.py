@@ -220,7 +220,7 @@ def connect_database(conf):
         logger.info('Connected to "{}"...'.format(log_address))
 
         MappedBase = automap_base(metadata=metadata)
-        reload_mapped_base(MappedBase)
+        load_mapped_base(MappedBase)
 
         for table_name, table in MappedBase.metadata.tables.items():
             if len(table.primary_key.columns) == 0 and table_name not in MappedBase.classes:
@@ -388,7 +388,7 @@ def connection_storage_set(request, name, value):
 
 def reload_request_mapped_base(request):
     MappedBase = get_mapped_base(request)
-    reload_mapped_base(MappedBase)
+    load_mapped_base(MappedBase, True)
     reload_request_graphql_schema(request)
 
 
@@ -397,7 +397,13 @@ def reload_request_graphql_schema(request):
     connection_cache_set(request, 'graphql_schema_draft', None)
 
 
-def reload_mapped_base(MappedBase):
+def load_mapped_base(MappedBase, clear=False):
+    def classname_for_table(base, tablename, table):
+        if table.schema and table.schema != MappedBase.metadata.schema:
+            return '{}.{}'.format(table.schema, tablename)
+        else:
+            return tablename
+
     def name_for_scalar_relationship(base, local_cls, referred_cls, constraint):
         foreign_key = constraint.elements[0] if len(constraint.elements) else None
         if foreign_key:
@@ -407,7 +413,7 @@ def reload_mapped_base(MappedBase):
 
         if name in constraint.parent.columns:
             name = name + '_relation'
-            logger.warning("Already detected column name, using {}".format(name))
+            logger.warning('Already detected column name, using {}'.format(name))
 
         return name
 
@@ -420,12 +426,16 @@ def reload_mapped_base(MappedBase):
 
         if name in constraint.parent.columns:
             name = name + '_relation'
-            logger.warning("Already detected column name, using {}".format(name))
+            logger.warning('Already detected column name, using {}'.format(name))
 
         return name
 
-    MappedBase.classes.clear()
+    if clear:
+        MappedBase.registry.dispose()
+        MappedBase.classes.clear()
+
     MappedBase.prepare(
+        classname_for_table=classname_for_table,
         name_for_scalar_relationship=name_for_scalar_relationship,
         name_for_collection_relationship=name_for_collection_relationship
     )

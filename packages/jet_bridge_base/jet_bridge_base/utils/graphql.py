@@ -1,10 +1,11 @@
 import re
 import graphene
 from jet_bridge_base.utils.relations import parse_relationship_direction
-from sqlalchemy import inspect, desc
+from sqlalchemy import inspect, desc, MetaData
+from sqlalchemy.ext.automap import automap_base
 from sqlalchemy.orm import MANYTOONE, ONETOMANY, aliased
 
-from jet_bridge_base.db import get_mapped_base, connection_storage_get
+from jet_bridge_base.db import get_mapped_base, connection_storage_get, get_engine, load_mapped_base
 from jet_bridge_base.filters import lookups
 from jet_bridge_base.filters.filter_for_dbfield import filter_for_data_type
 from jet_bridge_base.filters.model_group import get_query_func_by_name
@@ -62,7 +63,8 @@ def clean_keys(obj):
 
 
 class GraphQLSchemaGenerator(object):
-    relationships = {}
+    relationships_by_name = {}
+    relationships_by_clean_name = {}
     model_filters_types = {}
     model_filters_field_types = {}
     model_filters_relationship_types = {}
@@ -137,6 +139,18 @@ class GraphQLSchemaGenerator(object):
                 related_name = override.get('related_model')
                 related_model = MappedBase.classes.get(related_name)
 
+                if not related_model and '.' in related_name:
+                    schema, table = related_name.split('.', 1)
+                    engine = get_engine(request)
+                    bind = MappedBase.metadata.bind
+
+                    related_metadata = MetaData(schema=schema, bind=bind)
+                    related_metadata.reflect(bind=engine, schema=schema, only=[table])
+                    related_base = automap_base(metadata=related_metadata)
+                    load_mapped_base(related_base)
+
+                    related_model = related_base.classes.get(table)
+
                 if not related_model:
                     continue
 
@@ -160,7 +174,15 @@ class GraphQLSchemaGenerator(object):
 
     def get_model_relationships(self, mapper):
         name = mapper.selectable.name
-        return self.relationships.get(name, {})
+        return self.relationships_by_name.get(name, {}).values()
+
+    def get_model_relationships_by_name(self, mapper):
+        name = mapper.selectable.name
+        return self.relationships_by_name.get(name, {})
+
+    def get_model_relationships_by_clean_name(self, mapper):
+        name = mapper.selectable.name
+        return self.relationships_by_clean_name.get(name, {})
 
     def filter_queryset(self, MappedBase, queryset, mapper, filters, parent_relations=None, exclude=False):
         parent_relations = parent_relations or []
@@ -179,7 +201,7 @@ class GraphQLSchemaGenerator(object):
                     continue
 
                 column = mapper.columns.get(filter_name)
-                filter_relationship = self.get_model_relationships(mapper).get(filter_name)
+                filter_relationship = self.get_model_relationships_by_clean_name(mapper).get(filter_name)
 
                 if filter_relationship is not None:
                     for lookup_name, lookup_value in filter_lookups.items():
@@ -196,7 +218,7 @@ class GraphQLSchemaGenerator(object):
                 elif column is not None:
                     for lookup_name, lookup_value in filter_lookups.items():
                         if lookup_name == 'relation':
-                            for relationship in self.get_model_relationships(mapper).values():
+                            for relationship in self.get_model_relationships(mapper):
                                 if relationship['direction'] != MANYTOONE or relationship['local_column_name'] != column.name:
                                     continue
 
@@ -269,7 +291,7 @@ class GraphQLSchemaGenerator(object):
 
         for lookup_name, lookup_data in lookup_item.items():
             column = mapper.columns.get(lookup_name)
-            relationship = self.get_model_relationships(mapper).get(lookup_name)
+            relationship = self.get_model_relationships_by_clean_name(mapper).get(lookup_name)
 
             if relationship is not None:
                 lookup_result = {}
@@ -342,7 +364,7 @@ class GraphQLSchemaGenerator(object):
                 lookup_result['source_column'] = column.name
 
                 if 'relation' in lookup_data:
-                    for relationship in self.get_model_relationships(mapper).values():
+                    for relationship in self.get_model_relationships(mapper):
                         if relationship['direction'] != MANYTOONE or relationship['local_column_name'] != column.name:
                             continue
 
@@ -454,7 +476,7 @@ class GraphQLSchemaGenerator(object):
             attrs[attr_name] = column_filters_type()
 
         if with_relations:
-            for relationship in self.get_model_relationships(mapper).values():
+            for relationship in self.get_model_relationships(mapper):
                 if relationship['direction'] != ONETOMANY:
                     continue
 
@@ -486,7 +508,7 @@ class GraphQLSchemaGenerator(object):
             attrs[gql_lookup] = gql_scalar
 
         if with_relations:
-            for relationship in self.get_model_relationships(mapper).values():
+            for relationship in self.get_model_relationships(mapper):
                 if relationship['direction'] != MANYTOONE or relationship['local_column_name'] != column_name:
                     continue
 
@@ -534,7 +556,7 @@ class GraphQLSchemaGenerator(object):
             attrs[attr_name] = column_lookups_type()
 
         if with_relations:
-            for relationship in self.get_model_relationships(mapper).values():
+            for relationship in self.get_model_relationships(mapper):
                 if relationship['direction'] != ONETOMANY:
                     continue
 
@@ -561,7 +583,7 @@ class GraphQLSchemaGenerator(object):
         }
 
         if with_relations:
-            for relationship in self.get_model_relationships(mapper).values():
+            for relationship in self.get_model_relationships(mapper):
                 if relationship['direction'] != MANYTOONE or relationship['local_column_name'] != column_name:
                     continue
 
@@ -710,12 +732,22 @@ class GraphQLSchemaGenerator(object):
         except Exception as e:
             raise e
 
+    def clean_relationships_by_name(self, relationships):
+        def map_model_relations(x):
+            return clean_name(x[0]), x[1]
+
+        def map_models(x):
+            return x[0], dict(map(lambda r: map_model_relations(r), x[1].items()))
+
+        return dict(map(lambda x: map_models(x), relationships.items()))
+
     def get_query_type(self, request, draft, before_resolve=None):
         MappedBase = get_mapped_base(request)
 
         query_attrs = {}
 
-        self.relationships = self.get_relationships(request, MappedBase, draft)
+        self.relationships_by_name = self.get_relationships(request, MappedBase, draft)
+        self.relationships_by_clean_name = self.clean_relationships_by_name(self.relationships_by_name)
 
         for Model in MappedBase.classes:
             mapper = inspect(Model)
