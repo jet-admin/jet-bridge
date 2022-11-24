@@ -172,6 +172,18 @@ class GraphQLSchemaGenerator(object):
 
         return result
 
+    def clean_relationships_by_name(self, relationships):
+        def map_model_relations(x):
+            return clean_name(x[0]), x[1]
+
+        def map_models(x):
+            return x[0], dict(map(lambda r: map_model_relations(r), x[1].items()))
+
+        return dict(map(lambda x: map_models(x), relationships.items()))
+
+    def get_model_columns_by_clean_name(self, mapper):
+        return dict(map(lambda x: (clean_name(x[0]), x[1]), mapper.columns.items()))
+
     def get_model_relationships(self, mapper):
         name = mapper.selectable.name
         return self.relationships_by_name.get(name, {}).values()
@@ -200,7 +212,8 @@ class GraphQLSchemaGenerator(object):
                     )
                     continue
 
-                column = mapper.columns.get(filter_name)
+                columns_by_clean_name = self.get_model_columns_by_clean_name(mapper)
+                column = columns_by_clean_name.get(filter_name)
                 filter_relationship = self.get_model_relationships_by_clean_name(mapper).get(filter_name)
 
                 if filter_relationship is not None:
@@ -290,7 +303,8 @@ class GraphQLSchemaGenerator(object):
         result = {}
 
         for lookup_name, lookup_data in lookup_item.items():
-            column = mapper.columns.get(lookup_name)
+            columns_by_clean_name = self.get_model_columns_by_clean_name(mapper)
+            column = columns_by_clean_name.get(lookup_name)
             relationship = self.get_model_relationships_by_clean_name(mapper).get(lookup_name)
 
             if relationship is not None:
@@ -432,14 +446,23 @@ class GraphQLSchemaGenerator(object):
     def map_sort_order_field(self, mapper, name, options):
         descending = options.get('descending', False)
 
-        column = mapper.columns.get(name)
+        columns_by_clean_name = self.get_model_columns_by_clean_name(mapper)
+        column = columns_by_clean_name.get(name)
+
+        if column is None:
+            return
+
         if descending:
             column = desc(column)
+
         return column
 
     def sort_queryset(self, queryset, mapper, sort):
         for item in sort:
-            order_by = list(map(lambda x: self.map_sort_order_field(mapper, x[0], x[1]), item.items()))
+            order_by = map(lambda x: self.map_sort_order_field(mapper, x[0], x[1]), item.items())
+            order_by = filter(lambda x: x is not None, order_by)
+            order_by = list(order_by)
+
             queryset = queryset.order_by(*order_by)
 
         return queryset
@@ -731,15 +754,6 @@ class GraphQLSchemaGenerator(object):
             return result
         except Exception as e:
             raise e
-
-    def clean_relationships_by_name(self, relationships):
-        def map_model_relations(x):
-            return clean_name(x[0]), x[1]
-
-        def map_models(x):
-            return x[0], dict(map(lambda r: map_model_relations(r), x[1].items()))
-
-        return dict(map(lambda x: map_models(x), relationships.items()))
 
     def get_query_type(self, request, draft, before_resolve=None):
         MappedBase = get_mapped_base(request)
