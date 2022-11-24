@@ -1,4 +1,4 @@
-from jet_bridge_base.serializers.relationship_override import RelationshipOverrideSerializer
+from jet_bridge_base.serializers.relationship_override import ModelDescriptionRelationOverridesSerializer
 
 from jet_bridge_base.permissions import HasProjectPermissions
 from jet_bridge_base.responses.json import JSONResponse
@@ -10,7 +10,7 @@ class ModelDescriptionRelationshipOverrideView(APIView):
 
     def post(self, request, *args, **kwargs):
         serializer_context = {'request': request}
-        serializer = RelationshipOverrideSerializer(data=request.data, many=True, context=serializer_context)
+        serializer = ModelDescriptionRelationOverridesSerializer(data=request.data, many=True, context=serializer_context)
         serializer.is_valid(raise_exception=True)
         serializer.save()
 

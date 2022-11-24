@@ -1,19 +1,23 @@
 from sqlalchemy import inspect
 
 from jet_bridge_base import fields
-from jet_bridge_base.db import get_mapped_base, connection_cache_set, reload_request_graphql_schema, \
-    connection_storage_set, connection_storage_get
+from jet_bridge_base.db import get_mapped_base, reload_request_graphql_schema, connection_storage_set, \
+    connection_storage_get
 from jet_bridge_base.exceptions.validation_error import ValidationError
 from jet_bridge_base.serializers.serializer import Serializer
 from jet_bridge_base.logger import logger
 
 
-class RelationshipOverrideSerializer(Serializer):
-    model = fields.CharField()
+class ModelDescriptionRelationOverrideSerializer(Serializer):
     direction = fields.CharField()
     local_field = fields.CharField()
     related_model = fields.CharField()
     related_field = fields.CharField()
+
+
+class ModelDescriptionRelationOverridesSerializer(Serializer):
+    model = fields.CharField()
+    relations = ModelDescriptionRelationOverrideSerializer(many=True)
 
     def get_model(self, request, name):
         MappedBase = get_mapped_base(request)
@@ -46,12 +50,13 @@ class RelationshipOverrideSerializer(Serializer):
 
         mapper = inspect(Model)
 
-        if attrs['direction'] == 'MANYTOONE':
-            attrs['name'] = self.generate_many_to_one_name(mapper, attrs['local_field'], attrs['related_model'], attrs['related_field'])
-        elif attrs['direction'] == 'ONETOMANY':
-            attrs['name'] = self.generate_one_to_many_name(mapper, attrs['local_field'], attrs['related_model'], attrs['related_field'])
-        else:
-            raise ValidationError('Unknown relation direction: {}'.format(attrs['direction']))
+        for item in attrs['relations']:
+            if item['direction'] == 'MANYTOONE':
+                item['name'] = self.generate_many_to_one_name(mapper, item['local_field'], item['related_model'], item['related_field'])
+            elif item['direction'] == 'ONETOMANY':
+                item['name'] = self.generate_one_to_many_name(mapper, item['local_field'], item['related_model'], item['related_field'])
+            else:
+                raise ValidationError('Unknown relation direction: {}'.format(item['direction']))
 
         return attrs
 
@@ -62,18 +67,14 @@ class RelationshipOverrideSerializer(Serializer):
         relationships_overrides_key = 'relation_overrides_draft' if draft else 'relation_overrides'
         relationships_overrides = connection_storage_get(request, relationships_overrides_key, {})
 
-        for override in self.validated_data:
-            if override['model'] not in relationships_overrides:
-                relationships_overrides[override['model']] = []
-
-            relationships_overrides[override['model']].append({
-                'name': override.get('name'),
-                'direction': override.get('direction'),
-                'local_field': override.get('local_field'),
-                'related_model': override.get('related_model'),
-                'related_field': override.get('related_field')
-            })
-
+        for item in self.validated_data:
+            relationships_overrides[item['model']] = list(map(lambda x: {
+                'name': x.get('name'),
+                'direction': x.get('direction'),
+                'local_field': x.get('local_field'),
+                'related_model': x.get('related_model'),
+                'related_field': x.get('related_field')
+            }, item['relations']))
 
         connection_storage_set(request, relationships_overrides_key, relationships_overrides)
         reload_request_graphql_schema(request)
