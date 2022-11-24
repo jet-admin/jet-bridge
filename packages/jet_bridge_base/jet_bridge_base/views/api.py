@@ -1,6 +1,6 @@
 from jet_bridge_base.configuration import configuration
 from jet_bridge_base.responses.json import JSONResponse
-from jet_bridge_base.utils.store import store
+from jet_bridge_base.store import store
 from jet_bridge_base.views.base.api import BaseAPIView
 
 

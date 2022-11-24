@@ -31,7 +31,7 @@ class GraphQLView(APIView):
         return self.post(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
-        draft = request.get_argument('draft', False)
+        draft = bool(request.get_argument('draft', False))
         schema_key = 'graphql_schema_draft' if draft else 'graphql_schema'
 
         schema = connection_cache_get(request, schema_key)

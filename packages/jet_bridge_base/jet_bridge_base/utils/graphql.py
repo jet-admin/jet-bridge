@@ -1,11 +1,13 @@
 import re
 import graphene
+from jet_bridge_base.models.model_relation_override import ModelRelationOverrideModel
+from jet_bridge_base.store import store
 from jet_bridge_base.utils.relations import parse_relationship_direction
 from sqlalchemy import inspect, desc, MetaData
 from sqlalchemy.ext.automap import automap_base
 from sqlalchemy.orm import MANYTOONE, ONETOMANY, aliased
 
-from jet_bridge_base.db import get_mapped_base, connection_store_get, get_engine, load_mapped_base
+from jet_bridge_base.db import get_mapped_base, get_engine, load_mapped_base, get_request_connection
 from jet_bridge_base.filters import lookups
 from jet_bridge_base.filters.filter_for_dbfield import filter_for_data_type
 from jet_bridge_base.filters.model_group import get_query_func_by_name
@@ -128,45 +130,50 @@ class GraphQLSchemaGenerator(object):
                         'related_column_name': relation_column.name if relation_column is not None else None
                     }
 
-            relationships_overrides_key = 'relation_overrides_draft' if draft else 'relation_overrides'
-            relationships_overrides = connection_store_get(request, relationships_overrides_key, {})
+            if store.is_ok():
+                connection = get_request_connection(request)
 
-            model_relationships_overrides = relationships_overrides.get(name, [])
+                with store.session() as session:
+                    model_relationships_overrides = session.query(ModelRelationOverrideModel).filter(
+                        ModelRelationOverrideModel.connection_id == connection['id'],
+                        ModelRelationOverrideModel.model == name,
+                        draft == draft
+                    ).all()
 
-            for override in model_relationships_overrides:
-                direction = parse_relationship_direction(override.get('direction'))
-                local_column = getattr(Model, override.get('local_field'))
-                related_name = override.get('related_model')
-                related_model = MappedBase.classes.get(related_name)
+                for override in model_relationships_overrides:
+                    direction = parse_relationship_direction(override.direction)
+                    local_column = getattr(Model, override.local_field)
+                    related_name = override.related_model
+                    related_model = MappedBase.classes.get(related_name)
 
-                if not related_model and '.' in related_name:
-                    schema, table = related_name.split('.', 1)
-                    engine = get_engine(request)
-                    bind = MappedBase.metadata.bind
+                    if not related_model and '.' in related_name:
+                        schema, table = related_name.split('.', 1)
+                        engine = get_engine(request)
+                        bind = MappedBase.metadata.bind
 
-                    related_metadata = MetaData(schema=schema, bind=bind)
-                    related_metadata.reflect(bind=engine, schema=schema, only=[table])
-                    related_base = automap_base(metadata=related_metadata)
-                    load_mapped_base(related_base)
+                        related_metadata = MetaData(schema=schema, bind=bind)
+                        related_metadata.reflect(bind=engine, schema=schema, only=[table])
+                        related_base = automap_base(metadata=related_metadata)
+                        load_mapped_base(related_base)
 
-                    related_model = related_base.classes.get(table)
+                        related_model = related_base.classes.get(table)
 
-                if not related_model:
-                    continue
+                    if not related_model:
+                        continue
 
-                related_mapper = inspect(related_model)
-                related_column = getattr(related_model, override.get('related_field'))
+                    related_mapper = inspect(related_model)
+                    related_column = getattr(related_model, override.related_field)
 
-                model_relationships[override['name']] = {
-                    'name': override.get('name'),
-                    'direction': direction,
-                    'local_column': local_column,
-                    'local_column_name': override.get('local_field'),
-                    'related_model': related_model,
-                    'related_mapper': related_mapper,
-                    'related_column': related_column,
-                    'related_column_name': override.get('related_field')
-                }
+                    model_relationships[override.name] = {
+                        'name': override.name,
+                        'direction': direction,
+                        'local_column': local_column,
+                        'local_column_name': override.local_field,
+                        'related_model': related_model,
+                        'related_mapper': related_mapper,
+                        'related_column': related_column,
+                        'related_column_name': override.related_field
+                    }
 
             result[name] = model_relationships
 

@@ -1,8 +1,9 @@
+from jet_bridge_base.models.model_relation_override import ModelRelationOverrideModel
+from jet_bridge_base.store import store
 from sqlalchemy import inspect
 
 from jet_bridge_base import fields
-from jet_bridge_base.db import get_mapped_base, reload_request_graphql_schema, connection_store_set, \
-    connection_store_get
+from jet_bridge_base.db import get_mapped_base, reload_request_graphql_schema, get_request_connection
 from jet_bridge_base.exceptions.validation_error import ValidationError
 from jet_bridge_base.serializers.serializer import Serializer
 from jet_bridge_base.logger import logger
@@ -62,19 +63,44 @@ class ModelDescriptionRelationOverridesSerializer(Serializer):
 
     def save(self):
         request = self.context.get('request')
-        draft = request.get_argument('draft', False)
+        connection = get_request_connection(request)
+        draft = bool(request.get_argument('draft', False))
 
-        relationships_overrides_key = 'relation_overrides_draft' if draft else 'relation_overrides'
-        relationships_overrides = connection_store_get(request, relationships_overrides_key, {})
+        with store.session() as session:
+            with session.begin():
+                for item in self.validated_data:
+                    set_overrides = sorted(item['relations'], key=lambda x: x['name'])
 
-        for item in self.validated_data:
-            relationships_overrides[item['model']] = list(map(lambda x: {
-                'name': x.get('name'),
-                'direction': x.get('direction'),
-                'local_field': x.get('local_field'),
-                'related_model': x.get('related_model'),
-                'related_field': x.get('related_field')
-            }, item['relations']))
+                    existing_overrides = session.query(ModelRelationOverrideModel).filter(
+                        ModelRelationOverrideModel.connection_id == connection['id'],
+                        ModelRelationOverrideModel.model == item['model'],
+                        draft == draft
+                    ).order_by(ModelRelationOverrideModel.name).all()
+                    existing_overrides = list(existing_overrides)
 
-        connection_store_set(request, relationships_overrides_key, relationships_overrides)
+                    for i, override in enumerate(set_overrides):
+                        existing_override = existing_overrides[i] if i < len(existing_overrides) else None
+
+                        if existing_override:
+                            override.name = override.get('name'),
+                            override.direction = override.get('direction'),
+                            override.local_field = override.get('local_field'),
+                            override.related_model = override.get('related_model'),
+                            override.related_field = override.get('related_field')
+                        else:
+                            session.add(ModelRelationOverrideModel(
+                                connection_id=connection['id'],
+                                model=item['model'],
+                                draft=draft,
+                                name=override.get('name'),
+                                direction=override.get('direction'),
+                                local_field=override.get('local_field'),
+                                related_model=override.get('related_model'),
+                                related_field=override.get('related_field')
+                            ))
+
+                    delete_overrides = existing_overrides[len(item['relations']):]
+                    for override in delete_overrides:
+                        session.delete(override)
+
         reload_request_graphql_schema(request)
