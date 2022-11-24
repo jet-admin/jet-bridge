@@ -7,7 +7,7 @@ from jet_bridge_base.logger import logger
 from sqlalchemy.orm import scoped_session, sessionmaker
 
 
-class Storage(object):
+class Store(object):
     engine = None
     sessions = None
 
@@ -67,4 +67,4 @@ class Storage(object):
         self.set(key, data)
 
 
-storage = Storage(settings.STORE_PATH)
+store = Store(settings.STORE_PATH)

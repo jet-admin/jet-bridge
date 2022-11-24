@@ -1,8 +1,8 @@
 from sqlalchemy import inspect
 
 from jet_bridge_base import fields
-from jet_bridge_base.db import get_mapped_base, reload_request_graphql_schema, connection_storage_set, \
-    connection_storage_get
+from jet_bridge_base.db import get_mapped_base, reload_request_graphql_schema, connection_store_set, \
+    connection_store_get
 from jet_bridge_base.exceptions.validation_error import ValidationError
 from jet_bridge_base.serializers.serializer import Serializer
 from jet_bridge_base.logger import logger
@@ -65,7 +65,7 @@ class ModelDescriptionRelationOverridesSerializer(Serializer):
         draft = request.get_argument('draft', False)
 
         relationships_overrides_key = 'relation_overrides_draft' if draft else 'relation_overrides'
-        relationships_overrides = connection_storage_get(request, relationships_overrides_key, {})
+        relationships_overrides = connection_store_get(request, relationships_overrides_key, {})
 
         for item in self.validated_data:
             relationships_overrides[item['model']] = list(map(lambda x: {
@@ -76,5 +76,5 @@ class ModelDescriptionRelationOverridesSerializer(Serializer):
                 'related_field': x.get('related_field')
             }, item['relations']))
 
-        connection_storage_set(request, relationships_overrides_key, relationships_overrides)
+        connection_store_set(request, relationships_overrides_key, relationships_overrides)
         reload_request_graphql_schema(request)

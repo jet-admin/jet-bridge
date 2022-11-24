@@ -5,7 +5,7 @@ from sqlalchemy import inspect, String, Enum, Date
 from sqlalchemy.orm import MANYTOONE, ONETOMANY
 from sqlalchemy.sql.elements import TextClause
 
-from jet_bridge_base.db import get_mapped_base, connection_cache_get, connection_storage_get
+from jet_bridge_base.db import get_mapped_base, connection_cache_get, connection_store_get
 from jet_bridge_base.models import data_types
 from jet_bridge_base.permissions import HasProjectPermissions
 from jet_bridge_base.responses.json import JSONResponse
@@ -208,7 +208,7 @@ def map_table(request, cls, hidden, draft):
     additional = configuration.get_model_description(name)
 
     relationships_overrides_key = 'relation_overrides_draft' if draft else 'relation_overrides'
-    relationships_overrides = connection_storage_get(request, relationships_overrides_key, {})
+    relationships_overrides = connection_store_get(request, relationships_overrides_key, {})
     model_relationships_overrides = relationships_overrides.get(name)
 
     result = {

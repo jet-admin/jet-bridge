@@ -3,7 +3,7 @@ import json
 
 from jet_bridge_base.reflect import reflect
 from jet_bridge_base.utils.crypt import get_sha256_hash
-from jet_bridge_base.utils.storage import storage
+from jet_bridge_base.utils.store import store
 from jet_bridge_base.utils.type_codes import fetch_type_code_to_sql_type
 from six import StringIO
 from six.moves.urllib_parse import quote_plus
@@ -367,23 +367,23 @@ def connection_cache_set(request, name, value):
     connection['cache'][name] = value
 
 
-def connection_storage_get(request, name, default):
+def connection_store_get(request, name, default):
     connection = get_request_connection(request)
     if not connection:
         return
     key = 'con_{}'.format(connection['id'])
-    connection_data = storage.get_object(key, {})
+    connection_data = store.get_object(key, {})
     return connection_data.get(name, default)
 
 
-def connection_storage_set(request, name, value):
+def connection_store_set(request, name, value):
     connection = get_request_connection(request)
     if not connection:
         return
     key = 'con_{}'.format(connection['id'])
-    connection_data = storage.get_object(key, {})
+    connection_data = store.get_object(key, {})
     connection_data[name] = value
-    storage.set_object(key, connection_data)
+    store.set_object(key, connection_data)
 
 
 def reload_request_mapped_base(request):

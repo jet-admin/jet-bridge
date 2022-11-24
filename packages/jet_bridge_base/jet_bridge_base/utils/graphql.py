@@ -5,7 +5,7 @@ from sqlalchemy import inspect, desc, MetaData
 from sqlalchemy.ext.automap import automap_base
 from sqlalchemy.orm import MANYTOONE, ONETOMANY, aliased
 
-from jet_bridge_base.db import get_mapped_base, connection_storage_get, get_engine, load_mapped_base
+from jet_bridge_base.db import get_mapped_base, connection_store_get, get_engine, load_mapped_base
 from jet_bridge_base.filters import lookups
 from jet_bridge_base.filters.filter_for_dbfield import filter_for_data_type
 from jet_bridge_base.filters.model_group import get_query_func_by_name
@@ -129,7 +129,7 @@ class GraphQLSchemaGenerator(object):
                     }
 
             relationships_overrides_key = 'relation_overrides_draft' if draft else 'relation_overrides'
-            relationships_overrides = connection_storage_get(request, relationships_overrides_key, {})
+            relationships_overrides = connection_store_get(request, relationships_overrides_key, {})
 
             model_relationships_overrides = relationships_overrides.get(name, [])
 
