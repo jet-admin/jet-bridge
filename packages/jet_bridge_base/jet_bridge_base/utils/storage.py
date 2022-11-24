@@ -6,26 +6,31 @@ from jet_bridge_base.encoders import JSONEncoder
 
 
 class Storage(object):
+    db = None
+
     def __init__(self, path):
         self.path = path
 
-    def is_ok(self):
         try:
-            with self.get_file():
-                return True
+            self.db = self.open_db()
         except Exception:
-            return False
+            self.db = None
 
-    def get_file(self):
+    def is_ok(self):
+        return self.db is not None
+
+    def open_db(self):
         return dbm.open(self.path, 'c')
 
     def get(self, key, default=None):
-        with self.get_file() as f:
-            return f.get(key, default)
+        if not self.db:
+            return
+        return self.db.get(key, default)
 
     def set(self, key, value):
-        with self.get_file() as f:
-            f[key] = value
+        if not self.db:
+            return
+        self.db[key] = value
 
     def get_object(self, key, default=None):
         data = self.get(key)
