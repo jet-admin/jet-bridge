@@ -32,6 +32,7 @@ class GraphQLView(APIView):
 
     def post(self, request, *args, **kwargs):
         draft = bool(request.get_argument('draft', False))
+        validate = bool(request.data.get('validate', True))
         schema_key = 'graphql_schema_draft' if draft else 'graphql_schema'
 
         schema = connection_cache_get(request, schema_key)
@@ -47,10 +48,16 @@ class GraphQLView(APIView):
             return JSONResponse({})
 
         query = request.data.get('query')
-        result = schema.execute(query, variables={}, context_value={
+        context_value = {
             'request': request,
             'session': request.session
-        })
+        }
+        result = schema.execute(
+            query,
+            variables={},
+            context_value=context_value,
+            validate=validate
+        )
 
         if result.errors is not None and len(result.errors):
             error = result.errors[0]
