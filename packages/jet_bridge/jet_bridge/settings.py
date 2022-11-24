@@ -64,7 +64,7 @@ define('cookie_secure', default=True, type=bool)
 define('cookie_domain', default=None, type=str)
 define('cookie_compress', default=False, type=bool)
 
-define('store_path', default='jet_bridge_store', type=str)
+define('store_path', default='jet_bridge_store.sqlite3', type=str)
 
 define('sso_applications', default='{}', type=str)
 define('allow_origin', default='*')

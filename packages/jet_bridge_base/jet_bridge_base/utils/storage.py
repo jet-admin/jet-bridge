@@ -1,36 +1,55 @@
-import dbm
 import json
+from sqlalchemy import create_engine
 
 from jet_bridge_base import settings
 from jet_bridge_base.encoders import JSONEncoder
+from jet_bridge_base.logger import logger
+from sqlalchemy.orm import scoped_session, sessionmaker
 
 
 class Storage(object):
-    db = None
+    engine = None
+    sessions = None
 
     def __init__(self, path):
         self.path = path
+        self.open()
 
+    def open(self):
         try:
-            self.db = self.open_db()
-        except Exception:
-            self.db = None
+            self.engine = create_engine('sqlite:///{}'.format(self.path))
+            self.sessions = scoped_session(sessionmaker(self.engine))
+
+            with self.sessions() as session:
+                session.execute('CREATE TABLE IF NOT EXISTS kv_store (key text unique, value text)')
+                session.commit()
+        except Exception as e:
+            logger.error('Store initialize failed', exc_info=e)
 
     def is_ok(self):
-        return self.db is not None
+        return self.engine is not None and self.sessions is not None
 
-    def open_db(self):
-        return dbm.open(self.path, 'c')
+    def close(self):
+        if self.engine:
+            self.engine.dispose()
 
     def get(self, key, default=None):
-        if not self.db:
-            return
-        return self.db.get(key, default)
+        if not self.is_ok():
+            return default
+
+        with self.sessions() as session:
+            item = session.execute('SELECT value FROM kv_store WHERE key = :key', {'key': key}).fetchone()
+            if item is None:
+                return default
+            return item[0]
 
     def set(self, key, value):
-        if not self.db:
+        if not self.is_ok():
             return
-        self.db[key] = value
+
+        with self.sessions() as session:
+            session.execute('REPLACE INTO kv_store (key, value) VALUES (:key, :value)', {'key': key, 'value': value})
+            session.commit()
 
     def get_object(self, key, default=None):
         data = self.get(key)
