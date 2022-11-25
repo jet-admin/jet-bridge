@@ -65,15 +65,16 @@ def clean_keys(obj):
 
 
 class GraphQLSchemaGenerator(object):
-    relationships_by_name = {}
-    relationships_by_clean_name = {}
-    model_filters_types = {}
-    model_filters_field_types = {}
-    model_filters_relationship_types = {}
-    model_lookups_types = {}
-    model_lookups_field_types = {}
-    model_lookups_relationship_types = {}
-    model_sort_types = {}
+    def __init__(self):
+        self.relationships_by_name = dict()
+        self.relationships_by_clean_name = dict()
+        self.model_filters_types = dict()
+        self.model_filters_field_types = dict()
+        self.model_filters_relationship_types = dict()
+        self.model_lookups_types = dict()
+        self.model_lookups_field_types = dict()
+        self.model_lookups_relationship_types = dict()
+        self.model_sort_types = dict()
 
     def get_queryset(self, request, Model, only_columns=None):
         if only_columns:
