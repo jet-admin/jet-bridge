@@ -82,11 +82,11 @@ class ModelDescriptionRelationOverridesSerializer(Serializer):
                         existing_override = existing_overrides[i] if i < len(existing_overrides) else None
 
                         if existing_override:
-                            override.name = override.get('name'),
-                            override.direction = override.get('direction'),
-                            override.local_field = override.get('local_field'),
-                            override.related_model = override.get('related_model'),
-                            override.related_field = override.get('related_field')
+                            existing_override.name = override.get('name')
+                            existing_override.direction = override.get('direction')
+                            existing_override.local_field = override.get('local_field')
+                            existing_override.related_model = override.get('related_model')
+                            existing_override.related_field = override.get('related_field')
                         else:
                             session.add(ModelRelationOverrideModel(
                                 connection_id=connection['id'],
