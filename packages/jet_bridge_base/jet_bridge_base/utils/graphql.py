@@ -15,7 +15,7 @@ from jet_bridge_base.filters.model_search import search_queryset
 from jet_bridge_base.serializers.model import get_model_serializer
 from jet_bridge_base.utils.common import get_set_first, any_type_sorter
 from jet_bridge_base.utils.gql import RawScalar
-from jet_bridge_base.utils.queryset import queryset_count_optimized
+from jet_bridge_base.utils.queryset import queryset_count_optimized, apply_default_ordering
 
 
 class FieldSortType(graphene.InputObjectType):
@@ -464,13 +464,15 @@ class GraphQLSchemaGenerator(object):
 
         return column
 
-    def sort_queryset(self, queryset, mapper, sort):
+    def sort_queryset(self, queryset, Model, mapper, sort):
         for item in sort:
             order_by = map(lambda x: self.map_sort_order_field(mapper, x[0], x[1]), item.items())
             order_by = filter(lambda x: x is not None, order_by)
             order_by = list(order_by)
 
             queryset = queryset.order_by(*order_by)
+
+        queryset = apply_default_ordering(Model, queryset)
 
         return queryset
 
@@ -709,7 +711,7 @@ class GraphQLSchemaGenerator(object):
 
             queryset = self.filter_queryset(MappedBase, queryset, mapper, filters)
             queryset = self.search_queryset(queryset, mapper, search)
-            queryset = self.sort_queryset(queryset, mapper, sort)
+            queryset = self.sort_queryset(queryset, Model, mapper, sort)
 
             queryset_page = list(self.paginate_queryset(queryset, pagination))
 
