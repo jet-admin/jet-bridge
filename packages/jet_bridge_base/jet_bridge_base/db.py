@@ -1,7 +1,10 @@
 import base64
+import contextlib
 import json
+import threading
 
 from jet_bridge_base.reflect import reflect
+from jet_bridge_base.utils.crypt import get_sha256_hash
 from jet_bridge_base.utils.type_codes import fetch_type_code_to_sql_type
 from six import StringIO
 from six.moves.urllib_parse import quote_plus
@@ -18,7 +21,6 @@ except ImportError:
     pass
 
 from jet_bridge_base import settings
-from jet_bridge_base.models import Base
 from jet_bridge_base.logger import logger
 
 connections = {}
@@ -93,7 +95,7 @@ def build_engine_url(conf, tunnel=None):
 
 
 def get_connection_id(conf):
-    return json.dumps([
+    return get_sha256_hash(json.dumps([
         conf.get('engine'),
         conf.get('host'),
         conf.get('port'),
@@ -107,7 +109,7 @@ def get_connection_id(conf):
         conf.get('ssh_port'),
         conf.get('ssh_user'),
         conf.get('ssh_private_key')
-    ])
+    ]))
 
 
 def get_connection_params_id(conf):
@@ -218,20 +220,22 @@ def connect_database(conf):
         logger.info('Connected to "{}"...'.format(log_address))
 
         MappedBase = automap_base(metadata=metadata)
-        reload_mapped_base(MappedBase)
+        load_mapped_base(MappedBase)
 
         for table_name, table in MappedBase.metadata.tables.items():
             if len(table.primary_key.columns) == 0 and table_name not in MappedBase.classes:
                 logger.warning('Table "{}" does not have primary key and will be ignored'.format(table_name))
 
         connections[connection_id] = {
+            'id': connection_id,
             'engine': engine,
             'Session': Session,
             'MappedBase': MappedBase,
             'params_id': connection_params_id,
             'type_code_to_sql_type': type_code_to_sql_type,
             'tunnel': tunnel,
-            'cache': {}
+            'cache': {},
+            'lock': threading.Lock()
         }
 
     session.close()
@@ -350,37 +354,64 @@ def get_type_code_to_sql_type(request):
     return connection['type_code_to_sql_type']
 
 
+@contextlib.contextmanager
+def connection_cache(request):
+    connection = get_request_connection(request)
+    if not connection:
+        yield {}
+    with connection['lock']:
+        yield connection['cache']
+
+
 def connection_cache_get(request, name, default=None):
     connection = get_request_connection(request)
     if not connection:
         return
-    return connection['cache'].get(name, default)
+    with connection['lock']:
+        return connection['cache'].get(name, default)
 
 
 def connection_cache_set(request, name, value):
     connection = get_request_connection(request)
     if not connection:
         return
-    connection['cache'][name] = value
+    with connection['lock']:
+        connection['cache'][name] = value
 
 
 def reload_request_mapped_base(request):
     MappedBase = get_mapped_base(request)
-    reload_mapped_base(MappedBase)
-    connection_cache_set(request, 'graphql_schema', None)
+    load_mapped_base(MappedBase, True)
+    reload_request_graphql_schema(request)
 
 
-def reload_mapped_base(MappedBase):
+def reload_request_graphql_schema(request, draft=None):
+    with connection_cache(request) as cache:
+        if draft is None:
+            cache['graphql_schema'] = None
+            cache['graphql_schema_draft'] = None
+        else:
+            schema_key = 'graphql_schema_draft' if draft else 'graphql_schema'
+            cache[schema_key] = None
+
+
+def load_mapped_base(MappedBase, clear=False):
+    def classname_for_table(base, tablename, table):
+        if table.schema and table.schema != MappedBase.metadata.schema:
+            return '{}.{}'.format(table.schema, tablename)
+        else:
+            return tablename
+
     def name_for_scalar_relationship(base, local_cls, referred_cls, constraint):
         foreign_key = constraint.elements[0] if len(constraint.elements) else None
         if foreign_key:
-            name = '__'.join([foreign_key.parent.name, 'to', foreign_key.column.name])
+            name = '__'.join([foreign_key.parent.name, 'to', foreign_key.column.table.name, foreign_key.column.name])
         else:
             name = referred_cls.__name__.lower()
 
         if name in constraint.parent.columns:
             name = name + '_relation'
-            logger.warning("Already detected column name, using {}".format(name))
+            logger.warning('Already detected column name, using {}'.format(name))
 
         return name
 
@@ -393,12 +424,16 @@ def reload_mapped_base(MappedBase):
 
         if name in constraint.parent.columns:
             name = name + '_relation'
-            logger.warning("Already detected column name, using {}".format(name))
+            logger.warning('Already detected column name, using {}'.format(name))
 
         return name
 
-    MappedBase.classes.clear()
+    if clear:
+        MappedBase.registry.dispose()
+        MappedBase.classes.clear()
+
     MappedBase.prepare(
+        classname_for_table=classname_for_table,
         name_for_scalar_relationship=name_for_scalar_relationship,
         name_for_collection_relationship=name_for_collection_relationship
     )

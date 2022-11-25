@@ -15,6 +15,7 @@ from jet_bridge_base.views.file_upload import FileUploadView
 from jet_bridge_base.views.message import MessageView
 from jet_bridge_base.views.model import ModelViewSet
 from jet_bridge_base.views.model_description import ModelDescriptionView
+from jet_bridge_base.views.model_description_relationship_override import ModelDescriptionRelationshipOverrideView
 from jet_bridge_base.views.proxy_request import ProxyRequestView
 from jet_bridge_base.views.register import RegisterView
 from jet_bridge_base.views.reload import ReloadView
@@ -41,6 +42,7 @@ def make_app():
         (r'/api/', view_handler(ApiView)),
         (r'/api/register/', view_handler(RegisterView)),
         (r'/api/graphql/', view_handler(GraphQLView)),
+        (r'/api/model_descriptions/relationship_overrides/', view_handler(ModelDescriptionRelationshipOverrideView)),
         (r'/api/model_descriptions/', view_handler(ModelDescriptionView)),
         (r'/api/sql/', view_handler(SqlView)),
         (r'/api/messages/', view_handler(MessageView)),
