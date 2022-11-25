@@ -1,5 +1,7 @@
 import base64
+import contextlib
 import json
+import threading
 
 from jet_bridge_base.reflect import reflect
 from jet_bridge_base.utils.crypt import get_sha256_hash
@@ -232,7 +234,8 @@ def connect_database(conf):
             'params_id': connection_params_id,
             'type_code_to_sql_type': type_code_to_sql_type,
             'tunnel': tunnel,
-            'cache': {}
+            'cache': {},
+            'lock': threading.Lock()
         }
 
     session.close()
@@ -351,18 +354,29 @@ def get_type_code_to_sql_type(request):
     return connection['type_code_to_sql_type']
 
 
+@contextlib.contextmanager
+def connection_cache(request):
+    connection = get_request_connection(request)
+    if not connection:
+        yield {}
+    with connection['lock']:
+        yield connection['cache']
+
+
 def connection_cache_get(request, name, default=None):
     connection = get_request_connection(request)
     if not connection:
         return
-    return connection['cache'].get(name, default)
+    with connection['lock']:
+        return connection['cache'].get(name, default)
 
 
 def connection_cache_set(request, name, value):
     connection = get_request_connection(request)
     if not connection:
         return
-    connection['cache'][name] = value
+    with connection['lock']:
+        connection['cache'][name] = value
 
 
 def reload_request_mapped_base(request):
@@ -371,9 +385,14 @@ def reload_request_mapped_base(request):
     reload_request_graphql_schema(request)
 
 
-def reload_request_graphql_schema(request):
-    connection_cache_set(request, 'graphql_schema', None)
-    connection_cache_set(request, 'graphql_schema_draft', None)
+def reload_request_graphql_schema(request, draft=None):
+    with connection_cache(request) as cache:
+        if draft is None:
+            cache['graphql_schema'] = None
+            cache['graphql_schema_draft'] = None
+        else:
+            schema_key = 'graphql_schema_draft' if draft else 'graphql_schema'
+            cache[schema_key] = None
 
 
 def load_mapped_base(MappedBase, clear=False):

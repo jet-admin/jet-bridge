@@ -103,4 +103,4 @@ class ModelDescriptionRelationOverridesSerializer(Serializer):
                     for override in delete_overrides:
                         session.delete(override)
 
-        reload_request_graphql_schema(request)
+        reload_request_graphql_schema(request, draft)
