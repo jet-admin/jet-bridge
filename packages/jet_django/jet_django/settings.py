@@ -36,6 +36,8 @@ JET_COOKIE_SECURE = getattr(settings, 'JET_COOKIE_SECURE', True)
 JET_COOKIE_DOMAIN = getattr(settings, 'JET_COOKIE_DOMAIN', None)
 JET_COOKIE_COMPRESS = getattr(settings, 'JET_COOKIE_COMPRESS', False)
 
+JET_STORE_PATH = getattr(settings, 'JET_STORE_PATH', 'jet_bridge_store.sqlite3')
+
 JET_SSO_APPLICATIONS = getattr(settings, 'JET_SSO_APPLICATIONS', '{}')
 JET_ALLOW_ORIGIN = getattr(settings, 'JET_ALLOW_ORIGIN', '*')
 

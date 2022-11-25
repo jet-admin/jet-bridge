@@ -7,6 +7,7 @@ from jet_bridge_base.views.image_resize import ImageResizeView
 from jet_bridge_base.views.message import MessageView
 from jet_bridge_base.views.model import ModelViewSet
 from jet_bridge_base.views.model_description import ModelDescriptionView
+from jet_bridge_base.views.model_description_relationship_override import ModelDescriptionRelationshipOverrideView
 from jet_bridge_base.views.proxy_request import ProxyRequestView
 from jet_bridge_base.views.register import RegisterView
 from jet_bridge_base.views.reload import ReloadView
@@ -34,6 +35,7 @@ def init_urls():
             path('', route_view(ApiView).as_view(), name='root'),
             path('register/', route_view(RegisterView).as_view(), name='register'),
             path('graphql/', route_view(GraphQLView).as_view(), name='graphql'),
+            path('model_descriptions/relationship_overrides/', route_view(ModelDescriptionRelationshipOverrideView).as_view(), name='model-descriptions-relationships-overrides'),
             path('model_descriptions/', route_view(ModelDescriptionView).as_view(), name='model-descriptions'),
             path('sql/', route_view(SqlView).as_view(), name='sql'),
             path('messages/', route_view(MessageView).as_view(), name='message'),
@@ -51,6 +53,7 @@ def init_urls():
             url(r'^$', route_view(ApiView).as_view(), name='root'),
             url(r'^register/', route_view(RegisterView).as_view(), name='register'),
             url(r'^graphql/', route_view(GraphQLView).as_view(), name='graphql'),
+            url(r'^model_descriptions/relationship_overrides/', route_view(ModelDescriptionRelationshipOverrideView).as_view(), name='model-descriptions-relationships-overrides'),
             url(r'^model_descriptions/', route_view(ModelDescriptionView).as_view(), name='model-descriptions'),
             url(r'^sql/', route_view(SqlView).as_view(), name='sql'),
             url(r'^messages/', route_view(MessageView).as_view(), name='message'),
