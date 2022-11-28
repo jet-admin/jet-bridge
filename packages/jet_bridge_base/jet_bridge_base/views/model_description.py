@@ -200,24 +200,15 @@ def map_relationship_override(override):
 #
 #     return result
 
-def map_table(request, cls, hidden, draft):
+def map_table(cls, relationships_overrides, hidden):
     mapper = inspect(cls)
     name = mapper.selectable.name
     primary_key = mapper.primary_key[0]
     non_editable = []
+    model_relationships_overrides = relationships_overrides.get(name)
 
     from jet_bridge_base.configuration import configuration
     additional = configuration.get_model_description(name)
-
-    if store.is_ok():
-        connection = get_request_connection(request)
-
-        with store.session() as session:
-            model_relationships_overrides = session.query(ModelRelationOverrideModel).filter(
-                ModelRelationOverrideModel.connection_id == connection['id'],
-                ModelRelationOverrideModel.model == name,
-                draft == draft
-            ).all()
 
     result = {
         'model': name,
@@ -243,9 +234,24 @@ class ModelDescriptionView(APIView):
     def get_queryset(self, request):
         hidden = ['__jet__token']
         MappedBase = get_mapped_base(request)
+        relationships_overrides = {}
         draft = bool(request.get_argument('draft', False))
 
-        return list(map(lambda x: map_table(request, x, hidden, draft), MappedBase.classes))
+        if store.is_ok():
+            connection = get_request_connection(request)
+
+            with store.session() as session:
+                overrides = session.query(ModelRelationOverrideModel).filter(
+                    ModelRelationOverrideModel.connection_id == connection['id'],
+                    draft == draft
+                ).all()
+
+                for override in overrides:
+                    if override.model not in relationships_overrides:
+                        relationships_overrides[override.model] = []
+                    relationships_overrides[override.model].append(override)
+
+        return list(map(lambda x: map_table(x, relationships_overrides, hidden), MappedBase.classes))
 
     def get(self, request, *args, **kwargs):
         queryset = self.get_queryset(request)
