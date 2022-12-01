@@ -1,7 +1,12 @@
+import time
+
 from jet_bridge_base.settings import set_settings
 
 
 class Configuration(object):
+
+    def __init__(self):
+        self.init_time = time.time()
 
     def get_type(self):
         pass

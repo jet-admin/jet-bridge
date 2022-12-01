@@ -1,3 +1,6 @@
+import time
+
+from jet_bridge_base.configuration import configuration
 from jet_bridge_base.db import connections, pending_connections
 from jet_bridge_base.permissions import AdministratorPermissions
 from jet_bridge_base.responses.json import JSONResponse
@@ -97,9 +100,13 @@ class StatusView(BaseAPIView):
         }
 
     def get(self, request, *args, **kwargs):
+        now = time.time()
+        uptime = round(now - configuration.init_time, 3)
+
         return JSONResponse({
             'total_pending_connections': len(pending_connections.keys()),
             'total_connections': len(connections.keys()),
             'pending_connections': map(lambda x: self.map_pending_connection(x), pending_connections.values()),
-            'connections': map(lambda x: self.map_connection(x), connections.values())
+            'connections': map(lambda x: self.map_connection(x), connections.values()),
+            'uptime': uptime
         })
