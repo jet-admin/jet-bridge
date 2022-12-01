@@ -17,6 +17,8 @@ class Formatter(logging.Formatter):
 formatter = Formatter('%(asctime)s %(levelname)s %(message)s', '%Y-%m-%d %H:%M:%S')
 
 ch.setFormatter(formatter)
+
+logger.propagate = False
 logger.addHandler(ch)
 
 def set_logger_level(level):

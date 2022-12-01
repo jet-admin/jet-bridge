@@ -1,3 +1,5 @@
+import time
+
 from graphql import GraphQLError
 
 from jet_bridge_base.db import connection_cache_set, connection_cache_get, connection_cache
@@ -47,7 +49,7 @@ class GraphQLView(APIView):
                 schema = cached_schema['instance']
             else:
                 new_schema_id = get_random_string(32)
-                new_schema = {'id': new_schema_id, 'instance': None}
+                new_schema = {'id': new_schema_id, 'instance': None, 'get_schema_time': None}
                 cache[schema_key] = new_schema
 
         if new_schema:
@@ -57,13 +59,16 @@ class GraphQLView(APIView):
                 request.context['model'] = mapper.selectable.name
                 self.check_permissions(request)
 
+            get_schema_start = time.time()
             schema = GraphQLSchemaGenerator().get_schema(request, draft, before_resolve=before_resolve)
+            get_schema_end = time.time()
+            get_schema_time = round(get_schema_end - get_schema_start, 3)
 
             with connection_cache(request) as cache:
                 cached_schema = cache.get(schema_key)
 
                 if cached_schema and cached_schema['id'] == new_schema['id']:
-                    new_schema = {'id': new_schema['id'], 'instance': schema}
+                    new_schema = {'id': new_schema['id'], 'instance': schema, 'get_schema_time': get_schema_time}
                     cache[schema_key] = new_schema
 
                     logger.info('Saved GraphQL schema "{}"'.format(new_schema['id']))
