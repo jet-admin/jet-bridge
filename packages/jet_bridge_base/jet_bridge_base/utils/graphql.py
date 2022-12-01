@@ -18,6 +18,38 @@ from jet_bridge_base.utils.gql import RawScalar
 from jet_bridge_base.utils.queryset import queryset_count_optimized, apply_default_ordering
 
 
+class ModelFiltersType(graphene.InputObjectType):
+    pass
+
+
+class ModelFiltersFieldType(graphene.InputObjectType):
+    pass
+
+
+class ModelFiltersRelationshipType(graphene.InputObjectType):
+    pass
+
+
+class ModelLookupsType(graphene.InputObjectType):
+    pass
+
+
+class ModelLookupsFieldType(graphene.InputObjectType):
+    pass
+
+
+class ModelLookupsRelationshipType(graphene.InputObjectType):
+    pass
+
+
+class ModelSortType(graphene.InputObjectType):
+    pass
+
+
+class ModelAttrsType(graphene.ObjectType):
+    pass
+
+
 class FieldSortType(graphene.InputObjectType):
     descending = graphene.Boolean(required=False)
 
@@ -526,7 +558,7 @@ class GraphQLSchemaGenerator(object):
 
             attrs['_not_'] = self.get_model_filters_type(MappedBase, mapper, depth + 1)
 
-        cls = type(cls_name, (graphene.InputObjectType,), attrs)
+        cls = type(cls_name, (ModelFiltersType,), attrs)
         self.model_filters_types[cls_name] = cls
         return graphene.List(cls)
 
@@ -557,7 +589,7 @@ class GraphQLSchemaGenerator(object):
                 attrs['relation'] = column_filters_type
                 break
 
-        cls = type(cls_name, (graphene.InputObjectType,), attrs)
+        cls = type(cls_name, (ModelFiltersFieldType,), attrs)
         self.model_filters_field_types[cls_name] = cls
         return cls
 
@@ -575,7 +607,7 @@ class GraphQLSchemaGenerator(object):
         lookups_type = self.get_model_filters_type(MappedBase, relationship['related_mapper'], depth + 1)
         attrs['relation'] = lookups_type
 
-        cls = type(cls_name, (graphene.InputObjectType,), attrs)
+        cls = type(cls_name, (ModelFiltersRelationshipType,), attrs)
         self.model_filters_relationship_types[cls_name] = cls
         return cls
 
@@ -604,7 +636,7 @@ class GraphQLSchemaGenerator(object):
                 attr_name = clean_name(relationship['name'])
                 attrs[attr_name] = relationship_lookups_type()
 
-        cls = type(cls_name, (graphene.InputObjectType,), attrs)
+        cls = type(cls_name, (ModelLookupsType,), attrs)
         self.model_lookups_types[cls_name] = cls
         return cls
 
@@ -632,7 +664,7 @@ class GraphQLSchemaGenerator(object):
                 attrs['relation'] = lookups_type()
                 break
 
-        cls = type(cls_name, (graphene.InputObjectType,), attrs)
+        cls = type(cls_name, (ModelLookupsFieldType,), attrs)
         self.model_lookups_field_types[cls_name] = cls
         return cls
 
@@ -652,7 +684,7 @@ class GraphQLSchemaGenerator(object):
         lookups_type = self.get_model_lookups_type(MappedBase, relationship['related_mapper'], depth + 1)
         attrs['relation'] = lookups_type()
 
-        cls = type(cls_name, (graphene.InputObjectType,), attrs)
+        cls = type(cls_name, (ModelLookupsRelationshipType,), attrs)
         self.model_lookups_relationship_types[cls_name] = cls
         return cls
 
@@ -669,7 +701,7 @@ class GraphQLSchemaGenerator(object):
             attr_name = clean_name(column.name)
             attrs[attr_name] = FieldSortType()
 
-        cls = type(cls_name, (graphene.InputObjectType,), attrs)
+        cls = type(cls_name, (ModelSortType,), attrs)
         self.model_sort_types[cls_name] = cls
         return graphene.List(cls)
 
@@ -681,7 +713,7 @@ class GraphQLSchemaGenerator(object):
             attr_name = clean_name(column.name)
             attrs[attr_name] = RawScalar()
 
-        return type('Model{}RecordAttrsType'.format(name), (graphene.ObjectType,), attrs)
+        return type('Model{}RecordAttrsType'.format(name), (ModelAttrsType,), attrs)
 
     def get_selections(self, info, path):
         i = 0

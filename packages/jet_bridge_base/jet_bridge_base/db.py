@@ -2,6 +2,7 @@ import base64
 import contextlib
 import json
 import threading
+import time
 
 from jet_bridge_base.reflect import reflect
 from jet_bridge_base.utils.crypt import get_sha256_hash
@@ -202,22 +203,33 @@ def connect_database(conf):
 
     password_token = '__JET_DB_PASS__'
     log_conf = merge(merge({}, conf), {'password': password_token})
-    log_address = build_engine_url(log_conf)
-    if log_address:
-        log_address = log_address.replace(password_token, '********')
+    connection_name = build_engine_url(log_conf)
+    if connection_name:
+        connection_name = connection_name.replace(password_token, '********')
+    if schema:
+        connection_name += ':{}'.format(schema)
     if tunnel:
-        log_address += ' (via {}@{}:{})'.format(conf.get('ssh_user'), conf.get('ssh_host'), conf.get('ssh_port'))
+        connection_name += ' (via {}@{}:{})'.format(conf.get('ssh_user'), conf.get('ssh_host'), conf.get('ssh_port'))
 
-    logger.info('Connecting to database "{}"...'.format(log_address))
+    logger.info('Connecting to database "{}"...'.format(connection_name))
 
+    connect_start = time.time()
     with session.connection() as connection:
-        logger.info('Getting db types for "{}"...'.format(log_address))
+        connect_end = time.time()
+        connect_time = round(connect_end - connect_start, 3)
+
+        logger.info('Getting db types for "{}"...'.format(connection_name))
         type_code_to_sql_type = fetch_type_code_to_sql_type(session)
 
+        logger.info('Getting schema for "{}"...'.format(connection_name))
+
+        reflect_start = time.time()
         metadata = MetaData(schema=schema, bind=connection)
-        logger.info('Getting schema for "{}"...'.format(log_address))
         reflect(metadata, engine, only=only)
-        logger.info('Connected to "{}"...'.format(log_address))
+        reflect_end = time.time()
+        reflect_time = round(reflect_end - reflect_start, 3)
+
+        logger.info('Connected to "{}"...'.format(connection_name))
 
         MappedBase = automap_base(metadata=metadata)
         load_mapped_base(MappedBase)
@@ -228,6 +240,7 @@ def connect_database(conf):
 
         connections[connection_id] = {
             'id': connection_id,
+            'name': connection_name,
             'engine': engine,
             'Session': Session,
             'MappedBase': MappedBase,
@@ -235,7 +248,11 @@ def connect_database(conf):
             'type_code_to_sql_type': type_code_to_sql_type,
             'tunnel': tunnel,
             'cache': {},
-            'lock': threading.Lock()
+            'lock': threading.Lock(),
+            'project': conf.get('project'),
+            'token': conf.get('token'),
+            'connect_time': connect_time,
+            'reflect_time': reflect_time
         }
 
     session.close()
@@ -278,7 +295,9 @@ def get_settings_conf():
         'ssh_host': settings.DATABASE_SSH_HOST,
         'ssh_port': settings.DATABASE_SSH_PORT,
         'ssh_user': settings.DATABASE_SSH_USER,
-        'ssh_private_key': settings.DATABASE_SSH_PRIVATE_KEY
+        'ssh_private_key': settings.DATABASE_SSH_PRIVATE_KEY,
+        'project': settings.PROJECT,
+        'token': settings.TOKEN
     }
 
 
@@ -303,7 +322,9 @@ def get_request_conf(request):
         'ssh_host': bridge_settings.get('database_ssh_host'),
         'ssh_port': bridge_settings.get('database_ssh_port'),
         'ssh_user': bridge_settings.get('database_ssh_user'),
-        'ssh_private_key': bridge_settings.get('database_ssh_private_key')
+        'ssh_private_key': bridge_settings.get('database_ssh_private_key'),
+        'project': bridge_settings.get('project'),
+        'token': bridge_settings.get('token'),
     }
 
 

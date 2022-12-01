@@ -12,6 +12,7 @@ from jet_bridge_base.views.proxy_request import ProxyRequestView
 from jet_bridge_base.views.register import RegisterView
 from jet_bridge_base.views.reload import ReloadView
 from jet_bridge_base.views.sql import SqlView
+from jet_bridge_base.views.status import StatusView
 from jet_bridge_base.views.table import TableView
 from jet_bridge_base.views.table_column import TableColumnView
 from jet_django.route_view import route_view
@@ -45,6 +46,7 @@ def init_urls():
             path('proxy_request/', route_view(ProxyRequestView).as_view(), name='proxy-request'),
             path('api/external_auth/login/<app>/', route_view(ExternalAuthLoginView).as_view(), name='external-auth-login'),
             path('api/external_auth/complete/<app>/', route_view(ExternalAuthCompleteView).as_view(),name='external-auth-complete'),
+            path('status/', route_view(StatusView).as_view(), name='status'),
         ]
     except ImportError:
         from django.conf.urls import url
@@ -63,6 +65,7 @@ def init_urls():
             url(r'^proxy_request/', route_view(ProxyRequestView).as_view(), name='proxy-request'),
             url(r'^api/external_auth/login/(?P<app>[^/]+)/', route_view(ExternalAuthLoginView).as_view(), name='external-auth-login'),
             url(r'^api/external_auth/complete/(?P<app>[^/]+)/', route_view(ExternalAuthCompleteView).as_view(), name='external-auth-complete'),
+            url(r'^status/', route_view(StatusView).as_view(), name='status'),
         ]
 
 

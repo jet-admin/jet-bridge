@@ -183,3 +183,24 @@ class ReadOnly(BasePermission):
         if request.action in ['create', 'update', 'partial_update', 'destroy']:
             return False
         return True
+
+
+class AdministratorPermissions(BasePermission):
+    def has_permission(self, view, request):
+        JWT_VERIFY_KEY = '\n'.join([line.lstrip() for line in settings.JWT_VERIFY_KEY.split('\\n')])
+        key = request.get_argument('key', None)
+
+        if not key:
+            return False
+
+        try:
+            result = jwt.decode(key, key=JWT_VERIFY_KEY, algorithms=['RS256'])
+        except PyJWTError:
+            return False
+
+        admin = result.get('admin', False)
+
+        if not admin:
+            return False
+
+        return True
