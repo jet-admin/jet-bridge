@@ -3,7 +3,7 @@ import contextlib
 import json
 import threading
 import time
-from datetime import timedelta
+from datetime import timedelta, datetime
 
 from jet_bridge_base.reflect import reflect
 from jet_bridge_base.utils.crypt import get_sha256_hash
@@ -248,9 +248,18 @@ def connect_database(conf):
     if existing_connection:
         return existing_connection
 
+    init_start = datetime.now()
+
     connected_condition = threading.Condition()
     pending_connection_id = get_random_string(32)
-    pending_connection = {'id': pending_connection_id, 'connected': connected_condition}
+    pending_connection = {
+        'id': pending_connection_id,
+        'name': connection_name,
+        'project': conf.get('project'),
+        'token': conf.get('token'),
+        'init_start': init_start.isoformat(),
+        'connected': connected_condition
+    }
 
     pending_connections[connection_id] = pending_connection
 
@@ -280,7 +289,7 @@ def connect_database(conf):
 
             metadata = MetaData(schema=schema, bind=connection)
             only = get_connection_only_predicate(conf)
-            reflect(metadata, engine, only=only)
+            reflect(metadata, engine, only=only, pending_connection=pending_connection)
 
             reflect_end = time.time()
             reflect_time = round(reflect_end - reflect_start, 3)
@@ -307,6 +316,7 @@ def connect_database(conf):
                 'lock': threading.Lock(),
                 'project': conf.get('project'),
                 'token': conf.get('token'),
+                'init_start': init_start.isoformat(),
                 'connect_time': connect_time,
                 'reflect_time': reflect_time
             }
