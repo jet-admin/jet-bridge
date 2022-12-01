@@ -3,6 +3,7 @@ import contextlib
 import json
 import threading
 import time
+from datetime import timedelta, datetime
 
 from jet_bridge_base.reflect import reflect
 from jet_bridge_base.utils.crypt import get_sha256_hash
@@ -25,6 +26,7 @@ from jet_bridge_base import settings
 from jet_bridge_base.logger import logger
 
 connections = {}
+pending_connections = {}
 
 
 def url_encode(value):
@@ -120,8 +122,12 @@ def get_connection_params_id(conf):
     ])
 
 
+def is_tunnel_connection(conf):
+    return all(map(lambda x: conf.get(x), ['ssh_host', 'ssh_port', 'ssh_user', 'ssh_private_key']))
+
+
 def get_connection_tunnel(conf):
-    if any(map(lambda x: not conf.get(x), ['ssh_host', 'ssh_port', 'ssh_user', 'ssh_private_key'])):
+    if not is_tunnel_connection(conf):
         return
 
     from sshtunnel import SSHTunnelForwarder
@@ -142,8 +148,89 @@ def get_connection_tunnel(conf):
     return server
 
 
+def get_connection_schema(conf):
+    schema = conf.get('schema') if conf.get('schema') and conf.get('schema') != '' else None
+
+    if not schema and conf.get('engine', '').startswith('mssql'):
+        schema = 'dbo'
+
+    return schema
+
+
+def get_connection_name(conf, schema):
+    password_token = '__JET_DB_PASS__'
+    log_conf = merge(merge({}, conf), {'password': password_token})
+
+    connection_name = build_engine_url(log_conf)
+    if connection_name:
+        connection_name = connection_name.replace(password_token, '********')
+    if schema:
+        connection_name += ':{}'.format(schema)
+    if is_tunnel_connection(conf):
+        connection_name += ' (via {}@{}:{})'.format(conf.get('ssh_user'), conf.get('ssh_host'), conf.get('ssh_port'))
+
+    return connection_name
+
+
+def wait_pending_connection(connection_id, connection_name):
+    if connection_id not in pending_connections:
+        return
+
+    pending_connection = pending_connections[connection_id]
+
+    logger.info('Waiting database connection "{}"...'.format(connection_name))
+
+    connected_condition = pending_connection['connected']
+    with connected_condition:
+        timeout = timedelta(minutes=10).total_seconds()
+        connected_condition.wait(timeout=timeout)
+
+    if connection_id in connections:
+        logger.info('Found database connection "{}"'.format(connection_name))
+        return connections[connection_id]
+    else:
+        logger.info('Not found database connection "{}"'.format(connection_name))
+
+
+def create_connection_engine(conf, tunnel):
+    engine_url = build_engine_url(conf, tunnel)
+
+    if not engine_url:
+        raise Exception('Database configuration is not set')
+
+    if conf.get('engine') == 'sqlite':
+        return create_engine(engine_url)
+    elif conf.get('engine') == 'bigquery':
+        return create_engine(
+            engine_url,
+            pool_size=conf.get('connections'),
+            pool_pre_ping=True,
+            max_overflow=1,
+            pool_recycle=300
+        )
+    else:
+        return create_engine(
+            engine_url,
+            pool_size=conf.get('connections'),
+            pool_pre_ping=True,
+            max_overflow=1,
+            pool_recycle=300,
+            connect_args={'connect_timeout': 5}
+        )
+
+
+def get_connection_only_predicate(conf):
+    def only(table, meta):
+        if conf.get('only') is not None and table not in conf.get('only'):
+            return False
+        if conf.get('except') is not None and table in conf.get('except'):
+            return False
+        return True
+    return only
+
+
 def connect_database(conf):
-    global connections
+    global connections, pending_connections
 
     connection_id = get_connection_id(conf)
     connection_params_id = get_connection_params_id(conf)
@@ -152,131 +239,125 @@ def connect_database(conf):
         if connections[connection_id]['params_id'] == connection_params_id:
             return connections[connection_id]
         else:
-            disconnect_database(conf)
+            dispose_connection(conf)
 
-    tunnel = get_connection_tunnel(conf)
-    engine_url = build_engine_url(conf, tunnel)
+    schema = get_connection_schema(conf)
+    connection_name = get_connection_name(conf, schema)
 
-    if not engine_url:
-        raise Exception('Database configuration is not set')
+    existing_connection = wait_pending_connection(connection_id, connection_name)
+    if existing_connection:
+        return existing_connection
 
-    def get_engine():
-        if conf.get('engine') == 'sqlite':
-            return create_engine(engine_url)
-        elif conf.get('engine') == 'bigquery':
-            return create_engine(
-                engine_url,
-                pool_size=conf.get('connections'),
-                pool_pre_ping=True,
-                max_overflow=1,
-                pool_recycle=300
-            )
-        else:
-            return create_engine(
-                engine_url,
-                pool_size=conf.get('connections'),
-                pool_pre_ping=True,
-                max_overflow=1,
-                pool_recycle=300,
-                connect_args={'connect_timeout': 5}
-            )
+    init_start = datetime.now()
+
+    connected_condition = threading.Condition()
+    pending_connection_id = get_random_string(32)
+    pending_connection = {
+        'id': pending_connection_id,
+        'name': connection_name,
+        'project': conf.get('project'),
+        'token': conf.get('token'),
+        'init_start': init_start.isoformat(),
+        'connected': connected_condition
+    }
+
+    pending_connections[connection_id] = pending_connection
+
+    try:
+        tunnel = get_connection_tunnel(conf)
+        pending_connection['tunnel'] = tunnel
+
+        engine = create_connection_engine(conf, tunnel)
+        pending_connection['engine'] = engine
+
+        Session = scoped_session(sessionmaker(bind=engine))
+        session = Session()
+
+        logger.info('Connecting to database "{}"...'.format(connection_name))
+
+        connect_start = time.time()
+        with session.connection() as connection:
+            connect_end = time.time()
+            connect_time = round(connect_end - connect_start, 3)
+
+            logger.info('Getting db types for "{}"...'.format(connection_name))
+            type_code_to_sql_type = fetch_type_code_to_sql_type(session)
+
+            logger.info('Getting schema for "{}"...'.format(connection_name))
+
+            reflect_start = time.time()
+
+            metadata = MetaData(schema=schema, bind=connection)
+            only = get_connection_only_predicate(conf)
+            reflect(metadata, engine, only=only, pending_connection=pending_connection)
+
+            reflect_end = time.time()
+            reflect_time = round(reflect_end - reflect_start, 3)
+
+            logger.info('Connected to "{}"'.format(connection_name))
+
+            MappedBase = automap_base(metadata=metadata)
+            load_mapped_base(MappedBase)
+
+            for table_name, table in MappedBase.metadata.tables.items():
+                if len(table.primary_key.columns) == 0 and table_name not in MappedBase.classes:
+                    logger.warning('Table "{}" does not have primary key and will be ignored'.format(table_name))
+
+            connections[connection_id] = {
+                'id': connection_id,
+                'name': connection_name,
+                'engine': engine,
+                'Session': Session,
+                'MappedBase': MappedBase,
+                'params_id': connection_params_id,
+                'type_code_to_sql_type': type_code_to_sql_type,
+                'tunnel': tunnel,
+                'cache': {},
+                'lock': threading.Lock(),
+                'project': conf.get('project'),
+                'token': conf.get('token'),
+                'init_start': init_start.isoformat(),
+                'connect_time': connect_time,
+                'reflect_time': reflect_time
+            }
+
+        session.close()
+
+        return connections[connection_id]
+    finally:
+        if connection_id in pending_connections and pending_connections[connection_id].get('id') == pending_connection_id:
+            del pending_connections[connection_id]
+
+        with connected_condition:
+            connected_condition.notify_all()
 
 
-    engine = get_engine()
+def dispose_connection_object(connection):
+    try:
+        connection['engine'].dispose()
 
-    Session = scoped_session(sessionmaker(bind=engine))
+        if connection.get('tunnel'):
+            connection['tunnel'].close()
 
-    def only(table, meta):
-        if conf.get('only') is not None and table not in conf.get('only'):
-            return False
-        if conf.get('except') is not None and table in conf.get('except'):
-            return False
         return True
-
-    schema = conf.get('schema') if conf.get('schema') and conf.get('schema') != '' else None
-
-    if not schema and conf.get('engine', '').startswith('mssql'):
-        schema = 'dbo'
+    except Exception:
+        return False
 
 
-    session = Session()
-
-    password_token = '__JET_DB_PASS__'
-    log_conf = merge(merge({}, conf), {'password': password_token})
-    connection_name = build_engine_url(log_conf)
-    if connection_name:
-        connection_name = connection_name.replace(password_token, '********')
-    if schema:
-        connection_name += ':{}'.format(schema)
-    if tunnel:
-        connection_name += ' (via {}@{}:{})'.format(conf.get('ssh_user'), conf.get('ssh_host'), conf.get('ssh_port'))
-
-    logger.info('Connecting to database "{}"...'.format(connection_name))
-
-    connect_start = time.time()
-    with session.connection() as connection:
-        connect_end = time.time()
-        connect_time = round(connect_end - connect_start, 3)
-
-        logger.info('Getting db types for "{}"...'.format(connection_name))
-        type_code_to_sql_type = fetch_type_code_to_sql_type(session)
-
-        logger.info('Getting schema for "{}"...'.format(connection_name))
-
-        reflect_start = time.time()
-        metadata = MetaData(schema=schema, bind=connection)
-        reflect(metadata, engine, only=only)
-        reflect_end = time.time()
-        reflect_time = round(reflect_end - reflect_start, 3)
-
-        logger.info('Connected to "{}"...'.format(connection_name))
-
-        MappedBase = automap_base(metadata=metadata)
-        load_mapped_base(MappedBase)
-
-        for table_name, table in MappedBase.metadata.tables.items():
-            if len(table.primary_key.columns) == 0 and table_name not in MappedBase.classes:
-                logger.warning('Table "{}" does not have primary key and will be ignored'.format(table_name))
-
-        connections[connection_id] = {
-            'id': connection_id,
-            'name': connection_name,
-            'engine': engine,
-            'Session': Session,
-            'MappedBase': MappedBase,
-            'params_id': connection_params_id,
-            'type_code_to_sql_type': type_code_to_sql_type,
-            'tunnel': tunnel,
-            'cache': {},
-            'lock': threading.Lock(),
-            'project': conf.get('project'),
-            'token': conf.get('token'),
-            'connect_time': connect_time,
-            'reflect_time': reflect_time
-        }
-
-    session.close()
-    return connections[connection_id]
-
-
-def disconnect_database(conf):
+def dispose_connection(conf):
     global connections
 
     connection_id = get_connection_id(conf)
+    connection = connections.get(connection_id)
 
-    if connection_id in connections:
-        try:
-            connections[connection_id]['engine'].dispose()
-
-            if connections[connection_id]['tunnel']:
-                connections[connection_id]['tunnel'].close()
-
-            del connections[connection_id]
-            return True
-        except Exception:
-            pass
+    if connection and dispose_connection_object(connection):
+        return True
 
     return False
+
+
+def dispose_request_connection(request):
+    return dispose_connection(get_conf(request))
 
 
 def get_settings_conf():
@@ -459,6 +540,3 @@ def load_mapped_base(MappedBase, clear=False):
         name_for_collection_relationship=name_for_collection_relationship
     )
 
-
-def dispose_connection(request):
-    return disconnect_database(get_conf(request))
