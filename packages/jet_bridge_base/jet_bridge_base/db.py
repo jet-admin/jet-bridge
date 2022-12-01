@@ -213,14 +213,18 @@ def connect_database(conf):
 
     logger.info('Connecting to database "{}"...'.format(connection_name))
 
+    connect_start = time.time()
     with session.connection() as connection:
+        connect_end = time.time()
+        connect_time = round(connect_end - connect_start, 3)
+
         logger.info('Getting db types for "{}"...'.format(connection_name))
         type_code_to_sql_type = fetch_type_code_to_sql_type(session)
 
-        metadata = MetaData(schema=schema, bind=connection)
         logger.info('Getting schema for "{}"...'.format(connection_name))
 
         reflect_start = time.time()
+        metadata = MetaData(schema=schema, bind=connection)
         reflect(metadata, engine, only=only)
         reflect_end = time.time()
         reflect_time = round(reflect_end - reflect_start, 3)
@@ -247,6 +251,7 @@ def connect_database(conf):
             'lock': threading.Lock(),
             'project': conf.get('project'),
             'token': conf.get('token'),
+            'connect_time': connect_time,
             'reflect_time': reflect_time
         }
 

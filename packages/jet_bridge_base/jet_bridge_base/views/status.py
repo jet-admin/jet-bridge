@@ -81,6 +81,7 @@ class StatusView(BaseAPIView):
             'relationships': relationships_count,
             'graphql_schema': graphql_schema,
             'graphql_schema_draft': graphql_schema_draft,
+            'connect_time': connection.get('connect_time'),
             'reflect_time': connection.get('reflect_time')
         }
 
