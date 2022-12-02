@@ -16,6 +16,7 @@ def reflect(
     extend_existing=False,
     autoload_replace=True,
     resolve_fks=True,
+    pending_connection=None,
     **dialect_kwargs
 ):
     if bind is None:
@@ -82,6 +83,9 @@ def reflect(
         Modified: Added default PK set and progress display
         """
 
+        if pending_connection:
+            pending_connection['tables_total'] = len(load)
+
         i = 0
         for name in load:
             try:
@@ -112,6 +116,9 @@ def reflect(
                 util.warn("Skipping table %s: %s" % (name, uerr))
 
             i += 1
+
+            if pending_connection:
+                pending_connection['tables_processed'] = i
 
     """
     Modify END
