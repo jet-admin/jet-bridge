@@ -101,7 +101,7 @@ class StatusView(BaseAPIView):
 
     def get(self, request, *args, **kwargs):
         now = time.time()
-        uptime = round(now - configuration.init_time, 3)
+        uptime = round(now - configuration.init_time)
 
         return JSONResponse({
             'total_pending_connections': len(pending_connections.keys()),
