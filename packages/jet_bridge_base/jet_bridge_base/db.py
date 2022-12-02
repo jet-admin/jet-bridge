@@ -351,6 +351,7 @@ def dispose_connection(conf):
     connection = connections.get(connection_id)
 
     if connection and dispose_connection_object(connection):
+        del connections[connection_id]
         return True
 
     return False
