@@ -1,4 +1,7 @@
-from jet_bridge_base.db import connections
+import time
+
+from jet_bridge_base.configuration import configuration
+from jet_bridge_base.db import connections, pending_connections
 from jet_bridge_base.permissions import AdministratorPermissions
 from jet_bridge_base.responses.json import JSONResponse
 from jet_bridge_base.utils.classes import issubclass_safe
@@ -81,12 +84,29 @@ class StatusView(BaseAPIView):
             'relationships': relationships_count,
             'graphql_schema': graphql_schema,
             'graphql_schema_draft': graphql_schema_draft,
+            'init_start': connection.get('init_start'),
             'connect_time': connection.get('connect_time'),
             'reflect_time': connection.get('reflect_time')
         }
 
+    def map_pending_connection(self, pending_connection):
+        return {
+            'name': pending_connection['name'],
+            'project': pending_connection.get('project'),
+            'token': pending_connection.get('token'),
+            'init_start': pending_connection.get('init_start'),
+            'tables_processed': pending_connection.get('tables_processed'),
+            'tables_total': pending_connection.get('tables_total')
+        }
+
     def get(self, request, *args, **kwargs):
+        now = time.time()
+        uptime = round(now - configuration.init_time)
+
         return JSONResponse({
+            'total_pending_connections': len(pending_connections.keys()),
             'total_connections': len(connections.keys()),
-            'connections': map(lambda x: self.map_connection(x), connections.values())
+            'pending_connections': map(lambda x: self.map_pending_connection(x), pending_connections.values()),
+            'connections': map(lambda x: self.map_connection(x), connections.values()),
+            'uptime': uptime
         })

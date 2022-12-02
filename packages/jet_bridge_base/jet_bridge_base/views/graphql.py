@@ -1,8 +1,10 @@
+import threading
 import time
+from datetime import timedelta
 
 from graphql import GraphQLError
 
-from jet_bridge_base.db import connection_cache_set, connection_cache_get, connection_cache
+from jet_bridge_base.db import connection_cache
 from jet_bridge_base.exceptions.permission_denied import PermissionDenied
 from jet_bridge_base.logger import logger
 from jet_bridge_base.permissions import HasProjectPermissions
@@ -31,28 +33,32 @@ class GraphQLView(APIView):
         else:
             return str(error)
 
-    def get(self, request, *args, **kwargs):
-        return self.post(request, *args, **kwargs)
+    def wait_schema(self, request, schema_key, wait_schema):
+        if not wait_schema:
+            return
 
-    def post(self, request, *args, **kwargs):
-        draft = bool(request.get_argument('draft', False))
-        validate = bool(request.data.get('validate', True))
+        logger.info('Waiting GraphQL schema "{}"...'.format(wait_schema['id']))
 
-        schema_key = 'graphql_schema_draft' if draft else 'graphql_schema'
-        schema = None
-        new_schema = None
+        generated_condition = wait_schema['generated']
+        with generated_condition:
+            timeout = timedelta(minutes=10).total_seconds()
+            generated_condition.wait(timeout=timeout)
 
         with connection_cache(request) as cache:
             cached_schema = cache.get(schema_key)
-
             if cached_schema and cached_schema['instance']:
-                schema = cached_schema['instance']
+                logger.info('Found GraphQL schema "{}"'.format(wait_schema['id']))
+                return cached_schema['instance']
             else:
-                new_schema_id = get_random_string(32)
-                new_schema = {'id': new_schema_id, 'instance': None, 'get_schema_time': None}
-                cache[schema_key] = new_schema
+                logger.info('Not found GraphQL schema "{}"'.format(wait_schema['id']))
 
-        if new_schema:
+    def create_schema_object(self):
+        new_schema_id = get_random_string(32)
+        new_schema_generated = threading.Condition()
+        return {'id': new_schema_id, 'instance': None, 'get_schema_time': None, 'generated': new_schema_generated}
+
+    def create_schema(self, request, schema_key, new_schema, draft):
+        try:
             logger.info('Generating GraphQL schema "{}"...'.format(new_schema['id']))
 
             def before_resolve(request, mapper, *args, **kwargs):
@@ -68,18 +74,67 @@ class GraphQLView(APIView):
                 cached_schema = cache.get(schema_key)
 
                 if cached_schema and cached_schema['id'] == new_schema['id']:
-                    new_schema = {'id': new_schema['id'], 'instance': schema, 'get_schema_time': get_schema_time}
+                    new_schema = {**new_schema, 'instance': schema, 'get_schema_time': get_schema_time}
                     cache[schema_key] = new_schema
 
                     logger.info('Saved GraphQL schema "{}"'.format(new_schema['id']))
                 else:
-                    logger.info('Ignoring GraphQL schema result "{}", existing: ""'.format(
+                    logger.info('Ignoring GraphQL schema result "{}", existing: "{}"'.format(
                         new_schema['id'],
                         cached_schema.get('id')
                     ))
 
+            return schema
+        except Exception as e:
+            with connection_cache(request) as cache:
+                cached_schema = cache.get(schema_key)
+
+                if cached_schema and cached_schema['id'] == new_schema['id']:
+                    del cached_schema[schema_key]
+
+            raise e
+        finally:
+            generated_condition = new_schema['generated']
+            with generated_condition:
+                generated_condition.notify_all()
+
+    def get_schema(self, request, draft):
+        schema_key = 'graphql_schema_draft' if draft else 'graphql_schema'
+        wait_schema = None
+
+        with connection_cache(request) as cache:
+            cached_schema = cache.get(schema_key)
+
+            if cached_schema and cached_schema['instance']:
+                return cached_schema['instance']
+            elif cached_schema and not cached_schema['instance']:
+                wait_schema = cached_schema
+            else:
+                new_schema = self.create_schema_object()
+                cache[schema_key] = new_schema
+
+        if wait_schema:
+            existing_schema = self.wait_schema(request, schema_key, wait_schema)
+            if existing_schema:
+                return existing_schema
+            else:
+                with connection_cache(request) as cache:
+                    new_schema = self.create_schema_object()
+                    cache[schema_key] = new_schema
+
+        return self.create_schema(request, schema_key, new_schema, draft)
+
+    def get(self, request, *args, **kwargs):
+        return self.post(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        draft = bool(request.get_argument('draft', False))
+        validate = bool(request.data.get('validate', True))
+
         if 'query' not in request.data:
             return JSONResponse({})
+
+        schema = self.get_schema(request, draft)
 
         query = request.data.get('query')
         context_value = {
