@@ -31,6 +31,7 @@ class JetBridgeConfiguration(Configuration):
             'CORS_HEADERS': settings.CORS_HEADERS,
             'BASE_URL': settings.BASE_URL,
             'JWT_VERIFY_KEY': settings.JWT_VERIFY_KEY,
+            'BEARER_AUTH_KEY': settings.BEARER_AUTH_KEY,
             'ENVIRONMENT_TYPE': settings.ENVIRONMENT_TYPE,
             'DATABASE_ENGINE': settings.DATABASE_ENGINE,
             'DATABASE_HOST': settings.DATABASE_HOST,

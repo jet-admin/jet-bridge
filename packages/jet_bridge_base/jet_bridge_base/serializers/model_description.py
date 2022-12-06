@@ -11,6 +11,8 @@ class ModelDescriptionFieldSerializer(Serializer):
     null = fields_.BooleanField()
     editable = fields_.BooleanField()
     params = fields_.JSONField()
+    data_source_field = fields_.CharField(required=False)
+    data_source_params = fields_.JSONField(required=False)
     verbose_name = fields_.CharField(required=False)
     required = fields_.BooleanField(required=False)
     default_type = fields_.CharField(required=False)

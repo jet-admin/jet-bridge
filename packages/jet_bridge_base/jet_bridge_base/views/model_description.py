@@ -1,3 +1,4 @@
+import json
 import re
 
 from jet_bridge_base.models.model_relation_override import ModelRelationOverrideModel
@@ -63,6 +64,8 @@ def map_column_default(column):
 
 def map_column(column, editable):
     params = {}
+    data_source_field = None
+    data_source_params = None
 
     try:
         map_type = sql_to_map_type(column.type)
@@ -99,6 +102,23 @@ def map_column(column, editable):
 
     optional = is_column_optional(column)
 
+    if column.comment:
+        try:
+            meta_info = json.loads(column.comment)
+
+            if not isinstance(meta_info, dict):
+                raise ValueError
+
+            meta_info_field = meta_info.get('field')
+            meta_info_params = meta_info.get('params')
+
+            if meta_info_field is not None:
+                data_source_field = meta_info_field
+            if meta_info_params is not None and isinstance(meta_info_params, dict):
+                data_source_params = meta_info_params
+        except ValueError:
+            pass
+
     result = {
         'name': column.name,
         'db_column': column.name,
@@ -108,7 +128,9 @@ def map_column(column, editable):
         'required': not optional,
         'null': column.nullable,
         'editable': editable,
-        'params': params
+        'params': params,
+        'data_source_field': data_source_field,
+        'data_source_params': data_source_params
     }
 
     server_default = map_column_default(column)

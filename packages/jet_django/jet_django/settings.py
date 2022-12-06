@@ -13,6 +13,7 @@ JET_ENVIRONMENT = getattr(settings, 'JET_ENVIRONMENT', None)
 JET_CORS_HEADERS = getattr(settings, 'JET_CORS_HEADERS', 'corsheaders' not in settings.INSTALLED_APPS)
 JET_BASE_URL = getattr(settings, 'JET_BASE_URL', None)
 JET_JWT_VERIFY_KEY = getattr(settings, 'JET_JWT_VERIFY_KEY', None)
+JET_BEARER_AUTH_KEY = getattr(settings, 'JET_BEARER_AUTH_KEY', None)
 JET_ENVIRONMENT_TYPE = getattr(settings, 'JET_ENVIRONMENT_TYPE', 'django')
 
 JET_BACKEND_API_BASE_URL = getattr(settings, 'JET_BACKEND_API_BASE_URL', 'https://api.jetadmin.io/api')
