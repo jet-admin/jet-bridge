@@ -41,6 +41,7 @@ class HasProjectPermissions(BasePermission):
     user_token_prefix = 'Token'
     project_token_prefix = 'ProjectToken'
     jwt_token_prefix = 'JWT'
+    bearer_token_prefix = 'Bearer'
 
     def parse_token(self, value):
         tokens = value.split(',') if value else []
@@ -171,6 +172,8 @@ class HasProjectPermissions(BasePermission):
             #     view.headers['X-Application-Warning'] = result['warning']
 
             return result['result']
+        elif token['type'] == self.bearer_token_prefix:
+            return settings.BEARER_AUTH_KEY and token['value'] == settings.BEARER_AUTH_KEY
         else:
             return False
 
@@ -187,20 +190,24 @@ class ReadOnly(BasePermission):
 
 class AdministratorPermissions(BasePermission):
     def has_permission(self, view, request):
-        JWT_VERIFY_KEY = '\n'.join([line.lstrip() for line in settings.JWT_VERIFY_KEY.split('\\n')])
         key = request.get_argument('key', None)
 
         if not key:
             return False
 
-        try:
-            result = jwt.decode(key, key=JWT_VERIFY_KEY, algorithms=['RS256'])
-        except PyJWTError:
-            return False
+        if settings.BEARER_AUTH_KEY and key == settings.BEARER_AUTH_KEY:
+            return True
+        else:
+            JWT_VERIFY_KEY = '\n'.join([line.lstrip() for line in settings.JWT_VERIFY_KEY.split('\\n')])
 
-        admin = result.get('admin', False)
+            try:
+                result = jwt.decode(key, key=JWT_VERIFY_KEY, algorithms=['RS256'])
+            except PyJWTError:
+                return False
 
-        if not admin:
-            return False
+            admin = result.get('admin', False)
 
-        return True
+            if not admin:
+                return False
+
+            return True

@@ -34,6 +34,7 @@ define('environment', help='environment', type=str)
 define('cors_headers', default=True, help='add CORS headers', type=bool)
 define('base_url', help='base URL', type=str)
 define('jwt_verify_key', help='JWT verify key', type=str, default=None)
+define('bearer_auth_key', help='Bearer auth key', type=str, default=None)
 define('environment_type', help='environment type', type=str, default=None)
 
 define('web_base_url', default=DEFAULT_WEB_BASE_URL, help='Jet Admin frontend application base URL')
@@ -127,6 +128,7 @@ ENVIRONMENT = options.environment
 CORS_HEADERS = options.cors_headers
 BASE_URL = options.base_url
 JWT_VERIFY_KEY = options.jwt_verify_key
+BEARER_AUTH_KEY = options.bearer_auth_key
 ENVIRONMENT_TYPE = options.environment_type
 
 WEB_BASE_URL = options.web_base_url

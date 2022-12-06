@@ -60,6 +60,7 @@ class JetDjangoConfiguration(Configuration):
             'CORS_HEADERS': settings.JET_CORS_HEADERS,
             'BASE_URL': settings.JET_BASE_URL,
             'JWT_VERIFY_KEY': settings.JET_JWT_VERIFY_KEY,
+            'BEARER_AUTH_KEY': settings.JET_BEARER_AUTH_KEY,
             'ENVIRONMENT_TYPE': settings.JET_ENVIRONMENT_TYPE,
             'DATABASE_ENGINE': settings.database_engine,
             'DATABASE_HOST': settings.database_settings.get('HOST'),
