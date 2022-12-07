@@ -6,6 +6,7 @@ import time
 from datetime import timedelta, datetime
 
 from jet_bridge_base.reflect import reflect
+from jet_bridge_base.ssh_tunnel import SSHTunnel
 from jet_bridge_base.utils.crypt import get_sha256_hash
 from jet_bridge_base.utils.type_codes import fetch_type_code_to_sql_type
 from six import StringIO
@@ -133,44 +134,57 @@ def get_connection_tunnel(conf):
     schema = get_connection_schema(conf)
     connection_name = get_connection_name(conf, schema)
 
-    from sshtunnel import SSHTunnelForwarder, address_to_str
-    import paramiko
+    # from sshtunnel import SSHTunnelForwarder, address_to_str
+    # import paramiko
+    #
+    # class SafeSSHTunnelForwarder(SSHTunnelForwarder):
+    #     skip_tunnel_checkup = False
+    #
+    #     def check_is_running(self):
+    #         try:
+    #             while True:
+    #                 time.sleep(5)
+    #                 if not tunnel.local_is_up(tunnel.local_bind_address):
+    #                     logger.info('SSH tunnel is down, disposing connection "{}"'.format(connection_name))
+    #                     break
+    #         finally:
+    #             dispose_connection(conf)
+    #
+    #     def start(self):
+    #         super(SafeSSHTunnelForwarder, self).start()
+    #
+    #         for _srv in self._server_list:
+    #             thread = threading.Thread(
+    #                 target=self.check_is_running,
+    #                 args=(),
+    #                 name='Srv-{0}-check'.format(address_to_str(_srv.local_port))
+    #             )
+    #             thread.start()
+    #
+    # private_key_str = conf.get('ssh_private_key').replace('\\n', '\n')
+    # private_key = paramiko.RSAKey.from_private_key(StringIO(private_key_str))
+    #
+    # tunnel = SafeSSHTunnelForwarder(
+    #     ssh_address_or_host=(conf.get('ssh_host'), int(conf.get('ssh_port'))),
+    #     ssh_username=conf.get('ssh_user'),
+    #     ssh_pkey=private_key,
+    #     remote_bind_address=(conf.get('host'), int(conf.get('port'))),
+    #     logger=logger
+    # )
+    # tunnel.start()
+    #
+    # return tunnel
 
-    class SafeSSHTunnelForwarder(SSHTunnelForwarder):
-        skip_tunnel_checkup = False
+    logger.info('Starting SSH tunnel for connection "{}"...'.format(connection_name))
 
-        def check_is_running(self):
-            try:
-                while True:
-                    time.sleep(5)
-                    if not tunnel.local_is_up(tunnel.local_bind_address):
-                        logger.info('SSH tunnel is down, disposing connection "{}"'.format(connection_name))
-                        break
-            finally:
-                dispose_connection(conf)
+    def on_close():
+        logger.info('SSH tunnel is closed, disposing connection "{}"'.format(connection_name))
+        dispose_connection(conf)
 
-        def start(self):
-            super(SafeSSHTunnelForwarder, self).start()
-
-            for _srv in self._server_list:
-                thread = threading.Thread(
-                    target=self.check_is_running,
-                    args=(),
-                    name='Srv-{0}-check'.format(address_to_str(_srv.local_port))
-                )
-                thread.start()
-
-    private_key_str = conf.get('ssh_private_key').replace('\\n', '\n')
-    private_key = paramiko.RSAKey.from_private_key(StringIO(private_key_str))
-
-    tunnel = SafeSSHTunnelForwarder(
-        ssh_address_or_host=(conf.get('ssh_host'), int(conf.get('ssh_port'))),
-        ssh_username=conf.get('ssh_user'),
-        ssh_pkey=private_key,
-        remote_bind_address=(conf.get('host'), int(conf.get('port'))),
-        logger=logger
-    )
+    tunnel = SSHTunnel(connection_name, conf, on_close=on_close)
     tunnel.start()
+
+    logger.info('SSH tunnel started on port {} for connection "{}"'.format(tunnel.local_bind_port, connection_name))
 
     return tunnel
 
