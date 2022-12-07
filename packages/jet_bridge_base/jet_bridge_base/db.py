@@ -262,6 +262,7 @@ def connect_database(conf):
     }
 
     pending_connections[connection_id] = pending_connection
+    tunnel = None
 
     try:
         tunnel = get_connection_tunnel(conf)
@@ -324,6 +325,11 @@ def connect_database(conf):
         session.close()
 
         return connections[connection_id]
+    except Exception as e:
+        if tunnel:
+            tunnel.close()
+
+        raise e
     finally:
         if connection_id in pending_connections and pending_connections[connection_id].get('id') == pending_connection_id:
             del pending_connections[connection_id]
