@@ -65,12 +65,15 @@ class SSHTunnel(object):
 
         command.extend(['{}@{}'.format(self.ssh_user, self.ssh_host)])
 
-        process = Popen(
-            command,
-            stdin=PIPE,
-            stdout=PIPE,
-            stderr=PIPE
-        )
+        try:
+            process = Popen(
+                command,
+                stdin=PIPE,
+                stdout=PIPE,
+                stderr=PIPE
+            )
+        except FileNotFoundError:
+            raise Exception('SSH is not installed')
 
         process.stdout.readlines()
         os.unlink(keyfile)
