@@ -21,11 +21,11 @@ class SSHTunnel(object):
         self.on_close = on_close
 
     def is_tunnel_alive(self):
+        connect_to = ('127.0.0.1', self.local_bind_port)
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         s.settimeout(self.tunnel_timeout)
 
         try:
-            connect_to = ('127.0.0.1', self.local_bind_port)
             s.connect(connect_to)
             s.sendall('Hello, world'.encode('utf-8'))
             s.recv(1024)
@@ -86,8 +86,26 @@ class SSHTunnel(object):
         if self.on_close:
             self.on_close()
 
+    def is_port_used(self, port):
+        connect_to = ('127.0.0.1', port)
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+        try:
+            if s.connect_ex(connect_to) == 0:
+                return False
+            else:
+                return True
+        finally:
+            s.close()
+
+    def get_unused_port(self):
+        while True:
+            port = random.randint(10000, 65535)
+            if not self.is_port_used(port):
+                return port
+
     def start(self):
-        self.local_bind_port = random.randint(10000, 65535)
+        self.local_bind_port = self.get_unused_port()
         self.process = self.run_ssh_tunnel_process()
 
         self.check_thread = threading.Thread(
