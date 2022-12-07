@@ -137,6 +137,8 @@ def get_connection_tunnel(conf):
     import paramiko
 
     class SafeSSHTunnelForwarder(SSHTunnelForwarder):
+        skip_tunnel_checkup = False
+
         def check_is_running(self):
             try:
                 while True:
