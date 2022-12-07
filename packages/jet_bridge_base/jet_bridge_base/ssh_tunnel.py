@@ -10,18 +10,34 @@ from jet_bridge_base.logger import logger
 
 
 class SSHTunnel(object):
+    local_bind_host = '127.0.0.1'
     local_bind_port = None
     process = None
     check_thread = None
     tunnel_timeout = 10.0
 
-    def __init__(self, name, conf, on_close=None):
-        self.conf = conf
+    def __init__(
+        self,
+        name,
+        ssh_host,
+        ssh_port,
+        ssh_user,
+        ssh_private_key,
+        remote_host,
+        remote_port,
+        on_close=None
+    ):
         self.name = name
+        self.ssh_host = ssh_host
+        self.ssh_port = ssh_port
+        self.ssh_user = ssh_user
+        self.ssh_private_key = ssh_private_key
+        self.remote_host = remote_host
+        self.remote_port = remote_port
         self.on_close = on_close
 
     def is_tunnel_alive(self):
-        connect_to = ('127.0.0.1', self.local_bind_port)
+        connect_to = (self.local_bind_host, self.local_bind_port)
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         s.settimeout(self.tunnel_timeout)
 
@@ -37,19 +53,17 @@ class SSHTunnel(object):
             s.close()
 
     def run_ssh_tunnel_process(self):
-        private_key_str = self.conf.get('ssh_private_key').replace('\\n', '\n')
-
         with tempfile.NamedTemporaryFile(delete=False) as f:
-            f.write(private_key_str.encode('utf-8'))
+            f.write(self.ssh_private_key.encode('utf-8'))
             keyfile = f.name
 
-        listen = 'localhost:{}:{}:{}'.format(self.local_bind_port, self.conf.get('host'), self.conf.get('port'))
+        listen = 'localhost:{}:{}:{}'.format(self.local_bind_port, self.remote_host, self.remote_port)
         command = ['ssh', '-N', '-L', listen, '-i', keyfile]
 
-        if self.conf.get('ssh_port'):
-            command.extend(['-p', str(self.conf.get('ssh_port'))])
+        if self.ssh_port:
+            command.extend(['-p', str(self.ssh_port)])
 
-        command.extend(['{}@{}'.format(self.conf.get('ssh_user'), self.conf.get('ssh_host'))])
+        command.extend(['{}@{}'.format(self.ssh_user, self.ssh_host)])
 
         process = Popen(
             command,
@@ -86,8 +100,12 @@ class SSHTunnel(object):
         if self.on_close:
             self.on_close()
 
+    @property
+    def is_active(self):
+        return self.is_tunnel_alive()
+
     def is_port_used(self, port):
-        connect_to = ('127.0.0.1', port)
+        connect_to = (self.local_bind_host, port)
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
         try:

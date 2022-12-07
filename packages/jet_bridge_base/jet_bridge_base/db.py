@@ -178,10 +178,25 @@ def get_connection_tunnel(conf):
     logger.info('Starting SSH tunnel for connection "{}"...'.format(connection_name))
 
     def on_close():
-        logger.info('SSH tunnel is closed, disposing connection "{}"'.format(connection_name))
-        dispose_connection(conf)
+        connection_id = get_connection_id(conf)
+        connection = connections.get(connection_id)
 
-    tunnel = SSHTunnel(connection_name, conf, on_close=on_close)
+        if connection:
+            logger.info('SSH tunnel is closed, disposing connection "{}"'.format(connection_name))
+            dispose_connection(conf)
+        else:
+            logger.info('SSH tunnel is closed for connection "{}"'.format(connection_name))
+
+    tunnel = SSHTunnel(
+        name=connection_name,
+        ssh_host=conf.get('ssh_host'),
+        ssh_port=conf.get('ssh_port'),
+        ssh_user=conf.get('ssh_user'),
+        ssh_private_key=conf.get('ssh_private_key').replace('\\n', '\n'),
+        remote_host=conf.get('host'),
+        remote_port=conf.get('port'),
+        on_close=on_close
+    )
     tunnel.start()
 
     logger.info('SSH tunnel started on port {} for connection "{}"'.format(tunnel.local_bind_port, connection_name))
