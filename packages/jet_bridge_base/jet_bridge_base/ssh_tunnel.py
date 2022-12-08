@@ -113,9 +113,9 @@ class SSHTunnel(object):
 
         try:
             if s.connect_ex(connect_to) == 0:
-                return False
-            else:
                 return True
+            else:
+                return False
         finally:
             s.close()
 
