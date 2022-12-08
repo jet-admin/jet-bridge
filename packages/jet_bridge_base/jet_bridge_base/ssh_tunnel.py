@@ -58,7 +58,7 @@ class SSHTunnel(object):
             keyfile = f.name
 
         listen = 'localhost:{}:{}:{}'.format(self.local_bind_port, self.remote_host, self.remote_port)
-        command = ['ssh', '-N', '-L', listen, '-i', keyfile]
+        command = ['ssh', '-N', '-L', listen, '-i', keyfile, '-o', 'StrictHostKeyChecking=no']
 
         if self.ssh_port:
             command.extend(['-p', str(self.ssh_port)])
