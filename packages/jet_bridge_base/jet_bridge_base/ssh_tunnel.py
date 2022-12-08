@@ -58,12 +58,14 @@ class SSHTunnel(object):
             keyfile = f.name
 
         listen = 'localhost:{}:{}:{}'.format(self.local_bind_port, self.remote_host, self.remote_port)
-        command = ['ssh', '-N', '-L', listen, '-i', keyfile, '-o', 'StrictHostKeyChecking=no']
+        command = ['ssh', '-N', '-L', listen, '-i', keyfile, '-o', 'StrictHostKeyChecking=no', '-o', 'ExitOnForwardFailure=yes']
 
         if self.ssh_port:
             command.extend(['-p', str(self.ssh_port)])
 
         command.extend(['{}@{}'.format(self.ssh_user, self.ssh_host)])
+
+        logger.debug('Running SSH tunnel: {}'.format(command))
 
         try:
             process = Popen(
@@ -75,13 +77,18 @@ class SSHTunnel(object):
         except FileNotFoundError:
             raise Exception('SSH is not installed')
 
-        process.stdout.readlines()
+        output = process.stdout.readlines()
+        logger.debug('SSH run output: {}'.format(output))
+
         os.unlink(keyfile)
 
         return_code = process.poll()
 
         if return_code is not None:
-            error = '\n'.join(map(lambda x: x.decode('utf-8'), process.stderr.readlines()))
+            error_output = process.stderr.readlines()
+            logger.debug('SSH terminated with error: {}'.format(error_output))
+
+            error = '\n'.join(map(lambda x: x.decode('utf-8'), error_output))
             raise Exception(error)
 
         return process
