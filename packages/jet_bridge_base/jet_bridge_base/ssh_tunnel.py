@@ -88,6 +88,7 @@ class SSHTunnel(object):
 
     def execute_check_thread(self, process):
         while True:
+            time.sleep(5)
             return_code = process.poll()
 
             if return_code is not None:
@@ -97,8 +98,6 @@ class SSHTunnel(object):
                 logger.info('SSH tunnel is dropped')
                 process.kill()
                 break
-
-            time.sleep(5)
 
         if self.on_close:
             self.on_close()
