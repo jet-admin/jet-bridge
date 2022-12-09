@@ -81,3 +81,11 @@ def any_type_sorter(value):
     if value is None:
         return ''
     return str(value)
+
+
+def unique(arr):
+    result = []
+    for item in arr:
+        if item not in result:
+            result.append(item)
+    return result

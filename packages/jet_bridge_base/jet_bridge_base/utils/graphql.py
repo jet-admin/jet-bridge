@@ -13,7 +13,7 @@ from jet_bridge_base.filters.filter_for_dbfield import filter_for_data_type
 from jet_bridge_base.filters.model_group import get_query_func_by_name
 from jet_bridge_base.filters.model_search import search_queryset
 from jet_bridge_base.serializers.model import get_model_serializer
-from jet_bridge_base.utils.common import get_set_first, any_type_sorter
+from jet_bridge_base.utils.common import get_set_first, any_type_sorter, unique
 from jet_bridge_base.utils.gql import RawScalar
 from jet_bridge_base.utils.queryset import queryset_count_optimized, apply_default_ordering
 
@@ -415,7 +415,7 @@ class GraphQLSchemaGenerator(object):
                 result[lookup_name] = lookup_result
             elif column is not None:
                 lookup_result = {}
-                lookup_values = sorted(set(map(lambda x: getattr(x, column.name), models)), key=any_type_sorter)
+                lookup_values = sorted(unique(map(lambda x: getattr(x, column.name), models)), key=any_type_sorter)
 
                 lookup_result['return'] = lookup_data.get('return', False)
                 lookup_result['return_list'] = lookup_data.get('returnList', False)
