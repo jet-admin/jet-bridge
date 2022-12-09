@@ -61,6 +61,16 @@ class StatusView(BaseAPIView):
         else:
             return {'status': 'pending'}
 
+    def map_tunnel(self, tunnel):
+        if not tunnel:
+            return
+
+        return {
+            'is_active': tunnel.is_active,
+            'local_address': '{}:{}'.format(tunnel.local_bind_host, tunnel.local_bind_port),
+            'remote_address': '{}:{}'.format(tunnel.ssh_host, tunnel.ssh_port)
+        }
+
     def map_connection(self, connection):
         cache = connection['cache']
         MappedBase = connection['MappedBase']
@@ -74,6 +84,7 @@ class StatusView(BaseAPIView):
 
         graphql_schema = self.map_connection_graphql_schema(cache.get('graphql_schema'))
         graphql_schema_draft = self.map_connection_graphql_schema(cache.get('graphql_schema_draft'))
+        tunnel = self.map_tunnel(connection.get('tunnel'))
 
         return {
             'name': connection['name'],
@@ -86,17 +97,21 @@ class StatusView(BaseAPIView):
             'graphql_schema_draft': graphql_schema_draft,
             'init_start': connection.get('init_start'),
             'connect_time': connection.get('connect_time'),
-            'reflect_time': connection.get('reflect_time')
+            'reflect_time': connection.get('reflect_time'),
+            'tunnel': tunnel
         }
 
     def map_pending_connection(self, pending_connection):
+        tunnel = self.map_tunnel(pending_connection.get('tunnel'))
+
         return {
             'name': pending_connection['name'],
             'project': pending_connection.get('project'),
             'token': pending_connection.get('token'),
             'init_start': pending_connection.get('init_start'),
             'tables_processed': pending_connection.get('tables_processed'),
-            'tables_total': pending_connection.get('tables_total')
+            'tables_total': pending_connection.get('tables_total'),
+            'tunnel': tunnel
         }
 
     def get(self, request, *args, **kwargs):

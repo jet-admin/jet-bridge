@@ -6,6 +6,7 @@ import time
 from datetime import timedelta, datetime
 
 from jet_bridge_base.reflect import reflect
+from jet_bridge_base.ssh_tunnel import SSHTunnel
 from jet_bridge_base.utils.crypt import get_sha256_hash
 from jet_bridge_base.utils.type_codes import fetch_type_code_to_sql_type
 from six import StringIO
@@ -130,22 +131,77 @@ def get_connection_tunnel(conf):
     if not is_tunnel_connection(conf):
         return
 
-    from sshtunnel import SSHTunnelForwarder
-    import paramiko
+    schema = get_connection_schema(conf)
+    connection_name = get_connection_name(conf, schema)
 
-    private_key_str = conf.get('ssh_private_key').replace('\\n', '\n')
-    private_key = paramiko.RSAKey.from_private_key(StringIO(private_key_str))
+    # from sshtunnel import SSHTunnelForwarder, address_to_str
+    # import paramiko
+    #
+    # class SafeSSHTunnelForwarder(SSHTunnelForwarder):
+    #     skip_tunnel_checkup = False
+    #
+    #     def check_is_running(self):
+    #         try:
+    #             while True:
+    #                 time.sleep(5)
+    #                 if not tunnel.local_is_up(tunnel.local_bind_address):
+    #                     logger.info('SSH tunnel is down, disposing connection "{}"'.format(connection_name))
+    #                     break
+    #         finally:
+    #             dispose_connection(conf)
+    #
+    #     def start(self):
+    #         super(SafeSSHTunnelForwarder, self).start()
+    #
+    #         for _srv in self._server_list:
+    #             thread = threading.Thread(
+    #                 target=self.check_is_running,
+    #                 args=(),
+    #                 name='Srv-{0}-check'.format(address_to_str(_srv.local_port))
+    #             )
+    #             thread.start()
+    #
+    # private_key_str = conf.get('ssh_private_key').replace('\\n', '\n')
+    # private_key = paramiko.RSAKey.from_private_key(StringIO(private_key_str))
+    #
+    # tunnel = SafeSSHTunnelForwarder(
+    #     ssh_address_or_host=(conf.get('ssh_host'), int(conf.get('ssh_port'))),
+    #     ssh_username=conf.get('ssh_user'),
+    #     ssh_pkey=private_key,
+    #     remote_bind_address=(conf.get('host'), int(conf.get('port'))),
+    #     logger=logger
+    # )
+    # tunnel.start()
+    #
+    # return tunnel
 
-    server = SSHTunnelForwarder(
-        ssh_address_or_host=(conf.get('ssh_host'), int(conf.get('ssh_port'))),
-        ssh_username=conf.get('ssh_user'),
-        ssh_pkey=private_key,
-        remote_bind_address=(conf.get('host'), int(conf.get('port'))),
-        logger=logger
+    logger.info('Starting SSH tunnel for connection "{}"...'.format(connection_name))
+
+    def on_close():
+        connection_id = get_connection_id(conf)
+        connection = connections.get(connection_id)
+
+        if connection:
+            logger.info('SSH tunnel is closed, disposing connection "{}"'.format(connection_name))
+            dispose_connection(conf)
+        else:
+            logger.info('SSH tunnel is closed for connection "{}"'.format(connection_name))
+
+    tunnel = SSHTunnel(
+        name=connection_name,
+        ssh_host=conf.get('ssh_host'),
+        ssh_port=conf.get('ssh_port'),
+        ssh_user=conf.get('ssh_user'),
+        ssh_private_key=conf.get('ssh_private_key').replace('\\n', '\n'),
+        remote_host=conf.get('host'),
+        remote_port=conf.get('port'),
+        on_close=on_close
     )
-    server.start()
+    tunnel.start()
 
-    return server
+    logger.info('SSH tunnel started on port {} for connection "{}"'.format(tunnel.local_bind_port, connection_name))
+
+    return tunnel
 
 
 def get_connection_schema(conf):
@@ -262,6 +318,7 @@ def connect_database(conf):
     }
 
     pending_connections[connection_id] = pending_connection
+    tunnel = None
 
     try:
         tunnel = get_connection_tunnel(conf)
@@ -324,6 +381,11 @@ def connect_database(conf):
         session.close()
 
         return connections[connection_id]
+    except Exception as e:
+        if tunnel:
+            tunnel.close()
+
+        raise e
     finally:
         if connection_id in pending_connections and pending_connections[connection_id].get('id') == pending_connection_id:
             del pending_connections[connection_id]
