@@ -90,7 +90,7 @@ class GraphQLView(APIView):
                 cached_schema = cache.get(schema_key)
 
                 if cached_schema and cached_schema['id'] == new_schema['id']:
-                    del cached_schema[schema_key]
+                    del cache[schema_key]
 
             raise e
         finally:
