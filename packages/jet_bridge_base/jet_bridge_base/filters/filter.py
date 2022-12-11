@@ -1,6 +1,6 @@
 from jet_bridge_base.utils.queryset import get_session_engine
 from sqlalchemy import Unicode
-from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.dialects.postgresql import JSON
 from six import string_types
 
 from jet_bridge_base.fields import field, CharField, BooleanField
@@ -12,7 +12,7 @@ EMPTY_VALUES = ([], (), {}, '', None)
 def json_icontains(column, value):
     field_type = column.property.columns[0].type
 
-    if isinstance(field_type, JSONB):
+    if isinstance(field_type, JSON):
         return column.cast(Unicode).ilike('%{}%'.format(value))
     else:
         return column.astext.ilike('%{}%'.format(value))
