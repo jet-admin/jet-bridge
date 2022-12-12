@@ -1,6 +1,6 @@
 from sqlalchemy import Column, text, ForeignKey
 from sqlalchemy.exc import DBAPIError
-from sqlalchemy.sql.ddl import AddConstraint
+from sqlalchemy.sql.ddl import AddConstraint, DropConstraint
 
 from jet_bridge_base import status
 from jet_bridge_base.db import get_mapped_base, get_engine, reload_request_mapped_base
@@ -234,6 +234,13 @@ class TableColumnView(APIView):
         if sql_type_convert:
             column_type_stmt += ' USING {0}'.format(sql_type_convert(existing_column_name))
 
+        for foreign_key in existing_column.foreign_keys:
+            if foreign_key.constraint:
+                foreign_key_should_exist = any(map(lambda x: x.target_fullname == foreign_key.target_fullname, column.foreign_keys))
+                if foreign_key_should_exist:
+                    continue
+                engine.execute(DropConstraint(foreign_key.constraint))
+
         engine.execute('''ALTER TABLE {0} ALTER COLUMN {1} TYPE {2}'''.format(table_name, existing_column_name, column_type_stmt))
         # engine.execute('ALTER TABLE {0} ALTER COLUMN {1} TYPE {2} USING {1}::integer'.format(table_name, existing_column_name, column_type))
 
@@ -251,8 +258,8 @@ class TableColumnView(APIView):
 
         for foreign_key in column.foreign_keys:
             if not foreign_key.constraint:
-                existing_foreign_keys = list(filter(lambda x: x.target_fullname == foreign_key.target_fullname, existing_column.foreign_keys))
-                if len(existing_foreign_keys):
+                foreign_key_exists = any(map(lambda x: x.target_fullname == foreign_key.target_fullname, existing_column.foreign_keys))
+                if foreign_key_exists:
                     continue
                 foreign_key._set_table(column, table)
                 engine.execute(AddConstraint(foreign_key.constraint))
