@@ -110,9 +110,17 @@ class GraphQLSchemaGenerator(object):
 
     def get_queryset(self, request, Model, only_columns=None):
         if only_columns:
+            mapper = inspect(Model)
+            pk = mapper.primary_key[0]
+
+            if not any(map(lambda x: x.name == pk.name, only_columns)):
+                only_columns = [pk, *only_columns]
+
             queryset = request.session.query(*only_columns)
         else:
             queryset = request.session.query(Model)
+
+        queryset = queryset.distinct()
 
         mapper = inspect(Model)
         auto_pk = getattr(mapper.tables[0], '__jet_auto_pk__', False) if len(mapper.tables) else None
@@ -228,8 +236,10 @@ class GraphQLSchemaGenerator(object):
 
         return dict(map(lambda x: map_models(x), relationships.items()))
 
-    def get_model_columns_by_clean_name(self, mapper):
-        return dict(map(lambda x: (clean_name(x[0]), x[1]), mapper.columns.items()))
+    def get_model_columns_by_clean_name(self, MappedBase, mapper):
+        name = mapper.selectable.name
+        Model = MappedBase.classes.get(name)
+        return dict(map(lambda x: (clean_name(x), getattr(Model, x)), mapper.columns.keys()))
 
     def get_model_relationships(self, mapper):
         name = mapper.selectable.name
@@ -259,7 +269,7 @@ class GraphQLSchemaGenerator(object):
                     )
                     continue
 
-                columns_by_clean_name = self.get_model_columns_by_clean_name(mapper)
+                columns_by_clean_name = self.get_model_columns_by_clean_name(MappedBase, mapper)
                 column = columns_by_clean_name.get(filter_name)
                 filter_relationship = self.get_model_relationships_by_clean_name(mapper).get(filter_name)
 
@@ -350,7 +360,7 @@ class GraphQLSchemaGenerator(object):
         result = {}
 
         for lookup_name, lookup_data in lookup_item.items():
-            columns_by_clean_name = self.get_model_columns_by_clean_name(mapper)
+            columns_by_clean_name = self.get_model_columns_by_clean_name(MappedBase, mapper)
             column = columns_by_clean_name.get(lookup_name)
             relationship = self.get_model_relationships_by_clean_name(mapper).get(lookup_name)
 
@@ -490,10 +500,10 @@ class GraphQLSchemaGenerator(object):
 
         return result
 
-    def map_sort_order_field(self, mapper, name, options):
+    def map_sort_order_field(self, MappedBase, mapper, name, options):
         descending = options.get('descending', False)
 
-        columns_by_clean_name = self.get_model_columns_by_clean_name(mapper)
+        columns_by_clean_name = self.get_model_columns_by_clean_name(MappedBase, mapper)
         column = columns_by_clean_name.get(name)
 
         if column is None:
@@ -504,14 +514,16 @@ class GraphQLSchemaGenerator(object):
 
         return column
 
-    def sort_queryset(self, queryset, Model, mapper, sort):
+    def sort_queryset(self, queryset, MappedBase, mapper, sort):
         for item in sort:
-            order_by = map(lambda x: self.map_sort_order_field(mapper, x[0], x[1]), item.items())
+            order_by = map(lambda x: self.map_sort_order_field(MappedBase, mapper, x[0], x[1]), item.items())
             order_by = filter(lambda x: x is not None, order_by)
             order_by = list(order_by)
 
             queryset = queryset.order_by(*order_by)
 
+        name = mapper.selectable.name
+        Model = MappedBase.classes.get(name)
         queryset = apply_default_ordering(Model, queryset)
 
         return queryset
@@ -751,7 +763,7 @@ class GraphQLSchemaGenerator(object):
 
             queryset = self.filter_queryset(MappedBase, queryset, mapper, filters)
             queryset = self.search_queryset(queryset, mapper, search)
-            queryset = self.sort_queryset(queryset, Model, mapper, sort)
+            queryset = self.sort_queryset(queryset, MappedBase, mapper, sort)
 
             queryset_page = list(self.paginate_queryset(queryset, pagination))
 
