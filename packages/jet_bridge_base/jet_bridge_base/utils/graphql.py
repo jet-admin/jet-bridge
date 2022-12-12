@@ -110,9 +110,17 @@ class GraphQLSchemaGenerator(object):
 
     def get_queryset(self, request, Model, only_columns=None):
         if only_columns:
+            mapper = inspect(Model)
+            pk = mapper.primary_key[0]
+
+            if not any(map(lambda x: x.name == pk.name, only_columns)):
+                only_columns = [pk, *only_columns]
+
             queryset = request.session.query(*only_columns)
         else:
             queryset = request.session.query(Model)
+
+        queryset = queryset.distinct()
 
         mapper = inspect(Model)
         auto_pk = getattr(mapper.tables[0], '__jet_auto_pk__', False) if len(mapper.tables) else None
