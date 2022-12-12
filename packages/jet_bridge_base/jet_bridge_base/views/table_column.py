@@ -1,4 +1,6 @@
 from sqlalchemy import Column, text, ForeignKey
+from sqlalchemy.exc import DataError
+from sqlalchemy.sql.ddl import AddConstraint
 
 from jet_bridge_base import status
 from jet_bridge_base.db import get_mapped_base, get_engine, reload_request_mapped_base
@@ -7,10 +9,9 @@ from jet_bridge_base.exceptions.validation_error import ValidationError
 from jet_bridge_base.permissions import HasProjectPermissions
 from jet_bridge_base.responses.json import JSONResponse
 from jet_bridge_base.serializers.table import TableColumnSerializer
-from jet_bridge_base.utils.db_types import map_to_sql_type, db_to_sql_type
+from jet_bridge_base.utils.db_types import map_to_sql_type, db_to_sql_type, get_sql_type_convert
 from jet_bridge_base.views.base.api import APIView
 from jet_bridge_base.views.model_description import map_column
-from sqlalchemy.sql.ddl import AddConstraint
 
 
 def map_dto_column(column, metadata=None):
@@ -174,7 +175,7 @@ class TableColumnView(APIView):
         ddl_compiler = engine.dialect.ddl_compiler(engine.dialect, None)
         table_name = ddl_compiler.preparer.format_table(table)
         column_name = ddl_compiler.preparer.format_column(column)
-        engine.execute('''ALTER TABLE {0} DROP COLUMN {1} '''.format(table_name, column_name))
+        engine.execute('''ALTER TABLE {0} DROP COLUMN {1}'''.format(table_name, column_name))
 
         metadata.remove(table)
         metadata.reflect(bind=engine, only=[table.name])
@@ -189,6 +190,9 @@ class TableColumnView(APIView):
         try:
             self.perform_update(request, instance, serializer)
         except Exception as e:
+            if isinstance(e, DataError):
+                if '(psycopg2.errors.InvalidDatetimeFormat)' in e.args[0]:
+                    raise ValidationError('Some of the rows has invalid date format')
             raise ValidationError(str(e))
 
         return JSONResponse(serializer.representation_data)
@@ -219,7 +223,13 @@ class TableColumnView(APIView):
         existing_column_name = ddl_compiler.preparer.format_column(existing_column)
         column_type = column.type.compile(engine.dialect)
 
-        engine.execute('''ALTER TABLE {0} ALTER COLUMN {1} TYPE {2}'''.format(table_name, existing_column_name, column_type))
+        column_type_stmt = column_type
+        sql_type_convert = get_sql_type_convert(column.type)
+
+        if sql_type_convert:
+            column_type_stmt += ' USING {0}'.format(sql_type_convert(existing_column_name))
+
+        engine.execute('''ALTER TABLE {0} ALTER COLUMN {1} TYPE {2}'''.format(table_name, existing_column_name, column_type_stmt))
         # engine.execute('ALTER TABLE {0} ALTER COLUMN {1} TYPE {2} USING {1}::integer'.format(table_name, existing_column_name, column_type))
 
         if column.nullable:
