@@ -109,23 +109,23 @@ class GraphQLSchemaGenerator(object):
         self.model_sort_types = dict()
 
     def get_queryset(self, request, Model, only_columns=None):
-        # mapper = inspect(Model)
-        # pk = mapper.primary_key[0]
+        mapper = inspect(Model)
+        pk = mapper.primary_key[0]
 
         if only_columns:
-            # if not any(map(lambda x: x.name == pk.name, only_columns)):
-            #     only_columns = [pk, *only_columns]
+            if not any(map(lambda x: x.name == pk.name, only_columns)):
+                only_columns = [pk, *only_columns]
 
             queryset = request.session.query(*only_columns)
         else:
             queryset = request.session.query(Model)
 
-        # queryset = queryset.distinct(pk)
-
         mapper = inspect(Model)
         auto_pk = getattr(mapper.tables[0], '__jet_auto_pk__', False) if len(mapper.tables) else None
         if auto_pk:
             queryset = queryset.filter(mapper.primary_key[0].isnot(None))
+
+        queryset = queryset.group_by(pk)
 
         return queryset
 
