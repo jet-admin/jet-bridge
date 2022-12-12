@@ -1,5 +1,5 @@
 from sqlalchemy import Column, text, ForeignKey
-from sqlalchemy.exc import DataError
+from sqlalchemy.exc import DBAPIError
 from sqlalchemy.sql.ddl import AddConstraint
 
 from jet_bridge_base import status
@@ -138,6 +138,9 @@ class TableColumnView(APIView):
         try:
             self.perform_create(request, serializer)
         except Exception as e:
+            if isinstance(e, DBAPIError):
+                if '(psycopg2.errors.DuplicateColumn)' in e.args[0]:
+                    raise ValidationError('Column with such name already exists')
             raise ValidationError(str(e))
 
         return JSONResponse(serializer.representation_data, status=status.HTTP_201_CREATED)
@@ -190,9 +193,11 @@ class TableColumnView(APIView):
         try:
             self.perform_update(request, instance, serializer)
         except Exception as e:
-            if isinstance(e, DataError):
+            if isinstance(e, DBAPIError):
                 if '(psycopg2.errors.InvalidDatetimeFormat)' in e.args[0]:
                     raise ValidationError('Some of the rows has invalid date format')
+                elif '(psycopg2.errors.DuplicateColumn)' in e.args[0]:
+                    raise ValidationError('Column with such name already exists')
             raise ValidationError(str(e))
 
         return JSONResponse(serializer.representation_data)
