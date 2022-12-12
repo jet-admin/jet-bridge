@@ -26,14 +26,14 @@ def get_queryset_limit(queryset):
 
 def apply_default_ordering(Model, queryset):
     mapper = inspect(Model)
-    pk = mapper.primary_key[0].name
+    pk = mapper.primary_key[0]
     ordering = get_queryset_order_by(queryset)
 
     def is_pk(x):
         if isinstance(x, AnnotatedColumnElement):
-            return x.name == pk
+            return x.name == pk.name
         elif isinstance(x, UnaryExpression):
-            return hasattr(x.element, 'name') and x.element.name == pk and x.modifier == operators.desc_op
+            return hasattr(x.element, 'name') and x.element.name == pk.name and x.modifier == operators.desc_op
         return False
 
     if ordering is None or not any(map(is_pk, ordering)):
