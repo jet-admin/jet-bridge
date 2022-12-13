@@ -68,10 +68,11 @@ class TableView(APIView):
         else:
             comment = None
 
+        columns = list(map(lambda x: map_dto_column(data['name'], x, metadata), data['columns']))
         table = Table(
             data['name'],
             metadata,
-            *list(map(lambda x: map_dto_column(x, metadata=metadata), data['columns'])),
+            *columns,
             comment=comment
         )
 

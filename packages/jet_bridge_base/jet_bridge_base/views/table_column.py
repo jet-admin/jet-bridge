@@ -17,7 +17,7 @@ from jet_bridge_base.views.base.api import APIView
 from jet_bridge_base.views.model_description import map_column
 
 
-def map_dto_column(column, metadata=None):
+def map_dto_column(table_name, column, metadata):
     args = []
     column_kwargs = {}
     autoincrement = False
@@ -64,9 +64,10 @@ def map_dto_column(column, metadata=None):
                 table_primary_key = table_primary_keys[0] if len(table_primary_keys) > 0 else None
                 related_column_name = params.get('custom_primary_key') or table_primary_key
                 related_column = [x for x in table.columns if x.name == related_column_name][0]
+                name = '{}_{}_fkey'.format(table_name, column['name'])
 
                 column_type = related_column.type
-                foreign_key = ForeignKey(related_column)
+                foreign_key = ForeignKey(related_column, name=name)
                 args.append(foreign_key)
             except IndexError:
                 pass
@@ -171,7 +172,7 @@ class TableColumnView(APIView):
     def perform_create(self, request, serializer):
         metadata, engine = self.get_db(request)
         table = self.get_table(request)
-        column = map_dto_column(serializer.validated_data, metadata=metadata)
+        column = map_dto_column(table.name, serializer.validated_data, metadata)
         column._set_parent(table)
 
         ddl_compiler = engine.dialect.ddl_compiler(engine.dialect, None)
@@ -244,10 +245,11 @@ class TableColumnView(APIView):
         if 'length' in existing_data:
             existing_dto['length'] = existing_data['length']
 
-        column = map_dto_column({
+        column_data = {
             **existing_dto,
             **serializer.validated_data
-        }, metadata=metadata)
+        }
+        column = map_dto_column(table.name, column_data, metadata)
         column._set_parent(table)
 
         ddl_compiler = engine.dialect.ddl_compiler(engine.dialect, None)
