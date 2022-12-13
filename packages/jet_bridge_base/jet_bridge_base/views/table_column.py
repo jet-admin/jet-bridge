@@ -248,8 +248,9 @@ class TableColumnView(APIView):
         table_name = ddl_compiler.preparer.format_table(table)
 
         column_name = ddl_compiler.preparer.format_column(column)
-        existing_column_name = ddl_compiler.preparer.format_column(existing_column)
         column_type = column.type.compile(engine.dialect)
+        existing_column_name = ddl_compiler.preparer.format_column(existing_column)
+        existing_column_type = existing_column.type.compile(engine.dialect)
 
         column_type_stmt = column_type
         sql_type_convert = get_sql_type_convert(column.type)
@@ -264,8 +265,9 @@ class TableColumnView(APIView):
                     continue
                 engine.execute(DropConstraint(foreign_key.constraint))
 
-        engine.execute('''ALTER TABLE {0} ALTER COLUMN {1} TYPE {2}'''.format(table_name, existing_column_name, column_type_stmt))
-        # engine.execute('ALTER TABLE {0} ALTER COLUMN {1} TYPE {2} USING {1}::integer'.format(table_name, existing_column_name, column_type))
+        if column_type != existing_column_type:
+            engine.execute('''ALTER TABLE {0} ALTER COLUMN {1} DROP DEFAULT'''.format(table_name, existing_column_name))
+            engine.execute('''ALTER TABLE {0} ALTER COLUMN {1} TYPE {2}'''.format(table_name, existing_column_name, column_type_stmt))
 
         if column.nullable:
             engine.execute('''ALTER TABLE {0} ALTER COLUMN {1} DROP NOT NULL'''.format(table_name, existing_column_name))
