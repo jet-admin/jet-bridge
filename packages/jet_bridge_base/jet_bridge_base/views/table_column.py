@@ -1,3 +1,6 @@
+import json
+
+from jet_bridge_base.encoders import JSONEncoder
 from sqlalchemy import Column, text, ForeignKey
 from sqlalchemy.exc import DBAPIError
 from sqlalchemy.sql.ddl import AddConstraint, DropConstraint
@@ -68,6 +71,25 @@ def map_dto_column(column, metadata=None):
             except IndexError:
                 pass
 
+    data_source_meta = {}
+    data_source_field = column.get('data_source_field')
+    data_source_name = column.get('data_source_name')
+    data_source_params = column.get('data_source_params')
+
+    if data_source_field:
+        data_source_meta['field'] = data_source_field
+
+    if data_source_name:
+        data_source_meta['name'] = data_source_name
+
+    if data_source_params:
+        data_source_meta['params'] = data_source_params
+
+    if len(data_source_meta.keys()):
+        comment = json.dumps(data_source_meta, cls=JSONEncoder)
+    else:
+        comment = None
+
     return Column(
         *args,
         name=column['name'],
@@ -75,7 +97,8 @@ def map_dto_column(column, metadata=None):
         autoincrement=autoincrement,
         primary_key=column.get('primary_key', False),
         nullable=column.get('null', False),
-        server_default=server_default
+        server_default=server_default,
+        comment=comment
     )
 
 

@@ -1,5 +1,8 @@
+import json
+
 from jet_bridge_base import status
 from jet_bridge_base.db import get_mapped_base, get_engine, reload_request_mapped_base
+from jet_bridge_base.encoders import JSONEncoder
 from jet_bridge_base.exceptions.not_found import NotFound
 from jet_bridge_base.exceptions.validation_error import ValidationError
 from jet_bridge_base.permissions import HasProjectPermissions
@@ -50,10 +53,26 @@ class TableView(APIView):
         data = serializer.validated_data
         metadata, engine = self.get_db(request)
 
+        data_source_meta = {}
+        data_source_name = data.get('data_source_name')
+        data_source_name_plural = data.get('data_source_name_plural')
+
+        if data_source_name:
+            data_source_meta['name'] = data_source_name
+
+        if data_source_name_plural:
+            data_source_meta['name_plural'] = data_source_name_plural
+
+        if len(data_source_meta.keys()):
+            comment = json.dumps(data_source_meta, cls=JSONEncoder)
+        else:
+            comment = None
+
         table = Table(
             data['name'],
             metadata,
-            *list(map(lambda x: map_dto_column(x, metadata=metadata), data['columns']))
+            *list(map(lambda x: map_dto_column(x, metadata=metadata), data['columns'])),
+            comment=comment
         )
 
         try:
