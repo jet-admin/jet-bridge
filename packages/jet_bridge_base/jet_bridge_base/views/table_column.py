@@ -185,8 +185,6 @@ class TableColumnView(APIView):
                 foreign_key._set_table(column, table)
                 engine.execute(AddConstraint(foreign_key.constraint))
 
-        metadata.remove(table)
-        metadata.reflect(bind=engine, only=[table.name])
         self.update_base(request)
 
     def destroy(self, request, *args, **kwargs):
@@ -203,8 +201,16 @@ class TableColumnView(APIView):
         column_name = ddl_compiler.preparer.format_column(column)
         engine.execute('''ALTER TABLE {0} DROP COLUMN {1}'''.format(table_name, column_name))
 
-        metadata.remove(table)
-        metadata.reflect(bind=engine, only=[table.name])
+        table._columns.remove(column)
+
+        for fk in column.foreign_keys:
+            table.foreign_keys.remove(fk)
+            if fk.constraint in table.constraints:
+                # this might have been removed
+                # already, if it's a composite constraint
+                # and more than one col being replaced
+                table.constraints.remove(fk.constraint)
+
         self.update_base(request)
 
     def update(self, request, *args, **kwargs):
@@ -292,8 +298,6 @@ class TableColumnView(APIView):
         if column_name != existing_column_name:
             engine.execute('''ALTER TABLE {0} RENAME COLUMN {1} TO {2}'''.format(table_name, existing_column_name, column_name))
 
-        metadata.remove(table)
-        metadata.reflect(bind=engine, only=[table.name])
         self.update_base(request)
 
     def partial_update(self, *args, **kwargs):

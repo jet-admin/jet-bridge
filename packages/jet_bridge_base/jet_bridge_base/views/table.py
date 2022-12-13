@@ -78,7 +78,7 @@ class TableView(APIView):
         try:
             table.create(bind=engine)
 
-            metadata.reflect(bind=engine, only=[data['name']])
+            metadata._set_parent(table)
             self.update_base(request)
         except Exception as e:
             metadata.remove(table)
