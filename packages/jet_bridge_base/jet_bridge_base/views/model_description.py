@@ -65,6 +65,7 @@ def map_column_default(column):
 def map_column(column, editable):
     params = {}
     data_source_field = None
+    data_source_name = None
     data_source_params = None
 
     try:
@@ -104,18 +105,21 @@ def map_column(column, editable):
 
     if column.comment:
         try:
-            meta_info = json.loads(column.comment)
+            data_source_meta = json.loads(column.comment)
 
-            if not isinstance(meta_info, dict):
+            if not isinstance(data_source_meta, dict):
                 raise ValueError
 
-            meta_info_field = meta_info.get('field')
-            meta_info_params = meta_info.get('params')
+            meta_field = data_source_meta.get('field')
+            meta_name = data_source_meta.get('name')
+            meta_params = data_source_meta.get('params')
 
-            if meta_info_field is not None:
-                data_source_field = meta_info_field
-            if meta_info_params is not None and isinstance(meta_info_params, dict):
-                data_source_params = meta_info_params
+            if meta_field is not None:
+                data_source_field = meta_field
+            if meta_name is not None:
+                data_source_name = meta_name
+            if meta_params is not None and isinstance(meta_params, dict):
+                data_source_params = meta_params
         except ValueError:
             pass
 
@@ -130,6 +134,7 @@ def map_column(column, editable):
         'editable': editable,
         'params': params,
         'data_source_field': data_source_field,
+        'data_source_name': data_source_name,
         'data_source_params': data_source_params
     }
 
@@ -224,6 +229,7 @@ def map_relationship_override(override):
 
 def map_table(cls, relationships_overrides, hidden):
     mapper = inspect(cls)
+    table = mapper.tables[0]
     name = mapper.selectable.name
     primary_key = mapper.primary_key[0]
     non_editable = []
@@ -231,6 +237,26 @@ def map_table(cls, relationships_overrides, hidden):
 
     from jet_bridge_base.configuration import configuration
     additional = configuration.get_model_description(name)
+
+    data_source_name = None
+    data_source_name_plural = None
+
+    if table.comment:
+        try:
+            data_source_meta = json.loads(table.comment)
+
+            if not isinstance(data_source_meta, dict):
+                raise ValueError
+
+            meta_name = data_source_meta.get('name')
+            meta_name_plural = data_source_meta.get('name_plural')
+
+            if meta_name is not None:
+                data_source_name = meta_name
+            if meta_name_plural is not None:
+                data_source_name_plural = meta_name_plural
+        except ValueError:
+            pass
 
     result = {
         'model': name,
@@ -240,7 +266,9 @@ def map_table(cls, relationships_overrides, hidden):
         'relation_overrides': list(map(lambda x: map_relationship_override(x), model_relationships_overrides)) if model_relationships_overrides else None,
         'hidden': name in hidden or name in configuration.get_hidden_model_description(),
         # 'relations': table_relations(mapper) + table_m2m_relations(mapper),
-        'primary_key_field': primary_key.name if primary_key is not None else None
+        'primary_key_field': primary_key.name if primary_key is not None else None,
+        'data_source_name': data_source_name,
+        'data_source_name_plural': data_source_name_plural
     }
 
     if additional:
