@@ -1,4 +1,9 @@
+import json
+
+from jet_bridge_base.encoders import JSONEncoder
 from sqlalchemy import Column, text, ForeignKey
+from sqlalchemy.exc import DBAPIError
+from sqlalchemy.sql.ddl import AddConstraint, DropConstraint
 
 from jet_bridge_base import status
 from jet_bridge_base.db import get_mapped_base, get_engine, reload_request_mapped_base
@@ -7,13 +12,12 @@ from jet_bridge_base.exceptions.validation_error import ValidationError
 from jet_bridge_base.permissions import HasProjectPermissions
 from jet_bridge_base.responses.json import JSONResponse
 from jet_bridge_base.serializers.table import TableColumnSerializer
-from jet_bridge_base.utils.db_types import map_to_sql_type, db_to_sql_type
+from jet_bridge_base.utils.db_types import map_to_sql_type, db_to_sql_type, get_sql_type_convert
 from jet_bridge_base.views.base.api import APIView
 from jet_bridge_base.views.model_description import map_column
-from sqlalchemy.sql.ddl import AddConstraint
 
 
-def map_dto_column(column, metadata=None):
+def map_dto_column(table_name, column, metadata):
     args = []
     column_kwargs = {}
     autoincrement = False
@@ -60,12 +64,32 @@ def map_dto_column(column, metadata=None):
                 table_primary_key = table_primary_keys[0] if len(table_primary_keys) > 0 else None
                 related_column_name = params.get('custom_primary_key') or table_primary_key
                 related_column = [x for x in table.columns if x.name == related_column_name][0]
+                name = '{}_{}_fkey'.format(table_name, column['name'])
 
                 column_type = related_column.type
-                foreign_key = ForeignKey(related_column)
+                foreign_key = ForeignKey(related_column, name=name)
                 args.append(foreign_key)
             except IndexError:
                 pass
+
+    data_source_meta = {}
+    data_source_field = column.get('data_source_field')
+    data_source_name = column.get('data_source_name')
+    data_source_params = column.get('data_source_params')
+
+    if data_source_field:
+        data_source_meta['field'] = data_source_field
+
+    if data_source_name:
+        data_source_meta['name'] = data_source_name
+
+    if data_source_params:
+        data_source_meta['params'] = data_source_params
+
+    if len(data_source_meta.keys()):
+        comment = json.dumps(data_source_meta, cls=JSONEncoder)
+    else:
+        comment = None
 
     return Column(
         *args,
@@ -74,7 +98,8 @@ def map_dto_column(column, metadata=None):
         autoincrement=autoincrement,
         primary_key=column.get('primary_key', False),
         nullable=column.get('null', False),
-        server_default=server_default
+        server_default=server_default,
+        comment=comment
     )
 
 
@@ -137,6 +162,9 @@ class TableColumnView(APIView):
         try:
             self.perform_create(request, serializer)
         except Exception as e:
+            if isinstance(e, DBAPIError):
+                if '(psycopg2.errors.DuplicateColumn)' in e.args[0]:
+                    raise ValidationError('Column with such name already exists')
             raise ValidationError(str(e))
 
         return JSONResponse(serializer.representation_data, status=status.HTTP_201_CREATED)
@@ -144,7 +172,7 @@ class TableColumnView(APIView):
     def perform_create(self, request, serializer):
         metadata, engine = self.get_db(request)
         table = self.get_table(request)
-        column = map_dto_column(serializer.validated_data, metadata=metadata)
+        column = map_dto_column(table.name, serializer.validated_data, metadata)
         column._set_parent(table)
 
         ddl_compiler = engine.dialect.ddl_compiler(engine.dialect, None)
@@ -158,8 +186,6 @@ class TableColumnView(APIView):
                 foreign_key._set_table(column, table)
                 engine.execute(AddConstraint(foreign_key.constraint))
 
-        metadata.remove(table)
-        metadata.reflect(bind=engine, only=[table.name])
         self.update_base(request)
 
     def destroy(self, request, *args, **kwargs):
@@ -174,10 +200,18 @@ class TableColumnView(APIView):
         ddl_compiler = engine.dialect.ddl_compiler(engine.dialect, None)
         table_name = ddl_compiler.preparer.format_table(table)
         column_name = ddl_compiler.preparer.format_column(column)
-        engine.execute('''ALTER TABLE {0} DROP COLUMN {1} '''.format(table_name, column_name))
+        engine.execute('''ALTER TABLE {0} DROP COLUMN {1}'''.format(table_name, column_name))
 
-        metadata.remove(table)
-        metadata.reflect(bind=engine, only=[table.name])
+        table._columns.remove(column)
+
+        for fk in column.foreign_keys:
+            table.foreign_keys.remove(fk)
+            if fk.constraint in table.constraints:
+                # this might have been removed
+                # already, if it's a composite constraint
+                # and more than one col being replaced
+                table.constraints.remove(fk.constraint)
+
         self.update_base(request)
 
     def update(self, request, *args, **kwargs):
@@ -189,6 +223,11 @@ class TableColumnView(APIView):
         try:
             self.perform_update(request, instance, serializer)
         except Exception as e:
+            if isinstance(e, DBAPIError):
+                if '(psycopg2.errors.InvalidDatetimeFormat)' in e.args[0]:
+                    raise ValidationError('Some of the rows has invalid date format')
+                elif '(psycopg2.errors.DuplicateColumn)' in e.args[0]:
+                    raise ValidationError('Column with such name already exists')
             raise ValidationError(str(e))
 
         return JSONResponse(serializer.representation_data)
@@ -206,21 +245,37 @@ class TableColumnView(APIView):
         if 'length' in existing_data:
             existing_dto['length'] = existing_data['length']
 
-        column = map_dto_column({
+        column_data = {
             **existing_dto,
             **serializer.validated_data
-        }, metadata=metadata)
+        }
+        column = map_dto_column(table.name, column_data, metadata)
         column._set_parent(table)
 
         ddl_compiler = engine.dialect.ddl_compiler(engine.dialect, None)
         table_name = ddl_compiler.preparer.format_table(table)
 
         column_name = ddl_compiler.preparer.format_column(column)
-        existing_column_name = ddl_compiler.preparer.format_column(existing_column)
         column_type = column.type.compile(engine.dialect)
+        existing_column_name = ddl_compiler.preparer.format_column(existing_column)
+        existing_column_type = existing_column.type.compile(engine.dialect)
 
-        engine.execute('''ALTER TABLE {0} ALTER COLUMN {1} TYPE {2}'''.format(table_name, existing_column_name, column_type))
-        # engine.execute('ALTER TABLE {0} ALTER COLUMN {1} TYPE {2} USING {1}::integer'.format(table_name, existing_column_name, column_type))
+        column_type_stmt = column_type
+        sql_type_convert = get_sql_type_convert(column.type)
+
+        if sql_type_convert:
+            column_type_stmt += ' USING {0}'.format(sql_type_convert(existing_column_name))
+
+        for foreign_key in existing_column.foreign_keys:
+            if foreign_key.constraint:
+                foreign_key_should_exist = any(map(lambda x: x.target_fullname == foreign_key.target_fullname, column.foreign_keys))
+                if foreign_key_should_exist:
+                    continue
+                engine.execute(DropConstraint(foreign_key.constraint))
+
+        if column_type != existing_column_type:
+            engine.execute('''ALTER TABLE {0} ALTER COLUMN {1} DROP DEFAULT'''.format(table_name, existing_column_name))
+            engine.execute('''ALTER TABLE {0} ALTER COLUMN {1} TYPE {2}'''.format(table_name, existing_column_name, column_type_stmt))
 
         if column.nullable:
             engine.execute('''ALTER TABLE {0} ALTER COLUMN {1} DROP NOT NULL'''.format(table_name, existing_column_name))
@@ -236,8 +291,8 @@ class TableColumnView(APIView):
 
         for foreign_key in column.foreign_keys:
             if not foreign_key.constraint:
-                existing_foreign_keys = list(filter(lambda x: x.target_fullname == foreign_key.target_fullname, existing_column.foreign_keys))
-                if len(existing_foreign_keys):
+                foreign_key_exists = any(map(lambda x: x.target_fullname == foreign_key.target_fullname, existing_column.foreign_keys))
+                if foreign_key_exists:
                     continue
                 foreign_key._set_table(column, table)
                 engine.execute(AddConstraint(foreign_key.constraint))
@@ -245,8 +300,6 @@ class TableColumnView(APIView):
         if column_name != existing_column_name:
             engine.execute('''ALTER TABLE {0} RENAME COLUMN {1} TO {2}'''.format(table_name, existing_column_name, column_name))
 
-        metadata.remove(table)
-        metadata.reflect(bind=engine, only=[table.name])
         self.update_base(request)
 
     def partial_update(self, *args, **kwargs):

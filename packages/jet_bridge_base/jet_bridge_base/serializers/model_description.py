@@ -12,6 +12,7 @@ class ModelDescriptionFieldSerializer(Serializer):
     editable = fields_.BooleanField()
     params = fields_.JSONField()
     data_source_field = fields_.CharField(required=False)
+    data_source_name = fields_.CharField(required=False)
     data_source_params = fields_.JSONField(required=False)
     verbose_name = fields_.CharField(required=False)
     required = fields_.BooleanField(required=False)
@@ -42,3 +43,5 @@ class ModelDescriptionSerializer(Serializer):
     verbose_name_plural = fields_.CharField(required=False)
     display_field = fields_.CharField(required=False)
     default_order_by = fields_.CharField(required=False)
+    data_source_name = fields_.CharField(required=False)
+    data_source_name_plural = fields_.CharField(required=False)

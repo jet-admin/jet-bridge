@@ -22,11 +22,16 @@ class TableColumnSerializer(Serializer):
     default_type = fields.CharField(required=False)
     default_value = fields.RawField(required=False)
     params = TableColumnParamsSerializer(required=False)
+    data_source_field = fields.CharField(required=False)
+    data_source_name = fields.CharField(required=False)
+    data_source_params = fields.JSONField(required=False)
 
 
 class TableSerializer(Serializer):
     name = fields.CharField()
     columns = TableColumnSerializer(many=True)
+    data_source_name = fields.CharField(required=False)
+    data_source_name_plural = fields.CharField(required=False)
 
     def validate(self, attrs):
         if not any(map(lambda x: x.get('primary_key'), attrs['columns'])):
