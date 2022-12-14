@@ -250,7 +250,6 @@ class TableColumnView(APIView):
             **serializer.validated_data
         }
         column = map_dto_column(table.name, column_data, metadata)
-        column._set_parent(table)
 
         ddl_compiler = engine.dialect.ddl_compiler(engine.dialect, None)
         table_name = ddl_compiler.preparer.format_table(table)
@@ -259,6 +258,25 @@ class TableColumnView(APIView):
         column_type = column.type.compile(engine.dialect)
         existing_column_name = ddl_compiler.preparer.format_column(existing_column)
         existing_column_type = existing_column.type.compile(engine.dialect)
+
+        preserve_column_index = None
+
+        if column_name != existing_column_name:
+            try:
+                preserve_column_index = table._columns.values().index(existing_column)
+                table._columns.remove(existing_column)
+            except ValueError:
+                pass
+
+        column._set_parent(table)
+
+        if preserve_column_index is not None:
+            try:
+                new_column_index = table._columns.values().index(column)
+                columns_collection = table._columns._collection
+                columns_collection.insert(preserve_column_index, columns_collection.pop(new_column_index))
+            except ValueError:
+                pass
 
         column_type_stmt = column_type
         sql_type_convert = get_sql_type_convert(column.type)
