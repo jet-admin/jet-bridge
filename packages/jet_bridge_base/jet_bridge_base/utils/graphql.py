@@ -125,7 +125,8 @@ class GraphQLSchemaGenerator(object):
         if auto_pk:
             queryset = queryset.filter(mapper.primary_key[0].isnot(None))
 
-        queryset = queryset.group_by(pk)
+        if not auto_pk:
+            queryset = queryset.group_by(pk)
 
         return queryset
 

@@ -36,6 +36,7 @@ class ModelDescriptionSerializer(Serializer):
     db_table = fields_.CharField()
     hidden = fields_.BooleanField()
     primary_key_field = fields_.CharField()
+    primary_key_auto = fields_.BooleanField()
     fields = ModelDescriptionFieldSerializer(many=True)
     relations = ModelDescriptionRelationSerializer(many=True)
     relation_overrides = ModelDescriptionRelationSerializer(many=True, required=False)
