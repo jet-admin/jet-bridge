@@ -774,7 +774,8 @@ class GraphQLSchemaGenerator(object):
             queryset_page_lookups = self.get_models_lookups(request, MappedBase, queryset_page, Model, mapper, lookups)
 
             def map_queryset_page_item(item):
-                serialized = serializer_class(instance=item, context=serializer_context).representation_data
+                serializer = serializer_class(instance=item, context=serializer_context)
+                serialized = serializer.representation_data
                 serialized = clean_keys(serialized)
 
                 return {
