@@ -258,7 +258,9 @@ class GraphQLSchemaGenerator(object):
         parent_relations = parent_relations or []
 
         for filters_item in filters:
-            for filter_name, filter_lookups in filters_item.items():
+            filters_item_dict = dict(filters_item)
+
+            for filter_name, filter_lookups in filters_item_dict.items():
                 if filter_name == '_not_':
                     queryset = self.filter_queryset(
                         MappedBase,
@@ -275,7 +277,9 @@ class GraphQLSchemaGenerator(object):
                 filter_relationship = self.get_model_relationships_by_clean_name(mapper).get(filter_name)
 
                 if filter_relationship is not None:
-                    for lookup_name, lookup_value in filter_lookups.items():
+                    filter_lookups_dict = dict(filter_lookups)
+
+                    for lookup_name, lookup_value in filter_lookups_dict.items():
                         if lookup_name == 'relation':
                             relation_mapper = filter_relationship['related_mapper']
                             queryset = self.filter_queryset(
@@ -287,7 +291,9 @@ class GraphQLSchemaGenerator(object):
                                 exclude
                             )
                 elif column is not None:
-                    for lookup_name, lookup_value in filter_lookups.items():
+                    filter_lookups_dict = dict(filter_lookups)
+
+                    for lookup_name, lookup_value in filter_lookups_dict.items():
                         if lookup_name == 'relation':
                             for relationship in self.get_model_relationships(mapper):
                                 if relationship['direction'] != MANYTOONE or relationship['local_column_name'] != column.name:
@@ -360,7 +366,9 @@ class GraphQLSchemaGenerator(object):
     def get_models_lookup(self, lookup_item, request, MappedBase, models, Model, mapper):
         result = {}
 
-        for lookup_name, lookup_data in lookup_item.items():
+        lookup_item_dict = dict(lookup_item)
+
+        for lookup_name, lookup_data in lookup_item_dict.items():
             columns_by_clean_name = self.get_model_columns_by_clean_name(MappedBase, mapper)
             column = columns_by_clean_name.get(lookup_name)
             relationship = self.get_model_relationships_by_clean_name(mapper).get(lookup_name)
@@ -517,7 +525,9 @@ class GraphQLSchemaGenerator(object):
 
     def sort_queryset(self, queryset, MappedBase, mapper, sort):
         for item in sort:
-            order_by = map(lambda x: self.map_sort_order_field(MappedBase, mapper, x[0], x[1]), item.items())
+            item_dict = dict(item)
+
+            order_by = map(lambda x: self.map_sort_order_field(MappedBase, mapper, x[0], x[1]), item_dict.items())
             order_by = filter(lambda x: x is not None, order_by)
             order_by = list(order_by)
 
