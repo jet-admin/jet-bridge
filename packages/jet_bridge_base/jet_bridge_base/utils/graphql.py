@@ -360,7 +360,9 @@ class GraphQLSchemaGenerator(object):
     def get_models_lookup(self, lookup_item, request, MappedBase, models, Model, mapper):
         result = {}
 
-        for lookup_name, lookup_data in lookup_item.items():
+        lookup_item_dict = dict(lookup_item)
+
+        for lookup_name, lookup_data in lookup_item_dict.items():
             columns_by_clean_name = self.get_model_columns_by_clean_name(MappedBase, mapper)
             column = columns_by_clean_name.get(lookup_name)
             relationship = self.get_model_relationships_by_clean_name(mapper).get(lookup_name)
