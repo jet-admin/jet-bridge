@@ -783,7 +783,7 @@ class GraphQLSchemaGenerator(object):
                     'attrs': serialized,
                     'allAttrs': serialized,
                     'lookups': list(map(
-                        lambda x: self.filter_lookup_models(x, lambda instance: instance == item),
+                        lambda x: self.filter_lookup_models(x, lambda instance: instance == row),
                         queryset_page_lookups
                     ))
                 }
