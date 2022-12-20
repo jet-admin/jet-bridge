@@ -757,7 +757,7 @@ class GraphQLSchemaGenerator(object):
             data_selections = self.get_selections(info, ['data']) or []
             data_names = list(map(lambda x: x.name.value, data_selections))
             model_attrs = dict(map(lambda x: [clean_name(x), getattr(Model, x)], dir(Model)))
-            only_columns = list(map(lambda x: model_attrs.get(x), field_names)) \
+            only_columns = list(filter(lambda x: x is not None, map(lambda x: model_attrs.get(x), field_names))) \
                 if len(field_names) and 'allAttrs' not in data_names else None
 
             queryset = self.get_queryset(request, Model, only_columns)
@@ -774,7 +774,8 @@ class GraphQLSchemaGenerator(object):
             queryset_page_lookups = self.get_models_lookups(request, MappedBase, queryset_page, Model, mapper, lookups)
 
             def map_queryset_page_item(item):
-                serialized = serializer_class(instance=item, context=serializer_context).representation_data
+                serializer = serializer_class(instance=item, context=serializer_context)
+                serialized = serializer.representation_data
                 serialized = clean_keys(serialized)
 
                 return {
