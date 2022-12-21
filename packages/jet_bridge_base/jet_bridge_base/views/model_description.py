@@ -67,6 +67,8 @@ def map_column(column, editable):
     data_source_field = None
     data_source_name = None
     data_source_params = None
+    data_source_order_after = None
+    data_source_hidden = None
 
     try:
         map_type = sql_to_map_type(column.type)
@@ -113,6 +115,8 @@ def map_column(column, editable):
             meta_field = data_source_meta.get('field')
             meta_name = data_source_meta.get('name')
             meta_params = data_source_meta.get('params')
+            meta_order_after = data_source_meta.get('order_after')
+            meta_hidden = data_source_meta.get('hidden')
 
             if meta_field is not None:
                 data_source_field = meta_field
@@ -120,6 +124,10 @@ def map_column(column, editable):
                 data_source_name = meta_name
             if meta_params is not None and isinstance(meta_params, dict):
                 data_source_params = meta_params
+            if meta_order_after is not None:
+                data_source_order_after = meta_order_after
+            if meta_hidden is not None:
+                data_source_hidden = meta_hidden
         except ValueError:
             pass
 
@@ -135,7 +143,9 @@ def map_column(column, editable):
         'params': params,
         'data_source_field': data_source_field,
         'data_source_name': data_source_name,
-        'data_source_params': data_source_params
+        'data_source_params': data_source_params,
+        'data_source_order_after': data_source_order_after,
+        'data_source_hidden': data_source_hidden
     }
 
     server_default = map_column_default(column)
@@ -241,6 +251,8 @@ def map_table(cls, relationships_overrides, hidden):
 
     data_source_name = None
     data_source_name_plural = None
+    data_source_order_after = None
+    data_source_hidden = None
 
     if table.comment:
         try:
@@ -251,11 +263,17 @@ def map_table(cls, relationships_overrides, hidden):
 
             meta_name = data_source_meta.get('name')
             meta_name_plural = data_source_meta.get('name_plural')
+            meta_order_after = data_source_meta.get('order_after')
+            meta_hidden = data_source_meta.get('hidden')
 
             if meta_name is not None:
                 data_source_name = meta_name
             if meta_name_plural is not None:
                 data_source_name_plural = meta_name_plural
+            if meta_order_after is not None:
+                data_source_order_after = meta_order_after
+            if meta_hidden is not None:
+                data_source_hidden = meta_hidden
         except ValueError:
             pass
 
@@ -270,7 +288,9 @@ def map_table(cls, relationships_overrides, hidden):
         'primary_key_field': primary_key.name if primary_key is not None else None,
         'primary_key_auto': primary_key_auto,
         'data_source_name': data_source_name,
-        'data_source_name_plural': data_source_name_plural
+        'data_source_name_plural': data_source_name_plural,
+        'data_source_order_after': data_source_order_after,
+        'data_source_hidden': data_source_hidden
     }
 
     if additional:
