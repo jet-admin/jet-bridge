@@ -32,6 +32,9 @@ engines = [
         'name': 'bigquery'
     },
     {
+        'name': 'snowflake'
+    },
+    {
         'name': 'sqlite'
     },
     {
@@ -143,6 +146,7 @@ def create_config(config_not_set):
     database_port = None
     database_user = None
     database_password = None
+    database_extra = None
 
     while True:
         print_formatted_text('')
@@ -191,6 +195,59 @@ def create_config(config_not_set):
                 promt_message('<green><b>Enter your service account key</b></green>'),
                 default=database_password or settings.DATABASE_PASSWORD or ''
             )
+        elif database_engine == 'snowflake':
+            prompts = 5
+
+            message = '<green><b>Enter your account name</b></green>'
+
+            database_host = prompt(
+                promt_message(message),
+                validator=Validator.from_callable(
+                    is_not_empty,
+                    error_message='Account name is required',
+                    move_cursor_to_end=True
+                )
+            )
+
+            print_formatted_text('')
+
+            database_name = prompt(
+                promt_message('<green><b>Enter your database name</b></green>'),
+                validator=Validator.from_callable(
+                    is_not_empty,
+                    error_message='Database name is required',
+                    move_cursor_to_end=True
+                ),
+                default=database_name or settings.DATABASE_NAME or ''
+            )
+
+            print_formatted_text('')
+
+            database_user = prompt(
+                promt_message('<green><b>Enter your database user</b></green>'),
+                validator=Validator.from_callable(
+                    is_not_empty,
+                    error_message='Database user is required',
+                    move_cursor_to_end=True
+                ),
+                default=database_user or settings.DATABASE_USER or ''
+            )
+
+            print_formatted_text('')
+
+            database_password = prompt(
+                promt_message('<green><b>Enter your database password</b></green>'),
+                default=database_password or settings.DATABASE_PASSWORD or ''
+            )
+
+            print_formatted_text('')
+
+            warehouse_name = prompt(
+                promt_message('<green><b>Enter your warehouse name</b></green>'),
+                default='compute_wh'
+            )
+
+            database_extra = 'warehouse={}'.format(warehouse_name)
         else:
             prompts = 5
 
@@ -263,7 +320,8 @@ def create_config(config_not_set):
             'port': database_port,
             'name': database_name,
             'user': database_user,
-            'password': database_password
+            'password': database_password,
+            'extra': database_extra
         })
 
         if not engine_url:
