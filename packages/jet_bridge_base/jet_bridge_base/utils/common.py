@@ -89,3 +89,13 @@ def unique(arr):
         if item not in result:
             result.append(item)
     return result
+
+
+def flatten(arr):
+    result = []
+    for item in arr:
+        if isinstance(item, list):
+            result.extend(item)
+        else:
+            result.append(item)
+    return result
