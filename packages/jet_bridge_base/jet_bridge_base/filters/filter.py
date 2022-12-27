@@ -6,7 +6,7 @@ from six import string_types
 from jet_bridge_base.fields import field, CharField, BooleanField
 from jet_bridge_base.filters import lookups
 
-EMPTY_VALUES = ([], (), {}, '', None)
+EMPTY_VALUES = ([], (), {}, None)
 
 
 def json_icontains(column, value):
