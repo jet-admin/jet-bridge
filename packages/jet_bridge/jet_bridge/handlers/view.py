@@ -25,7 +25,7 @@ class BaseViewHandler(tornado.web.RequestHandler):
         return dict(map(map_file, self.request.files.items()))
 
     def get_request(self):
-        query_arguments = parse_qs(self.request.query)
+        query_arguments = parse_qs(self.request.query, keep_blank_values=True)
         return Request(
             self.request.method.upper(),
             self.request.protocol,
