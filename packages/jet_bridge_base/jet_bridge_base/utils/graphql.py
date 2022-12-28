@@ -154,39 +154,6 @@ class GraphQLSchemaGenerator(object):
             mapper = inspect(Model)
             name = mapper.selectable.name
 
-            for relationship in mapper.relationships.values():
-                local_column = get_set_first(relationship.local_columns)
-                relation_column = get_set_first(relationship.remote_side)
-
-                if relationship.direction == MANYTOONE:
-                    related_name = relationship.mapper.selectable.name
-                    related_model = MappedBase.classes.get(related_name)
-
-                    model_relationships[relationship.key] = {
-                        'name': relationship.key,
-                        'direction': relationship.direction,
-                        'local_column': local_column,
-                        'local_column_name': local_column.name if local_column is not None else None,
-                        'related_model': related_model,
-                        'related_mapper': relationship.mapper,
-                        'related_column': relation_column,
-                        'related_column_name': relation_column.name if relation_column is not None else None
-                    }
-                elif relationship.direction == ONETOMANY:
-                    related_name = relationship.mapper.selectable.name
-                    related_model = MappedBase.classes.get(related_name)
-
-                    model_relationships[relationship.key] = {
-                        'name': relationship.key,
-                        'direction': relationship.direction,
-                        'local_column': local_column,
-                        'local_column_name': local_column.name if local_column is not None else None,
-                        'related_model': related_model,
-                        'related_mapper': relationship.mapper,
-                        'related_column': relation_column,
-                        'related_column_name': relation_column.name if relation_column is not None else None
-                    }
-
             model_relationships_overrides = relationships_overrides.get(name, [])
 
             for override in model_relationships_overrides:
@@ -223,6 +190,39 @@ class GraphQLSchemaGenerator(object):
                     'related_column': related_column,
                     'related_column_name': override.related_field
                 }
+
+            for relationship in mapper.relationships.values():
+                local_column = get_set_first(relationship.local_columns)
+                relation_column = get_set_first(relationship.remote_side)
+
+                if relationship.direction == MANYTOONE:
+                    related_name = relationship.mapper.selectable.name
+                    related_model = MappedBase.classes.get(related_name)
+
+                    model_relationships[relationship.key] = {
+                        'name': relationship.key,
+                        'direction': relationship.direction,
+                        'local_column': local_column,
+                        'local_column_name': local_column.name if local_column is not None else None,
+                        'related_model': related_model,
+                        'related_mapper': relationship.mapper,
+                        'related_column': relation_column,
+                        'related_column_name': relation_column.name if relation_column is not None else None
+                    }
+                elif relationship.direction == ONETOMANY:
+                    related_name = relationship.mapper.selectable.name
+                    related_model = MappedBase.classes.get(related_name)
+
+                    model_relationships[relationship.key] = {
+                        'name': relationship.key,
+                        'direction': relationship.direction,
+                        'local_column': local_column,
+                        'local_column_name': local_column.name if local_column is not None else None,
+                        'related_model': related_model,
+                        'related_mapper': relationship.mapper,
+                        'related_column': relation_column,
+                        'related_column_name': relation_column.name if relation_column is not None else None
+                    }
 
             result[name] = model_relationships
 

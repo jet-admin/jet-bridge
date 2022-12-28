@@ -62,6 +62,23 @@ def build_engine_url(conf, tunnel=None):
                 url.append(str(conf.get('extra')))
         except:
             pass
+    elif conf.get('engine') == 'snowflake':
+        url.append(url_encode(str(conf.get('user'))))
+
+        if conf.get('password'):
+            url.append(':')
+            url.append(url_encode(str(conf.get('password'))))
+
+        url.append('@')
+
+        url.append(str(conf.get('host')))
+        url.append('/')
+
+        url.append(str(conf.get('name')))
+
+        if conf.get('extra'):
+            url.append('?')
+            url.append(str(conf.get('extra')))
     else:
         host = '127.0.0.1' if tunnel else conf.get('host')
         port = tunnel.local_bind_port if tunnel else conf.get('port')

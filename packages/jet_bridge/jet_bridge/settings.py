@@ -44,7 +44,7 @@ define('media_storage', default=media.MEDIA_STORAGE_FILE, help='media storage ty
 define('media_root', default='media', help='media root')
 define('media_base_url', default=None, help='media base URL')
 
-define('database_engine', help='database engine (postgresql, mysql, oracle, mssql+pyodbc, bigquery, sqlite)')
+define('database_engine', help='database engine (postgresql, mysql, oracle, mssql+pyodbc, bigquery, snowflake, sqlite)')
 define('database_host', help='database host')
 define('database_port', help='database port')
 define('database_user', help='database user')
