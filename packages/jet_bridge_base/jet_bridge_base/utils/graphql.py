@@ -158,7 +158,11 @@ class GraphQLSchemaGenerator(object):
 
             for override in model_relationships_overrides:
                 direction = parse_relationship_direction(override.direction)
-                local_column = getattr(Model, override.local_field)
+                local_column = getattr(Model, override.local_field, None)
+
+                if local_column is None:
+                    continue
+
                 related_name = override.related_model
                 related_model = MappedBase.classes.get(related_name)
 
@@ -178,7 +182,10 @@ class GraphQLSchemaGenerator(object):
                     continue
 
                 related_mapper = inspect(related_model)
-                related_column = getattr(related_model, override.related_field)
+                related_column = getattr(related_model, override.related_field, None)
+
+                if related_column is None:
+                    continue
 
                 model_relationships[override.name] = {
                     'name': override.name,
@@ -395,20 +402,21 @@ class GraphQLSchemaGenerator(object):
                     else:
                         aggregate_column_name = relation_mapper.primary_key[0].name
 
-                    aggregate_column = getattr(relation_model, aggregate_column_name)
-                    aggregate_func = get_query_func_by_name(lookup_data['aggregate']['func'], aggregate_column)
+                    aggregate_column = getattr(relation_model, aggregate_column_name, None)
+                    if aggregate_column is not None:
+                        aggregate_func = get_query_func_by_name(lookup_data['aggregate']['func'], aggregate_column)
 
-                    groups = request.session\
-                        .query(relation_column, aggregate_func)\
-                        .filter(relation_column.in_(lookup_values))\
-                        .group_by(relation_column)
-                    groups_dict = dict(groups)
+                        groups = request.session\
+                            .query(relation_column, aggregate_func)\
+                            .filter(relation_column.in_(lookup_values))\
+                            .group_by(relation_column)
+                        groups_dict = dict(groups)
 
-                    lookup_result['aggregated_values'] = list(map(lambda x: {
-                        'instance': x,
-                        'value': groups_dict.get(getattr(x, local_column.name), 0)
-                    }, models))
-                    lookup_result['related_column'] = relation_column.name
+                        lookup_result['aggregated_values'] = list(map(lambda x: {
+                            'instance': x,
+                            'value': groups_dict.get(getattr(x, local_column.name), 0)
+                        }, models))
+                        lookup_result['related_column'] = relation_column.name
 
                 if 'relation' in lookup_data:
                     relation_model = relationship['related_model']
@@ -495,12 +503,12 @@ class GraphQLSchemaGenerator(object):
             if 'related' in lookup_data:
                 item_result['related'] = self.filter_lookup_models(
                     lookup_data['related'],
-                    lambda x: getattr(x, lookup_data['related_column']) in values
+                    lambda x: getattr(x, lookup_data['related_column'], None) in values
                 )
 
             if 'aggregated_values' in lookup_data:
                 model_values = list(filter(
-                    lambda x: getattr(x['instance'], lookup_data['source_column']) in values,
+                    lambda x: getattr(x['instance'], lookup_data['source_column'], None) in values,
                     lookup_data['aggregated_values']
                 ))
                 item_result['aggregated'] = model_values[0]['value'] if len(model_values) else 0
