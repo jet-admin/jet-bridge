@@ -13,6 +13,7 @@ data_types = [
     {'query': 'INTEGER[]', 'operator': 'startswith', 'data_type': fields.ArrayField},
     {'query': 'INTEGER', 'operator': 'equals', 'data_type': fields.IntegerField},
     {'query': 'SMALLINT', 'operator': 'equals', 'data_type': fields.IntegerField},
+    {'query': 'BIGINT', 'operator': 'equals', 'data_type': fields.IntegerField},
     {'query': 'NUMERIC', 'operator': 'startswith', 'data_type': fields.CharField},
     {'query': 'VARCHAR', 'operator': 'startswith', 'data_type': fields.CharField},
     {'query': 'TIMESTAMP', 'operator': 'startswith', 'data_type': fields.DateTimeField},
