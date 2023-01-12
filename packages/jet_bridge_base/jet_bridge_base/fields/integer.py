@@ -21,4 +21,4 @@ class IntegerField(Field):
     def to_representation_item(self, value):
         if value is None:
             return
-        return six.text_type(value)
+        return value
