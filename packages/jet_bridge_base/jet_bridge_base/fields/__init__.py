@@ -2,6 +2,7 @@ from jet_bridge_base.fields.raw import RawField
 from jet_bridge_base.fields.char import CharField
 from jet_bridge_base.fields.boolean import BooleanField
 from jet_bridge_base.fields.integer import IntegerField
+from jet_bridge_base.fields.float import FloatField
 from jet_bridge_base.fields.datetime import DateTimeField
 from jet_bridge_base.fields.json import JSONField
 from jet_bridge_base.fields.wkt import WKTField
