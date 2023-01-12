@@ -3,9 +3,9 @@ import six
 from jet_bridge_base.fields.field import Field
 
 
-class IntegerField(Field):
+class FloatField(Field):
     field_error_messages = {
-        'invalid': 'not a valid integer'
+        'invalid': 'not a valid float'
     }
 
     def to_internal_value_item(self, value):
@@ -14,7 +14,7 @@ class IntegerField(Field):
         value = six.text_type(value).strip()
 
         try:
-            return int(value)
+            return float(value)
         except (ValueError, TypeError):
             self.error('invalid')
 
