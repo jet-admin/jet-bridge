@@ -10,36 +10,36 @@ EMPTY_VALUES = ([], (), {}, None)
 
 
 def safe_startswith(column, value):
-    field_type = column.property.columns[0].type
+    field_type = column.property.columns[0].type if hasattr(column, 'property') else None
 
-    if isinstance(field_type, ENUM):
+    if isinstance(field_type, ENUM) or field_type is None:
         return column.cast(Unicode).ilike('{}%'.format(value))
     else:
         return column.ilike('{}%'.format(value))
 
 
 def safe_endswith(column, value):
-    field_type = column.property.columns[0].type
+    field_type = column.property.columns[0].type if hasattr(column, 'property') else None
 
-    if isinstance(field_type, ENUM):
+    if isinstance(field_type, ENUM) or field_type is None:
         return column.cast(Unicode).ilike('%{}'.format(value))
     else:
         return column.ilike('%{}'.format(value))
 
 
 def safe_icontains(column, value):
-    field_type = column.property.columns[0].type
+    field_type = column.property.columns[0].type if hasattr(column, 'property') else None
 
-    if isinstance(field_type, ENUM):
+    if isinstance(field_type, ENUM) or field_type is None:
         return column.cast(Unicode).ilike('%{}%'.format(value))
     else:
         return column.ilike('%{}%'.format(value))
 
 
 def json_icontains(column, value):
-    field_type = column.property.columns[0].type
+    field_type = column.property.columns[0].type if hasattr(column, 'property') else None
 
-    if isinstance(field_type, JSON):
+    if isinstance(field_type, JSON) or field_type is None:
         return column.cast(Unicode).ilike('%{}%'.format(value))
     else:
         return column.astext.ilike('%{}%'.format(value))
