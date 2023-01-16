@@ -1,12 +1,39 @@
 from jet_bridge_base.utils.queryset import get_session_engine
 from sqlalchemy import Unicode
-from sqlalchemy.dialects.postgresql import JSON
+from sqlalchemy.dialects.postgresql import JSON, ENUM
 from six import string_types
 
 from jet_bridge_base.fields import field, CharField, BooleanField
 from jet_bridge_base.filters import lookups
 
 EMPTY_VALUES = ([], (), {}, None)
+
+
+def safe_startswith(column, value):
+    field_type = column.property.columns[0].type
+
+    if isinstance(field_type, ENUM):
+        return column.cast(Unicode).ilike('{}%'.format(value))
+    else:
+        return column.ilike('{}%'.format(value))
+
+
+def safe_endswith(column, value):
+    field_type = column.property.columns[0].type
+
+    if isinstance(field_type, ENUM):
+        return column.cast(Unicode).ilike('%{}'.format(value))
+    else:
+        return column.ilike('%{}'.format(value))
+
+
+def safe_icontains(column, value):
+    field_type = column.property.columns[0].type
+
+    if isinstance(field_type, ENUM):
+        return column.cast(Unicode).ilike('%{}%'.format(value))
+    else:
+        return column.ilike('%{}%'.format(value))
 
 
 def json_icontains(column, value):
@@ -42,10 +69,10 @@ class Filter(object):
         lookups.GTE: {'operator': '__ge__'},
         lookups.LT: {'operator': '__lt__'},
         lookups.LTE: {'operator': '__le__'},
-        lookups.ICONTAINS: {'operator': 'ilike', 'post_process': lambda x: '%{}%'.format(x)},
+        lookups.ICONTAINS: {'operator': False, 'func': safe_icontains},
         lookups.IN: {'operator': 'in_', 'field_class': CharField, 'field_kwargs': {'many': True}, 'pre_process': lambda x: safe_array(x)},
-        lookups.STARTS_WITH: {'operator': 'ilike', 'post_process': lambda x: '{}%'.format(x)},
-        lookups.ENDS_WITH: {'operator': 'ilike', 'post_process': lambda x: '%{}'.format(x)},
+        lookups.STARTS_WITH: {'operator': False, 'func': safe_startswith},
+        lookups.ENDS_WITH: {'operator': False, 'func': safe_endswith},
         lookups.IS_NULL: {'operator': lambda x: ('__eq__', None) if x else ('isnot', None), 'field_class': BooleanField},
         lookups.JSON_ICONTAINS: {'operator': False, 'func': json_icontains},
         lookups.COVEREDBY: {'operator': False, 'func': coveredby}
