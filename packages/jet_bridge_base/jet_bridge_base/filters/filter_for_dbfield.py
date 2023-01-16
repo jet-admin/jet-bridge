@@ -40,7 +40,10 @@ text_lookups = [
 
 select_lookups = [
     lookups.EXACT,
+    lookups.ICONTAINS,
     lookups.IN,
+    lookups.STARTS_WITH,
+    lookups.ENDS_WITH,
     lookups.IS_NULL,
 ]
 
