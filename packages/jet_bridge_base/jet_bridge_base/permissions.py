@@ -157,6 +157,12 @@ class HasProjectPermissions(BasePermission):
             request.environment = result.get('environment')
             request.resource_token = project_token
 
+            user_id = result.get('user')
+            if user_id is not None:
+                sentry_controller.set_user({'id': user_id})
+            else:
+                sentry_controller.set_user(None)
+
             return self.has_view_permissions(view_permissions, user_permissions, project_token)
         elif token['type'] == self.user_token_prefix:
             result = project_auth(token['value'], project_token, view_permissions, token['params'])

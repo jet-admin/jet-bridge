@@ -6,7 +6,7 @@ import six
 
 from jet_bridge_base import settings
 from jet_bridge_base.configuration import configuration
-from jet_bridge_base.db import create_session
+from jet_bridge_base.db import create_session, get_connection
 from jet_bridge_base.exceptions.api import APIException
 from jet_bridge_base.exceptions.not_found import NotFound
 from jet_bridge_base.exceptions.permission_denied import PermissionDenied
@@ -14,6 +14,7 @@ from jet_bridge_base.exceptions.validation_error import ValidationError
 from jet_bridge_base.responses.json import JSONResponse
 from jet_bridge_base.responses.template import TemplateResponse
 from jet_bridge_base.logger import logger
+from jet_bridge_base.sentry import sentry_controller
 from jet_bridge_base.utils.exceptions import serialize_validation_error
 
 
@@ -149,6 +150,16 @@ class APIView(BaseAPIView):
             request.session = create_session(request)
         except Exception as e:
             raise ValidationError(str(e))
+
+        connection = get_connection(request)
+        if connection:
+            sentry_controller.set_context('db_connection', {
+                'name': connection.get('name'),
+                'project': connection.get('project'),
+                'token': connection.get('token')
+            })
+        else:
+            sentry_controller.set_context('db_connection', {})
 
     def after_dispatch(self, request):
         super(APIView, self).after_dispatch(request)
