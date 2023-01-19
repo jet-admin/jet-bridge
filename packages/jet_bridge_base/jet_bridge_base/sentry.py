@@ -33,6 +33,8 @@ class SentryController(object):
             exc_type, exc_value, tb = hint['exc_info']
             if isinstance(exc_value, (APIException, KeyboardInterrupt)):
                 return None
+        if event.get('logger') == 'jet_bridge':
+            return None
         return event
 
     def set_user(self, user):
