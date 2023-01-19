@@ -4,6 +4,7 @@ import tornado.ioloop
 import tornado.web
 
 from jet_bridge.handlers.temporary_redirect import TemporaryRedirectHandler
+from jet_bridge_base.sentry import sentry_controller
 from jet_bridge_base.utils.async_exec import set_max_workers
 from jet_bridge_base import settings as base_settings
 from jet_bridge_base.views.api import ApiView
@@ -24,10 +25,11 @@ from jet_bridge_base.views.status import StatusView
 from jet_bridge_base.views.table import TableView
 from jet_bridge_base.views.table_column import TableColumnView
 
-from jet_bridge import settings, media
+from jet_bridge import settings, media, VERSION
 from jet_bridge.handlers.view import view_handler
 from jet_bridge.handlers.not_found import NotFoundHandler
 from jet_bridge.router import Router
+from jet_bridge_base.views.trigger_exception import TriggerExceptionView
 
 
 def make_app():
@@ -55,6 +57,7 @@ def make_app():
         (r'/api/external_auth/login/(?P<app>[^/]+)/', view_handler(ExternalAuthLoginView)),
         (r'/api/external_auth/complete/(?P<app>[^/]+)/', view_handler(ExternalAuthCompleteView)),
         (r'/api/status/', view_handler(StatusView)),
+        (r'/api/trigger_exception/', view_handler(TriggerExceptionView)),
     ]
     urls += router.urls
 
@@ -63,6 +66,13 @@ def make_app():
 
     if settings.THREADS is not None:
         set_max_workers(settings.THREADS)
+
+    if settings.SENTRY_DSN:
+        sentry_controller.enable(
+            dsn=settings.SENTRY_DSN,
+            release='jet-bridge@{}'.format(VERSION),
+            tornado=True
+        )
 
     return tornado.web.Application(
         handlers=urls,

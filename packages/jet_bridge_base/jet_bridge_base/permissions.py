@@ -6,6 +6,7 @@ import jwt
 from jwt import PyJWTError
 
 from jet_bridge_base import settings
+from jet_bridge_base.sentry import sentry_controller
 from jet_bridge_base.utils.backend import project_auth
 from jet_bridge_base.utils.crypt import get_sha256_hash
 
@@ -156,6 +157,12 @@ class HasProjectPermissions(BasePermission):
             request.project = result.get('project')
             request.environment = result.get('environment')
             request.resource_token = project_token
+
+            user_id = result.get('user')
+            if user_id is not None:
+                sentry_controller.set_user({'id': user_id})
+            else:
+                sentry_controller.set_user(None)
 
             return self.has_view_permissions(view_permissions, user_permissions, project_token)
         elif token['type'] == self.user_token_prefix:

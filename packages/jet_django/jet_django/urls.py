@@ -15,6 +15,7 @@ from jet_bridge_base.views.sql import SqlView
 from jet_bridge_base.views.status import StatusView
 from jet_bridge_base.views.table import TableView
 from jet_bridge_base.views.table_column import TableColumnView
+from jet_bridge_base.views.trigger_exception import TriggerExceptionView
 from jet_django.route_view import route_view
 
 from jet_django.router import Router
@@ -47,6 +48,7 @@ def init_urls():
             path('api/external_auth/login/<app>/', route_view(ExternalAuthLoginView).as_view(), name='external-auth-login'),
             path('api/external_auth/complete/<app>/', route_view(ExternalAuthCompleteView).as_view(),name='external-auth-complete'),
             path('status/', route_view(StatusView).as_view(), name='status'),
+            path('trigger_exception/', route_view(TriggerExceptionView).as_view(), name='trigger-exception'),
         ]
     except ImportError:
         from django.conf.urls import url
@@ -66,6 +68,7 @@ def init_urls():
             url(r'^api/external_auth/login/(?P<app>[^/]+)/', route_view(ExternalAuthLoginView).as_view(), name='external-auth-login'),
             url(r'^api/external_auth/complete/(?P<app>[^/]+)/', route_view(ExternalAuthCompleteView).as_view(), name='external-auth-complete'),
             url(r'^status/', route_view(StatusView).as_view(), name='status'),
+            url(r'^trigger_exception/', route_view(TriggerExceptionView).as_view(), name='trigger-exception'),
         ]
 
 
