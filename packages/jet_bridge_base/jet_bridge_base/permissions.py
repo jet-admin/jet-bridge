@@ -6,6 +6,7 @@ import jwt
 from jwt import PyJWTError
 
 from jet_bridge_base import settings
+from jet_bridge_base.sentry import sentry_controller
 from jet_bridge_base.utils.backend import project_auth
 from jet_bridge_base.utils.crypt import get_sha256_hash
 
