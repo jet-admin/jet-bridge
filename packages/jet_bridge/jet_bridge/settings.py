@@ -77,6 +77,8 @@ define('track_databases_auth', default='')
 define('track_models_endpoint', default='')
 define('track_models_auth', default='')
 
+define('sentry_dsn', default='')
+
 # Parse
 
 options.parse_command_line(final=False)
@@ -175,5 +177,7 @@ TRACK_DATABASES_AUTH = options.track_databases_auth
 
 TRACK_MODELS_ENDPOINT = options.track_models_endpoint
 TRACK_MODELS_AUTH = options.track_models_auth
+
+SENTRY_DSN = options.sentry_dsn
 
 POSSIBLE_HOST = os.environ.get('POSSIBLE_HOST')

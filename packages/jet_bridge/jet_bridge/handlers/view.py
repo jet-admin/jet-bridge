@@ -1,5 +1,7 @@
 import tornado.web
+from jet_bridge_base.db import get_connection
 from jet_bridge_base.exceptions.request_error import RequestError
+from jet_bridge_base.sentry import sentry_controller
 from tornado import gen
 from six.moves.urllib_parse import parse_qs
 
@@ -8,6 +10,7 @@ from jet_bridge_base.responses.redirect import RedirectResponse
 from jet_bridge_base.responses.template import TemplateResponse
 from jet_bridge_base.status import HTTP_204_NO_CONTENT
 from jet_bridge_base.utils.async_exec import as_future
+from tornado.iostream import StreamClosedError
 
 
 class BaseViewHandler(tornado.web.RequestHandler):
@@ -57,21 +60,24 @@ class BaseViewHandler(tornado.web.RequestHandler):
 
     @gen.coroutine
     def write_response(self, response):
-        if isinstance(response, RedirectResponse):
-            self.redirect(response.url, status=response.status)
-            return
+        try:
+            if isinstance(response, RedirectResponse):
+                self.redirect(response.url, status=response.status)
+                raise gen.Return()
 
-        for name, value in response.header_items():
-            self.set_header(name, value)
+            for name, value in response.header_items():
+                self.set_header(name, value)
 
-        if response.status is not None:
-            self.set_status(response.status)
+            if response.status is not None:
+                self.set_status(response.status)
 
-        if isinstance(response, TemplateResponse):
-            yield self.render(response.template, **(response.data or {}))
-            return
+            if isinstance(response, TemplateResponse):
+                yield self.render(response.template, **(response.data or {}))
+            else:
+                yield self.finish(response.render())
+        except StreamClosedError:
+            pass
 
-        yield self.finish(response.render())
         raise gen.Return()
 
     @gen.coroutine
@@ -99,6 +105,16 @@ class BaseViewHandler(tornado.web.RequestHandler):
     @gen.coroutine
     def dispatch(self, action, *args, **kwargs):
         request = self.get_request()
+
+        connection = get_connection(request)
+        if connection:
+            sentry_controller.set_context('Database connection', {
+                'name': connection.get('name'),
+                'project': connection.get('project'),
+                'token': connection.get('token')
+            })
+        else:
+            sentry_controller.set_context('Database connection', {})
 
         def execute():
             self.before_dispatch(request)

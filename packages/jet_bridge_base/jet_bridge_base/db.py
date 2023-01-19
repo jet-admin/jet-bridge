@@ -498,6 +498,12 @@ def get_conf(request):
         return get_settings_conf()
 
 
+def get_connection(request):
+    conf = get_conf(request)
+    connection_id = get_connection_id(conf)
+    return connections.get(connection_id)
+
+
 def connect_database_from_settings():
     if settings.DATABASE_ENGINE == 'none':
         return
