@@ -10,6 +10,7 @@ from jet_bridge_base.responses.redirect import RedirectResponse
 from jet_bridge_base.responses.template import TemplateResponse
 from jet_bridge_base.status import HTTP_204_NO_CONTENT
 from jet_bridge_base.utils.async_exec import as_future
+from tornado.iostream import StreamClosedError
 
 
 class BaseViewHandler(tornado.web.RequestHandler):
@@ -69,11 +70,15 @@ class BaseViewHandler(tornado.web.RequestHandler):
         if response.status is not None:
             self.set_status(response.status)
 
-        if isinstance(response, TemplateResponse):
-            yield self.render(response.template, **(response.data or {}))
-            return
+        try:
+            if isinstance(response, TemplateResponse):
+                yield self.render(response.template, **(response.data or {}))
+                return
 
-        yield self.finish(response.render())
+            yield self.finish(response.render())
+        except StreamClosedError:
+            pass
+
         raise gen.Return()
 
     @gen.coroutine
