@@ -60,22 +60,21 @@ class BaseViewHandler(tornado.web.RequestHandler):
 
     @gen.coroutine
     def write_response(self, response):
-        if isinstance(response, RedirectResponse):
-            self.redirect(response.url, status=response.status)
-            return
-
-        for name, value in response.header_items():
-            self.set_header(name, value)
-
-        if response.status is not None:
-            self.set_status(response.status)
-
         try:
+            if isinstance(response, RedirectResponse):
+                self.redirect(response.url, status=response.status)
+                raise gen.Return()
+
+            for name, value in response.header_items():
+                self.set_header(name, value)
+
+            if response.status is not None:
+                self.set_status(response.status)
+
             if isinstance(response, TemplateResponse):
                 yield self.render(response.template, **(response.data or {}))
-                return
-
-            yield self.finish(response.render())
+            else:
+                yield self.finish(response.render())
         except StreamClosedError:
             pass
 
