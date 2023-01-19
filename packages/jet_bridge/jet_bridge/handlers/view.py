@@ -1,5 +1,7 @@
 import tornado.web
+from jet_bridge_base.db import get_connection
 from jet_bridge_base.exceptions.request_error import RequestError
+from jet_bridge_base.sentry import sentry_controller
 from tornado import gen
 from six.moves.urllib_parse import parse_qs
 
@@ -99,6 +101,16 @@ class BaseViewHandler(tornado.web.RequestHandler):
     @gen.coroutine
     def dispatch(self, action, *args, **kwargs):
         request = self.get_request()
+
+        connection = get_connection(request)
+        if connection:
+            sentry_controller.set_context('Database connection', {
+                'name': connection.get('name'),
+                'project': connection.get('project'),
+                'token': connection.get('token')
+            })
+        else:
+            sentry_controller.set_context('Database connection', {})
 
         def execute():
             self.before_dispatch(request)
