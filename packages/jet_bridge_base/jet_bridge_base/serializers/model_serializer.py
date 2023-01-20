@@ -63,8 +63,8 @@ class ModelSerializer(Serializer):
                 data_type = get_column_data_type(column)
                 kwargs = {}
 
-                if column.primary_key and column.autoincrement:
-                    kwargs['read_only'] = True
+                # if column.primary_key and column.autoincrement:
+                #     kwargs['read_only'] = True
                 if column.autoincrement or column.default or column.server_default or column.nullable:
                     kwargs['required'] = False
 
