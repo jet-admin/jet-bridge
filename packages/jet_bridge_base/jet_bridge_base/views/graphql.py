@@ -81,7 +81,7 @@ class GraphQLView(APIView):
                 else:
                     logger.info('Ignoring GraphQL schema result "{}", existing: "{}"'.format(
                         new_schema['id'],
-                        cached_schema.get('id')
+                        cached_schema.get('id') if cached_schema else None
                     ))
 
             return schema
