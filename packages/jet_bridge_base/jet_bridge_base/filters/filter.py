@@ -1,6 +1,8 @@
+from jet_bridge_base.utils.classes import is_instance_or_subclass
 from jet_bridge_base.utils.queryset import get_session_engine
 from sqlalchemy import Unicode
 from sqlalchemy.dialects.postgresql import JSON, ENUM
+from sqlalchemy.sql import sqltypes
 from six import string_types
 
 from jet_bridge_base.fields import field, CharField, BooleanField
@@ -10,36 +12,36 @@ EMPTY_VALUES = ([], (), {}, None)
 
 
 def safe_startswith(column, value):
-    field_type = column.property.columns[0].type if hasattr(column, 'property') else None
+    field_type = column.property.columns[0].type if hasattr(column, 'property') else column.type
 
-    if isinstance(field_type, ENUM) or field_type is None:
+    if is_instance_or_subclass(field_type, (ENUM, sqltypes.NullType)):
         return column.cast(Unicode).ilike('{}%'.format(value))
     else:
         return column.ilike('{}%'.format(value))
 
 
 def safe_endswith(column, value):
-    field_type = column.property.columns[0].type if hasattr(column, 'property') else None
+    field_type = column.property.columns[0].type if hasattr(column, 'property') else column.type
 
-    if isinstance(field_type, ENUM) or field_type is None:
+    if is_instance_or_subclass(field_type, (ENUM, sqltypes.NullType)):
         return column.cast(Unicode).ilike('%{}'.format(value))
     else:
         return column.ilike('%{}'.format(value))
 
 
 def safe_icontains(column, value):
-    field_type = column.property.columns[0].type if hasattr(column, 'property') else None
+    field_type = column.property.columns[0].type if hasattr(column, 'property') else column.type
 
-    if isinstance(field_type, ENUM) or field_type is None:
+    if is_instance_or_subclass(field_type, (ENUM, sqltypes.NullType)):
         return column.cast(Unicode).ilike('%{}%'.format(value))
     else:
         return column.ilike('%{}%'.format(value))
 
 
 def json_icontains(column, value):
-    field_type = column.property.columns[0].type if hasattr(column, 'property') else None
+    field_type = column.property.columns[0].type if hasattr(column, 'property') else column.type
 
-    if isinstance(field_type, JSON) or field_type is None:
+    if is_instance_or_subclass(field_type, (JSON, sqltypes.NullType)) or not hasattr(column, 'astext'):
         return column.cast(Unicode).ilike('%{}%'.format(value))
     else:
         return column.astext.ilike('%{}%'.format(value))
