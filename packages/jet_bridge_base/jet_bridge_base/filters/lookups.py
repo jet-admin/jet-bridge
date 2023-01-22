@@ -12,6 +12,7 @@ IN = 'in'
 STARTS_WITH = 'istartswith'
 ENDS_WITH = 'iendswith'
 IS_NULL = 'isnull'
+IS_EMPTY = 'isempty'
 JSON_ICONTAINS = 'json_icontains'
 COVEREDBY = 'coveredby'
 DEFAULT_LOOKUP = EXACT
@@ -27,6 +28,7 @@ by_gql = {
     'startsWithI': STARTS_WITH,
     'endsWithI': ENDS_WITH,
     'isNull': IS_NULL,
+    'isEmpty': IS_EMPTY,
     'jsonContainsI': JSON_ICONTAINS,
     'coveredBy': COVEREDBY
 }

@@ -1,6 +1,6 @@
 from jet_bridge_base.utils.classes import is_instance_or_subclass
 from jet_bridge_base.utils.queryset import get_session_engine
-from sqlalchemy import Unicode
+from sqlalchemy import Unicode, and_, or_
 from sqlalchemy.dialects.postgresql import JSON, ENUM
 from sqlalchemy.sql import sqltypes
 from six import string_types
@@ -47,6 +47,25 @@ def json_icontains(column, value):
         return column.astext.ilike('%{}%'.format(value))
 
 
+def is_null(column, value):
+    if value:
+        return column.__eq__(None)
+    else:
+        return column.isnot(None)
+
+
+def is_empty(column, value):
+    field_type = column.property.columns[0].type if hasattr(column, 'property') else column.type
+
+    if is_instance_or_subclass(field_type, sqltypes.String):
+        if value:
+            return or_(column.__eq__(None), column == '')
+        else:
+            return and_(column.isnot(None), column != '')
+    else:
+        return is_null(column, value)
+
+
 def coveredby(column, value):
     return column.ST_CoveredBy(value)
 
@@ -75,7 +94,8 @@ class Filter(object):
         lookups.IN: {'operator': 'in_', 'field_class': CharField, 'field_kwargs': {'many': True}, 'pre_process': lambda x: safe_array(x)},
         lookups.STARTS_WITH: {'operator': False, 'func': safe_startswith},
         lookups.ENDS_WITH: {'operator': False, 'func': safe_endswith},
-        lookups.IS_NULL: {'operator': lambda x: ('__eq__', None) if x else ('isnot', None), 'field_class': BooleanField},
+        lookups.IS_NULL: {'operator': False, 'func': is_null, 'field_class': BooleanField},
+        lookups.IS_EMPTY: {'operator': False, 'func': is_empty, 'field_class': BooleanField},
         lookups.JSON_ICONTAINS: {'operator': False, 'func': json_icontains},
         lookups.COVEREDBY: {'operator': False, 'func': coveredby}
     }
