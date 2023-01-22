@@ -1,3 +1,4 @@
+from jet_bridge_base.filters.float_filter import FloatFilter
 from sqlalchemy.sql import sqltypes
 
 from jet_bridge_base.filters import lookups
@@ -71,7 +72,7 @@ FILTER_FOR_DBFIELD = {
     sqltypes.SmallInteger: {'filter_class': IntegerFilter, 'lookups': number_lookups},
     sqltypes.BigInteger: {'filter_class': IntegerFilter, 'lookups': number_lookups},
     sqltypes.Numeric: {'filter_class': IntegerFilter, 'lookups': number_lookups},
-    sqltypes.Float: {'filter_class': IntegerFilter, 'lookups': number_lookups},
+    sqltypes.Float: {'filter_class': FloatFilter, 'lookups': number_lookups},
     sqltypes.Date: {'filter_class': DateTimeFilter, 'lookups': datetime_lookups},
     sqltypes.DateTime: {'filter_class': DateTimeFilter, 'lookups': datetime_lookups},
     sqltypes.TIMESTAMP: {'filter_class': DateTimeFilter, 'lookups': datetime_lookups},
