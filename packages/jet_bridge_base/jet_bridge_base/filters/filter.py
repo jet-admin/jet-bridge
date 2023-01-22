@@ -106,7 +106,10 @@ class Filter(object):
             value = post_process(value)
 
         if func:
-            return func(self.column, value)
+            if self.exclude:
+                return ~func(self.column, value)
+            else:
+                return func(self.column, value)
         elif callable(operator):
             op = operator(value)
 
