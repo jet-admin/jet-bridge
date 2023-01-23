@@ -1,3 +1,4 @@
+from jet_bridge_base.filters.float_filter import FloatFilter
 from sqlalchemy.sql import sqltypes
 
 from jet_bridge_base.filters import lookups
@@ -16,6 +17,7 @@ number_lookups = [
     lookups.ICONTAINS,
     lookups.IN,
     lookups.IS_NULL,
+    lookups.IS_EMPTY,
 ]
 
 datetime_lookups = [
@@ -27,6 +29,7 @@ datetime_lookups = [
     lookups.ICONTAINS,
     lookups.IN,
     lookups.IS_NULL,
+    lookups.IS_EMPTY,
 ]
 
 text_lookups = [
@@ -36,6 +39,7 @@ text_lookups = [
     lookups.STARTS_WITH,
     lookups.ENDS_WITH,
     lookups.IS_NULL,
+    lookups.IS_EMPTY,
 ]
 
 select_lookups = [
@@ -45,17 +49,20 @@ select_lookups = [
     lookups.STARTS_WITH,
     lookups.ENDS_WITH,
     lookups.IS_NULL,
+    lookups.IS_EMPTY,
 ]
 
 boolean_lookups = [
     lookups.EXACT,
     lookups.IN,
     lookups.IS_NULL,
+    lookups.IS_EMPTY,
 ]
 
 json_lookups = [
     lookups.JSON_ICONTAINS,
     lookups.IS_NULL,
+    lookups.IS_EMPTY,
 ]
 
 geography_lookups = [
@@ -71,7 +78,7 @@ FILTER_FOR_DBFIELD = {
     sqltypes.SmallInteger: {'filter_class': IntegerFilter, 'lookups': number_lookups},
     sqltypes.BigInteger: {'filter_class': IntegerFilter, 'lookups': number_lookups},
     sqltypes.Numeric: {'filter_class': IntegerFilter, 'lookups': number_lookups},
-    sqltypes.Float: {'filter_class': IntegerFilter, 'lookups': number_lookups},
+    sqltypes.Float: {'filter_class': FloatFilter, 'lookups': number_lookups},
     sqltypes.Date: {'filter_class': DateTimeFilter, 'lookups': datetime_lookups},
     sqltypes.DateTime: {'filter_class': DateTimeFilter, 'lookups': datetime_lookups},
     sqltypes.TIMESTAMP: {'filter_class': DateTimeFilter, 'lookups': datetime_lookups},

@@ -4,6 +4,7 @@ from jet_bridge_base.models.model_relation_override import ModelRelationOverride
 from jet_bridge_base.store import store
 from jet_bridge_base.utils.relations import parse_relationship_direction
 from sqlalchemy import inspect, desc, MetaData
+from sqlalchemy.engine import Row
 from sqlalchemy.ext.automap import automap_base
 from sqlalchemy.orm import MANYTOONE, ONETOMANY, aliased
 
@@ -792,7 +793,11 @@ class GraphQLSchemaGenerator(object):
             queryset_page_lookups = self.get_models_lookups(request, MappedBase, queryset_page, Model, mapper, lookups)
 
             def map_queryset_page_item(row):
-                data = dict(row)
+                if isinstance(row, Row):
+                    data = dict(row)
+                else:
+                    data = dict(map(lambda x: (clean_name(x.name), getattr(row, x.name)), mapper.columns))
+
                 serializer = serializer_class(instance=data, context=serializer_context)
                 serialized = serializer.representation_data
                 serialized = clean_keys(serialized)
