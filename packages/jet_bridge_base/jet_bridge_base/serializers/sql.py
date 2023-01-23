@@ -150,7 +150,7 @@ class SqlSerializer(Serializer):
                 for exclude in [False, True]:
                     instance = filter_data['filter_class'](
                         name=item['name'],
-                        column=column(item['name']),
+                        column=column(item['name'], type_=query_type),
                         lookup=lookup,
                         exclude=exclude
                     )
