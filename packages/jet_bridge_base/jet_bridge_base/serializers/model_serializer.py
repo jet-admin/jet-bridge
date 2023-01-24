@@ -79,6 +79,12 @@ class ModelSerializer(Serializer):
         return ModelClass(**validated_data)
 
     def create(self, validated_data):
+        mapper = inspect(self.meta.model)
+        primary_key = mapper.primary_key[0]
+
+        if primary_key.autoincrement and primary_key.name in validated_data:
+            del validated_data[primary_key.name]
+
         instance = self.create_instance(validated_data)
         self.session.add(instance)
 
