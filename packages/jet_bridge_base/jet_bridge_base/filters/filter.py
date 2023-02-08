@@ -70,6 +70,16 @@ def coveredby(column, value):
     return column.ST_CoveredBy(value)
 
 
+def safe_not_array(value):
+    if isinstance(value, list):
+        if len(value):
+            return value[0]
+        else:
+            return ''
+    else:
+        return value
+
+
 def safe_array(value):
     if isinstance(value, list):
         return value
@@ -85,19 +95,19 @@ def safe_array(value):
 class Filter(object):
     field_class = field
     lookup_operators = {
-        lookups.EXACT: {'operator': '__eq__'},
-        lookups.GT: {'operator': '__gt__'},
-        lookups.GTE: {'operator': '__ge__'},
-        lookups.LT: {'operator': '__lt__'},
-        lookups.LTE: {'operator': '__le__'},
-        lookups.ICONTAINS: {'operator': False, 'func': safe_icontains},
+        lookups.EXACT: {'operator': '__eq__', 'pre_process': lambda x: safe_not_array(x)},
+        lookups.GT: {'operator': '__gt__', 'pre_process': lambda x: safe_not_array(x)},
+        lookups.GTE: {'operator': '__ge__', 'pre_process': lambda x: safe_not_array(x)},
+        lookups.LT: {'operator': '__lt__', 'pre_process': lambda x: safe_not_array(x)},
+        lookups.LTE: {'operator': '__le__', 'pre_process': lambda x: safe_not_array(x)},
+        lookups.ICONTAINS: {'operator': False, 'func': safe_icontains, 'pre_process': lambda x: safe_not_array(x)},
         lookups.IN: {'operator': 'in_', 'field_class': CharField, 'field_kwargs': {'many': True}, 'pre_process': lambda x: safe_array(x)},
-        lookups.STARTS_WITH: {'operator': False, 'func': safe_startswith},
-        lookups.ENDS_WITH: {'operator': False, 'func': safe_endswith},
-        lookups.IS_NULL: {'operator': False, 'func': is_null, 'field_class': BooleanField},
-        lookups.IS_EMPTY: {'operator': False, 'func': is_empty, 'field_class': BooleanField},
-        lookups.JSON_ICONTAINS: {'operator': False, 'func': json_icontains},
-        lookups.COVEREDBY: {'operator': False, 'func': coveredby}
+        lookups.STARTS_WITH: {'operator': False, 'func': safe_startswith, 'pre_process': lambda x: safe_not_array(x)},
+        lookups.ENDS_WITH: {'operator': False, 'func': safe_endswith, 'pre_process': lambda x: safe_not_array(x)},
+        lookups.IS_NULL: {'operator': False, 'func': is_null, 'field_class': BooleanField, 'pre_process': lambda x: safe_not_array(x)},
+        lookups.IS_EMPTY: {'operator': False, 'func': is_empty, 'field_class': BooleanField, 'pre_process': lambda x: safe_not_array(x)},
+        lookups.JSON_ICONTAINS: {'operator': False, 'func': json_icontains, 'pre_process': lambda x: safe_not_array(x)},
+        lookups.COVEREDBY: {'operator': False, 'func': coveredby, 'pre_process': lambda x: safe_not_array(x)}
     }
 
     def __init__(self, name=None, column=None, lookup=lookups.DEFAULT_LOOKUP, exclude=False):
