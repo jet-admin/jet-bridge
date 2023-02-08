@@ -79,7 +79,7 @@ def safe_array(value):
         else:
             return []
     else:
-        value
+        return [value]
 
 
 class Filter(object):
