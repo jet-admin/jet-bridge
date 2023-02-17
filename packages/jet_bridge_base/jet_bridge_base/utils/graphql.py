@@ -16,7 +16,7 @@ from jet_bridge_base.filters.model_search import search_queryset
 from jet_bridge_base.serializers.model import get_model_serializer
 from jet_bridge_base.utils.common import get_set_first, any_type_sorter, unique, flatten
 from jet_bridge_base.utils.gql import RawScalar
-from jet_bridge_base.utils.queryset import queryset_count_optimized, apply_default_ordering
+from jet_bridge_base.utils.queryset import queryset_count_optimized, apply_default_ordering, get_session_engine
 
 
 class ModelFiltersType(graphene.InputObjectType):
@@ -126,7 +126,7 @@ class GraphQLSchemaGenerator(object):
         if auto_pk:
             queryset = queryset.filter(mapper.primary_key[0].isnot(None))
 
-        if not auto_pk:
+        if not auto_pk and get_session_engine(request.session) in ['postgresql', 'mysql']:
             queryset = queryset.group_by(pk)
 
         return queryset
