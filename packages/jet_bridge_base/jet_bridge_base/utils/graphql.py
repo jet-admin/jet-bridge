@@ -8,7 +8,7 @@ from sqlalchemy.engine import Row
 from sqlalchemy.ext.automap import automap_base
 from sqlalchemy.orm import MANYTOONE, ONETOMANY, aliased
 
-from jet_bridge_base.db import get_mapped_base, get_engine, load_mapped_base, get_request_connection
+from jet_bridge_base.db import get_mapped_base, get_engine, load_mapped_base, get_request_connection, get_table_name
 from jet_bridge_base.filters import lookups
 from jet_bridge_base.filters.filter_for_dbfield import filter_for_data_type
 from jet_bridge_base.filters.model_group import get_query_func_by_name
@@ -204,7 +204,8 @@ class GraphQLSchemaGenerator(object):
                 relation_column = get_set_first(relationship.remote_side)
 
                 if relationship.direction == MANYTOONE:
-                    related_name = relationship.mapper.selectable.name
+                    table = relationship.mapper.tables[0]
+                    related_name = get_table_name(MappedBase.metadata, table)
                     related_model = MappedBase.classes.get(related_name)
 
                     model_relationships[relationship.key] = {
@@ -218,7 +219,8 @@ class GraphQLSchemaGenerator(object):
                         'related_column_name': relation_column.name if relation_column is not None else None
                     }
                 elif relationship.direction == ONETOMANY:
-                    related_name = relationship.mapper.selectable.name
+                    table = relationship.mapper.tables[0]
+                    related_name = get_table_name(MappedBase.metadata, table)
                     related_model = MappedBase.classes.get(related_name)
 
                     model_relationships[relationship.key] = {
@@ -246,7 +248,8 @@ class GraphQLSchemaGenerator(object):
         return dict(map(lambda x: map_models(x), relationships.items()))
 
     def get_model_columns_by_clean_name(self, MappedBase, mapper):
-        name = mapper.selectable.name
+        table = mapper.tables[0]
+        name = get_table_name(MappedBase.metadata, table)
         Model = MappedBase.classes.get(name)
         return dict(map(lambda x: (clean_name(x), getattr(Model, x)), mapper.columns.keys()))
 
@@ -542,7 +545,8 @@ class GraphQLSchemaGenerator(object):
 
             queryset = queryset.order_by(*order_by)
 
-        name = mapper.selectable.name
+        table = mapper.tables[0]
+        name = get_table_name(MappedBase.metadata, table)
         Model = MappedBase.classes.get(name)
         queryset = apply_default_ordering(Model, queryset)
 
@@ -852,7 +856,9 @@ class GraphQLSchemaGenerator(object):
 
         for Model in MappedBase.classes:
             mapper = inspect(Model)
-            name = clean_name(mapper.selectable.name)
+            table = mapper.tables[0]
+            name = get_table_name(MappedBase.metadata, table)
+            name = clean_name(name)
 
             FiltersType = self.get_model_filters_type(MappedBase, mapper)
             LookupsType = self.get_model_lookups_type(MappedBase, mapper)

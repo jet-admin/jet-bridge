@@ -583,12 +583,16 @@ def reload_request_graphql_schema(request, draft=None):
             cache[schema_key] = None
 
 
+def get_table_name(metadata, table):
+    if table.schema and table.schema != metadata.schema:
+        return '{}.{}'.format(table.schema, table.name)
+    else:
+        return str(table.name)
+
+
 def load_mapped_base(MappedBase, clear=False):
     def classname_for_table(base, tablename, table):
-        if table.schema and table.schema != MappedBase.metadata.schema:
-            return '{}.{}'.format(table.schema, tablename)
-        else:
-            return tablename
+        return get_table_name(MappedBase.metadata, table)
 
     def name_for_scalar_relationship(base, local_cls, referred_cls, constraint):
         foreign_key = constraint.elements[0] if len(constraint.elements) else None
