@@ -4,6 +4,7 @@ from jet_bridge_base.configuration import configuration
 from jet_bridge_base.db import connections, pending_connections
 from jet_bridge_base.permissions import AdministratorPermissions
 from jet_bridge_base.responses.json import JSONResponse
+from jet_bridge_base.sentry import sentry_controller
 from jet_bridge_base.utils.classes import issubclass_safe
 from jet_bridge_base.utils.graphql import ModelFiltersType, ModelFiltersFieldType, ModelFiltersRelationshipType, \
     ModelLookupsType, ModelLookupsFieldType, ModelLookupsRelationshipType
@@ -78,9 +79,12 @@ class StatusView(BaseAPIView):
         relationships_count = 0
 
         for Model in MappedBase.classes:
-            mapper = inspect(Model)
-            column_count += len(mapper.columns)
-            relationships_count += len(mapper.relationships)
+            try:
+                mapper = inspect(Model)
+                column_count += len(mapper.columns)
+                relationships_count += len(mapper.relationships)
+            except Exception as e:
+                sentry_controller.capture_exception(e)
 
         graphql_schema = self.map_connection_graphql_schema(cache.get('graphql_schema'))
         graphql_schema_draft = self.map_connection_graphql_schema(cache.get('graphql_schema_draft'))
