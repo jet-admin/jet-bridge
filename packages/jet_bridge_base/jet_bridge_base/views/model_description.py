@@ -8,7 +8,7 @@ from sqlalchemy import inspect, String, Enum, Date
 from sqlalchemy.orm import MANYTOONE, ONETOMANY
 from sqlalchemy.sql.elements import TextClause
 
-from jet_bridge_base.db import get_mapped_base, get_request_connection
+from jet_bridge_base.db import get_mapped_base, get_request_connection, get_table_name
 from jet_bridge_base.models import data_types
 from jet_bridge_base.permissions import HasProjectPermissions
 from jet_bridge_base.responses.json import JSONResponse
@@ -62,7 +62,7 @@ def map_column_default(column):
                 }
 
 
-def map_column(column, editable):
+def map_column(metadata, column, editable):
     params = {}
     data_source_field = None
     data_source_name = None
@@ -84,7 +84,7 @@ def map_column(column, editable):
         foreign_key = next(iter(column.foreign_keys))
         map_type = data_types.FOREIGN_KEY
         params['related_model'] = {
-            'model': foreign_key.column.table.name
+            'model': get_table_name(metadata, foreign_key.column.table)
         }
 
         table_primary_keys = foreign_key.column.table.primary_key.columns.keys()
@@ -157,7 +157,7 @@ def map_column(column, editable):
     return result
 
 
-def map_relationship(relationship):
+def map_relationship(metadata, relationship):
     local_field = get_set_first(relationship.local_columns)
     related_field = get_set_first(relationship.remote_side)
     direction = relationship_direction_to_str(relationship.direction)
@@ -166,7 +166,7 @@ def map_relationship(relationship):
         'name': relationship.key,
         'direction': direction,
         'local_field': local_field.name,
-        'related_model': relationship.target.name,
+        'related_model': get_table_name(metadata, relationship.target),
         'related_field': related_field.name
     }
 
@@ -240,7 +240,7 @@ def map_relationship_override(override):
 def map_table(cls, relationships_overrides, hidden):
     mapper = inspect(cls)
     table = mapper.tables[0]
-    name = mapper.selectable.name
+    name = get_table_name(cls.metadata, table)
     primary_key = mapper.primary_key[0]
     primary_key_auto = getattr(table, '__jet_auto_pk__', False) if table is not None else None
     non_editable = []
@@ -280,8 +280,8 @@ def map_table(cls, relationships_overrides, hidden):
     result = {
         'model': name,
         'db_table': name,
-        'fields': list(map(lambda x: map_column(x, x.name not in non_editable), mapper.columns)),
-        'relations': list(map(lambda x: map_relationship(x), filter(lambda x: x.direction in [MANYTOONE, ONETOMANY], mapper.relationships))),
+        'fields': list(map(lambda x: map_column(cls.metadata, x, x.name not in non_editable), mapper.columns)),
+        'relations': list(map(lambda x: map_relationship(cls.metadata, x), filter(lambda x: x.direction in [MANYTOONE, ONETOMANY], mapper.relationships))),
         'relation_overrides': list(map(lambda x: map_relationship_override(x), model_relationships_overrides)) if model_relationships_overrides else None,
         'hidden': name in hidden or name in configuration.get_hidden_model_description(),
         # 'relations': table_relations(mapper) + table_m2m_relations(mapper),

@@ -1,4 +1,5 @@
 from jet_bridge_base.exceptions.api import APIException
+from jet_bridge_base.logger import logger
 
 
 class SentryController(object):
@@ -48,6 +49,14 @@ class SentryController(object):
             return
 
         self.sentry_sdk.set_context(name, value)
+
+    def capture_exception(self, exc):
+        logger.exception(exc)
+
+        if not self.sentry_sdk:
+            return
+
+        self.sentry_sdk.capture_exception(exc)
 
 
 sentry_controller = SentryController()
