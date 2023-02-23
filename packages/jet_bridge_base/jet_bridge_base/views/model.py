@@ -33,9 +33,10 @@ class ModelViewSet(ModelAPIViewMixin):
         super(ModelViewSet, self).on_finish()
 
     def required_project_permission(self, request):
+        model_name = self.get_model_name(request)
         return {
             'permission_type': 'model',
-            'permission_object': request.path_kwargs['model'],
+            'permission_object': model_name,
             'permission_actions': {
                 'create': 'w',
                 'update': 'w',
@@ -51,13 +52,17 @@ class ModelViewSet(ModelAPIViewMixin):
             }.get(request.action, 'w')
         }
 
+    def get_model_name(self, request):
+        return request.path_kwargs['model']
+
     def get_model(self, request):
+        model_name = self.get_model_name(request)
         MappedBase = get_mapped_base(request)
 
-        if request.path_kwargs['model'] not in MappedBase.classes:
+        if model_name not in MappedBase.classes:
             raise NotFound
 
-        return MappedBase.classes[request.path_kwargs['model']]
+        return MappedBase.classes[model_name]
 
     def get_serializer_class(self, request):
         Model = self.get_model(request)
@@ -116,9 +121,14 @@ class ModelViewSet(ModelAPIViewMixin):
         y_func = request.get_argument('_y_func').lower()
         y_column = request.get_argument('_y_column', self.lookup_field)
 
+        model_name = self.get_model_name(request)
         model_serializer = self.get_serializer(request)
 
         y_serializers = list(filter(lambda x: x.field_name == y_column, model_serializer.fields))
+
+        if len(y_serializers) == 0:
+            raise ValidationError('Table "{}" does not have column "{}"'.format(model_name, y_column))
+
         y_serializer = y_serializers[0]
 
         filter_instance = ModelAggregateFilter()
