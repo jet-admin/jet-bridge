@@ -147,13 +147,15 @@ class TableColumnView(APIView):
         return obj
 
     def list(self, request, *args, **kwargs):
+        metadata, engine = self.get_db(request)
         table = self.get_table(request)
-        columns = list(map(lambda x: map_column(x, True), table.columns))
+        columns = list(map(lambda x: map_column(metadata, x, True), table.columns))
         return JSONResponse(columns)
 
     def retrieve(self, request, *args, **kwargs):
+        metadata, engine = self.get_db(request)
         instance = self.get_object(request)
-        return JSONResponse(map_column(instance, True))
+        return JSONResponse(map_column(metadata, instance, True))
 
     def create(self, request, *args, **kwargs):
         serializer = TableColumnSerializer(data=request.data)
@@ -235,7 +237,7 @@ class TableColumnView(APIView):
     def perform_update(self, request, existing_column, serializer):
         metadata, engine = self.get_db(request)
         table = self.get_table(request)
-        existing_data = map_column(existing_column, True)
+        existing_data = map_column(metadata, existing_column, True)
         existing_dto = {
             'name': existing_data['name'],
             'field': existing_data['field'],
