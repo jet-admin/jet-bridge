@@ -33,9 +33,10 @@ class ModelViewSet(ModelAPIViewMixin):
         super(ModelViewSet, self).on_finish()
 
     def required_project_permission(self, request):
+        model_name = self.get_model_name(request)
         return {
             'permission_type': 'model',
-            'permission_object': request.path_kwargs['model'],
+            'permission_object': model_name,
             'permission_actions': {
                 'create': 'w',
                 'update': 'w',
@@ -51,13 +52,17 @@ class ModelViewSet(ModelAPIViewMixin):
             }.get(request.action, 'w')
         }
 
+    def get_model_name(self, request):
+        return request.path_kwargs['model']
+
     def get_model(self, request):
+        model_name = self.get_model_name(request)
         MappedBase = get_mapped_base(request)
 
-        if request.path_kwargs['model'] not in MappedBase.classes:
+        if model_name not in MappedBase.classes:
             raise NotFound
 
-        return MappedBase.classes[request.path_kwargs['model']]
+        return MappedBase.classes[model_name]
 
     def get_serializer_class(self, request):
         Model = self.get_model(request)
