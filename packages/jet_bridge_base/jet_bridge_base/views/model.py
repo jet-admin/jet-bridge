@@ -121,9 +121,14 @@ class ModelViewSet(ModelAPIViewMixin):
         y_func = request.get_argument('_y_func').lower()
         y_column = request.get_argument('_y_column', self.lookup_field)
 
+        model_name = self.get_model_name(request)
         model_serializer = self.get_serializer(request)
 
         y_serializers = list(filter(lambda x: x.field_name == y_column, model_serializer.fields))
+
+        if len(y_serializers) == 0:
+            raise ValidationError('Table "{}" does not have column "{}"'.format(model_name, y_column))
+
         y_serializer = y_serializers[0]
 
         filter_instance = ModelAggregateFilter()
