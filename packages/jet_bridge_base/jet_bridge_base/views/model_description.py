@@ -237,10 +237,10 @@ def map_relationship_override(override):
 #
 #     return result
 
-def map_table(cls, relationships_overrides, hidden):
+def map_table(MappedBase, cls, relationships_overrides, hidden):
     mapper = inspect(cls)
     table = mapper.tables[0]
-    name = get_table_name(cls.metadata, table)
+    name = get_table_name(MappedBase.metadata, table)
     primary_key = mapper.primary_key[0]
     primary_key_auto = getattr(table, '__jet_auto_pk__', False) if table is not None else None
     non_editable = []
@@ -280,8 +280,8 @@ def map_table(cls, relationships_overrides, hidden):
     result = {
         'model': name,
         'db_table': name,
-        'fields': list(map(lambda x: map_column(cls.metadata, x, x.name not in non_editable), mapper.columns)),
-        'relations': list(map(lambda x: map_relationship(cls.metadata, x), filter(lambda x: x.direction in [MANYTOONE, ONETOMANY], mapper.relationships))),
+        'fields': list(map(lambda x: map_column(MappedBase.metadata, x, x.name not in non_editable), mapper.columns)),
+        'relations': list(map(lambda x: map_relationship(MappedBase.metadata, x), filter(lambda x: x.direction in [MANYTOONE, ONETOMANY], mapper.relationships))),
         'relation_overrides': list(map(lambda x: map_relationship_override(x), model_relationships_overrides)) if model_relationships_overrides else None,
         'hidden': name in hidden or name in configuration.get_hidden_model_description(),
         # 'relations': table_relations(mapper) + table_m2m_relations(mapper),
@@ -323,7 +323,7 @@ class ModelDescriptionView(APIView):
                         relationships_overrides[override.model] = []
                     relationships_overrides[override.model].append(override)
 
-        return list(map(lambda x: map_table(x, relationships_overrides, hidden), MappedBase.classes))
+        return list(map(lambda x: map_table(MappedBase, x, relationships_overrides, hidden), MappedBase.classes))
 
     def get(self, request, *args, **kwargs):
         queryset = self.get_queryset(request)
