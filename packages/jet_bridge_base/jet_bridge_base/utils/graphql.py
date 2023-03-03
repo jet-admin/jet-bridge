@@ -849,6 +849,9 @@ class GraphQLSchemaGenerator(object):
     def get_query_type(self, request, draft, before_resolve=None):
         MappedBase = get_mapped_base(request)
 
+        if len(MappedBase.classes) == 0:
+            raise Exception('No tables found')
+
         query_attrs = {}
 
         self.relationships_by_name = self.get_relationships(request, MappedBase, draft)
