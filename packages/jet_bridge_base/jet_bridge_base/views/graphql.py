@@ -134,7 +134,10 @@ class GraphQLView(APIView):
         if 'query' not in request.data:
             return JSONResponse({})
 
-        schema = self.get_schema(request, draft)
+        try:
+            schema = self.get_schema(request, draft)
+        except Exception as e:
+            return JSONResponse({'errors': ['Failed to get table schema: {}'.format(e)]})
 
         query = request.data.get('query')
         context_value = {

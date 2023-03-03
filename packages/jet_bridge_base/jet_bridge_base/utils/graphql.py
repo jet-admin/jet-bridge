@@ -87,6 +87,8 @@ class PaginationResponseType(graphene.ObjectType):
 
 
 def clean_name(name):
+    if name == '_meta':
+        return '__meta'
     name = re.sub(r'[^_a-zA-Z0-9]', r'_', name)
     name = re.sub(r'^(\d)', r'_\1', name)
     return name
@@ -848,6 +850,9 @@ class GraphQLSchemaGenerator(object):
 
     def get_query_type(self, request, draft, before_resolve=None):
         MappedBase = get_mapped_base(request)
+
+        if len(MappedBase.classes) == 0:
+            raise Exception('No tables found')
 
         query_attrs = {}
 
