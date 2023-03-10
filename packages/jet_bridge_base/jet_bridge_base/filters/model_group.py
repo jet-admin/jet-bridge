@@ -128,4 +128,7 @@ class ModelGroupFilter(CharFilter):
         if whereclause is not None:
             qs = qs.filter(whereclause)
 
-        return qs.group_by(*x_lookup_names).order_by(*x_lookup_names)
+        if get_session_engine(qs.session) == 'mssql':
+            return qs.group_by(*x_lookups).order_by(*x_lookup_names)
+        else:
+            return qs.group_by(*x_lookup_names).order_by(*x_lookup_names)

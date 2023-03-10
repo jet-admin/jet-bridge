@@ -136,7 +136,11 @@ class SqlSerializer(Serializer):
         x_lookup_names = list(map(lambda x: x.name, x_lookups))
 
         queryset = select([*x_lookups, y_func.label('y_func')]).select_from(subquery)
-        return queryset.group_by(*x_lookup_names).order_by(*x_lookup_names)
+
+        if get_session_engine(session) == 'mssql':
+            return queryset.group_by(*x_lookups).order_by(*x_lookup_names)
+        else:
+            return queryset.group_by(*x_lookup_names).order_by(*x_lookup_names)
 
     def filter_queryset(self, queryset, data):
         filters_instances = []
