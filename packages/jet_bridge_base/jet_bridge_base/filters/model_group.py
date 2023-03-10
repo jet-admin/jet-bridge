@@ -1,6 +1,6 @@
 from jet_bridge_base.exceptions.validation_error import ValidationError
 from sqlalchemy import func, sql, inspect
-from sqlalchemy.sql import sqltypes
+from sqlalchemy.sql import sqltypes, text
 
 from jet_bridge_base.filters.char_filter import CharFilter
 from jet_bridge_base.filters.filter import EMPTY_VALUES
@@ -45,6 +45,18 @@ strftime_options = {
     'year': '%Y-01-01'
 }
 
+dateadd_options = {
+    'millisecond': 'millisecond',
+    'second': 'minute',
+    'minute': 'minute',
+    'hour': 'hour',
+    'day': 'day',
+    'week': 'week',
+    'month': 'month',
+    'quarter': 'quarter',
+    'year': 'year'
+}
+
 
 def get_query_lookup_func_by_name(session, lookup_type, lookup_param, column):
     try:
@@ -57,6 +69,10 @@ def get_query_lookup_func_by_name(session, lookup_type, lookup_param, column):
             elif get_session_engine(session) == 'mysql':
                 if date_group in strftime_options:
                     return func.date_format(column, strftime_options[date_group])
+            elif get_session_engine(session) == 'mssql':
+                if date_group in dateadd_options:
+                    interval = dateadd_options[date_group]
+                    return func.dateadd(text(interval), func.datediff(text(interval), text('0'), column), text('0'))
             else:
                 if date_group in strftime_options:
                     return func.strftime(strftime_options[date_group], column)
