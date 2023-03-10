@@ -3,6 +3,7 @@ from jet_bridge_base.exceptions.validation_error import ValidationError
 from jet_bridge_base.utils.exceptions import serialize_validation_error
 from sqlalchemy import inspect
 from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.engine import Row
 
 from jet_bridge_base.db import get_mapped_base
 from jet_bridge_base.exceptions.not_found import NotFound
@@ -176,8 +177,21 @@ class ModelViewSet(ModelAPIViewMixin):
             'y_column': y_column
         })
 
+        def map_item(row):
+            if isinstance(row, Row):
+                row = dict(row)
+
+            if isinstance(row, dict):
+                if 'group_1' in row:
+                    row['group'] = row['group_1']
+                    del row['group_1']
+
+                return row
+            else:
+                return row
+
         try:
-            instance = list(queryset)
+            instance = list(map(lambda x: map_item(x), queryset))
         except SQLAlchemyError:
             queryset.session.rollback()
             raise
