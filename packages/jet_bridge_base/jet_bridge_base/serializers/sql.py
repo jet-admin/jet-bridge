@@ -112,7 +112,7 @@ class SqlSerializer(Serializer):
             return subquery.filter(sql.false())
 
         def group_name(i):
-            if i == 0:
+            if i == 0 and get_session_engine(session) != 'mssql':
                 return 'group'
             else:
                 return 'group_{}'.format(i + 1)
@@ -310,10 +310,15 @@ class SqlSerializer(Serializer):
             def map_row(row):
                 return list(map(lambda x: map_row_column(row[x]), row.keys()))
 
+            column_names = result.keys()
+
+            if 'groups' in data or 'group' in data:
+                column_names = list(map(lambda x: 'group' if x == 'group_1' else x, column_names))
+
             cursor_description = result.cursor.description
             response = {
                 'data': list(map(map_row, result)),
-                'columns': list(map(map_column, result.keys()))
+                'columns': list(map(map_column, column_names))
             }
 
             type_code_to_sql_type = get_type_code_to_sql_type(request)

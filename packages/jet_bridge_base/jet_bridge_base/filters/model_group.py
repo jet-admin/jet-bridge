@@ -99,7 +99,7 @@ class ModelGroupFilter(CharFilter):
             return qs.filter(sql.false())
 
         def group_name(i):
-            if i == 0:
+            if i == 0 and get_session_engine(qs.session) != 'mssql':
                 return 'group'
             else:
                 return 'group_{}'.format(i + 1)
