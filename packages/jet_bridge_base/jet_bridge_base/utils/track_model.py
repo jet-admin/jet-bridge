@@ -4,6 +4,7 @@ import requests
 
 from jet_bridge_base import settings
 from jet_bridge_base.encoders import JSONEncoder
+from jet_bridge_base.sentry import sentry_controller
 from jet_bridge_base.utils.async_exec import as_future
 
 
@@ -34,7 +35,12 @@ def track_model(request, model, action, uid, model_data):
         headers['Authorization'] = settings.TRACK_MODELS_AUTH
 
     data_str = json.dumps(data, cls=JSONEncoder)
-    requests.post(url, data=data_str, headers=headers)
+    r = requests.post(url, data=data_str, headers=headers)
+    success = 200 <= r.status_code < 300
+
+    if not success:
+        error = 'MODEL_CHANGE request error: {} {} {}'.format(r.status_code, r.reason, r.text)
+        sentry_controller.capture_exception(error)
 
 
 def track_model_async(request, model, action, uid, data):
