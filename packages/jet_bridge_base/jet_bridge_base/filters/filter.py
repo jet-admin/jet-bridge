@@ -15,7 +15,7 @@ def safe_equals(queryset, column, value):
     field_type = column.property.columns[0].type if hasattr(column, 'property') else column.type
 
     if is_instance_or_subclass(field_type, (JSON, sqltypes.NullType)) or not hasattr(column, 'astext'):
-        if get_session_engine(queryset.session) == 'postgresql':
+        if is_instance_or_subclass(field_type, JSON) and get_session_engine(queryset.session) == 'postgresql':
             return column.cast(JSONB).op('?')(value)
         else:
             return column.cast(Unicode).ilike('%{}%'.format(value))
@@ -27,7 +27,7 @@ def safe_in(queryset, column, value):
     field_type = column.property.columns[0].type if hasattr(column, 'property') else column.type
 
     if is_instance_or_subclass(field_type, (JSON, sqltypes.NullType)) or not hasattr(column, 'astext'):
-        if get_session_engine(queryset.session) == 'postgresql':
+        if is_instance_or_subclass(field_type, JSON) and get_session_engine(queryset.session) == 'postgresql':
             return column.cast(JSONB).op('?|')(array(value))
         else:
             operators = list(map(lambda x: column.cast(Unicode).ilike('%{}%'.format(x)), value))
