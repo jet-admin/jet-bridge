@@ -346,7 +346,7 @@ class GraphQLSchemaGenerator(object):
                                 lookup=lookup,
                                 exclude=False
                             )
-                            criterion = instance.get_loookup_criterion(lookup_value)
+                            criterion = instance.get_loookup_criterion(queryset, lookup_value)
                             criterion = ~criterion if exclude else criterion
 
                             queryset = queryset.filter(criterion)
