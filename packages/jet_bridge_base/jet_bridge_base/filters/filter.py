@@ -1,7 +1,7 @@
 from jet_bridge_base.utils.classes import is_instance_or_subclass
 from jet_bridge_base.utils.queryset import get_session_engine
 from sqlalchemy import Unicode, and_, or_
-from sqlalchemy.dialects.postgresql import JSON, ENUM
+from sqlalchemy.dialects.postgresql import JSON, ENUM, JSONB, array
 from sqlalchemy.sql import sqltypes
 from six import string_types
 
@@ -11,7 +11,32 @@ from jet_bridge_base.filters import lookups
 EMPTY_VALUES = ([], (), {}, None)
 
 
-def safe_startswith(column, value):
+def safe_equals(queryset, column, value):
+    field_type = column.property.columns[0].type if hasattr(column, 'property') else column.type
+
+    if is_instance_or_subclass(field_type, (JSON, sqltypes.NullType)) or not hasattr(column, 'astext'):
+        if get_session_engine(queryset.session) == 'postgresql':
+            return column.cast(JSONB).op('?')(value)
+        else:
+            return column.cast(Unicode).ilike('%{}%'.format(value))
+    else:
+        return column.__eq__(value)
+
+
+def safe_in(queryset, column, value):
+    field_type = column.property.columns[0].type if hasattr(column, 'property') else column.type
+
+    if is_instance_or_subclass(field_type, (JSON, sqltypes.NullType)) or not hasattr(column, 'astext'):
+        if get_session_engine(queryset.session) == 'postgresql':
+            return column.cast(JSONB).op('?|')(array(value))
+        else:
+            operators = list(map(lambda x: column.cast(Unicode).ilike('%{}%'.format(x)), value))
+            return or_(*operators)
+    else:
+        return column.in_(value)
+
+
+def safe_startswith(queryset, column, value):
     field_type = column.property.columns[0].type if hasattr(column, 'property') else column.type
 
     if is_instance_or_subclass(field_type, (ENUM, sqltypes.NullType)):
@@ -20,7 +45,7 @@ def safe_startswith(column, value):
         return column.ilike('{}%'.format(value))
 
 
-def safe_endswith(column, value):
+def safe_endswith(queryset, column, value):
     field_type = column.property.columns[0].type if hasattr(column, 'property') else column.type
 
     if is_instance_or_subclass(field_type, (ENUM, sqltypes.NullType)):
@@ -29,7 +54,7 @@ def safe_endswith(column, value):
         return column.ilike('%{}'.format(value))
 
 
-def safe_icontains(column, value):
+def safe_icontains(queryset, column, value):
     field_type = column.property.columns[0].type if hasattr(column, 'property') else column.type
 
     if is_instance_or_subclass(field_type, (ENUM, sqltypes.NullType)):
@@ -38,7 +63,7 @@ def safe_icontains(column, value):
         return column.ilike('%{}%'.format(value))
 
 
-def json_icontains(column, value):
+def json_icontains(queryset, column, value):
     field_type = column.property.columns[0].type if hasattr(column, 'property') else column.type
 
     if is_instance_or_subclass(field_type, (JSON, sqltypes.NullType)) or not hasattr(column, 'astext'):
@@ -47,14 +72,14 @@ def json_icontains(column, value):
         return column.astext.ilike('%{}%'.format(value))
 
 
-def is_null(column, value):
+def is_null(queryset, column, value):
     if value:
         return column.__eq__(None)
     else:
         return column.isnot(None)
 
 
-def is_empty(column, value):
+def is_empty(queryset, column, value):
     field_type = column.property.columns[0].type if hasattr(column, 'property') else column.type
 
     if is_instance_or_subclass(field_type, sqltypes.String):
@@ -63,10 +88,10 @@ def is_empty(column, value):
         else:
             return and_(column.isnot(None), column != '')
     else:
-        return is_null(column, value)
+        return is_null(queryset, column, value)
 
 
-def coveredby(column, value):
+def coveredby(queryset, column, value):
     return column.ST_CoveredBy(value)
 
 
@@ -95,13 +120,13 @@ def safe_array(value):
 class Filter(object):
     field_class = field
     lookup_operators = {
-        lookups.EXACT: {'operator': '__eq__', 'pre_process': lambda x: safe_not_array(x)},
+        lookups.EXACT: {'operator': False, 'func': safe_equals, 'pre_process': lambda x: safe_not_array(x)},
         lookups.GT: {'operator': '__gt__', 'pre_process': lambda x: safe_not_array(x)},
         lookups.GTE: {'operator': '__ge__', 'pre_process': lambda x: safe_not_array(x)},
         lookups.LT: {'operator': '__lt__', 'pre_process': lambda x: safe_not_array(x)},
         lookups.LTE: {'operator': '__le__', 'pre_process': lambda x: safe_not_array(x)},
         lookups.ICONTAINS: {'operator': False, 'func': safe_icontains, 'pre_process': lambda x: safe_not_array(x)},
-        lookups.IN: {'operator': 'in_', 'field_class': CharField, 'field_kwargs': {'many': True}, 'pre_process': lambda x: safe_array(x)},
+        lookups.IN: {'operator': False, 'func': safe_in, 'field_class': CharField, 'field_kwargs': {'many': True}, 'pre_process': lambda x: safe_array(x)},
         lookups.STARTS_WITH: {'operator': False, 'func': safe_startswith, 'pre_process': lambda x: safe_not_array(x)},
         lookups.ENDS_WITH: {'operator': False, 'func': safe_endswith, 'pre_process': lambda x: safe_not_array(x)},
         lookups.IS_NULL: {'operator': False, 'func': is_null, 'field_class': BooleanField, 'pre_process': lambda x: safe_not_array(x)},
@@ -119,7 +144,7 @@ class Filter(object):
     def clean_value(self, value):
         return value
 
-    def get_loookup_criterion(self, value):
+    def get_loookup_criterion(self, qs, value):
         lookup_operator = self.lookup_operators[self.lookup]
         operator = lookup_operator['operator']
         pre_process = lookup_operator.get('pre_process')
@@ -139,9 +164,9 @@ class Filter(object):
 
         if func:
             if self.exclude:
-                return ~func(self.column, value)
+                return ~func(qs, self.column, value)
             else:
-                return func(self.column, value)
+                return func(qs, self.column, value)
         elif callable(operator):
             op = operator(value)
 
@@ -156,7 +181,7 @@ class Filter(object):
                 return getattr(self.column, operator)(value)
 
     def apply_lookup(self, qs, value):
-        criterion = self.get_loookup_criterion(value)
+        criterion = self.get_loookup_criterion(qs, value)
         return qs.filter(criterion)
 
     def filter(self, qs, value):
