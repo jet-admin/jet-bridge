@@ -60,6 +60,8 @@ boolean_lookups = [
 ]
 
 json_lookups = [
+    lookups.EXACT,
+    lookups.IN,
     lookups.JSON_ICONTAINS,
     lookups.IS_NULL,
     lookups.IS_EMPTY,
