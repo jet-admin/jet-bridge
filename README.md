@@ -127,9 +127,12 @@ Requirements
 
   - PostgreSQL
   - MySQL
+  - MariaDB
   - SQLite
   - Oracle
   - Microsoft SQL Server
+  - BigQuery
+  - Snowflake
   - Firebird
   - Sybase
 
