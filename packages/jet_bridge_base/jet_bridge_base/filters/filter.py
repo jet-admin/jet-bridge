@@ -1,7 +1,7 @@
 from jet_bridge_base.utils.classes import is_instance_or_subclass
 from jet_bridge_base.utils.queryset import get_session_engine
 from sqlalchemy import Unicode, and_, or_
-from sqlalchemy.dialects.postgresql import JSON, ENUM, JSONB, array
+from sqlalchemy.dialects.postgresql import ENUM, JSONB, array
 from sqlalchemy.sql import sqltypes
 from six import string_types
 
@@ -14,7 +14,7 @@ EMPTY_VALUES = ([], (), {}, None)
 def safe_equals(queryset, column, value):
     field_type = column.property.columns[0].type if hasattr(column, 'property') else column.type
 
-    if is_instance_or_subclass(field_type, (JSON,)):
+    if is_instance_or_subclass(field_type, (sqltypes.JSON,)):
         if get_session_engine(queryset.session) == 'postgresql':
             return column.cast(JSONB).op('?')(value)
         else:
@@ -26,7 +26,7 @@ def safe_equals(queryset, column, value):
 def safe_in(queryset, column, value):
     field_type = column.property.columns[0].type if hasattr(column, 'property') else column.type
 
-    if is_instance_or_subclass(field_type, (JSON,)):
+    if is_instance_or_subclass(field_type, (sqltypes.JSON,)):
         if get_session_engine(queryset.session) == 'postgresql':
             return column.cast(JSONB).op('?|')(array(value))
         else:
@@ -66,7 +66,7 @@ def safe_icontains(queryset, column, value):
 def json_icontains(queryset, column, value):
     field_type = column.property.columns[0].type if hasattr(column, 'property') else column.type
 
-    if is_instance_or_subclass(field_type, (JSON, sqltypes.NullType)) or not hasattr(column, 'astext'):
+    if is_instance_or_subclass(field_type, (sqltypes.JSON, sqltypes.NullType)) or not hasattr(column, 'astext'):
         return column.cast(Unicode).ilike('%{}%'.format(value))
     else:
         return column.astext.ilike('%{}%'.format(value))
