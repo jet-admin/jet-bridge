@@ -77,7 +77,7 @@ define('track_databases_auth', default='')
 define('track_models_endpoint', default='')
 define('track_models_auth', default='')
 
-define('disable_auth', default=False)
+define('disable_auth', default=False, type=bool)
 
 define('sentry_dsn', default='')
 
