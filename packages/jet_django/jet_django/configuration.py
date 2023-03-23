@@ -89,7 +89,8 @@ class JetDjangoConfiguration(Configuration):
             'TRACK_DATABASES_ENDPOINT': settings.JET_TRACK_DATABASES_ENDPOINT,
             'TRACK_DATABASES_AUTH': settings.JET_TRACK_DATABASES_AUTH,
             'TRACK_MODELS_ENDPOINT': settings.JET_TRACK_MODELS_ENDPOINT,
-            'TRACK_MODELS_AUTH': settings.JET_TRACK_MODELS_AUTH
+            'TRACK_MODELS_AUTH': settings.JET_TRACK_MODELS_AUTH,
+            'DISABLE_AUTH': settings.JET_DISABLE_AUTH
         }
 
     def get_django_instance(self, model, instance):

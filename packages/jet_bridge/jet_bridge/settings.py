@@ -77,6 +77,8 @@ define('track_databases_auth', default='')
 define('track_models_endpoint', default='')
 define('track_models_auth', default='')
 
+define('disable_auth', default=False)
+
 define('sentry_dsn', default='')
 
 # Parse
@@ -177,6 +179,8 @@ TRACK_DATABASES_AUTH = options.track_databases_auth
 
 TRACK_MODELS_ENDPOINT = options.track_models_endpoint
 TRACK_MODELS_AUTH = options.track_models_auth
+
+DISABLE_AUTH = options.disable_auth
 
 SENTRY_DSN = options.sentry_dsn
 
