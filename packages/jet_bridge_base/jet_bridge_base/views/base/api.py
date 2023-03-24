@@ -50,11 +50,17 @@ class BaseAPIView(object):
         return [permission() for permission in self.permission_classes]
 
     def check_permissions(self, request):
+        if settings.DISABLE_AUTH:
+            return
+
         for permission in self.get_permissions():
             if not permission.has_permission(self, request):
                 raise PermissionDenied(getattr(permission, 'message', 'forbidden'))
 
     def check_object_permissions(self, request, obj):
+        if settings.DISABLE_AUTH:
+            return
+
         for permission in self.get_permissions():
             if not permission.has_object_permission(self, request, obj):
                 raise PermissionDenied(getattr(permission, 'message', 'forbidden'))

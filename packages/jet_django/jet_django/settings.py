@@ -49,6 +49,8 @@ JET_TRACK_DATABASES_AUTH = getattr(settings, 'JET_TRACK_DATABASES_AUTH', '')
 JET_TRACK_MODELS_ENDPOINT = getattr(settings, 'JET_TRACK_MODELS_ENDPOINT', '')
 JET_TRACK_MODELS_AUTH = getattr(settings, 'JET_TRACK_MODELS_AUTH', '')
 
+JET_DISABLE_AUTH = getattr(settings, 'JET_DISABLE_AUTH', False)
+
 try:
     JET_SSO_APPLICATIONS = json.loads(JET_SSO_APPLICATIONS)
 except Exception as e:

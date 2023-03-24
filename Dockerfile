@@ -1,4 +1,4 @@
-FROM jetadmin/jet-bridge-base:1.2.0
+FROM jetadmin/jet-bridge-base:1.3.0
 
 COPY packages /packages
 RUN pip install -e /packages/jet_bridge_base
