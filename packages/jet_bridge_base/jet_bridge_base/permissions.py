@@ -125,7 +125,6 @@ class HasProjectPermissions(BasePermission):
         return False
 
     def has_permission(self, view, request):
-        # return True
         token = self.parse_token(request.headers.get('AUTHORIZATION'))
         view_permissions = view.required_project_permission(request) if hasattr(view, 'required_project_permission') else None
 

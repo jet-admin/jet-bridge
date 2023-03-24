@@ -102,7 +102,8 @@ def build_engine_url(conf, tunnel=None):
 
             url.append('/')
 
-        url.append(str(conf.get('name')))
+        if conf.get('engine') != 'oracle':
+            url.append(str(conf.get('name')))
 
         if conf.get('extra'):
             url.append('?')
@@ -111,6 +112,8 @@ def build_engine_url(conf, tunnel=None):
             url.append('?charset=utf8')
         elif conf.get('engine') == 'mssql+pyodbc':
             url.append('?driver=FreeTDS')
+        elif conf.get('engine') == 'oracle':
+            url.append('?service_name={}'.format(url_encode(conf.get('name'))))
 
     return ''.join(url)
 
@@ -274,6 +277,14 @@ def create_connection_engine(conf, tunnel):
     if conf.get('engine') == 'sqlite':
         return create_engine(engine_url)
     elif conf.get('engine') == 'bigquery':
+        return create_engine(
+            engine_url,
+            pool_size=conf.get('connections'),
+            pool_pre_ping=True,
+            max_overflow=1,
+            pool_recycle=300
+        )
+    elif conf.get('engine') == 'oracle':
         return create_engine(
             engine_url,
             pool_size=conf.get('connections'),
