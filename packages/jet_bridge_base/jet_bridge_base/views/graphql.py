@@ -11,6 +11,7 @@ from jet_bridge_base.permissions import HasProjectPermissions
 from jet_bridge_base.responses.json import JSONResponse
 from jet_bridge_base.utils.common import get_random_string
 from jet_bridge_base.utils.graphql import GraphQLSchemaGenerator
+from jet_bridge_base.utils.track_database import track_database_async
 from jet_bridge_base.views.base.api import APIView
 
 
@@ -128,6 +129,8 @@ class GraphQLView(APIView):
         return self.post(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
+        track_database_async(request)
+
         draft = bool(request.get_argument('draft', False))
         validate = bool(request.data.get('validate', True))
 
