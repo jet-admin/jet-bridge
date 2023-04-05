@@ -16,8 +16,6 @@ def track_database(request):
     hostname = '{}:{}'.format(conf.get('host', ''), conf.get('port', '')).lower()
 
     if not any(map(lambda x: fnmatch(hostname, x), track_databases)):
-        error = 'TRACK_DATABASE untracked database: {} not in {}'.format(hostname, track_databases)
-        sentry_controller.capture_message(error)
         return
 
     headers = {}
