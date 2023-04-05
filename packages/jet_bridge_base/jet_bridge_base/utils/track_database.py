@@ -3,6 +3,7 @@ import requests
 
 from jet_bridge_base import settings
 from jet_bridge_base.db import get_conf
+from jet_bridge_base.sentry import sentry_controller
 from jet_bridge_base.utils.async_exec import as_future
 
 
@@ -14,19 +15,31 @@ def track_database(request):
     conf = get_conf(request)
     hostname = '{}:{}'.format(conf.get('host', ''), conf.get('port', '')).lower()
 
-    if any(map(lambda x: fnmatch(hostname, x), track_databases)):
-        headers = {}
-        data = {
-            'databaseName': conf.get('name', ''),
-            'databaseSchema': conf.get('schema', ''),
-            'databaseHost': conf.get('host', ''),
-            'databasePort': conf.get('port', '')
-        }
+    if not any(map(lambda x: fnmatch(hostname, x), track_databases)):
+        error = 'TRACK_DATABASE untracked database: {} not in {}'.format(hostname, track_databases)
+        sentry_controller.capture_message(error)
+        return
 
-        if settings.TRACK_DATABASES_AUTH:
-            headers['Authorization'] = settings.TRACK_DATABASES_AUTH
+    headers = {}
+    data = {
+        'databaseName': conf.get('name', ''),
+        'databaseSchema': conf.get('schema', ''),
+        'databaseHost': conf.get('host', ''),
+        'databasePort': conf.get('port', '')
+    }
 
-        requests.request('POST', settings.TRACK_DATABASES_ENDPOINT, headers=headers, json=data)
+    if settings.TRACK_DATABASES_AUTH:
+        headers['Authorization'] = settings.TRACK_DATABASES_AUTH
+
+    try:
+        r = requests.post(settings.TRACK_DATABASES_ENDPOINT, headers=headers, json=data)
+        success = 200 <= r.status_code < 300
+
+        if not success:
+            error = 'TRACK_DATABASE request error: {} {} {}'.format(r.status_code, r.reason, r.text)
+            sentry_controller.capture_message(error)
+    except Exception as e:
+        sentry_controller.capture_exception(e)
 
 
 def track_database_async(request):
