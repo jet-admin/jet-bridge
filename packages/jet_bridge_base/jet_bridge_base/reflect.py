@@ -4,6 +4,7 @@ from sqlalchemy import exc
 from sqlalchemy import inspection
 from sqlalchemy import util
 
+from jet_bridge_base import settings
 from jet_bridge_base.logger import logger
 
 
@@ -116,6 +117,10 @@ def reflect(
                 util.warn("Skipping table %s: %s" % (name, uerr))
 
             i += 1
+
+            if settings.DATABASE_MAX_TABLES is not None and i >= settings.DATABASE_MAX_TABLES:
+                logger.warning('Max tables limit ({}) reached'.format(settings.DATABASE_MAX_TABLES))
+                break
 
             if pending_connection:
                 pending_connection['tables_processed'] = i
