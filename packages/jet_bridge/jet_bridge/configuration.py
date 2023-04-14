@@ -43,6 +43,7 @@ class JetBridgeConfiguration(Configuration):
             'DATABASE_CONNECTIONS': settings.CONNECTIONS,
             'DATABASE_ONLY': settings.DATABASE_ONLY,
             'DATABASE_EXCEPT': settings.DATABASE_EXCEPT,
+            'DATABASE_MAX_TABLES': settings.DATABASE_MAX_TABLES,
             'DATABASE_SCHEMA': settings.DATABASE_SCHEMA,
             'DATABASE_SSH_HOST': settings.DATABASE_SSH_HOST,
             'DATABASE_SSH_PORT': settings.DATABASE_SSH_PORT,
