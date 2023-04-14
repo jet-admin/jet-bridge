@@ -25,6 +25,7 @@ JET_DJANGO_DATABASE = getattr(settings, 'JET_DJANGO_DATABASE', 'default')
 JET_DATABASE_EXTRA = getattr(settings, 'JET_DATABASE_EXTRA', None)
 JET_DATABASE_ONLY = getattr(settings, 'JET_DATABASE_ONLY', None)
 JET_DATABASE_EXCEPT = getattr(settings, 'JET_DATABASE_EXCEPT', None)
+JET_DATABASE_MAX_TABLES = getattr(settings, 'JET_DATABASE_MAX_TABLES', None)
 JET_DATABASE_SCHEMA = getattr(settings, 'JET_DATABASE_SCHEMA', None)
 
 JET_DATABASE_SSH_HOST = getattr(settings, 'JET_DATABASE_SSH_HOST', None)

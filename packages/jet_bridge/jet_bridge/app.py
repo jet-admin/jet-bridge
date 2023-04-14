@@ -8,6 +8,8 @@ from jet_bridge_base.sentry import sentry_controller
 from jet_bridge_base.utils.async_exec import set_max_workers
 from jet_bridge_base import settings as base_settings
 from jet_bridge_base.views.api import ApiView
+from jet_bridge_base.views.discover_connection import DiscoverConnectionView
+from jet_bridge_base.views.discover_table import DiscoverTableView
 from jet_bridge_base.views.external_auth.complete import ExternalAuthCompleteView
 from jet_bridge_base.views.external_auth.login import ExternalAuthLoginView
 from jet_bridge_base.views.graphql import GraphQLView
@@ -53,6 +55,8 @@ def make_app():
         (r'/api/image_resize/', view_handler(ImageResizeView)),
         (r'/api/reload/', view_handler(ReloadView)),
         (r'/api/proxy_request/', view_handler(ProxyRequestView)),
+        (r'/api/discover/connection/', view_handler(DiscoverConnectionView)),
+        (r'/api/discover/tables/', view_handler(DiscoverTableView)),
         (r'/media/(.*)', tornado.web.StaticFileHandler, {'path': settings.MEDIA_ROOT}),
         (r'/api/external_auth/login/(?P<app>[^/]+)/', view_handler(ExternalAuthLoginView)),
         (r'/api/external_auth/complete/(?P<app>[^/]+)/', view_handler(ExternalAuthCompleteView)),

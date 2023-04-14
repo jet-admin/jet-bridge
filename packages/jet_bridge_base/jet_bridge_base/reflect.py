@@ -4,7 +4,60 @@ from sqlalchemy import exc
 from sqlalchemy import inspection
 from sqlalchemy import util
 
+from jet_bridge_base import settings
 from jet_bridge_base.logger import logger
+
+
+def get_tables(
+    insp,
+    metadata,
+    bind=None,
+    schema=None,
+    views=False,
+    only=None,
+    extend_existing=False
+):
+    available = util.OrderedSet(insp.get_table_names(schema))
+    if views:
+        available.update(insp.get_view_names(schema))
+
+    if schema is not None:
+        available_w_schema = util.OrderedSet(
+            ["%s.%s" % (schema, name) for name in available]
+        )
+    else:
+        available_w_schema = available
+
+    current = set(metadata.tables)
+
+    if only is None:
+        load = [
+            name
+            for name, schname in zip(available, available_w_schema)
+            if extend_existing or schname not in current
+        ]
+    elif callable(only):
+        load = [
+            name
+            for name, schname in zip(available, available_w_schema)
+            if (extend_existing or schname not in current)
+               and only(name, metadata)
+        ]
+    else:
+        missing = [name for name in only if name not in available]
+        if missing:
+            s = schema and (" schema '%s'" % schema) or ""
+            raise exc.InvalidRequestError(
+                "Could not reflect: requested table(s) not available "
+                "in %r%s: (%s)" % (bind.engine, s, ", ".join(missing))
+            )
+        load = [
+            name
+            for name in only
+            if extend_existing or name not in current
+        ]
+
+    return load
 
 
 def reflect(
@@ -39,45 +92,7 @@ def reflect(
         if schema is not None:
             reflect_opts["schema"] = schema
 
-        available = util.OrderedSet(insp.get_table_names(schema))
-        if views:
-            available.update(insp.get_view_names(schema))
-
-        if schema is not None:
-            available_w_schema = util.OrderedSet(
-                ["%s.%s" % (schema, name) for name in available]
-            )
-        else:
-            available_w_schema = available
-
-        current = set(metadata.tables)
-
-        if only is None:
-            load = [
-                name
-                for name, schname in zip(available, available_w_schema)
-                if extend_existing or schname not in current
-            ]
-        elif callable(only):
-            load = [
-                name
-                for name, schname in zip(available, available_w_schema)
-                if (extend_existing or schname not in current)
-                   and only(name, metadata)
-            ]
-        else:
-            missing = [name for name in only if name not in available]
-            if missing:
-                s = schema and (" schema '%s'" % schema) or ""
-                raise exc.InvalidRequestError(
-                    "Could not reflect: requested table(s) not available "
-                    "in %r%s: (%s)" % (bind.engine, s, ", ".join(missing))
-                )
-            load = [
-                name
-                for name in only
-                if extend_existing or name not in current
-            ]
+        load = get_tables(insp, metadata, bind, schema, views, only, extend_existing)
 
         """
         Modified: Added default PK set and progress display
@@ -116,6 +131,10 @@ def reflect(
                 util.warn("Skipping table %s: %s" % (name, uerr))
 
             i += 1
+
+            if settings.DATABASE_MAX_TABLES is not None and i >= settings.DATABASE_MAX_TABLES:
+                logger.warning('Max tables limit ({}) reached'.format(settings.DATABASE_MAX_TABLES))
+                break
 
             if pending_connection:
                 pending_connection['tables_processed'] = i
