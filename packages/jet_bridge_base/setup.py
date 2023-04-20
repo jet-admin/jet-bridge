@@ -13,7 +13,7 @@ def read(fname):
 
 def get_install_requires():
     install_requires = [
-        'sqlalchemy',
+        'sqlalchemy<2.0',
         'six',
         'requests',
         'Pillow',
