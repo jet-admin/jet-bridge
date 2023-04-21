@@ -20,6 +20,8 @@ DEFAULT_API_BASE_URL = 'https://api.jetadmin.io/api'
 
 define('address', default='0.0.0.0', help='server address')
 define('port', default=8888, help='server port', type=int)
+define('ssl_cert', help='SSL certificate file path', type=str, default=None)
+define('ssl_key', help='SSL private key file path', type=str, default=None)
 define('workers', default=1, help='number of workers', type=int)
 define('config', default=DEFAULT_CONFIG_PATH, help='config file path')
 define('use_default_config', default='', help='use default config values')
@@ -119,6 +121,8 @@ missing_options = list(filter(lambda x: x not in options or options[x] is None, 
 
 ADDRESS = options.address
 PORT = options.port
+SSL_CERT = options.ssl_cert
+SSL_KEY = options.ssl_key
 WORKERS = options.workers
 DEBUG = options.debug
 READ_ONLY = options.read_only

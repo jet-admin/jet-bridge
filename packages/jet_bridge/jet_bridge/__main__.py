@@ -36,8 +36,11 @@ def main():
         logger.info('Required options are not specified: {}'.format(', '.join(missing_options)))
         return
 
+    ssl = settings.SSL_CERT or settings.SSL_KEY
+
     address = 'localhost' if settings.ADDRESS == '0.0.0.0' else settings.ADDRESS
-    url = 'http://{}:{}/'.format(address, settings.PORT)
+    protocol = 'https' if ssl else 'http'
+    url = '{}://{}:{}/'.format(protocol, address, settings.PORT)
     api_url = '{}api/'.format(url)
 
     if len(args) >= 1:
@@ -51,7 +54,12 @@ def main():
 
     app = make_app()
     workers = settings.WORKERS if not settings.DEBUG else 1
-    server = HTTPServer(app)
+
+    ssl_options = {
+        'certfile': settings.SSL_CERT,
+        'keyfile': settings.SSL_KEY
+    } if ssl else None
+    server = HTTPServer(app, ssl_options=ssl_options)
     server.bind(settings.PORT, settings.ADDRESS)
     server.start(workers)
 

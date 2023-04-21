@@ -147,6 +147,8 @@ create_config() {
 
 run_instance() {
     PORT=$(awk -F "=" '/^PORT=/ {print $2}' jet.conf)
+    SSL_CERT=$(awk -F "=" '/^SSL_CERT=/ {print $2}' jet.conf)
+    SSL_KEY=$(awk -F "=" '/^SSL_KEY=/ {print $2}' jet.conf)
     CONFIG_FILE="${PWD}/jet.conf"
     RUN_TIMEOUT=$(awk -F "=" '/^RUN_TIMEOUT=/ {print $2}' jet.conf)
     RUN_TIMEOUT="${RUN_TIMEOUT:-10}"
@@ -165,7 +167,12 @@ run_instance() {
         jetadmin/jetbridge:dev \
         1> /dev/null
 
-    BASE_URL="http://localhost:${PORT}/api/"
+    if [ -n "$SSL_CERT" ] || [ -n "$SSL_KEY" ]; then
+      BASE_URL="https://localhost:${PORT}/api/"
+    else
+      BASE_URL="http://localhost:${PORT}/api/"
+    fi
+
     REGISTER_URL="${BASE_URL}register/"
 
     printf '    '
