@@ -13,7 +13,7 @@ Description
 ===========
 
 * Jet Admin: https://www.jetadmin.io
-* **Live Demo**: http://app.jetadmin.io/demo
+* **Live Demo**: https://app.jetadmin.io/demo
 * Support: support@jetadmin.io
 
 **Jet** is a SaaS service that automatically generates back office for your Django Application through REST API of **Jet Bridge** package installed to your project.
