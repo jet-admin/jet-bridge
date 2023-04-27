@@ -4,6 +4,7 @@ from sqlalchemy.sql.base import _bind_or_error
 
 from jet_bridge_base import settings
 from jet_bridge_base.db import get_conf, get_connection_schema, get_connection_tunnel, create_connection_engine
+from jet_bridge_base.exceptions.validation_error import ValidationError
 from jet_bridge_base.permissions import HasProjectPermissions
 from jet_bridge_base.reflect import get_tables
 from jet_bridge_base.responses.json import JSONResponse
@@ -51,7 +52,7 @@ class DiscoverTableView(BaseAPIView):
                         'max_tables': settings.DATABASE_MAX_TABLES
                     })
         except Exception as e:
-            raise e
+            raise ValidationError(str(e))
         finally:
             if bind:
                 bind.dispose()

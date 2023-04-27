@@ -113,11 +113,14 @@ class GraphQLSchemaGenerator(object):
 
     def get_queryset(self, request, Model, only_columns=None):
         mapper = inspect(Model)
-        pk = mapper.primary_key[0]
+        pks = mapper.primary_key
 
         if only_columns:
-            if not any(map(lambda x: x.name == pk.name, only_columns)):
-                only_columns = [pk, *only_columns]
+            only_columns_name = list(map(lambda x: x.name, only_columns))
+            missing_pks = list(filter(lambda x: x.name not in only_columns_name, pks))
+
+            if len(missing_pks):
+                only_columns = [*missing_pks, *only_columns]
 
             queryset = request.session.query(*only_columns)
         else:
@@ -129,7 +132,7 @@ class GraphQLSchemaGenerator(object):
             queryset = queryset.filter(mapper.primary_key[0].isnot(None))
 
         if not auto_pk and get_session_engine(request.session) in ['postgresql', 'mysql']:
-            queryset = queryset.group_by(pk)
+            queryset = queryset.group_by(*pks)
 
         return queryset
 
