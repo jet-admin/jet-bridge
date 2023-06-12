@@ -237,11 +237,12 @@ class SqlSerializer(Serializer):
             order_by = list(map(lambda x: self.map_order_field(x), data['order_by']))
             queryset = queryset.order_by(*order_by)
         else:
-            if get_session_engine(session) == 'mssql':
-                for item in data.get('columns', []):
-                    field = column(item['name'])
-                    queryset = queryset.order_by(field)
-                    break
+            if 'aggregate' not in data and 'group' not in data and 'groups' not in data:
+                if get_session_engine(session) == 'mssql':
+                    for item in data.get('columns', []):
+                        field = column(item['name'])
+                        queryset = queryset.order_by(field)
+                        break
 
         return queryset
 
