@@ -106,6 +106,9 @@ def reflect(
 
         i = 0
         for name in load:
+            if name in ['pg_stat_statements']:
+                continue
+
             try:
                 logger.info('Analyzing table "{}" ({} / {})"...'.format(name, i + 1, len(load)))
                 table = Table(name, metadata, **reflect_opts)
