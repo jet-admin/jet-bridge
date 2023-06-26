@@ -45,7 +45,7 @@ class DiscoverTableView(BaseAPIView):
                     if schema is None:
                         schema = metadata.schema
 
-                    load, view_names = get_tables(insp, metadata, bind, schema, views=True)
+                    load = get_tables(insp, metadata, bind, schema)
 
                     return JSONResponse({
                         'tables': load,
