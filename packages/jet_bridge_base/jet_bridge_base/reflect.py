@@ -17,9 +17,12 @@ def get_tables(
     only=None,
     extend_existing=False
 ):
+    view_names = []
+
     available = util.OrderedSet(insp.get_table_names(schema))
     if views:
-        available.update(insp.get_view_names(schema))
+        view_names = insp.get_view_names(schema)
+        available.update(view_names)
 
     if schema is not None:
         available_w_schema = util.OrderedSet(
@@ -57,7 +60,7 @@ def get_tables(
             if extend_existing or name not in current
         ]
 
-    return load
+    return load, view_names
 
 
 def reflect(
@@ -92,7 +95,7 @@ def reflect(
         if schema is not None:
             reflect_opts["schema"] = schema
 
-        load = get_tables(insp, metadata, bind, schema, views, only, extend_existing)
+        load, view_names = get_tables(insp, metadata, bind, schema, views, only, extend_existing)
 
         """
         Modified: Added default PK set and progress display
@@ -103,9 +106,15 @@ def reflect(
 
         i = 0
         for name in load:
+            if name in ['pg_stat_statements']:
+                continue
+
             try:
                 logger.info('Analyzing table "{}" ({} / {})"...'.format(name, i + 1, len(load)))
                 table = Table(name, metadata, **reflect_opts)
+
+                if view_names and name in view_names:
+                    setattr(table, '__jet_is_view__', True)
 
                 args = []
                 has_pk = False

@@ -374,7 +374,7 @@ def connect_database(conf):
 
             metadata = MetaData(schema=schema, bind=connection)
             only = get_connection_only_predicate(conf)
-            reflect(metadata, engine, only=only, pending_connection=pending_connection)
+            reflect(metadata, engine, only=only, pending_connection=pending_connection, views=True)
 
             reflect_end = time.time()
             reflect_time = round(reflect_end - reflect_start, 3)

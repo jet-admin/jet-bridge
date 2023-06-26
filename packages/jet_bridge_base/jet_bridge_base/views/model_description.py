@@ -243,6 +243,7 @@ def map_table(MappedBase, cls, relationships_overrides, hidden):
     name = get_table_name(MappedBase.metadata, table)
     primary_key = mapper.primary_key[0]
     primary_key_auto = getattr(table, '__jet_auto_pk__', False) if table is not None else None
+    is_view = getattr(table, '__jet_is_view__', False) if table is not None else False
     non_editable = []
     model_relationships_overrides = relationships_overrides.get(name)
 
@@ -287,6 +288,7 @@ def map_table(MappedBase, cls, relationships_overrides, hidden):
         # 'relations': table_relations(mapper) + table_m2m_relations(mapper),
         'primary_key_field': primary_key.name if primary_key is not None else None,
         'primary_key_auto': primary_key_auto,
+        'is_view': is_view,
         'data_source_name': data_source_name,
         'data_source_name_plural': data_source_name_plural,
         'data_source_order_after': data_source_order_after,
