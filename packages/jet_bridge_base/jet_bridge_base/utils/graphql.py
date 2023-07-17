@@ -1,22 +1,22 @@
 import re
 import graphene
-from jet_bridge_base.models.model_relation_override import ModelRelationOverrideModel
-from jet_bridge_base.store import store
-from jet_bridge_base.utils.relations import parse_relationship_direction
 from sqlalchemy import inspect, desc, MetaData
 from sqlalchemy.engine import Row
-from sqlalchemy.ext.automap import automap_base
 from sqlalchemy.orm import MANYTOONE, ONETOMANY, aliased
 
+from jet_bridge_base.automap import automap_base
 from jet_bridge_base.db import get_mapped_base, get_engine, load_mapped_base, get_request_connection, get_table_name
 from jet_bridge_base.filters import lookups
 from jet_bridge_base.filters.filter_for_dbfield import filter_for_data_type
 from jet_bridge_base.filters.model_group import get_query_func_by_name
 from jet_bridge_base.filters.model_search import search_queryset
+from jet_bridge_base.models.model_relation_override import ModelRelationOverrideModel
 from jet_bridge_base.serializers.model import get_model_serializer
+from jet_bridge_base.store import store
 from jet_bridge_base.utils.common import get_set_first, any_type_sorter, unique, flatten
 from jet_bridge_base.utils.gql import RawScalar
 from jet_bridge_base.utils.queryset import queryset_count_optimized, apply_default_ordering, get_session_engine
+from jet_bridge_base.utils.relations import parse_relationship_direction
 
 
 class ModelFiltersType(graphene.InputObjectType):

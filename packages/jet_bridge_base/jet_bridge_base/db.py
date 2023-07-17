@@ -5,6 +5,7 @@ import threading
 import time
 from datetime import timedelta, datetime
 
+from jet_bridge_base.automap import automap_base
 from jet_bridge_base.reflect import reflect
 from jet_bridge_base.ssh_tunnel import SSHTunnel
 from jet_bridge_base.utils.crypt import get_sha256_hash
@@ -13,7 +14,6 @@ from six import StringIO
 from six.moves.urllib_parse import quote_plus
 
 from sqlalchemy import create_engine, MetaData
-from sqlalchemy.ext.automap import automap_base, generate_relationship
 from sqlalchemy.orm import sessionmaker, scoped_session
 
 from jet_bridge_base.utils.common import get_random_string, merge
