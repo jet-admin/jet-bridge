@@ -63,7 +63,7 @@ class GraphQLView(APIView):
             logger.info('Generating GraphQL schema "{}"...'.format(new_schema['id']))
 
             def before_resolve(request, mapper, *args, **kwargs):
-                request.context['model'] = mapper.selectable.name
+                request.context['model'] = mapper.selectable.fullname
                 self.check_permissions(request)
 
             get_schema_start = time.time()
