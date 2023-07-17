@@ -158,7 +158,7 @@ class GraphQLSchemaGenerator(object):
             model_relationships = {}
 
             mapper = inspect(Model)
-            name = mapper.selectable.name
+            name = mapper.selectable.fullname
 
             model_relationships_overrides = relationships_overrides.get(name, [])
 
@@ -259,15 +259,15 @@ class GraphQLSchemaGenerator(object):
         return dict(map(lambda x: (clean_name(x), getattr(Model, x)), mapper.columns.keys()))
 
     def get_model_relationships(self, mapper):
-        name = mapper.selectable.name
+        name = mapper.selectable.fullname
         return self.relationships_by_name.get(name, {}).values()
 
     def get_model_relationships_by_name(self, mapper):
-        name = mapper.selectable.name
+        name = mapper.selectable.fullname
         return self.relationships_by_name.get(name, {})
 
     def get_model_relationships_by_clean_name(self, mapper):
-        name = mapper.selectable.name
+        name = mapper.selectable.fullname
         return self.relationships_by_clean_name.get(name, {})
 
     def filter_queryset(self, MappedBase, queryset, mapper, filters, parent_relations=None, exclude=False):
@@ -574,7 +574,7 @@ class GraphQLSchemaGenerator(object):
 
     def get_model_filters_type(self, MappedBase, mapper, depth=1):
         with_relations = depth <= 4
-        model_name = clean_name(mapper.selectable.name)
+        model_name = clean_name(mapper.selectable.fullname)
         cls_name = 'Model{}Depth{}NestedFiltersType'.format(model_name, depth) if with_relations \
             else 'Model{}Depth{}FiltersType'.format(model_name, depth)
 
@@ -604,7 +604,7 @@ class GraphQLSchemaGenerator(object):
         return graphene.List(cls)
 
     def get_model_field_filters_type(self, MappedBase, mapper, column, with_relations, depth=1):
-        model_name = clean_name(mapper.selectable.name)
+        model_name = clean_name(mapper.selectable.fullname)
         column_name = clean_name(column.name)
         cls_name = 'Model{}Column{}Depth{}NestedFiltersType'.format(model_name, column_name, depth) if with_relations \
             else 'Model{}Column{}Depth{}FiltersType'.format(model_name, column_name, depth)
@@ -635,7 +635,7 @@ class GraphQLSchemaGenerator(object):
         return cls
 
     def get_model_relationship_filters_type(self, MappedBase, mapper, relationship, with_relations, depth=1):
-        model_name = clean_name(mapper.selectable.name)
+        model_name = clean_name(mapper.selectable.fullname)
         relationship_key = clean_name(relationship['name'])
         cls_name = 'Model{}Column{}Depth{}NestedRelationshipType'.format(model_name, relationship_key, depth) if with_relations \
             else 'Model{}Column{}Depth{}RelationshipType'.format(model_name, relationship_key, depth)
@@ -654,7 +654,7 @@ class GraphQLSchemaGenerator(object):
 
     def get_model_lookups_type(self, MappedBase, mapper, depth=1):
         with_relations = depth <= 4
-        model_name = clean_name(mapper.selectable.name)
+        model_name = clean_name(mapper.selectable.fullname)
         cls_name = 'Model{}Depth{}NestedLookupsType'.format(model_name, depth) if with_relations \
             else 'Model{}Depth{}LookupsType'.format(model_name, depth)
 
@@ -682,7 +682,7 @@ class GraphQLSchemaGenerator(object):
         return cls
 
     def get_model_field_lookups_type(self, MappedBase, mapper, column, with_relations, depth=1):
-        model_name = clean_name(mapper.selectable.name)
+        model_name = clean_name(mapper.selectable.fullname)
         column_name = clean_name(column.name)
         cls_name = 'Model{}Column{}Depth{}NestedLookupsFieldType'.format(model_name, column_name, depth) if with_relations \
             else 'Model{}Column{}Depth{}LookupsFieldType'.format(model_name, column_name, depth)
@@ -710,7 +710,7 @@ class GraphQLSchemaGenerator(object):
         return cls
 
     def get_model_relationship_lookups_type(self, MappedBase, mapper, relationship, with_relations, depth=1):
-        model_name = clean_name(mapper.selectable.name)
+        model_name = clean_name(mapper.selectable.fullname)
         relationship_key = clean_name(relationship['name'])
         cls_name = 'Model{}Column{}Depth{}NestedLookupsRelationshipType'.format(model_name, relationship_key, depth) if with_relations \
             else 'Model{}Column{}Depth{}LookupsRelationshipType'.format(model_name, relationship_key, depth)
@@ -730,7 +730,7 @@ class GraphQLSchemaGenerator(object):
         return cls
 
     def get_model_sort_type(self, mapper):
-        model_name = clean_name(mapper.selectable.name)
+        model_name = clean_name(mapper.selectable.fullname)
         cls_name = 'Model{}SortType'.format(model_name)
 
         if cls_name in self.model_sort_types:
@@ -747,7 +747,7 @@ class GraphQLSchemaGenerator(object):
         return graphene.List(cls)
 
     def get_model_attrs_type(self, mapper):
-        name = clean_name(mapper.selectable.name)
+        name = clean_name(mapper.selectable.fullname)
         attrs = {}
 
         for column in mapper.columns:

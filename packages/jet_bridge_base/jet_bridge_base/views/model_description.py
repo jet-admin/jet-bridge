@@ -206,7 +206,7 @@ def map_relationship_override(override):
 #
 # def table_m2m_relations(mapper):
 #     result = []
-#     name = mapper.selectable.name
+#     name = mapper.selectable.fullname
 #
 #     for relation in mapper.relationships:
 #         if relation.direction != ONETOMANY or not hasattr(relation, 'table'):
@@ -220,19 +220,19 @@ def map_relationship_override(override):
 #         if len(relation.table.columns) > 5:
 #             continue
 #
-#         self_relationship = m2m_relationships[1] if m2m_relationships[1].table.name == name else \
+#         self_relationship = m2m_relationships[1] if m2m_relationships[1].table.fullname == name else \
 #         m2m_relationships[0]
 #         other_relationship = m2m_relationships[0] if self_relationship == m2m_relationships[1] else \
 #         m2m_relationships[1]
 #
 #         result.append({
-#             'name': 'M2M {} {}'.format(self_relationship.table.name, other_relationship.table.name),
+#             'name': 'M2M {} {}'.format(self_relationship.table.fullname, other_relationship.table.fullname),
 #             'related_model': {
-#                 'model': other_relationship.table.name
+#                 'model': other_relationship.table.fullname
 #             },
 #             'field': 'ManyToManyField',
-#             'related_model_field': self_relationship.table.name,
-#             'through': {'model': relation.table.name}
+#             'related_model_field': self_relationship.table.fullname,
+#             'through': {'model': relation.table.fullname}
 #         })
 #
 #     return result
