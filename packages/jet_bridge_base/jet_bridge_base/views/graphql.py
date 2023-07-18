@@ -4,7 +4,7 @@ from datetime import timedelta
 
 from graphql import GraphQLError
 
-from jet_bridge_base.db import connection_cache
+from jet_bridge_base.db import connection_cache, get_table_name, get_mapped_base
 from jet_bridge_base.exceptions.permission_denied import PermissionDenied
 from jet_bridge_base.logger import logger
 from jet_bridge_base.permissions import HasProjectPermissions
@@ -63,7 +63,8 @@ class GraphQLView(APIView):
             logger.info('Generating GraphQL schema "{}"...'.format(new_schema['id']))
 
             def before_resolve(request, mapper, *args, **kwargs):
-                request.context['model'] = mapper.selectable.fullname
+                MappedBase = get_mapped_base(request)
+                request.context['model'] = get_table_name(MappedBase.metadata, mapper.selectable)
                 self.check_permissions(request)
 
             get_schema_start = time.time()
