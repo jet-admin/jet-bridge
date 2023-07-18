@@ -158,7 +158,7 @@ class GraphQLSchemaGenerator(object):
             model_relationships = {}
 
             mapper = inspect(Model)
-            name = mapper.selectable.fullname
+            name = get_table_name(MappedBase.metadata, mapper.selectable)
 
             model_relationships_overrides = relationships_overrides.get(name, [])
 
@@ -258,16 +258,16 @@ class GraphQLSchemaGenerator(object):
         Model = MappedBase.classes.get(name)
         return dict(map(lambda x: (clean_name(x), getattr(Model, x)), mapper.columns.keys()))
 
-    def get_model_relationships(self, mapper):
-        name = mapper.selectable.fullname
+    def get_model_relationships(self, MappedBase, mapper):
+        name = get_table_name(MappedBase.metadata, mapper.selectable)
         return self.relationships_by_name.get(name, {}).values()
 
-    def get_model_relationships_by_name(self, mapper):
-        name = mapper.selectable.fullname
+    def get_model_relationships_by_name(self, MappedBase, mapper):
+        name = get_table_name(MappedBase.metadata, mapper.selectable)
         return self.relationships_by_name.get(name, {})
 
-    def get_model_relationships_by_clean_name(self, mapper):
-        name = mapper.selectable.fullname
+    def get_model_relationships_by_clean_name(self, MappedBase, mapper):
+        name = get_table_name(MappedBase.metadata, mapper.selectable)
         return self.relationships_by_clean_name.get(name, {})
 
     def filter_queryset(self, MappedBase, queryset, mapper, filters, parent_relations=None, exclude=False):
@@ -290,7 +290,7 @@ class GraphQLSchemaGenerator(object):
 
                 columns_by_clean_name = self.get_model_columns_by_clean_name(MappedBase, mapper)
                 column = columns_by_clean_name.get(filter_name)
-                filter_relationship = self.get_model_relationships_by_clean_name(mapper).get(filter_name)
+                filter_relationship = self.get_model_relationships_by_clean_name(MappedBase, mapper).get(filter_name)
 
                 if filter_relationship is not None:
                     filter_lookups_dict = dict(filter_lookups)
@@ -311,7 +311,7 @@ class GraphQLSchemaGenerator(object):
 
                     for lookup_name, lookup_value in filter_lookups_dict.items():
                         if lookup_name == 'relation':
-                            for relationship in self.get_model_relationships(mapper):
+                            for relationship in self.get_model_relationships(MappedBase, mapper):
                                 if relationship['direction'] != MANYTOONE or relationship['local_column_name'] != column.name:
                                     continue
 
@@ -387,7 +387,7 @@ class GraphQLSchemaGenerator(object):
         for lookup_name, lookup_data in lookup_item_dict.items():
             columns_by_clean_name = self.get_model_columns_by_clean_name(MappedBase, mapper)
             column = columns_by_clean_name.get(lookup_name)
-            relationship = self.get_model_relationships_by_clean_name(mapper).get(lookup_name)
+            relationship = self.get_model_relationships_by_clean_name(MappedBase, mapper).get(lookup_name)
 
             if relationship is not None:
                 lookup_result = {}
@@ -461,7 +461,7 @@ class GraphQLSchemaGenerator(object):
                 lookup_result['source_column'] = column.name
 
                 if 'relation' in lookup_data:
-                    for relationship in self.get_model_relationships(mapper):
+                    for relationship in self.get_model_relationships(MappedBase, mapper):
                         if relationship['direction'] != MANYTOONE or relationship['local_column_name'] != column.name:
                             continue
 
@@ -574,7 +574,8 @@ class GraphQLSchemaGenerator(object):
 
     def get_model_filters_type(self, MappedBase, mapper, depth=1):
         with_relations = depth <= 4
-        model_name = clean_name(mapper.selectable.fullname)
+        table_name = get_table_name(MappedBase.metadata, mapper.selectable)
+        model_name = clean_name(table_name)
         cls_name = 'Model{}Depth{}NestedFiltersType'.format(model_name, depth) if with_relations \
             else 'Model{}Depth{}FiltersType'.format(model_name, depth)
 
@@ -589,7 +590,7 @@ class GraphQLSchemaGenerator(object):
             attrs[attr_name] = column_filters_type()
 
         if with_relations:
-            for relationship in self.get_model_relationships(mapper):
+            for relationship in self.get_model_relationships(MappedBase, mapper):
                 if relationship['direction'] != ONETOMANY:
                     continue
 
@@ -604,7 +605,8 @@ class GraphQLSchemaGenerator(object):
         return graphene.List(cls)
 
     def get_model_field_filters_type(self, MappedBase, mapper, column, with_relations, depth=1):
-        model_name = clean_name(mapper.selectable.fullname)
+        table_name = get_table_name(MappedBase.metadata, mapper.selectable)
+        model_name = clean_name(table_name)
         column_name = clean_name(column.name)
         cls_name = 'Model{}Column{}Depth{}NestedFiltersType'.format(model_name, column_name, depth) if with_relations \
             else 'Model{}Column{}Depth{}FiltersType'.format(model_name, column_name, depth)
@@ -621,7 +623,7 @@ class GraphQLSchemaGenerator(object):
             attrs[gql_lookup] = gql_scalar
 
         if with_relations:
-            for relationship in self.get_model_relationships(mapper):
+            for relationship in self.get_model_relationships(MappedBase, mapper):
                 if relationship['direction'] != MANYTOONE or relationship['local_column_name'] != column_name:
                     continue
 
@@ -635,7 +637,8 @@ class GraphQLSchemaGenerator(object):
         return cls
 
     def get_model_relationship_filters_type(self, MappedBase, mapper, relationship, with_relations, depth=1):
-        model_name = clean_name(mapper.selectable.fullname)
+        table_name = get_table_name(MappedBase.metadata, mapper.selectable)
+        model_name = clean_name(table_name)
         relationship_key = clean_name(relationship['name'])
         cls_name = 'Model{}Column{}Depth{}NestedRelationshipType'.format(model_name, relationship_key, depth) if with_relations \
             else 'Model{}Column{}Depth{}RelationshipType'.format(model_name, relationship_key, depth)
@@ -654,7 +657,8 @@ class GraphQLSchemaGenerator(object):
 
     def get_model_lookups_type(self, MappedBase, mapper, depth=1):
         with_relations = depth <= 4
-        model_name = clean_name(mapper.selectable.fullname)
+        table_name = get_table_name(MappedBase.metadata, mapper.selectable)
+        model_name = clean_name(table_name)
         cls_name = 'Model{}Depth{}NestedLookupsType'.format(model_name, depth) if with_relations \
             else 'Model{}Depth{}LookupsType'.format(model_name, depth)
 
@@ -669,7 +673,7 @@ class GraphQLSchemaGenerator(object):
             attrs[attr_name] = column_lookups_type()
 
         if with_relations:
-            for relationship in self.get_model_relationships(mapper):
+            for relationship in self.get_model_relationships(MappedBase, mapper):
                 if relationship['direction'] != ONETOMANY:
                     continue
 
@@ -682,7 +686,8 @@ class GraphQLSchemaGenerator(object):
         return cls
 
     def get_model_field_lookups_type(self, MappedBase, mapper, column, with_relations, depth=1):
-        model_name = clean_name(mapper.selectable.fullname)
+        table_name = get_table_name(MappedBase.metadata, mapper.selectable)
+        model_name = clean_name(table_name)
         column_name = clean_name(column.name)
         cls_name = 'Model{}Column{}Depth{}NestedLookupsFieldType'.format(model_name, column_name, depth) if with_relations \
             else 'Model{}Column{}Depth{}LookupsFieldType'.format(model_name, column_name, depth)
@@ -696,7 +701,7 @@ class GraphQLSchemaGenerator(object):
         }
 
         if with_relations:
-            for relationship in self.get_model_relationships(mapper):
+            for relationship in self.get_model_relationships(MappedBase, mapper):
                 if relationship['direction'] != MANYTOONE or relationship['local_column_name'] != column_name:
                     continue
 
@@ -710,7 +715,8 @@ class GraphQLSchemaGenerator(object):
         return cls
 
     def get_model_relationship_lookups_type(self, MappedBase, mapper, relationship, with_relations, depth=1):
-        model_name = clean_name(mapper.selectable.fullname)
+        table_name = get_table_name(MappedBase.metadata, mapper.selectable)
+        model_name = clean_name(table_name)
         relationship_key = clean_name(relationship['name'])
         cls_name = 'Model{}Column{}Depth{}NestedLookupsRelationshipType'.format(model_name, relationship_key, depth) if with_relations \
             else 'Model{}Column{}Depth{}LookupsRelationshipType'.format(model_name, relationship_key, depth)
@@ -729,8 +735,9 @@ class GraphQLSchemaGenerator(object):
         self.model_lookups_relationship_types[cls_name] = cls
         return cls
 
-    def get_model_sort_type(self, mapper):
-        model_name = clean_name(mapper.selectable.fullname)
+    def get_model_sort_type(self, MappedBase, mapper):
+        table_name = get_table_name(MappedBase.metadata, mapper.selectable)
+        model_name = clean_name(table_name)
         cls_name = 'Model{}SortType'.format(model_name)
 
         if cls_name in self.model_sort_types:
@@ -746,8 +753,9 @@ class GraphQLSchemaGenerator(object):
         self.model_sort_types[cls_name] = cls
         return graphene.List(cls)
 
-    def get_model_attrs_type(self, mapper):
-        name = clean_name(mapper.selectable.fullname)
+    def get_model_attrs_type(self, MappedBase, mapper):
+        table_name = get_table_name(MappedBase.metadata, mapper.selectable)
+        name = clean_name(table_name)
         attrs = {}
 
         for column in mapper.columns:
@@ -870,8 +878,8 @@ class GraphQLSchemaGenerator(object):
 
             FiltersType = self.get_model_filters_type(MappedBase, mapper)
             LookupsType = self.get_model_lookups_type(MappedBase, mapper)
-            SortType = self.get_model_sort_type(mapper)
-            ModelAttrsType = self.get_model_attrs_type(mapper)
+            SortType = self.get_model_sort_type(MappedBase, mapper)
+            ModelAttrsType = self.get_model_attrs_type(MappedBase, mapper)
             ModelType = type('Model{}ModelType'.format(name), (graphene.ObjectType,), {
                 'attrs': graphene.Field(ModelAttrsType),
                 'allAttrs': graphene.Field(RawScalar),
