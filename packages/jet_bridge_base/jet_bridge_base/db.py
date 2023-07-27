@@ -130,6 +130,9 @@ def get_connection_id(conf):
         conf.get('only'),
         conf.get('except'),
         conf.get('schema'),
+        conf.get('ssl_ca'),
+        conf.get('ssl_cert'),
+        conf.get('ssl_key'),
         conf.get('ssh_host'),
         conf.get('ssh_port'),
         conf.get('ssh_user'),
@@ -277,6 +280,29 @@ def create_connection_engine(conf, tunnel):
 
     if conf.get('engine') == 'sqlite':
         return create_engine(engine_url)
+    elif conf.get('engine') == 'mysql':
+        connect_args = {}
+        ssl = {
+            'ca': conf.get('ssl_ca'),
+            'cert': conf.get('ssl_cert'),
+            'key': conf.get('ssl_key')
+        }
+        ssl_set = dict(list(filter(lambda x: x[1], ssl.items())))
+
+        if len(ssl_set):
+            connect_args['ssl'] = ssl_set
+
+        return create_engine(
+            engine_url,
+            pool_size=conf.get('connections'),
+            pool_pre_ping=True,
+            max_overflow=1,
+            pool_recycle=300,
+            connect_args={
+                'connect_timeout': 5,
+                **connect_args
+            }
+        )
     elif conf.get('engine') == 'bigquery':
         return create_engine(
             engine_url,
@@ -466,6 +492,9 @@ def get_settings_conf():
         'only': settings.DATABASE_ONLY,
         'except': settings.DATABASE_EXCEPT,
         'schema': settings.DATABASE_SCHEMA,
+        'ssl_ca': settings.DATABASE_SSL_CA,
+        'ssl_cert': settings.DATABASE_SSL_CERT,
+        'ssl_key': settings.DATABASE_SSL_KEY,
         'ssh_host': settings.DATABASE_SSH_HOST,
         'ssh_port': settings.DATABASE_SSH_PORT,
         'ssh_user': settings.DATABASE_SSH_USER,
@@ -493,6 +522,9 @@ def get_request_conf(request):
         'only': bridge_settings.get('database_only'),
         'except': bridge_settings.get('database_except'),
         'schema': bridge_settings.get('database_schema'),
+        'ssl_ca': bridge_settings.get('database_ssl_ca'),
+        'ssl_cert': bridge_settings.get('database_ssl_cert'),
+        'ssl_key': bridge_settings.get('database_ssl_key'),
         'ssh_host': bridge_settings.get('database_ssh_host'),
         'ssh_port': bridge_settings.get('database_ssh_port'),
         'ssh_user': bridge_settings.get('database_ssh_user'),

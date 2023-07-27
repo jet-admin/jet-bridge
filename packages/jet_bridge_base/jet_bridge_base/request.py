@@ -1,4 +1,5 @@
 import json
+import tempfile
 from json import JSONDecodeError
 
 from jet_bridge_base.exceptions.request_error import RequestError
@@ -155,8 +156,31 @@ class Request(object):
         try:
             secret_key = settings.TOKEN.replace('-', '').lower()
             decrypted = decrypt(bridge_settings_encoded, secret_key)
-            self.bridge_settings = json.loads(decrypted)
-            return self.bridge_settings
+
+            self.bridge_settings = {
+                **json.loads(decrypted),
+                'raw': bridge_settings_encoded
+            }
         except Exception:
             return
 
+        database_ssl_ca = self.bridge_settings.get('database_ssl_ca')
+        database_ssl_cert = self.bridge_settings.get('database_ssl_cert')
+        database_ssl_key = self.bridge_settings.get('database_ssl_key')
+
+        if database_ssl_ca:
+            with tempfile.NamedTemporaryFile(delete=False) as f:
+                f.write(database_ssl_ca.encode('utf-8'))
+                self.bridge_settings['database_ssl_ca'] = f.name
+
+        if database_ssl_cert:
+            with tempfile.NamedTemporaryFile(delete=False) as f:
+                f.write(database_ssl_cert.encode('utf-8'))
+                self.bridge_settings['database_ssl_cert'] = f.name
+
+        if database_ssl_key:
+            with tempfile.NamedTemporaryFile(delete=False) as f:
+                f.write(database_ssl_key.encode('utf-8'))
+                self.bridge_settings['database_ssl_key'] = f.name
+
+        return self.bridge_settings
