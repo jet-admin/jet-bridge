@@ -9,6 +9,7 @@ from jet_bridge_base.automap import automap_base
 from jet_bridge_base.reflect import reflect
 from jet_bridge_base.ssh_tunnel import SSHTunnel
 from jet_bridge_base.utils.crypt import get_sha256_hash
+from jet_bridge_base.utils.process import get_memory_usage_human
 from jet_bridge_base.utils.type_codes import fetch_type_code_to_sql_type
 from six import StringIO
 from six.moves.urllib_parse import quote_plus
@@ -334,6 +335,7 @@ def connect_database(conf):
 
     init_start = datetime.now()
 
+    id_short = connection_id[:4]
     connected_condition = threading.Condition()
     pending_connection_id = get_random_string(32)
     pending_connection = {
@@ -358,35 +360,35 @@ def connect_database(conf):
         Session = scoped_session(sessionmaker(bind=engine))
         session = Session()
 
-        logger.info('Connecting to database "{}"...'.format(connection_name))
+        logger.info('[{}] Connecting to database "{}"...'.format(id_short, connection_name))
 
         connect_start = time.time()
         with session.connection() as connection:
             connect_end = time.time()
             connect_time = round(connect_end - connect_start, 3)
 
-            logger.info('Getting db types for "{}"...'.format(connection_name))
+            logger.info('[{}] Getting db types for "{}"...'.format(id_short, connection_name))
             type_code_to_sql_type = fetch_type_code_to_sql_type(session)
 
-            logger.info('Getting schema for "{}"...'.format(connection_name))
+            logger.info('[{}] Getting schema for "{}"...'.format(id_short, connection_name))
 
             reflect_start = time.time()
 
             metadata = MetaData(schema=schema, bind=connection)
             only = get_connection_only_predicate(conf)
-            reflect(metadata, engine, only=only, pending_connection=pending_connection, views=True)
+            reflect(id_short, metadata, engine, only=only, pending_connection=pending_connection, views=True)
 
             reflect_end = time.time()
             reflect_time = round(reflect_end - reflect_start, 3)
 
-            logger.info('Connected to "{}"'.format(connection_name))
+            logger.info('[{}] Connected to "{}" (Mem:{})'.format(id_short, connection_name, get_memory_usage_human()))
 
             MappedBase = automap_base(metadata=metadata)
             load_mapped_base(MappedBase)
 
             for table_name, table in MappedBase.metadata.tables.items():
                 if len(table.primary_key.columns) == 0 and table_name not in MappedBase.classes:
-                    logger.warning('Table "{}" does not have primary key and will be ignored'.format(table_name))
+                    logger.warning('[{}] Table "{}" does not have primary key and will be ignored'.format(id_short, table_name))
 
             connections[connection_id] = {
                 'id': connection_id,
@@ -530,6 +532,13 @@ def create_session(request):
     if not connection:
         return
     return connection['Session']()
+
+
+def get_connection_id_short(request):
+    connection = get_request_connection(request)
+    if not connection or 'id' not in connection:
+        return
+    return connection['id'][:4]
 
 
 def get_mapped_base(request):
