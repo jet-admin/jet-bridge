@@ -18,6 +18,7 @@ def get_install_requires():
         'requests',
         'Pillow',
         'dateparser',
+        'psutil',
         'social-auth-core',
         'prompt_toolkit==2.0.9',
         'graphene<3.0',
