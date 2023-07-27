@@ -1,4 +1,5 @@
 import time
+from sqlalchemy import inspect
 
 from jet_bridge_base.configuration import configuration
 from jet_bridge_base.db import connections, pending_connections
@@ -6,10 +7,11 @@ from jet_bridge_base.permissions import AdministratorPermissions
 from jet_bridge_base.responses.json import JSONResponse
 from jet_bridge_base.sentry import sentry_controller
 from jet_bridge_base.utils.classes import issubclass_safe
+from jet_bridge_base.utils.common import format_size
 from jet_bridge_base.utils.graphql import ModelFiltersType, ModelFiltersFieldType, ModelFiltersRelationshipType, \
     ModelLookupsType, ModelLookupsFieldType, ModelLookupsRelationshipType
+from jet_bridge_base.utils.process import get_memory_usage
 from jet_bridge_base.views.base.api import BaseAPIView
-from sqlalchemy import inspect
 
 
 class StatusView(BaseAPIView):
@@ -20,6 +22,8 @@ class StatusView(BaseAPIView):
             return {'status': 'no_schema'}
 
         instance = schema.get('instance')
+        tables_processed = schema.get('tables_processed', 0)
+        tables_total = schema.get('tables_total')
 
         if instance:
             types_count = len(instance._type_map.values())
@@ -50,6 +54,8 @@ class StatusView(BaseAPIView):
 
             return {
                 'status': 'ok',
+                'tables_processed': tables_processed,
+                'tables_total': tables_total,
                 'types': types_count,
                 'filters': filters_count,
                 'filters_fields': filters_fields_count,
@@ -60,7 +66,11 @@ class StatusView(BaseAPIView):
                 'get_schema_time': get_schema_time
             }
         else:
-            return {'status': 'pending'}
+            return {
+                'status': 'pending',
+                'tables_processed': tables_processed,
+                'tables_total': tables_total
+            }
 
     def map_tunnel(self, tunnel):
         if not tunnel:
@@ -113,7 +123,7 @@ class StatusView(BaseAPIView):
             'project': pending_connection.get('project'),
             'token': pending_connection.get('token'),
             'init_start': pending_connection.get('init_start'),
-            'tables_processed': pending_connection.get('tables_processed'),
+            'tables_processed': pending_connection.get('tables_processed', 0),
             'tables_total': pending_connection.get('tables_total'),
             'tunnel': tunnel
         }
@@ -121,11 +131,31 @@ class StatusView(BaseAPIView):
     def get(self, request, *args, **kwargs):
         now = time.time()
         uptime = round(now - configuration.init_time)
+        memory_used = get_memory_usage()
+
+        active_connections = []
+        schema_generating_connections = []
+
+        for connection in connections.values():
+            cache = connection['cache']
+            graphql_schema = cache.get('graphql_schema')
+            graphql_schema_draft = cache.get('graphql_schema_draft')
+
+            if graphql_schema and not graphql_schema.get('instance'):
+                schema_generating_connections.append(connection)
+            elif graphql_schema_draft and not graphql_schema_draft.get('instance'):
+                schema_generating_connections.append(connection)
+            else:
+                active_connections.append(connection)
 
         return JSONResponse({
             'total_pending_connections': len(pending_connections.keys()),
-            'total_connections': len(connections.keys()),
+            'total_schema_generating_connections': len(schema_generating_connections),
+            'total_active_connections': len(active_connections),
             'pending_connections': map(lambda x: self.map_pending_connection(x), pending_connections.values()),
-            'connections': map(lambda x: self.map_connection(x), connections.values()),
+            'schema_generating_connections': map(lambda x: self.map_connection(x), schema_generating_connections),
+            'active_connections': map(lambda x: self.map_connection(x), active_connections),
+            'memory_used': memory_used,
+            'memory_used_str': format_size(memory_used),
             'uptime': uptime
         })

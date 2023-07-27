@@ -859,7 +859,7 @@ class GraphQLSchemaGenerator(object):
         except Exception as e:
             raise e
 
-    def get_query_type(self, request, draft, before_resolve=None):
+    def get_query_type(self, request, draft, before_resolve=None, on_progress_updated=None):
         MappedBase = get_mapped_base(request)
 
         if len(MappedBase.classes) == 0:
@@ -870,11 +870,17 @@ class GraphQLSchemaGenerator(object):
         self.relationships_by_name = self.get_relationships(request, MappedBase, draft)
         self.relationships_by_clean_name = self.clean_relationships_by_name(self.relationships_by_name)
 
+        i = 0
+        total = len(MappedBase.classes)
+
         for Model in MappedBase.classes:
             mapper = inspect(Model)
             table = mapper.tables[0]
             name = get_table_name(MappedBase.metadata, table)
             name = clean_name(name)
+
+            if on_progress_updated:
+                on_progress_updated(name, i, total)
 
             FiltersType = self.get_model_filters_type(MappedBase, mapper)
             LookupsType = self.get_model_lookups_type(MappedBase, mapper)
@@ -920,8 +926,13 @@ class GraphQLSchemaGenerator(object):
             )
             query_attrs['resolve_{}'.format(name)] = create_list_resolver(Model, mapper)
 
+            i += 1
+
+        if on_progress_updated:
+            on_progress_updated(None, total, total)
+
         return type('Query', (graphene.ObjectType,), query_attrs)
 
-    def get_schema(self, request, draft, before_resolve=None):
-        Query = self.get_query_type(request, draft, before_resolve)
+    def get_schema(self, request, draft, before_resolve=None, on_progress_updated=None):
+        Query = self.get_query_type(request, draft, before_resolve, on_progress_updated)
         return graphene.Schema(query=Query, auto_camelcase=False)

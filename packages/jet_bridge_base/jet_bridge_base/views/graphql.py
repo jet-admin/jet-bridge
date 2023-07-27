@@ -4,13 +4,14 @@ from datetime import timedelta
 
 from graphql import GraphQLError
 
-from jet_bridge_base.db import connection_cache, get_table_name, get_mapped_base
+from jet_bridge_base.db import connection_cache, get_table_name, get_mapped_base, get_connection_id_short
 from jet_bridge_base.exceptions.permission_denied import PermissionDenied
 from jet_bridge_base.logger import logger
 from jet_bridge_base.permissions import HasProjectPermissions
 from jet_bridge_base.responses.json import JSONResponse
 from jet_bridge_base.utils.common import get_random_string
 from jet_bridge_base.utils.graphql import GraphQLSchemaGenerator
+from jet_bridge_base.utils.process import get_memory_usage_human
 from jet_bridge_base.utils.track_database import track_database_async
 from jet_bridge_base.views.base.api import APIView
 
@@ -38,7 +39,9 @@ class GraphQLView(APIView):
         if not wait_schema:
             return
 
-        logger.info('Waiting GraphQL schema "{}"...'.format(wait_schema['id']))
+        id_short = get_connection_id_short(request)
+
+        logger.info('[{}] Waiting GraphQL schema "{}"...'.format(id_short, wait_schema['id']))
 
         generated_condition = wait_schema['generated']
         with generated_condition:
@@ -48,10 +51,10 @@ class GraphQLView(APIView):
         with connection_cache(request) as cache:
             cached_schema = cache.get(schema_key)
             if cached_schema and cached_schema['instance']:
-                logger.info('Found GraphQL schema "{}"'.format(wait_schema['id']))
+                logger.info('[{}] Found GraphQL schema "{}"'.format(id_short, wait_schema['id']))
                 return cached_schema['instance']
             else:
-                logger.info('Not found GraphQL schema "{}"'.format(wait_schema['id']))
+                logger.info('[{}] Not found GraphQL schema "{}"'.format(id_short, wait_schema['id']))
 
     def create_schema_object(self):
         new_schema_id = get_random_string(32)
@@ -59,16 +62,40 @@ class GraphQLView(APIView):
         return {'id': new_schema_id, 'instance': None, 'get_schema_time': None, 'generated': new_schema_generated}
 
     def create_schema(self, request, schema_key, new_schema, draft):
+        id_short = get_connection_id_short(request)
+
         try:
-            logger.info('Generating GraphQL schema "{}"...'.format(new_schema['id']))
+            logger.info('[{}] Generating GraphQL schema "{}"...'.format(id_short, new_schema['id']))
 
             def before_resolve(request, mapper, *args, **kwargs):
                 MappedBase = get_mapped_base(request)
                 request.context['model'] = get_table_name(MappedBase.metadata, mapper.selectable)
                 self.check_permissions(request)
 
+            def on_progress_updated(request, new_schema, current_name, i, total):
+                if current_name is not None:
+                    logger.info('[{}] Generating GraphQL schema "{}" ({} / {}) (Mem:{})...'.format(
+                        id_short,
+                        current_name,
+                        i + 1,
+                        total,
+                        get_memory_usage_human()
+                    ))
+
+                with connection_cache(request) as cache:
+                    cached_schema = cache.get(schema_key)
+
+                    if cached_schema and cached_schema['id'] == new_schema['id']:
+                        new_schema = {**cached_schema, 'tables_processed': i, 'tables_total': total}
+                        cache[schema_key] = new_schema
+
             get_schema_start = time.time()
-            schema = GraphQLSchemaGenerator().get_schema(request, draft, before_resolve=before_resolve)
+            schema = GraphQLSchemaGenerator().get_schema(
+                request,
+                draft,
+                before_resolve=before_resolve,
+                on_progress_updated=lambda name, i, total: on_progress_updated(request, new_schema, name, i, total)
+            )
             get_schema_end = time.time()
             get_schema_time = round(get_schema_end - get_schema_start, 3)
 
@@ -76,12 +103,17 @@ class GraphQLView(APIView):
                 cached_schema = cache.get(schema_key)
 
                 if cached_schema and cached_schema['id'] == new_schema['id']:
-                    new_schema = {**new_schema, 'instance': schema, 'get_schema_time': get_schema_time}
+                    new_schema = {**cached_schema, 'instance': schema, 'get_schema_time': get_schema_time}
                     cache[schema_key] = new_schema
 
-                    logger.info('Saved GraphQL schema "{}"'.format(new_schema['id']))
+                    logger.info('[{}] Saved GraphQL schema "{}" (Mem:{})'.format(
+                        id_short,
+                        new_schema['id'],
+                        get_memory_usage_human())
+                    )
                 else:
-                    logger.info('Ignoring GraphQL schema result "{}", existing: "{}"'.format(
+                    logger.info('[{}] Ignoring GraphQL schema result "{}", existing: "{}"'.format(
+                        id_short,
                         new_schema['id'],
                         cached_schema.get('id') if cached_schema else None
                     ))

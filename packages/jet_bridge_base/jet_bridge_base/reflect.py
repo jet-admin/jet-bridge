@@ -6,6 +6,7 @@ from sqlalchemy import util
 
 from jet_bridge_base import settings
 from jet_bridge_base.logger import logger
+from jet_bridge_base.utils.process import get_memory_usage_human
 
 
 def get_tables(
@@ -64,6 +65,7 @@ def get_tables(
 
 
 def reflect(
+    cid_short,
     metadata,
     bind=None,
     schema=None,
@@ -110,7 +112,7 @@ def reflect(
                 continue
 
             try:
-                logger.info('Analyzing table "{}" ({} / {})"...'.format(name, i + 1, len(load)))
+                logger.info('[{}] Analyzing table "{}" ({} / {})" (Mem:{})...'.format(cid_short, name, i + 1, len(load), get_memory_usage_human()))
                 table = Table(name, metadata, **reflect_opts)
 
                 if view_names and name in view_names:
@@ -127,7 +129,7 @@ def reflect(
                         first_column = item
 
                 if not has_pk and first_column is not None:
-                    logger.warning('Table "{}" is missing PK: "{}" column was set as PK'.format(name, first_column.name))
+                    logger.warning('[{}] Table "{}" is missing PK: "{}" column was set as PK'.format(cid_short, name, first_column.name))
 
                     first_column.primary_key = True
                     args.append(first_column)
@@ -142,7 +144,7 @@ def reflect(
             i += 1
 
             if settings.DATABASE_MAX_TABLES is not None and i >= settings.DATABASE_MAX_TABLES:
-                logger.warning('Max tables limit ({}) reached'.format(settings.DATABASE_MAX_TABLES))
+                logger.warning('[{}] Max tables limit ({}) reached'.format(cid_short, settings.DATABASE_MAX_TABLES))
                 break
 
             if pending_connection:
