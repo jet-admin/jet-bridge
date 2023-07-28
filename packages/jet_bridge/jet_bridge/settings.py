@@ -58,6 +58,10 @@ define('database_except', default=None, type=str)
 define('database_max_tables', default=None, type=int)
 define('database_schema', default=None, type=str)
 
+define('database_ssl_ca', default=None, type=str, help='Path to "CA Certificate" file')
+define('database_ssl_cert', default=None, type=str, help='Path to "Client Certificate" file')
+define('database_ssl_key', default=None, type=str, help='Path to "Client Key" file')
+
 define('database_ssh_host', default=None, type=str)
 define('database_ssh_port', default=None, type=int)
 define('database_ssh_user', default=None, type=str)
@@ -158,6 +162,10 @@ DATABASE_ONLY = options.database_only.split(',') if options.database_only else N
 DATABASE_EXCEPT = options.database_except.split(',') if options.database_except else None
 DATABASE_MAX_TABLES = options.database_max_tables
 DATABASE_SCHEMA = options.database_schema
+
+DATABASE_SSL_CA = options.database_ssl_ca
+DATABASE_SSL_CERT = options.database_ssl_cert
+DATABASE_SSL_KEY = options.database_ssl_key
 
 DATABASE_SSH_HOST = options.database_ssh_host
 DATABASE_SSH_PORT = options.database_ssh_port

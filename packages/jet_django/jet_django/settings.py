@@ -28,6 +28,10 @@ JET_DATABASE_EXCEPT = getattr(settings, 'JET_DATABASE_EXCEPT', None)
 JET_DATABASE_MAX_TABLES = getattr(settings, 'JET_DATABASE_MAX_TABLES', None)
 JET_DATABASE_SCHEMA = getattr(settings, 'JET_DATABASE_SCHEMA', None)
 
+JET_DATABASE_SSL_CA = getattr(settings, 'JET_DATABASE_SSL_CA', None)
+JET_DATABASE_SSL_CERT = getattr(settings, 'JET_DATABASE_SSL_CERT', None)
+JET_DATABASE_SSL_KEY = getattr(settings, 'JET_DATABASE_SSL_KEY', None)
+
 JET_DATABASE_SSH_HOST = getattr(settings, 'JET_DATABASE_SSH_HOST', None)
 JET_DATABASE_SSH_PORT = getattr(settings, 'JET_DATABASE_SSH_PORT', None)
 JET_DATABASE_SSH_USER = getattr(settings, 'JET_DATABASE_SSH_USER', None)

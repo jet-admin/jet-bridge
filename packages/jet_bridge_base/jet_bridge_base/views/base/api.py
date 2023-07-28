@@ -135,6 +135,8 @@ class BaseAPIView(object):
 
                 return TemplateResponse('500.debug.html', status=500, data=ctx)
             else:
+                logger.exception(exc)
+
                 return TemplateResponse('500.html', status=500)
 
     def dispatch(self, action, request, *args, **kwargs):
