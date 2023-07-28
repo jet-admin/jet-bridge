@@ -1,2 +1,2 @@
-VERSION = '1.7.24'
+VERSION = '1.8.0'
 default_app_config = 'jet_django.apps.JetDjangoConfig'
