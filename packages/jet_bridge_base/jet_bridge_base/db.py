@@ -518,7 +518,7 @@ def get_request_conf(request):
         'user': bridge_settings.get('database_user'),
         'password': bridge_settings.get('database_password'),
         'extra': bridge_settings.get('database_extra'),
-        'connections': bridge_settings.get('database_connections', 50),
+        'connections': bridge_settings.get('database_connections', settings.DATABASE_CONNECTIONS),
         'only': bridge_settings.get('database_only'),
         'except': bridge_settings.get('database_except'),
         'schema': bridge_settings.get('database_schema'),
