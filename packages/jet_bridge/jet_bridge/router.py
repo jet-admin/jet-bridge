@@ -1,3 +1,5 @@
+import sys
+
 import tornado
 from tornado import gen
 from tornado.concurrent import Future
@@ -36,19 +38,24 @@ class Router(object):
             def create_action_method(action):
                 @gen.coroutine
                 def action_method(inner_self, *args, **kwargs):
+                    request = inner_self.get_request()
+                    request.action = action
 
                     def execute():
-                        request = inner_self.get_request()
-                        request.action = action
                         inner_self.before_dispatch(request)
                         result = inner_self.view.dispatch(action, request, *args, **kwargs)
                         inner_self.after_dispatch(request)
                         return result
 
-                    response = yield as_future(execute)
-
-                    yield inner_self.write_response(response)
-                    raise gen.Return()
+                    try:
+                        response = yield as_future(execute)
+                        yield inner_self.write_response(response)
+                    except Exception:
+                        exc_type, exc, traceback = sys.exc_info()
+                        response = inner_self.view.error_response(request, exc_type, exc, traceback)
+                        yield inner_self.write_response(response)
+                    finally:
+                        raise gen.Return()
 
                 return action_method
 

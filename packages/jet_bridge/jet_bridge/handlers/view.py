@@ -1,3 +1,5 @@
+import sys
+
 import tornado.web
 from jet_bridge_base.db import get_connection
 from jet_bridge_base.exceptions.request_error import RequestError
@@ -122,9 +124,15 @@ class BaseViewHandler(tornado.web.RequestHandler):
             self.after_dispatch(request)
             return result
 
-        response = yield as_future(execute)
-        yield self.write_response(response)
-        raise gen.Return()
+        try:
+            response = yield as_future(execute)
+            yield self.write_response(response)
+        except Exception:
+            exc_type, exc, traceback = sys.exc_info()
+            response = self.view.error_response(request, exc_type, exc, traceback)
+            yield self.write_response(response)
+        finally:
+            raise gen.Return()
 
     def get(self, *args, **kwargs):
         return self.dispatch('get', *args, **kwargs)
