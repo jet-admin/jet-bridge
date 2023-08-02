@@ -1,9 +1,11 @@
 import json
+import os
 import tempfile
 from json import JSONDecodeError
 
 from jet_bridge_base.exceptions.request_error import RequestError
 from jet_bridge_base.exceptions.validation_error import ValidationError
+from jet_bridge_base.utils.crypt import get_sha256_hash
 from six import string_types
 
 from jet_bridge_base import settings
@@ -168,19 +170,29 @@ class Request(object):
         database_ssl_cert = self.bridge_settings.get('database_ssl_cert')
         database_ssl_key = self.bridge_settings.get('database_ssl_key')
 
+        temp_dir = os.path.join(tempfile.gettempdir(), 'ssl')
+
+        try:
+            os.makedirs(temp_dir)
+        except OSError:
+            pass
+
         if database_ssl_ca:
-            with tempfile.NamedTemporaryFile(delete=False) as f:
-                f.write(database_ssl_ca.encode('utf-8'))
-                self.bridge_settings['database_ssl_ca'] = f.name
+            self.bridge_settings['database_ssl_ca'] = self.save_file(temp_dir, '{}-ca.pem', database_ssl_ca)
 
         if database_ssl_cert:
-            with tempfile.NamedTemporaryFile(delete=False) as f:
-                f.write(database_ssl_cert.encode('utf-8'))
-                self.bridge_settings['database_ssl_cert'] = f.name
+            self.bridge_settings['database_ssl_cert'] = self.save_file(temp_dir, '{}-cert.pem', database_ssl_cert)
 
         if database_ssl_key:
-            with tempfile.NamedTemporaryFile(delete=False) as f:
-                f.write(database_ssl_key.encode('utf-8'))
-                self.bridge_settings['database_ssl_key'] = f.name
+            self.bridge_settings['database_ssl_key'] = self.save_file(temp_dir, '{}-key.pem', database_ssl_key)
 
         return self.bridge_settings
+
+    def save_file(self, dir_path, name, content):
+        file_hash = get_sha256_hash(content)
+        file_path = os.path.join(dir_path, name.format(file_hash))
+
+        with open(file_path, 'w') as f:
+            f.write(content)
+
+        return f.name
