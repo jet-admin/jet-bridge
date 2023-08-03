@@ -11,7 +11,7 @@ from jet_bridge_base.permissions import HasProjectPermissions
 from jet_bridge_base.responses.json import JSONResponse
 from jet_bridge_base.utils.common import get_random_string
 from jet_bridge_base.utils.graphql import GraphQLSchemaGenerator
-from jet_bridge_base.utils.process import get_memory_usage_human
+from jet_bridge_base.utils.process import get_memory_usage_human, get_memory_usage
 from jet_bridge_base.utils.track_database import track_database_async
 from jet_bridge_base.views.base.api import APIView
 
@@ -59,10 +59,18 @@ class GraphQLView(APIView):
     def create_schema_object(self):
         new_schema_id = get_random_string(32)
         new_schema_generated = threading.Condition()
-        return {'id': new_schema_id, 'instance': None, 'get_schema_time': None, 'generated': new_schema_generated}
+
+        return {
+            'id': new_schema_id,
+            'instance': None,
+            'get_schema_time': None,
+            'memory_usage_approx': None,
+            'generated': new_schema_generated
+        }
 
     def create_schema(self, request, schema_key, new_schema, draft):
         id_short = get_connection_id_short(request)
+        memory_usage_before = get_memory_usage()
 
         try:
             logger.info('[{}] Generating GraphQL schema "{}"...'.format(id_short, new_schema['id']))
@@ -98,19 +106,25 @@ class GraphQLView(APIView):
             )
             get_schema_end = time.time()
             get_schema_time = round(get_schema_end - get_schema_start, 3)
+            memory_usage_approx = get_memory_usage() - memory_usage_before
 
             with connection_cache(request) as cache:
                 cached_schema = cache.get(schema_key)
 
                 if cached_schema and cached_schema['id'] == new_schema['id']:
-                    new_schema = {**cached_schema, 'instance': schema, 'get_schema_time': get_schema_time}
+                    new_schema = {
+                        **cached_schema,
+                        'instance': schema,
+                        'get_schema_time': get_schema_time,
+                        'memory_usage_approx': memory_usage_approx
+                    }
                     cache[schema_key] = new_schema
 
                     logger.info('[{}] Saved GraphQL schema "{}" (Mem:{})'.format(
                         id_short,
                         new_schema['id'],
-                        get_memory_usage_human())
-                    )
+                        get_memory_usage_human()
+                    ))
                 else:
                     logger.info('[{}] Ignoring GraphQL schema result "{}", existing: "{}"'.format(
                         id_short,

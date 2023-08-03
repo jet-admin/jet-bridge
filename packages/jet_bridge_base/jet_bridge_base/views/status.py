@@ -34,6 +34,7 @@ class StatusView(BaseAPIView):
             lookups_fields_count = 0
             lookups_relationships_count = 0
             get_schema_time = schema.get('get_schema_time')
+            memory_usage_approx = schema.get('memory_usage_approx')
 
             for item in instance._type_map.values():
                 if not hasattr(item, 'graphene_type'):
@@ -63,7 +64,9 @@ class StatusView(BaseAPIView):
                 'lookups': lookups_count,
                 'lookups_fields': lookups_fields_count,
                 'lookups_relationships': lookups_relationships_count,
-                'get_schema_time': get_schema_time
+                'get_schema_time': get_schema_time,
+                'memory_usage_approx': memory_usage_approx,
+                'memory_usage_approx_str': format_size(memory_usage_approx) if memory_usage_approx else None
             }
         else:
             return {
