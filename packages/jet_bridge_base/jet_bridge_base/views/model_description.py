@@ -103,6 +103,13 @@ def map_column(metadata, column, editable):
     if isinstance(column.type, String):
         params['length'] = column.type.length
 
+    try:
+        from geoalchemy2 import types
+        if isinstance(column.type, types.Geography):
+            params['output_format'] = 'postgresql'
+    except ImportError:
+        pass
+
     optional = is_column_optional(column)
 
     if column.comment:
