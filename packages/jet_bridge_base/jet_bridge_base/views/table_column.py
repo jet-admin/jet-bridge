@@ -22,7 +22,9 @@ def map_dto_column(table_name, column, metadata):
     column_kwargs = {}
     autoincrement = False
     server_default = None
-    column_type = db_to_sql_type(column['db_field']) if 'db_field' in column else map_to_sql_type(column['field'])
+    db_type = column.get('db_field')
+    map_type = column.get('field')
+    column_type = db_to_sql_type(db_type) if db_type else map_to_sql_type(map_type)
 
     if column.get('primary_key', False):
         autoincrement = True
@@ -46,6 +48,13 @@ def map_dto_column(table_name, column, metadata):
     if params:
         if 'length' in params:
             column_kwargs['length'] = params['length']
+
+    try:
+        from geoalchemy2 import types
+        if column_type is types.Geography:
+            column_kwargs['geometry_type'] = 'POINT'
+    except ImportError:
+        pass
 
     if callable(column_type):
         try:
