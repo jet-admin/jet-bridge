@@ -64,6 +64,7 @@ class JetBridgeConfiguration(Configuration):
             'TRACK_DATABASES_AUTH': settings.TRACK_DATABASES_AUTH,
             'TRACK_MODELS_ENDPOINT': settings.TRACK_MODELS_ENDPOINT,
             'TRACK_MODELS_AUTH': settings.TRACK_MODELS_AUTH,
+            'RELEASE_INACTIVE_GRAPHQL_SCHEMAS_TIMEOUT': settings.RELEASE_INACTIVE_GRAPHQL_SCHEMAS_TIMEOUT,
             'DISABLE_AUTH': settings.DISABLE_AUTH
         }
 

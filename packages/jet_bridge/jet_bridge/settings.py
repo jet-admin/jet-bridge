@@ -84,6 +84,8 @@ define('track_databases_auth', default='')
 define('track_models_endpoint', default='')
 define('track_models_auth', default='')
 
+define('release_inactive_graphql_schemas_timeout', default=None, type=int)
+
 define('disable_auth', default=False, type=bool)
 
 define('sentry_dsn', default='')
@@ -193,6 +195,8 @@ TRACK_DATABASES_AUTH = options.track_databases_auth
 
 TRACK_MODELS_ENDPOINT = options.track_models_endpoint
 TRACK_MODELS_AUTH = options.track_models_auth
+
+RELEASE_INACTIVE_GRAPHQL_SCHEMAS_TIMEOUT = options.release_inactive_graphql_schemas_timeout
 
 DISABLE_AUTH = options.disable_auth
 

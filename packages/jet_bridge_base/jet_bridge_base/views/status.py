@@ -102,6 +102,7 @@ class StatusView(BaseAPIView):
         graphql_schema = self.map_connection_graphql_schema(cache.get('graphql_schema'))
         graphql_schema_draft = self.map_connection_graphql_schema(cache.get('graphql_schema_draft'))
         tunnel = self.map_tunnel(connection.get('tunnel'))
+        last_request = connection.get('last_request')
 
         return {
             'name': connection['name'],
@@ -115,7 +116,8 @@ class StatusView(BaseAPIView):
             'init_start': connection.get('init_start'),
             'connect_time': connection.get('connect_time'),
             'reflect_time': connection.get('reflect_time'),
-            'tunnel': tunnel
+            'tunnel': tunnel,
+            'last_request': last_request.isoformat() if last_request else None
         }
 
     def map_pending_connection(self, pending_connection):
