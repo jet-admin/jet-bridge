@@ -21,4 +21,9 @@ class WKTField(Field):
         if value is None:
             return
         from geoalchemy2.shape import to_shape
-        return to_shape(value).to_wkt()
+        shape = to_shape(value)
+        if hasattr(shape, 'wkt'):
+            return shape.wkt
+        else:
+            # Backward compatibility Shapely <1.8.0
+            return shape.to_wkt()
