@@ -127,8 +127,6 @@ def get_connection_id(conf):
         conf.get('name'),
         conf.get('user'),
         conf.get('password'),
-        conf.get('only'),
-        conf.get('except'),
         conf.get('schema'),
         conf.get('ssl_ca'),
         conf.get('ssl_cert'),
@@ -142,6 +140,8 @@ def get_connection_id(conf):
 
 def get_connection_params_id(conf):
     return json.dumps([
+        conf.get('only'),
+        conf.get('except'),
         conf.get('extra'),
         conf.get('connections')
     ])
