@@ -144,7 +144,7 @@ class Filter(object):
     def clean_value(self, value):
         return value
 
-    def get_loookup_criterion(self, qs, value):
+    def get_lookup_criterion(self, qs, value):
         lookup_operator = self.lookup_operators[self.lookup]
         operator = lookup_operator['operator']
         pre_process = lookup_operator.get('pre_process')
@@ -181,7 +181,7 @@ class Filter(object):
                 return getattr(self.column, operator)(value)
 
     def apply_lookup(self, qs, value):
-        criterion = self.get_loookup_criterion(qs, value)
+        criterion = self.get_lookup_criterion(qs, value)
         return qs.filter(criterion)
 
     def filter(self, qs, value):
