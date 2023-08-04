@@ -270,7 +270,7 @@ class GraphQLSchemaGenerator(object):
         name = get_table_name(MappedBase.metadata, mapper.selectable)
         return self.relationships_by_clean_name.get(name, {})
 
-    def filter_queryset(self, MappedBase, queryset, mapper, filters, parent_relations=None, exclude=False):
+    def filter_queryset(self, request, MappedBase, queryset, mapper, filters, parent_relations=None, exclude=False):
         parent_relations = parent_relations or []
 
         for filters_item in filters:
@@ -279,6 +279,7 @@ class GraphQLSchemaGenerator(object):
             for filter_name, filter_lookups in filters_item_dict.items():
                 if filter_name == '_not_':
                     queryset = self.filter_queryset(
+                        request,
                         MappedBase,
                         queryset,
                         mapper,
@@ -299,6 +300,7 @@ class GraphQLSchemaGenerator(object):
                         if lookup_name == 'relation':
                             relation_mapper = filter_relationship['related_mapper']
                             queryset = self.filter_queryset(
+                                request,
                                 MappedBase,
                                 queryset,
                                 relation_mapper,
@@ -317,6 +319,7 @@ class GraphQLSchemaGenerator(object):
 
                                 relation_mapper = relationship['related_mapper']
                                 queryset = self.filter_queryset(
+                                    request,
                                     MappedBase,
                                     queryset,
                                     relation_mapper,
@@ -343,13 +346,21 @@ class GraphQLSchemaGenerator(object):
 
                             item = filter_for_data_type(column.type)
                             lookup = lookups.by_gql.get(lookup_name)
-                            instance = item['filter_class'](
+                            filters_instance = item['filter_class'](
                                 name=column.key,
                                 column=column,
                                 lookup=lookup,
                                 exclude=False
                             )
-                            criterion = instance.get_lookup_criterion(queryset, lookup_value)
+
+                            if get_session_engine(request.session) == 'bigquery':
+                                python_type = filters_instance.column.type.python_type
+                                if filters_instance.lookup == lookups.IN and isinstance(lookup_value, list):
+                                    lookup_value = list(map(lambda x: python_type(x), lookup_value))
+                                else:
+                                    lookup_value = python_type(lookup_value)
+
+                            criterion = filters_instance.get_lookup_criterion(queryset, lookup_value)
                             criterion = ~criterion if exclude else criterion
 
                             queryset = queryset.filter(criterion)
@@ -798,7 +809,7 @@ class GraphQLSchemaGenerator(object):
 
             queryset = self.get_queryset(request, Model, only_columns)
 
-            queryset = self.filter_queryset(MappedBase, queryset, mapper, filters)
+            queryset = self.filter_queryset(request, MappedBase, queryset, mapper, filters)
             queryset = self.search_queryset(queryset, mapper, search)
             queryset = self.sort_queryset(queryset, MappedBase, mapper, sort)
 
