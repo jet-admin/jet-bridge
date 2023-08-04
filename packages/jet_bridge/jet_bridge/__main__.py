@@ -3,7 +3,7 @@ from datetime import datetime
 import sys
 
 from tornado.httpserver import HTTPServer
-from tornado.ioloop import IOLoop
+from tornado.ioloop import IOLoop, PeriodicCallback
 
 from jet_bridge_base import configuration
 from jet_bridge.configuration import JetBridgeConfiguration
@@ -17,6 +17,7 @@ from jet_bridge_base.logger import logger
 
 from jet_bridge import settings, VERSION
 from jet_bridge.settings import missing_options, required_options_without_default
+from jet_bridge.tasks.release_inactive_graphql_schemas import run_release_inactive_graphql_schemas_task
 
 
 def main():
@@ -67,6 +68,17 @@ def main():
         logger.warning('Multiple workers are not supported in DEBUG mode')
 
     logger.info('Starting server at {} (WORKERS: {})'.format(url, workers))
+
+    if settings.RELEASE_INACTIVE_GRAPHQL_SCHEMAS_TIMEOUT:
+        logger.info('RELEASE_INACTIVE_GRAPHQL_SCHEMAS_TIMEOUT task is enabled (TIMEOUT={}s)'.format(
+            settings.RELEASE_INACTIVE_GRAPHQL_SCHEMAS_TIMEOUT
+        ))
+
+        release_inactive_graphql_schemas_task = PeriodicCallback(
+            lambda: run_release_inactive_graphql_schemas_task(),
+            60 * 1000  # every minute
+        )
+        release_inactive_graphql_schemas_task.start()
 
     if settings.DEBUG:
         logger.warning('Server is running in DEBUG mode')

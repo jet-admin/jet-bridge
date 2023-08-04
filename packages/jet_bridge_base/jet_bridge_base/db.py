@@ -17,7 +17,7 @@ from six.moves.urllib_parse import quote_plus
 from sqlalchemy import create_engine, MetaData
 from sqlalchemy.orm import sessionmaker, scoped_session
 
-from jet_bridge_base.utils.common import get_random_string, merge
+from jet_bridge_base.utils.common import get_random_string, merge, format_size
 
 try:
     from geoalchemy2 import types
@@ -431,7 +431,8 @@ def connect_database(conf):
                 'token': conf.get('token'),
                 'init_start': init_start.isoformat(),
                 'connect_time': connect_time,
-                'reflect_time': reflect_time
+                'reflect_time': reflect_time,
+                'last_request': datetime.now()
             }
 
         session.close()
@@ -595,7 +596,15 @@ def get_type_code_to_sql_type(request):
 
 
 @contextlib.contextmanager
-def connection_cache(request):
+def connection_cache(connection):
+    if not connection:
+        yield {}
+    with connection['lock']:
+        yield connection['cache']
+
+
+@contextlib.contextmanager
+def request_connection_cache(request):
     connection = get_request_connection(request)
     if not connection:
         yield {}
@@ -625,14 +634,54 @@ def reload_request_mapped_base(request):
     reload_request_graphql_schema(request)
 
 
-def reload_request_graphql_schema(request, draft=None):
-    with connection_cache(request) as cache:
+def reload_connection_graphql_schema(connection, draft=None):
+    with connection_cache(connection) as cache:
         if draft is None:
             cache['graphql_schema'] = None
             cache['graphql_schema_draft'] = None
         else:
             schema_key = 'graphql_schema_draft' if draft else 'graphql_schema'
             cache[schema_key] = None
+
+
+def reload_request_graphql_schema(request, draft=None):
+    with request_connection_cache(request) as cache:
+        if draft is None:
+            cache['graphql_schema'] = None
+            cache['graphql_schema_draft'] = None
+        else:
+            schema_key = 'graphql_schema_draft' if draft else 'graphql_schema'
+            cache[schema_key] = None
+
+
+def release_inactive_graphql_schemas():
+    if not settings.RELEASE_INACTIVE_GRAPHQL_SCHEMAS_TIMEOUT:
+        return
+
+    for connection in connections.values():
+        cache = connection['cache']
+        graphql_schema = cache.get('graphql_schema')
+        graphql_schema_draft = cache.get('graphql_schema_draft')
+
+        if not graphql_schema and not graphql_schema_draft:
+            continue
+
+        time_elapsed = (datetime.now() - connection['last_request']).total_seconds()
+
+        if time_elapsed <= settings.RELEASE_INACTIVE_GRAPHQL_SCHEMAS_TIMEOUT:
+            continue
+
+        graphql_schema_memory = graphql_schema.get('memory_usage_approx') if graphql_schema else 0
+        graphql_schema_draft_memory = graphql_schema_draft.get('memory_usage_approx') if graphql_schema_draft else 0
+        memory_usage_approx = graphql_schema_memory + graphql_schema_draft_memory
+
+        logger.info('Release inactive GraphQL schema "{}" (MEM: {}, ELAPSED: {})...'.format(
+            connection['name'],
+            format_size(memory_usage_approx) if memory_usage_approx else None,
+            '{}s'.format(round(time_elapsed))
+        ))
+
+        reload_connection_graphql_schema(connection)
 
 
 def get_table_name(metadata, table):
