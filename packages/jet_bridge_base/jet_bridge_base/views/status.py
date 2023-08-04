@@ -34,6 +34,7 @@ class StatusView(BaseAPIView):
             lookups_fields_count = 0
             lookups_relationships_count = 0
             get_schema_time = schema.get('get_schema_time')
+            memory_usage_approx = schema.get('memory_usage_approx')
 
             for item in instance._type_map.values():
                 if not hasattr(item, 'graphene_type'):
@@ -63,7 +64,9 @@ class StatusView(BaseAPIView):
                 'lookups': lookups_count,
                 'lookups_fields': lookups_fields_count,
                 'lookups_relationships': lookups_relationships_count,
-                'get_schema_time': get_schema_time
+                'get_schema_time': get_schema_time,
+                'memory_usage_approx': memory_usage_approx,
+                'memory_usage_approx_str': format_size(memory_usage_approx) if memory_usage_approx else None
             }
         else:
             return {
@@ -99,6 +102,7 @@ class StatusView(BaseAPIView):
         graphql_schema = self.map_connection_graphql_schema(cache.get('graphql_schema'))
         graphql_schema_draft = self.map_connection_graphql_schema(cache.get('graphql_schema_draft'))
         tunnel = self.map_tunnel(connection.get('tunnel'))
+        last_request = connection.get('last_request')
 
         return {
             'name': connection['name'],
@@ -112,7 +116,8 @@ class StatusView(BaseAPIView):
             'init_start': connection.get('init_start'),
             'connect_time': connection.get('connect_time'),
             'reflect_time': connection.get('reflect_time'),
-            'tunnel': tunnel
+            'tunnel': tunnel,
+            'last_request': last_request.isoformat() if last_request else None
         }
 
     def map_pending_connection(self, pending_connection):

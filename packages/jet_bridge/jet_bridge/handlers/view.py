@@ -1,4 +1,5 @@
 import sys
+from datetime import datetime
 
 import tornado.web
 from jet_bridge_base.db import get_connection
@@ -110,6 +111,7 @@ class BaseViewHandler(tornado.web.RequestHandler):
 
         connection = get_connection(request)
         if connection:
+            connection['last_request'] = datetime.now()
             sentry_controller.set_context('Database connection', {
                 'name': connection.get('name'),
                 'project': connection.get('project'),
