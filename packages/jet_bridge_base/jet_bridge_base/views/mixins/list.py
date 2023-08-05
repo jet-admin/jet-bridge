@@ -14,15 +14,16 @@ class ListAPIViewMixin(object):
         queryset = self.filter_queryset(request, self.get_queryset(request))
 
         paginate = not request.get_argument('_no_pagination', False)
-        page = self.paginate_queryset(request, queryset) if paginate else None
-        if page is not None:
-            try:
+
+        try:
+            page = self.paginate_queryset(request, queryset) if paginate else None
+            if page is not None:
                 instance = list(page)
                 serializer = self.get_serializer(request, instance=instance, many=True)
                 return self.get_paginated_response(request, serializer.representation_data)
-            except SQLAlchemyError:
-                request.session.rollback()
-                raise
+        except SQLAlchemyError:
+            request.session.rollback()
+            raise
 
         if get_queryset_limit(queryset) is None:
             queryset = queryset.limit(10000)

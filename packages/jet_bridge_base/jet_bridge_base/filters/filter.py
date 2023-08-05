@@ -5,7 +5,7 @@ from sqlalchemy.dialects.postgresql import ENUM, JSONB, array
 from sqlalchemy.sql import sqltypes
 from six import string_types
 
-from jet_bridge_base.fields import field, CharField, BooleanField
+from jet_bridge_base.fields import field, BooleanField, RawField
 from jet_bridge_base.filters import lookups
 
 EMPTY_VALUES = ([], (), {}, None)
@@ -126,7 +126,7 @@ class Filter(object):
         lookups.LT: {'operator': '__lt__', 'pre_process': lambda x: safe_not_array(x)},
         lookups.LTE: {'operator': '__le__', 'pre_process': lambda x: safe_not_array(x)},
         lookups.ICONTAINS: {'operator': False, 'func': safe_icontains, 'pre_process': lambda x: safe_not_array(x)},
-        lookups.IN: {'operator': False, 'func': safe_in, 'field_class': CharField, 'field_kwargs': {'many': True}, 'pre_process': lambda x: safe_array(x)},
+        lookups.IN: {'operator': False, 'func': safe_in, 'field_class': RawField, 'field_kwargs': {'many': True}, 'pre_process': lambda x: safe_array(x)},
         lookups.STARTS_WITH: {'operator': False, 'func': safe_startswith, 'pre_process': lambda x: safe_not_array(x)},
         lookups.ENDS_WITH: {'operator': False, 'func': safe_endswith, 'pre_process': lambda x: safe_not_array(x)},
         lookups.IS_NULL: {'operator': False, 'func': is_null, 'field_class': BooleanField, 'pre_process': lambda x: safe_not_array(x)},
@@ -144,7 +144,7 @@ class Filter(object):
     def clean_value(self, value):
         return value
 
-    def get_loookup_criterion(self, qs, value):
+    def get_lookup_criterion(self, qs, value):
         lookup_operator = self.lookup_operators[self.lookup]
         operator = lookup_operator['operator']
         pre_process = lookup_operator.get('pre_process')
@@ -181,7 +181,7 @@ class Filter(object):
                 return getattr(self.column, operator)(value)
 
     def apply_lookup(self, qs, value):
-        criterion = self.get_loookup_criterion(qs, value)
+        criterion = self.get_lookup_criterion(qs, value)
         return qs.filter(criterion)
 
     def filter(self, qs, value):
