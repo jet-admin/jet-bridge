@@ -170,7 +170,10 @@ class SqlSerializer(Serializer):
 
             if filters_instance and value is not None and get_session_engine(session) == 'bigquery':
                 python_type = filters_instance.column.type.python_type
-                value = python_type(value)
+                if filters_instance.lookup == lookups.IN and isinstance(value, list):
+                    value = list(map(lambda x: python_type(x), value))
+                else:
+                    value = python_type(value)
 
             return value
 
