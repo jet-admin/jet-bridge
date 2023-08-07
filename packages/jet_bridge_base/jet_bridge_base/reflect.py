@@ -1,3 +1,5 @@
+import time
+
 from sqlalchemy.sql.base import _bind_or_error
 from sqlalchemy import Table
 from sqlalchemy import exc
@@ -110,6 +112,9 @@ def reflect(
         for name in load:
             if name in ['pg_stat_statements']:
                 continue
+
+            # Wait to allow other threads execution
+            time.sleep(0.01)
 
             try:
                 logger.info('[{}] Analyzing table "{}" ({} / {})" (Mem:{})...'.format(cid_short, name, i + 1, len(load), get_memory_usage_human()))
