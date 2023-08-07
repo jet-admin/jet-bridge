@@ -67,7 +67,7 @@ def main():
     if settings.WORKERS > 1 and settings.DEBUG:
         logger.warning('Multiple workers are not supported in DEBUG mode')
 
-    logger.info('Starting server at {} (WORKERS: {})'.format(url, workers))
+    logger.info('Starting server at {} (WORKERS:{}, THREADS:{})'.format(url, workers, settings.THREADS))
 
     if settings.RELEASE_INACTIVE_GRAPHQL_SCHEMAS_TIMEOUT:
         logger.info('RELEASE_INACTIVE_GRAPHQL_SCHEMAS_TIMEOUT task is enabled (TIMEOUT={}s)'.format(
