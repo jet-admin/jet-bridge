@@ -675,7 +675,7 @@ def release_inactive_graphql_schemas():
         graphql_schema_draft_memory = graphql_schema_draft.get('memory_usage_approx') if graphql_schema_draft else 0
         memory_usage_approx = graphql_schema_memory + graphql_schema_draft_memory
 
-        logger.info('Release inactive GraphQL schema "{}" (MEM: {}, ELAPSED: {})...'.format(
+        logger.info('Release inactive GraphQL schema "{}" (MEM:{}, ELAPSED:{})...'.format(
             connection['name'],
             format_size(memory_usage_approx) if memory_usage_approx else None,
             '{}s'.format(round(time_elapsed))

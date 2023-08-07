@@ -99,7 +99,7 @@ class SSHTunnel(object):
             return_code = process.poll()
 
             if return_code is not None:
-                logger.info('SSH tunnel is terminated (CODE: {})'.format(return_code))
+                logger.info('SSH tunnel is terminated (CODE:{})'.format(return_code))
                 break
             elif not self.is_tunnel_alive():
                 logger.info('SSH tunnel is dropped')
