@@ -1,4 +1,6 @@
 import re
+import time
+
 import graphene
 from sqlalchemy import inspect, desc, MetaData
 from sqlalchemy.engine import Row
@@ -885,6 +887,9 @@ class GraphQLSchemaGenerator(object):
         total = len(MappedBase.classes)
 
         for Model in MappedBase.classes:
+            # Wait to allow other threads execution
+            time.sleep(0.01)
+
             mapper = inspect(Model)
             table = mapper.tables[0]
             name = get_table_name(MappedBase.metadata, table)
