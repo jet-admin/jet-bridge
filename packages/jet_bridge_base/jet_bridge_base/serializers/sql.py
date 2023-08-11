@@ -10,7 +10,7 @@ from jet_bridge_base.exceptions.sql import SqlError
 from jet_bridge_base.exceptions.validation_error import ValidationError
 from jet_bridge_base.fields.sql_params import SqlParamsSerializers
 from jet_bridge_base.filters import lookups
-from jet_bridge_base.filters.filter import EMPTY_VALUES
+from jet_bridge_base.filters.filter import EMPTY_VALUES, safe_array
 from jet_bridge_base.filters.model_group import get_query_func_by_name, get_query_lookup_func_by_name
 from jet_bridge_base.filters.filter_for_dbfield import filter_for_data_type
 from jet_bridge_base.serializers.serializer import Serializer
@@ -170,8 +170,8 @@ class SqlSerializer(Serializer):
 
             if filters_instance and value is not None and get_session_engine(session) == 'bigquery':
                 python_type = filters_instance.column.type.python_type
-                if filters_instance.lookup == lookups.IN and isinstance(value, list):
-                    value = list(map(lambda x: python_type(x), value))
+                if filters_instance.lookup == lookups.IN:
+                    value = list(map(lambda x: python_type(x), safe_array(value)))
                 else:
                     value = python_type(value)
 
