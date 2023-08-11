@@ -2,6 +2,7 @@ import re
 import time
 
 import graphene
+from jet_bridge_base.filters.filter import safe_array
 from sqlalchemy import inspect, desc, MetaData
 from sqlalchemy.engine import Row
 from sqlalchemy.orm import MANYTOONE, ONETOMANY, aliased
@@ -357,8 +358,8 @@ class GraphQLSchemaGenerator(object):
 
                             if get_session_engine(request.session) == 'bigquery':
                                 python_type = filters_instance.column.type.python_type
-                                if filters_instance.lookup == lookups.IN and isinstance(lookup_value, list):
-                                    lookup_value = list(map(lambda x: python_type(x), lookup_value))
+                                if filters_instance.lookup == lookups.IN:
+                                    lookup_value = list(map(lambda x: python_type(x), safe_array(lookup_value)))
                                 else:
                                     lookup_value = python_type(lookup_value)
 

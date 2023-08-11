@@ -2,7 +2,7 @@ from jet_bridge_base.utils.queryset import get_session_engine
 from sqlalchemy import inspect
 
 from jet_bridge_base.filters import lookups
-from jet_bridge_base.filters.filter import Filter
+from jet_bridge_base.filters.filter import Filter, safe_array
 from jet_bridge_base.filters.filter_for_dbfield import filter_for_data_type
 
 
@@ -57,8 +57,8 @@ class FilterClass(object):
 
             if filters_instance and value is not None and get_session_engine(session) == 'bigquery':
                 python_type = filters_instance.column.type.python_type
-                if filters_instance.lookup == lookups.IN and isinstance(value, list):
-                    value = list(map(lambda x: python_type(x), value))
+                if filters_instance.lookup == lookups.IN:
+                    value = list(map(lambda x: python_type(x), safe_array(value)))
                 else:
                     value = python_type(value)
 

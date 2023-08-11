@@ -100,6 +100,9 @@ class HasProjectPermissions(BasePermission):
             else:
                 return False
 
+        if not project_token:
+            return False
+
         token_hash = get_sha256_hash(project_token.replace('-', '').lower())
 
         for item in permissions:
