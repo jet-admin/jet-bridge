@@ -1,9 +1,11 @@
 import json
 
 from jet_bridge_base.encoders import JSONEncoder
+from jet_bridge_base.utils.classes import issubclass_safe
 from sqlalchemy import Column, text, ForeignKey
 from sqlalchemy.exc import DBAPIError
 from sqlalchemy.sql.ddl import AddConstraint, DropConstraint
+from sqlalchemy.sql import sqltypes
 
 from jet_bridge_base import status
 from jet_bridge_base.db import get_mapped_base, get_engine, reload_request_mapped_base
@@ -55,6 +57,9 @@ def map_dto_column(table_name, column, metadata):
             column_kwargs['geometry_type'] = 'POINT'
     except ImportError:
         pass
+
+    if issubclass_safe(column_type, sqltypes.DateTime):
+        column_kwargs['timezone'] = True
 
     if callable(column_type):
         try:
