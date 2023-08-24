@@ -18,7 +18,7 @@ from jet_bridge_base.utils.backend import get_secret_tokens
 
 class ProxyRequestSerializer(Serializer):
     method = fields.CharField(required=False, default='GET')
-    url = fields.CharField(trim_whitespace=False)
+    url = fields.CharField()
     query_params = fields.JSONField(required=False, default=dict)
     headers = fields.JSONField(required=False, default=dict)
     body = fields.RawField(required=False)

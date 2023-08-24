@@ -6,7 +6,7 @@ from jet_bridge_base.fields.field import Field
 class CharField(Field):
 
     def __init__(self, *args, **kwargs):
-        self.trim_whitespace = kwargs.pop('trim_whitespace', True)
+        self.trim_whitespace = kwargs.pop('trim_whitespace', False)
         super(CharField, self).__init__(*args, **kwargs)
 
     def to_internal_value_item(self, value):
