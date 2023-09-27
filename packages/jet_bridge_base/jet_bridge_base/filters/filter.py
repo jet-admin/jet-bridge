@@ -1,3 +1,5 @@
+import json
+
 from jet_bridge_base.utils.classes import is_instance_or_subclass
 from jet_bridge_base.utils.queryset import get_session_engine
 from sqlalchemy import Unicode, and_, or_
@@ -11,12 +13,26 @@ from jet_bridge_base.filters import lookups
 EMPTY_VALUES = ([], (), {}, None)
 
 
+def safe_is_float(value):
+    try:
+        float(value)
+        return True
+    except (ValueError, TypeError):
+        return False
+
+
 def safe_equals(queryset, column, value):
     field_type = column.property.columns[0].type if hasattr(column, 'property') else column.type
 
     if is_instance_or_subclass(field_type, (sqltypes.JSON,)):
         if get_session_engine(queryset.session) == 'postgresql':
-            return column.cast(JSONB).op('?')(value)
+            value_str = json.dumps(str(value))
+            operators = [column.cast(JSONB).op('@>')(value_str)]
+
+            if safe_is_float(value):
+                operators.append(column.cast(JSONB).op('@>')(value))
+
+            return or_(*operators)
         else:
             return column.cast(Unicode).ilike('%{}%'.format(value))
     else:
@@ -28,7 +44,16 @@ def safe_in(queryset, column, value):
 
     if is_instance_or_subclass(field_type, (sqltypes.JSON,)):
         if get_session_engine(queryset.session) == 'postgresql':
-            return column.cast(JSONB).op('?|')(array(value))
+            operators = []
+
+            for value_item in value:
+                value_item_str = json.dumps(value_item)
+                operators.append(column.cast(JSONB).op('@>')(value_item_str))
+
+                if safe_is_float(value_item):
+                    operators.append(column.cast(JSONB).op('@>')(value_item))
+
+            return or_(*operators)
         else:
             operators = list(map(lambda x: column.cast(Unicode).ilike('%{}%'.format(x)), value))
             return or_(*operators)

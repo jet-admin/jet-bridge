@@ -15,6 +15,7 @@ from jet_bridge_base.views.external_auth.login import ExternalAuthLoginView
 from jet_bridge_base.views.graphql import GraphQLView
 from jet_bridge_base.views.image_resize import ImageResizeView
 from jet_bridge_base.views.file_upload import FileUploadView
+from jet_bridge_base.views.inspect_token import TokenInspectView
 from jet_bridge_base.views.message import MessageView
 from jet_bridge_base.views.model import ModelViewSet
 from jet_bridge_base.views.model_description import ModelDescriptionView
@@ -62,6 +63,7 @@ def make_app():
         (r'/api/external_auth/complete/(?P<app>[^/]+)/', view_handler(ExternalAuthCompleteView)),
         (r'/api/status/', view_handler(StatusView)),
         (r'/api/trigger_exception/', view_handler(TriggerExceptionView)),
+        (r'/api/token_inspect/', view_handler(TokenInspectView)),
     ]
     urls += router.urls
 
