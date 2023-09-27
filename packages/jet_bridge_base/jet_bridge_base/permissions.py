@@ -1,32 +1,9 @@
-import base64
-import gzip
-import json
-
-import jwt
-from jwt import PyJWTError
-
 from jet_bridge_base import settings
 from jet_bridge_base.sentry import sentry_controller
 from jet_bridge_base.utils.backend import project_auth
 from jet_bridge_base.utils.crypt import get_sha256_hash
-
-
-def decompress_data(value):
-    try:
-        bytes = base64.b64decode(value)
-        data = gzip.decompress(bytes)
-        return data.decode('utf-8')
-    except AttributeError:
-        return value.decode('zlib')
-
-
-def compress_data(data):
-    try:
-        encoded = data.encode('utf-8')
-        bytes = gzip.compress(encoded)
-        return str(base64.b64encode(bytes), 'utf-8')
-    except AttributeError:
-        return data.encode('zlib')
+from jet_bridge_base.utils.token import decompress_permissions, parse_token, JWT_TOKEN_PREFIX, USER_TOKEN_PREFIX, \
+    PROJECT_TOKEN_PREFIX, BEARER_TOKEN_PREFIX, decode_jwt_token
 
 
 class BasePermission(object):
@@ -39,41 +16,6 @@ class BasePermission(object):
 
 
 class HasProjectPermissions(BasePermission):
-    user_token_prefix = 'Token'
-    project_token_prefix = 'ProjectToken'
-    jwt_token_prefix = 'JWT'
-    bearer_token_prefix = 'Bearer'
-
-    def parse_token(self, value):
-        tokens = value.split(',') if value else []
-        result = {}
-
-        for token in tokens:
-            try:
-                type, data = token.split(' ', 2)
-                items = data.split(';')
-
-                if len(items) == 0:
-                    continue
-
-                try:
-                    params = dict(map(lambda x: x.split('=', 2), items[1:]))
-                except ValueError:
-                    params = {}
-
-                result[type] = {
-                    'type': type,
-                    'value': items[0],
-                    'params': params
-                }
-            except (ValueError, AttributeError):
-                pass
-
-        if self.jwt_token_prefix in result:
-            return result[self.jwt_token_prefix]
-        elif len(result):
-            return list(result.values())[0]
-
     def has_view_permissions(self, view_permissions, user_permissions, project_token):
         if not view_permissions:
             return True
@@ -83,8 +25,7 @@ class HasProjectPermissions(BasePermission):
             return True
 
         if 'permissions' in user_permissions:
-            decoded = decompress_data(user_permissions['permissions'])
-            permissions = json.loads(decoded)
+            permissions = decompress_permissions(user_permissions['permissions'])
         else:
             permissions = []
 
@@ -128,7 +69,7 @@ class HasProjectPermissions(BasePermission):
         return False
 
     def has_permission(self, view, request):
-        token = self.parse_token(request.headers.get('AUTHORIZATION'))
+        token = parse_token(request.headers.get('AUTHORIZATION'))
         view_permissions = view.required_project_permission(request) if hasattr(view, 'required_project_permission') else None
 
         if not token:
@@ -143,12 +84,10 @@ class HasProjectPermissions(BasePermission):
             project_token = settings.TOKEN
             project = settings.PROJECT
 
-        if token['type'] == self.jwt_token_prefix:
-            JWT_VERIFY_KEY = '\n'.join([line.lstrip() for line in settings.JWT_VERIFY_KEY.split('\\n')])
+        if token['type'] == JWT_TOKEN_PREFIX:
+            result = decode_jwt_token(token['value'])
 
-            try:
-                result = jwt.decode(token['value'], key=JWT_VERIFY_KEY, algorithms=['RS256'])
-            except PyJWTError:
+            if result is None:
                 return False
 
             user_permissions = result.get('projects', {}).get(project)
@@ -167,21 +106,21 @@ class HasProjectPermissions(BasePermission):
                 sentry_controller.set_user(None)
 
             return self.has_view_permissions(view_permissions, user_permissions, project_token)
-        elif token['type'] == self.user_token_prefix:
+        elif token['type'] == USER_TOKEN_PREFIX:
             result = project_auth(token['value'], project_token, view_permissions, token['params'])
 
             # if result.get('warning'):
             #     view.headers['X-Application-Warning'] = result['warning']
 
             return result['result']
-        elif token['type'] == self.project_token_prefix:
+        elif token['type'] == PROJECT_TOKEN_PREFIX:
             result = project_auth(token['value'], project_token, view_permissions, token['params'])
 
             # if result.get('warning'):
             #     view.headers['X-Application-Warning'] = result['warning']
 
             return result['result']
-        elif token['type'] == self.bearer_token_prefix:
+        elif token['type'] == BEARER_TOKEN_PREFIX:
             return settings.BEARER_AUTH_KEY and token['value'] == settings.BEARER_AUTH_KEY
         else:
             return False
@@ -207,11 +146,9 @@ class AdministratorPermissions(BasePermission):
         if settings.BEARER_AUTH_KEY and key == settings.BEARER_AUTH_KEY:
             return True
         else:
-            JWT_VERIFY_KEY = '\n'.join([line.lstrip() for line in settings.JWT_VERIFY_KEY.split('\\n')])
+            result = decode_jwt_token(key)
 
-            try:
-                result = jwt.decode(key, key=JWT_VERIFY_KEY, algorithms=['RS256'])
-            except PyJWTError:
+            if result is None:
                 return False
 
             admin = result.get('admin', False)

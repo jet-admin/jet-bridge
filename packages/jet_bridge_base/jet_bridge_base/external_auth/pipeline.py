@@ -4,7 +4,7 @@ import time
 from jet_bridge_base import settings
 from jet_bridge_base.configuration import configuration
 from jet_bridge_base.external_auth.storage import User
-from jet_bridge_base.permissions import compress_data
+from jet_bridge_base.utils.compress import compress_data
 
 
 def save_extra_data(backend, user, response, details, strategy, *args, **kwargs):

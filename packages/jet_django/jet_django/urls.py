@@ -4,6 +4,7 @@ from jet_bridge_base.views.external_auth.login import ExternalAuthLoginView
 from jet_bridge_base.views.file_upload import FileUploadView
 from jet_bridge_base.views.graphql import GraphQLView
 from jet_bridge_base.views.image_resize import ImageResizeView
+from jet_bridge_base.views.inspect_token import TokenInspectView
 from jet_bridge_base.views.message import MessageView
 from jet_bridge_base.views.model import ModelViewSet
 from jet_bridge_base.views.model_description import ModelDescriptionView
@@ -49,6 +50,7 @@ def init_urls():
             path('api/external_auth/complete/<app>/', route_view(ExternalAuthCompleteView).as_view(),name='external-auth-complete'),
             path('status/', route_view(StatusView).as_view(), name='status'),
             path('trigger_exception/', route_view(TriggerExceptionView).as_view(), name='trigger-exception'),
+            path('token_inspect/', route_view(TokenInspectView).as_view(), name='token-inspect'),
         ]
     except ImportError:
         from django.conf.urls import url
@@ -69,6 +71,7 @@ def init_urls():
             url(r'^api/external_auth/complete/(?P<app>[^/]+)/', route_view(ExternalAuthCompleteView).as_view(), name='external-auth-complete'),
             url(r'^status/', route_view(StatusView).as_view(), name='status'),
             url(r'^trigger_exception/', route_view(TriggerExceptionView).as_view(), name='trigger-exception'),
+            url(r'^token_inspect/', route_view(TokenInspectView).as_view(), name='token-inspect'),
         ]
 
 
