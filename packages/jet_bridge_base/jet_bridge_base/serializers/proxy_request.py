@@ -10,10 +10,10 @@ from jet_bridge_base import fields, settings
 from jet_bridge_base.configuration import configuration
 from jet_bridge_base.exceptions.validation_error import ValidationError
 from jet_bridge_base.external_auth.utils import load_strategy
-from jet_bridge_base.permissions import decompress_data, compress_data
 from jet_bridge_base.responses.base import Response
 from jet_bridge_base.serializers.serializer import Serializer
 from jet_bridge_base.utils.backend import get_secret_tokens
+from jet_bridge_base.utils.compress import compress_data, decompress_data
 
 
 class ProxyRequestSerializer(Serializer):
