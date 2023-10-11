@@ -1,4 +1,3 @@
-from jet_bridge_base.utils.queryset import get_session_engine, apply_session_timezone
 from sqlalchemy import text, select, column, func, desc, or_, cast
 from sqlalchemy import sql
 from sqlalchemy.sql import sqltypes
@@ -13,8 +12,10 @@ from jet_bridge_base.filters import lookups
 from jet_bridge_base.filters.filter import EMPTY_VALUES, safe_array
 from jet_bridge_base.filters.model_group import get_query_func_by_name, get_query_lookup_func_by_name
 from jet_bridge_base.filters.filter_for_dbfield import filter_for_data_type
+from jet_bridge_base.serializers.model_serializer import get_column_data_type
 from jet_bridge_base.serializers.serializer import Serializer
 from jet_bridge_base.utils.db_types import map_to_sql_type, sql_to_map_type
+from jet_bridge_base.utils.queryset import get_session_engine, apply_session_timezone
 
 
 class ColumnSerializer(Serializer):
@@ -169,11 +170,13 @@ class SqlSerializer(Serializer):
             value = filter_items[0]['value']
 
             if filters_instance and value is not None and get_session_engine(session) == 'bigquery':
-                python_type = filters_instance.column.type.python_type
+                data_type = get_column_data_type(filters_instance.column)
+                field = data_type()
+
                 if filters_instance.lookup == lookups.IN:
-                    value = list(map(lambda x: python_type(x), safe_array(value)))
+                    value = list(map(lambda x: field.to_internal_value_item(x), safe_array(value)))
                 else:
-                    value = python_type(value)
+                    value = field.to_internal_value_item(value)
 
             return value
 

@@ -1,9 +1,10 @@
-from jet_bridge_base.utils.queryset import get_session_engine
 from sqlalchemy import inspect
 
 from jet_bridge_base.filters import lookups
 from jet_bridge_base.filters.filter import Filter, safe_array
 from jet_bridge_base.filters.filter_for_dbfield import filter_for_data_type
+from jet_bridge_base.serializers.model_serializer import get_column_data_type
+from jet_bridge_base.utils.queryset import get_session_engine
 
 
 class FilterClass(object):
@@ -56,11 +57,13 @@ class FilterClass(object):
             value = request.get_argument_safe(name, None)
 
             if filters_instance and value is not None and get_session_engine(session) == 'bigquery':
-                python_type = filters_instance.column.type.python_type
+                data_type = get_column_data_type(filters_instance.column)
+                field = data_type()
+
                 if filters_instance.lookup == lookups.IN:
-                    value = list(map(lambda x: python_type(x), safe_array(value)))
+                    value = list(map(lambda x: field.to_internal_value_item(x), safe_array(value)))
                 else:
-                    value = python_type(value)
+                    value = field.to_internal_value_item(value)
 
             return value
 
