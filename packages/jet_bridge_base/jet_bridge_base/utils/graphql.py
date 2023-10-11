@@ -2,7 +2,6 @@ import re
 import time
 
 import graphene
-from jet_bridge_base.filters.filter import safe_array
 from sqlalchemy import inspect, desc, MetaData
 from sqlalchemy.engine import Row
 from sqlalchemy.orm import MANYTOONE, ONETOMANY, aliased
@@ -10,11 +9,13 @@ from sqlalchemy.orm import MANYTOONE, ONETOMANY, aliased
 from jet_bridge_base.automap import automap_base
 from jet_bridge_base.db import get_mapped_base, get_engine, load_mapped_base, get_request_connection, get_table_name
 from jet_bridge_base.filters import lookups
+from jet_bridge_base.filters.filter import safe_array
 from jet_bridge_base.filters.filter_for_dbfield import filter_for_data_type
 from jet_bridge_base.filters.model_group import get_query_func_by_name
 from jet_bridge_base.filters.model_search import search_queryset
 from jet_bridge_base.models.model_relation_override import ModelRelationOverrideModel
 from jet_bridge_base.serializers.model import get_model_serializer
+from jet_bridge_base.serializers.model_serializer import get_column_data_type
 from jet_bridge_base.store import store
 from jet_bridge_base.utils.common import get_set_first, any_type_sorter, unique, flatten
 from jet_bridge_base.utils.gql import RawScalar
@@ -357,11 +358,13 @@ class GraphQLSchemaGenerator(object):
                             )
 
                             if get_session_engine(request.session) == 'bigquery':
-                                python_type = filters_instance.column.type.python_type
+                                data_type = get_column_data_type(filters_instance.column)
+                                field = data_type()
+
                                 if filters_instance.lookup == lookups.IN:
-                                    lookup_value = list(map(lambda x: python_type(x), safe_array(lookup_value)))
+                                    lookup_value = list(map(lambda x: field.to_internal_value_item(x), safe_array(lookup_value)))
                                 else:
-                                    lookup_value = python_type(lookup_value)
+                                    lookup_value = field.to_internal_value_item(lookup_value)
 
                             criterion = filters_instance.get_lookup_criterion(queryset, lookup_value)
                             criterion = ~criterion if exclude else criterion
