@@ -5,6 +5,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from jet_bridge_base import fields
 from jet_bridge_base.serializers.serializer import Serializer
 from jet_bridge_base.utils.exceptions import validation_error_from_database_error
+from jet_bridge_base.utils.queryset import get_session_engine
 
 data_types = [
     {'query': 'VARCHAR', 'operator': 'startswith', 'data_type': fields.CharField},
@@ -81,12 +82,33 @@ class ModelSerializer(Serializer):
     def create(self, validated_data):
         mapper = inspect(self.meta.model)
         primary_key = mapper.primary_key[0]
+        primary_key_specified = primary_key.name in validated_data
 
-        if primary_key.autoincrement and primary_key.name in validated_data:
+        if primary_key.autoincrement and primary_key_specified and not validated_data.get(primary_key.name):
+            primary_key_specified = False
             del validated_data[primary_key.name]
 
         instance = self.create_instance(validated_data)
         self.session.add(instance)
+
+        if primary_key_specified:
+            if get_session_engine(self.session) == 'postgresql':
+                self.session.execute('''
+                    SELECT 
+                        pg_catalog.setval(
+                            pg_catalog.pg_get_serial_sequence('"{}"."{}"', '{}'), 
+                            max("{}")
+                        ) 
+                    FROM 
+                        "{}"."{}"
+                '''.format(
+                    mapper.selectable.schema,
+                    mapper.selectable.name,
+                    primary_key.name,
+                    primary_key.name,
+                    mapper.selectable.schema,
+                    mapper.selectable.name,
+                ))
 
         try:
             self.session.commit()
