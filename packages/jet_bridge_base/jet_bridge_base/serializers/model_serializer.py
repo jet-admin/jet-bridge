@@ -91,7 +91,7 @@ class ModelSerializer(Serializer):
         instance = self.create_instance(validated_data)
         self.session.add(instance)
 
-        if primary_key_specified:
+        if primary_key.autoincrement and primary_key_specified:
             if get_session_engine(self.session) == 'postgresql':
                 self.session.execute('''
                     SELECT 
