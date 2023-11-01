@@ -323,6 +323,9 @@ class TableColumnView(APIView):
         else:
             engine.execute('''ALTER TABLE {0} ALTER COLUMN {1} DROP DEFAULT'''.format(table_name, existing_column_name))
 
+        if column_name != existing_column_name:
+            engine.execute('''ALTER TABLE {0} RENAME COLUMN {1} TO {2}'''.format(table_name, existing_column_name, column_name))
+
         for foreign_key in column.foreign_keys:
             if not foreign_key.constraint:
                 foreign_key_exists = any(map(lambda x: x.target_fullname == foreign_key.target_fullname, existing_column.foreign_keys))
@@ -330,9 +333,6 @@ class TableColumnView(APIView):
                     continue
                 foreign_key._set_table(column, table)
                 engine.execute(AddConstraint(foreign_key.constraint))
-
-        if column_name != existing_column_name:
-            engine.execute('''ALTER TABLE {0} RENAME COLUMN {1} TO {2}'''.format(table_name, existing_column_name, column_name))
 
         self.update_base(request)
 
