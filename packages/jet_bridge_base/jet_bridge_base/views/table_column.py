@@ -3,7 +3,7 @@ import json
 from jet_bridge_base.encoders import JSONEncoder
 from jet_bridge_base.utils.classes import issubclass_safe
 from sqlalchemy import Column, text, ForeignKey
-from sqlalchemy.exc import DBAPIError
+from sqlalchemy.exc import DBAPIError, SQLAlchemyError
 from sqlalchemy.sql.ddl import AddConstraint, DropConstraint
 from sqlalchemy.sql import sqltypes
 
@@ -300,41 +300,58 @@ class TableColumnView(APIView):
         if sql_type_convert:
             column_type_stmt += ' USING {0}'.format(sql_type_convert(existing_column_name))
 
-        for foreign_key in existing_column.foreign_keys:
-            if foreign_key.constraint:
-                foreign_key_should_exist = any(map(lambda x: x.target_fullname == foreign_key.target_fullname, column.foreign_keys))
-                if foreign_key_should_exist:
-                    continue
-                engine.execute(DropConstraint(foreign_key.constraint))
+        with request.session.begin():
+            try:
+                for foreign_key in existing_column.foreign_keys:
+                    if foreign_key.constraint:
+                        foreign_key_should_exist = any(map(lambda x: x.target_fullname == foreign_key.target_fullname, column.foreign_keys))
+                        if foreign_key_should_exist:
+                            continue
+                        request.session.execute(DropConstraint(foreign_key.constraint))
 
-        if column_type != existing_column_type:
-            engine.execute('''ALTER TABLE {0} ALTER COLUMN {1} DROP DEFAULT'''.format(table_name, existing_column_name))
-            engine.execute('''ALTER TABLE {0} ALTER COLUMN {1} TYPE {2}'''.format(table_name, existing_column_name, column_type_stmt))
+                if column_type != existing_column_type:
+                    request.session.execute('''ALTER TABLE {0} ALTER COLUMN {1} DROP DEFAULT'''.format(table_name, existing_column_name))
+                    request.session.execute('''ALTER TABLE {0} ALTER COLUMN {1} TYPE {2}'''.format(table_name, existing_column_name, column_type_stmt))
 
-        if column.nullable:
-            engine.execute('''ALTER TABLE {0} ALTER COLUMN {1} DROP NOT NULL'''.format(table_name, existing_column_name))
-        else:
-            engine.execute('''ALTER TABLE {0} ALTER COLUMN {1} SET NOT NULL'''.format(table_name, existing_column_name))
+                if column.nullable:
+                    request.session.execute('''ALTER TABLE {0} ALTER COLUMN {1} DROP NOT NULL'''.format(table_name, existing_column_name))
+                else:
+                    request.session.execute('''ALTER TABLE {0} ALTER COLUMN {1} SET NOT NULL'''.format(table_name, existing_column_name))
 
-        default = ddl_compiler.get_column_default_string(column)
+                default = ddl_compiler.get_column_default_string(column)
 
-        if default is not None:
-            engine.execute('''ALTER TABLE {0} ALTER COLUMN {1} SET DEFAULT {2}'''.format(table_name, existing_column_name, default))
-        else:
-            engine.execute('''ALTER TABLE {0} ALTER COLUMN {1} DROP DEFAULT'''.format(table_name, existing_column_name))
+                if default is not None:
+                    request.session.execute('''ALTER TABLE {0} ALTER COLUMN {1} SET DEFAULT {2}'''.format(table_name, existing_column_name, default))
+                else:
+                    request.session.execute('''ALTER TABLE {0} ALTER COLUMN {1} DROP DEFAULT'''.format(table_name, existing_column_name))
 
-        if column_name != existing_column_name:
-            engine.execute('''ALTER TABLE {0} RENAME COLUMN {1} TO {2}'''.format(table_name, existing_column_name, column_name))
+                column_rename = column_name != existing_column_name
 
-        for foreign_key in column.foreign_keys:
-            if not foreign_key.constraint:
-                foreign_key_exists = any(map(lambda x: x.target_fullname == foreign_key.target_fullname, existing_column.foreign_keys))
-                if foreign_key_exists:
-                    continue
-                foreign_key._set_table(column, table)
-                engine.execute(AddConstraint(foreign_key.constraint))
+                if column_rename:
+                    request.session.execute('''ALTER TABLE {0} RENAME COLUMN {1} TO {2}'''.format(table_name, existing_column_name, column_name))
 
-        self.update_base(request)
+                for foreign_key in column.foreign_keys:
+                    if not foreign_key.constraint:
+                        foreign_key_exists = any(map(lambda x: x.target_fullname == foreign_key.target_fullname, existing_column.foreign_keys))
+                        if foreign_key_exists:
+                            continue
+                        foreign_key._set_table(column, table)
+                        request.session.execute(AddConstraint(foreign_key.constraint))
+
+                self.update_base(request)
+            except SQLAlchemyError as e:
+                request.session.rollback()
+
+                table._columns.remove(column)
+                existing_column._set_parent(table)
+
+                for fk in column.foreign_keys:
+                    table.foreign_keys.remove(fk)
+                    if fk.constraint in table.constraints:
+                        table.constraints.remove(fk.constraint)
+
+                self.update_base(request)
+                raise e
 
     def partial_update(self, *args, **kwargs):
         kwargs['partial'] = True
