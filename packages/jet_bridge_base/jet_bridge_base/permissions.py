@@ -55,6 +55,7 @@ class HasProjectPermissions(BasePermission):
                 resource_token_hash = item.get('resource_token_hash', '')
                 item_object_model = item_object.split('.', 1)[-1:][0]
 
+                # TODO: make check non optional
                 if resource_token_hash and resource_token_hash != token_hash:
                     continue
 
@@ -64,7 +65,8 @@ class HasProjectPermissions(BasePermission):
                 if item_type != view_permission_type or item_object != view_permission_object:
                     continue
 
-            return view_permission_actions in item_actions
+            if view_permission_actions in item_actions:
+                return True
 
         return False
 
