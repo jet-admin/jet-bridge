@@ -355,10 +355,6 @@ def connect_database(conf):
     schema = get_connection_schema(conf)
     connection_name = get_connection_name(conf, schema)
 
-    existing_connection = wait_pending_connection(connection_id, connection_name)
-    if existing_connection:
-        return existing_connection
-
     init_start = datetime.now()
 
     id_short = connection_id[:4]
@@ -372,6 +368,10 @@ def connect_database(conf):
         'init_start': init_start.isoformat(),
         'connected': connected_condition
     }
+
+    existing_connection = wait_pending_connection(connection_id, connection_name)
+    if existing_connection:
+        return existing_connection
 
     pending_connections[connection_id] = pending_connection
     tunnel = None
