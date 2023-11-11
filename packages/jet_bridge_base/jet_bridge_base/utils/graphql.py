@@ -118,17 +118,13 @@ def get_model_filters_type_not_type(self, MappedBase, mapper, with_relations, de
     return self.get_model_filters_type(MappedBase, mapper, depth + 1)
 
 
-def get_model_field_filters_type_relation_type(self, MappedBase, mapper, column_name, with_relations, depth):
+def get_model_field_filters_type_relation_type(self, MappedBase, relationship, with_relations, depth):
     if not with_relations:
         return
 
-    for relationship in self.get_model_relationships(MappedBase, mapper):
-        if relationship['direction'] != MANYTOONE or relationship['local_column_name'] != column_name:
-            continue
-
-        relation_mapper = relationship['related_mapper']
-        column_filters_type = self.get_model_filters_type(MappedBase, relation_mapper, depth + 1)
-        return column_filters_type
+    relation_mapper = relationship['related_mapper']
+    column_filters_type = self.get_model_filters_type(MappedBase, relation_mapper, depth + 1)
+    return column_filters_type
 
 
 def get_model_lookups_type_relation_type(self, MappedBase, mapper, relationship, with_relations, depth):
@@ -688,24 +684,34 @@ class GraphQLSchemaGenerator(object):
         self.model_filters_types[cls_name] = cls
         return graphene.List(cls)
 
+    def get_model_field_filters_type_relationship(self, MappedBase, mapper, column_name):
+        for relationship in self.get_model_relationships(MappedBase, mapper):
+            if relationship['direction'] != MANYTOONE or relationship['local_column_name'] != column_name:
+                continue
+
+            return relationship
+
     def get_model_field_filters_type(self, MappedBase, mapper, column, with_relations, depth=1):
         table_name = get_table_name(MappedBase.metadata, mapper.selectable)
         model_name = clean_name(table_name)
         column_name = clean_name(column.name)
-        cls_name = 'Model{}Column{}FiltersType'.format(model_name, column_name)
+        dbfield_filter = filter_for_data_type(column.type)
+        relationship = self.get_model_field_filters_type_relationship(MappedBase, mapper, column_name) if with_relations else None
+        cls_name = 'Model{}Column{}FiltersType'.format(model_name, column_name) if relationship \
+            else 'Lookups{}FiltersType'.format(dbfield_filter['lookups_name'])
 
         if cls_name in self.model_filters_field_types:
             return self.model_filters_field_types[cls_name]
 
         attrs = {}
-        item = filter_for_data_type(column.type)
 
-        for lookup in item['lookups']:
+        for lookup in dbfield_filter['lookups']:
             gql_lookup = lookups.gql.get(lookup)
             gql_scalar = lookups.gql_scalar.get(lookup, RawScalar())
             attrs[gql_lookup] = gql_scalar
 
-        attrs['relation'] = apply_dynamic_type(get_model_field_filters_type_relation_type, self, MappedBase, mapper, column_name, with_relations, depth)
+        if relationship:
+            attrs['relation'] = apply_dynamic_type(get_model_field_filters_type_relation_type, self, MappedBase, relationship, with_relations, depth)
 
         cls = type(cls_name, (ModelFiltersFieldType,), attrs)
         self.model_filters_field_types[cls_name] = cls
