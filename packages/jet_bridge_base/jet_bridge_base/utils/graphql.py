@@ -762,11 +762,20 @@ class GraphQLSchemaGenerator(object):
         self.model_lookups_types[cls_name] = cls
         return cls
 
+    def get_model_field_lookups_type_relationship(self, MappedBase, mapper, column_name):
+        for relationship in self.get_model_relationships(MappedBase, mapper):
+            if relationship['direction'] != MANYTOONE or relationship['local_column_name'] != column_name:
+                continue
+
+            return relationship
+
     def get_model_field_lookups_type(self, MappedBase, mapper, column, with_relations, depth=1):
         table_name = get_table_name(MappedBase.metadata, mapper.selectable)
         model_name = clean_name(table_name)
         column_name = clean_name(column.name)
-        cls_name = 'Model{}Column{}LookupsFieldType'.format(model_name, column_name)
+        relationship = self.get_model_field_lookups_type_relationship(MappedBase, mapper, column_name) if with_relations else None
+        cls_name = 'Model{}Column{}LookupsFieldType'.format(model_name, column_name) if relationship \
+            else 'LookupsFieldType'
 
         if cls_name in self.model_lookups_field_types:
             return self.model_lookups_field_types[cls_name]
@@ -776,7 +785,8 @@ class GraphQLSchemaGenerator(object):
             'returnList': graphene.Boolean()
         }
 
-        attrs['relation'] = apply_dynamic_type(get_model_field_lookups_type_relation_type, self, MappedBase, mapper, column_name, with_relations, depth)
+        if relationship:
+            attrs['relation'] = apply_dynamic_type(get_model_field_lookups_type_relation_type, self, MappedBase, mapper, column_name, with_relations, depth)
 
         cls = type(cls_name, (ModelLookupsFieldType,), attrs)
         self.model_lookups_field_types[cls_name] = cls
