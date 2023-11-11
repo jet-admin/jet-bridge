@@ -72,20 +72,20 @@ geography_lookups = [
 ]
 
 FILTER_FOR_DBFIELD = {
-    sqltypes.VARCHAR: {'filter_class': CharFilter, 'lookups': text_lookups},
-    sqltypes.TEXT: {'filter_class': CharFilter, 'lookups': text_lookups},
-    sqltypes.Enum: {'filter_class': CharFilter, 'lookups': select_lookups},
-    sqltypes.Boolean: {'filter_class': BooleanFilter, 'lookups': boolean_lookups},
-    sqltypes.Integer: {'filter_class': IntegerFilter, 'lookups': number_lookups},
-    sqltypes.SmallInteger: {'filter_class': IntegerFilter, 'lookups': number_lookups},
-    sqltypes.BigInteger: {'filter_class': IntegerFilter, 'lookups': number_lookups},
-    sqltypes.Numeric: {'filter_class': IntegerFilter, 'lookups': number_lookups},
-    sqltypes.Float: {'filter_class': FloatFilter, 'lookups': number_lookups},
-    sqltypes.Date: {'filter_class': DateTimeFilter, 'lookups': datetime_lookups},
-    sqltypes.DateTime: {'filter_class': DateTimeFilter, 'lookups': datetime_lookups},
-    sqltypes.TIMESTAMP: {'filter_class': DateTimeFilter, 'lookups': datetime_lookups},
-    sqltypes.JSON: {'filter_class': CharFilter, 'lookups': json_lookups},
-    sqltypes.ARRAY: {'filter_class': CharFilter, 'lookups': json_lookups},
+    sqltypes.VARCHAR: {'filter_class': CharFilter, 'lookups': text_lookups, 'lookups_name': 'text'},
+    sqltypes.TEXT: {'filter_class': CharFilter, 'lookups': text_lookups, 'lookups_name': 'text'},
+    sqltypes.Enum: {'filter_class': CharFilter, 'lookups': select_lookups, 'lookups_name': 'select'},
+    sqltypes.Boolean: {'filter_class': BooleanFilter, 'lookups': boolean_lookups, 'lookups_name': 'boolean'},
+    sqltypes.Integer: {'filter_class': IntegerFilter, 'lookups': number_lookups, 'lookups_name': 'number'},
+    sqltypes.SmallInteger: {'filter_class': IntegerFilter, 'lookups': number_lookups, 'lookups_name': 'number'},
+    sqltypes.BigInteger: {'filter_class': IntegerFilter, 'lookups': number_lookups, 'lookups_name': 'number'},
+    sqltypes.Numeric: {'filter_class': IntegerFilter, 'lookups': number_lookups, 'lookups_name': 'number'},
+    sqltypes.Float: {'filter_class': FloatFilter, 'lookups': number_lookups, 'lookups_name': 'number'},
+    sqltypes.Date: {'filter_class': DateTimeFilter, 'lookups': datetime_lookups, 'lookups_name': 'datetime'},
+    sqltypes.DateTime: {'filter_class': DateTimeFilter, 'lookups': datetime_lookups, 'lookups_name': 'datetime'},
+    sqltypes.TIMESTAMP: {'filter_class': DateTimeFilter, 'lookups': datetime_lookups, 'lookups_name': 'datetime'},
+    sqltypes.JSON: {'filter_class': CharFilter, 'lookups': json_lookups, 'lookups_name': 'json'},
+    sqltypes.ARRAY: {'filter_class': CharFilter, 'lookups': json_lookups, 'lookups_name': 'json'},
     # sqlalchemy.TextField:                   {'filter_class': CharFilter},
     # sqlalchemy.BOOLEAN:                {'filter_class': BooleanFilter},
     # sqlalchemy.DateField:                   {'filter_class': DateFilter},
@@ -111,8 +111,8 @@ FILTER_FOR_DBFIELD_DEFAULT = FILTER_FOR_DBFIELD[sqltypes.VARCHAR]
 
 try:
     from geoalchemy2 import types
-    FILTER_FOR_DBFIELD[types.Geometry] = {'filter_class': WKTFilter, 'lookups': geography_lookups}
-    FILTER_FOR_DBFIELD[types.Geography] = {'filter_class': WKTFilter, 'lookups': geography_lookups}
+    FILTER_FOR_DBFIELD[types.Geometry] = {'filter_class': WKTFilter, 'lookups': geography_lookups, 'lookups_name': 'geography'}
+    FILTER_FOR_DBFIELD[types.Geography] = {'filter_class': WKTFilter, 'lookups': geography_lookups, 'lookups_name': 'geography'}
 except ImportError:
     pass
 
