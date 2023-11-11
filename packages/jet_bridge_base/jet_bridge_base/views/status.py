@@ -9,7 +9,7 @@ from jet_bridge_base.sentry import sentry_controller
 from jet_bridge_base.utils.classes import issubclass_safe
 from jet_bridge_base.utils.common import format_size
 from jet_bridge_base.utils.graphql import ModelFiltersType, ModelFiltersFieldType, ModelFiltersRelationshipType, \
-    ModelLookupsType, ModelLookupsFieldType, ModelLookupsRelationshipType
+    ModelLookupsType, ModelLookupsFieldType, ModelLookupsRelationshipType, ModelSortType, ModelAttrsType
 from jet_bridge_base.utils.process import get_memory_usage
 from jet_bridge_base.views.base.api import BaseAPIView
 
@@ -33,6 +33,8 @@ class StatusView(BaseAPIView):
             lookups_count = 0
             lookups_fields_count = 0
             lookups_relationships_count = 0
+            sort_count = 0
+            attrs_count = 0
             get_schema_time = schema.get('get_schema_time')
             memory_usage_approx = schema.get('memory_usage_approx')
 
@@ -52,6 +54,10 @@ class StatusView(BaseAPIView):
                     lookups_fields_count += 1
                 elif issubclass_safe(item.graphene_type, ModelLookupsRelationshipType):
                     lookups_relationships_count += 1
+                elif issubclass_safe(item.graphene_type, ModelSortType):
+                    sort_count += 1
+                elif issubclass_safe(item.graphene_type, ModelAttrsType):
+                    attrs_count += 1
 
             return {
                 'status': 'ok',
@@ -64,6 +70,8 @@ class StatusView(BaseAPIView):
                 'lookups': lookups_count,
                 'lookups_fields': lookups_fields_count,
                 'lookups_relationships': lookups_relationships_count,
+                'sort': sort_count,
+                'attrs': attrs_count,
                 'get_schema_time': get_schema_time,
                 'memory_usage_approx': memory_usage_approx,
                 'memory_usage_approx_str': format_size(memory_usage_approx) if memory_usage_approx else None
