@@ -6,7 +6,8 @@ import six
 
 from jet_bridge_base import settings
 from jet_bridge_base.configuration import configuration
-from jet_bridge_base.db import create_session
+from jet_bridge_base.db import create_session, get_connection_name, get_connection, get_conf, get_connection_schema, \
+    get_connection_id
 from jet_bridge_base.exceptions.api import APIException
 from jet_bridge_base.exceptions.not_found import NotFound
 from jet_bridge_base.exceptions.permission_denied import PermissionDenied
@@ -14,6 +15,7 @@ from jet_bridge_base.exceptions.validation_error import ValidationError
 from jet_bridge_base.responses.json import JSONResponse
 from jet_bridge_base.responses.template import TemplateResponse
 from jet_bridge_base.logger import logger
+from jet_bridge_base.utils.common import format_size
 from jet_bridge_base.utils.exceptions import serialize_validation_error
 
 
@@ -21,6 +23,7 @@ class BaseAPIView(object):
     # request = None
     # session = None
     permission_classes = []
+    track_queries = False
 
     def log_request(self, request):
         params = {'IP': request.get_ip(), 'SID': request.get_stick_session()}
@@ -28,6 +31,7 @@ class BaseAPIView(object):
         logger.debug('{} {} {}'.format(request.method, request.full_url(), params_str))
 
     def before_dispatch(self, request):
+        self.track_query_start(request)
         self.log_request(request)
 
         method_override = request.headers.get('X_HTTP_METHOD_OVERRIDE')
@@ -41,6 +45,53 @@ class BaseAPIView(object):
             self.check_permissions(request)
 
     def after_dispatch(self, request):
+        self.track_query_finish(request)
+
+    def is_track_queries_enabled(self):
+        return self.track_queries and (settings.TRACK_QUERY_SLOW_TIME or settings.TRACK_QUERY_HIGH_MEMORY)
+
+    def track_query_start(self, request):
+        if not self.is_track_queries_enabled():
+            return
+
+        request.start_track()
+
+    def track_query_finish(self, request):
+        if not self.is_track_queries_enabled():
+            return
+
+        track_time = request.get_track_time()
+        track_memory_usage = request.get_track_memory_usage()
+
+        tags = []
+
+        if track_time >= settings.TRACK_QUERY_SLOW_TIME:
+            tags.append('SLOW')
+
+        if track_memory_usage >= settings.TRACK_QUERY_HIGH_MEMORY:
+            tags.append('HIGHMEM')
+
+        if not len(tags):
+            return
+
+        conf = get_conf(request)
+        schema = get_connection_schema(conf)
+        connection_id = get_connection_id(conf)
+        connection_name = get_connection_name(conf, schema)
+        id_short = connection_id[:4]
+
+        track_query_name = self.get_track_query_name(request) or '{} {}'.format(request.method, request.path)
+
+        logger.info('[{}] {} [{}] (MEM:{}, TIME:{}) "{}"'.format(
+            id_short,
+            track_query_name,
+            ','.join(tags),
+            format_size(track_memory_usage) if track_memory_usage else None,
+            '{}s'.format(track_time),
+            connection_name
+        ))
+
+    def get_track_query_name(self, request):
         pass
 
     def on_finish(self):

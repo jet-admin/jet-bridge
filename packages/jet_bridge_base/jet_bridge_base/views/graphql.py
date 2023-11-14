@@ -18,6 +18,7 @@ from jet_bridge_base.views.base.api import APIView
 
 class GraphQLView(APIView):
     permission_classes = (HasProjectPermissions,)
+    track_queries = True
 
     def before_dispatch_permissions_check(self, request):
         pass
@@ -28,6 +29,9 @@ class GraphQLView(APIView):
             'permission_object': request.context.get('model'),
             'permission_actions': 'r'
         }
+
+    def get_track_query_name(self, request):
+        return '{} {} {}'.format(request.method, request.path, request.context.get('model'))
 
     def map_gql_error(self, error):
         if isinstance(error, GraphQLError):
