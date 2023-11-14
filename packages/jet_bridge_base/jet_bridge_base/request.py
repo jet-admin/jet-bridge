@@ -1,11 +1,13 @@
 import json
 import os
 import tempfile
+import time
 from json import JSONDecodeError
 
 from jet_bridge_base.exceptions.request_error import RequestError
 from jet_bridge_base.exceptions.validation_error import ValidationError
 from jet_bridge_base.utils.crypt import get_sha256_hash
+from jet_bridge_base.utils.process import get_memory_usage
 from six import string_types
 
 from jet_bridge_base import settings
@@ -22,6 +24,9 @@ class Request(object):
     environment = None
     resource_token = None
     context = {}
+
+    track_start_time = None
+    track_start_memory_usage = None
 
     def __init__(
             self,
@@ -196,3 +201,17 @@ class Request(object):
             f.write(content)
 
         return f.name
+
+    def start_track(self):
+        self.track_start_time = time.time()
+        self.track_start_memory_usage = get_memory_usage()
+
+    def get_track_time(self):
+        if self.track_start_time is None:
+            return
+        return round(time.time() - self.track_start_time, 3)
+
+    def get_track_memory_usage(self):
+        if self.track_start_memory_usage is None:
+            return
+        return get_memory_usage() - self.track_start_memory_usage

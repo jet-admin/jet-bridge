@@ -1,3 +1,4 @@
+import time
 from collections import OrderedDict
 import math
 
@@ -15,8 +16,10 @@ class PageNumberPagination(Pagination):
     max_page_size = 10000
 
     count = None
+    count_query_time = None
     page_number = None
     page_size = None
+    data_query_time = None
     handler = None
 
     def paginate_queryset(self, request, queryset, handler):
@@ -28,12 +31,23 @@ class PageNumberPagination(Pagination):
         if not page_size:
             return None
 
+        count_query_start = time.time()
         self.count = queryset_count_optimized(request, queryset)
+        count_query_end = time.time()
+
+        self.count_query_time = round(count_query_end - count_query_start, 3)
+
         self.page_number = page_number
         self.page_size = page_size
         self.handler = handler
 
-        return queryset.offset((page_number - 1) * page_size).limit(page_size)
+        data_query_start = time.time()
+        result = list(queryset.offset((page_number - 1) * page_size).limit(page_size))
+        data_query_end = time.time()
+
+        self.data_query_time = round(data_query_end - data_query_start, 3)
+
+        return result
 
     def get_pages_count(self):
         return int(math.ceil(self.count / self.page_size)) if self.count is not None else None
@@ -47,6 +61,8 @@ class PageNumberPagination(Pagination):
             ('num_pages', self.get_pages_count()),
             ('per_page', self.page_size),
             ('has_more', self.has_next_potential(data)),
+            ('data_query_time', self.data_query_time),
+            ('count_query_time', self.count_query_time),
         ]))
 
     def get_page_number(self, request, handler):

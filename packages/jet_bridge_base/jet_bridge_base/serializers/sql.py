@@ -1,3 +1,5 @@
+import time
+
 from sqlalchemy import text, select, column, func, desc, or_, cast
 from sqlalchemy import sql
 from sqlalchemy.sql import sqltypes
@@ -279,14 +281,19 @@ class SqlSerializer(Serializer):
 
         subquery = text(query).columns().subquery('__jet_q2')
         count_rows = None
+        count_query_time = None
 
         if data['count']:
             try:
                 count_queryset = select([func.count()]).select_from(subquery)
                 count_queryset = self.filter_queryset(count_queryset, data)
 
+                count_query_start = time.time()
                 count_result = session.execute(count_queryset, params)
                 count_rows = count_result.all()[0][0]
+                count_query_end = time.time()
+
+                count_query_time = round(count_query_end - count_query_start, 3)
             except SQLAlchemyError:
                 session.rollback()
             except Exception:
@@ -308,7 +315,11 @@ class SqlSerializer(Serializer):
             if 'group' not in data and 'groups' not in data:
                 queryset = self.sort_queryset(queryset, data, session)
 
+            data_query_start = time.time()
             result = session.execute(queryset, params)
+            data_query_end = time.time()
+
+            data_query_time = round(data_query_end - data_query_start, 3)
 
             def map_column(x):
                 if x == '?column?':
@@ -351,6 +362,11 @@ class SqlSerializer(Serializer):
 
             if count_rows is not None:
                 response['count'] = count_rows
+
+            response['data_query_time'] = data_query_time
+
+            if count_rows is not None:
+                response['count_query_time'] = count_query_time
 
             return response
         except SQLAlchemyError as e:

@@ -94,6 +94,8 @@ class JetDjangoConfiguration(Configuration):
             'TRACK_DATABASES_AUTH': settings.JET_TRACK_DATABASES_AUTH,
             'TRACK_MODELS_ENDPOINT': settings.JET_TRACK_MODELS_ENDPOINT,
             'TRACK_MODELS_AUTH': settings.JET_TRACK_MODELS_AUTH,
+            'TRACK_QUERY_SLOW_TIME': settings.JET_TRACK_QUERY_SLOW_TIME,
+            'TRACK_QUERY_HIGH_MEMORY': settings.JET_TRACK_QUERY_HIGH_MEMORY,
             'DISABLE_AUTH': settings.JET_DISABLE_AUTH
         }
 

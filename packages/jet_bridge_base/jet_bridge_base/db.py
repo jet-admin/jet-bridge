@@ -9,7 +9,7 @@ from jet_bridge_base.automap import automap_base
 from jet_bridge_base.reflect import reflect
 from jet_bridge_base.ssh_tunnel import SSHTunnel
 from jet_bridge_base.utils.crypt import get_sha256_hash
-from jet_bridge_base.utils.process import get_memory_usage_human
+from jet_bridge_base.utils.process import get_memory_usage_human, get_memory_usage
 from jet_bridge_base.utils.type_codes import fetch_type_code_to_sql_type
 from six import StringIO
 from six.moves.urllib_parse import quote_plus
@@ -253,10 +253,9 @@ def get_connection_name(conf, schema):
 
 
 def wait_pending_connection(connection_id, connection_name):
-    if connection_id not in pending_connections:
+    pending_connection = pending_connections.get(connection_id)
+    if not pending_connection:
         return
-
-    pending_connection = pending_connections[connection_id]
 
     logger.info('Waiting database connection "{}"...'.format(connection_name))
 
@@ -265,9 +264,10 @@ def wait_pending_connection(connection_id, connection_name):
         timeout = timedelta(minutes=10).total_seconds()
         connected_condition.wait(timeout=timeout)
 
-    if connection_id in connections:
+    connection = connections.get(connection_id)
+    if connection:
         logger.info('Found database connection "{}"'.format(connection_name))
-        return connections[connection_id]
+        return connection
     else:
         logger.info('Not found database connection "{}"'.format(connection_name))
 
@@ -345,19 +345,25 @@ def connect_database(conf):
 
     connection_id = get_connection_id(conf)
     connection_params_id = get_connection_params_id(conf)
-
-    if connection_id in connections:
-        if connections[connection_id]['params_id'] == connection_params_id:
-            return connections[connection_id]
-        else:
-            dispose_connection(conf)
-
     schema = get_connection_schema(conf)
     connection_name = get_connection_name(conf, schema)
+    id_short = connection_id[:4]
+
+    existing_connection = connections.get(connection_id)
+    if existing_connection:
+        if existing_connection['params_id'] == connection_params_id:
+            return existing_connection
+        else:
+            logger.info('[{}] Reconnecting to database "{}" because of different params ({} {})...'.format(
+                id_short,
+                connection_name,
+                connection_params_id,
+                existing_connection['params_id']
+            ))
+            dispose_connection(conf)
 
     init_start = datetime.now()
 
-    id_short = connection_id[:4]
     connected_condition = threading.Condition()
     pending_connection_id = get_random_string(32)
     pending_connection = {
@@ -398,14 +404,17 @@ def connect_database(conf):
 
             logger.info('[{}] Getting schema for "{}"...'.format(id_short, connection_name))
 
-            reflect_start = time.time()
+            reflect_start_time = time.time()
+            reflect_start_memory_usage = get_memory_usage()
 
             metadata = MetaData(schema=schema, bind=connection)
             only = get_connection_only_predicate(conf)
             reflect(id_short, metadata, engine, only=only, pending_connection=pending_connection, views=True)
 
-            reflect_end = time.time()
-            reflect_time = round(reflect_end - reflect_start, 3)
+            reflect_end_time = time.time()
+            reflect_end_memory_usage = get_memory_usage()
+            reflect_time = round(reflect_end_time - reflect_start_time, 3)
+            reflect_memory_usage_approx = reflect_end_memory_usage - reflect_start_memory_usage
 
             logger.info('[{}] Connected to "{}" (Mem:{})'.format(id_short, connection_name, get_memory_usage_human()))
 
@@ -432,6 +441,7 @@ def connect_database(conf):
                 'init_start': init_start.isoformat(),
                 'connect_time': connect_time,
                 'reflect_time': reflect_time,
+                'reflect_memory_usage_approx': reflect_memory_usage_approx,
                 'last_request': datetime.now()
             }
 

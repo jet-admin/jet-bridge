@@ -24,6 +24,7 @@ from jet_bridge_base.views.mixins.model import ModelAPIViewMixin
 
 class ModelViewSet(ModelAPIViewMixin):
     permission_classes = (HasProjectPermissions, ReadOnly)
+    track_queries = True
 
     def before_dispatch(self, request):
         super(ModelViewSet, self).before_dispatch(request)
