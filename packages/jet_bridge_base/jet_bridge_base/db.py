@@ -345,19 +345,25 @@ def connect_database(conf):
 
     connection_id = get_connection_id(conf)
     connection_params_id = get_connection_params_id(conf)
-
-    if connection_id in connections:
-        if connections[connection_id]['params_id'] == connection_params_id:
-            return connections[connection_id]
-        else:
-            dispose_connection(conf)
-
     schema = get_connection_schema(conf)
     connection_name = get_connection_name(conf, schema)
+    id_short = connection_id[:4]
+
+    if connection_id in connections:
+        existing_params_id = connections[connection_id]['params_id']
+        if existing_params_id == connection_params_id:
+            return connections[connection_id]
+        else:
+            logger.info('[{}] Reconnecting to database "{}" because of different params ({} {})...'.format(
+                id_short,
+                connection_name,
+                connection_params_id,
+                existing_params_id
+            ))
+            dispose_connection(conf)
 
     init_start = datetime.now()
 
-    id_short = connection_id[:4]
     connected_condition = threading.Condition()
     pending_connection_id = get_random_string(32)
     pending_connection = {
