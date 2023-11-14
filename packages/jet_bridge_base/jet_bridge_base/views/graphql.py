@@ -209,6 +209,14 @@ class GraphQLView(APIView):
                 raise error
             return JSONResponse({'errors': map(lambda x: self.map_gql_error(x), result.errors)})
 
-        return JSONResponse({
+        response = {
             'data': result.data
-        })
+        }
+
+        if'graphql_data_query_time' in request.context:
+            response['data_query_time'] = request.context['graphql_data_query_time']
+
+        if'graphql_count_query_time' in request.context:
+            response['count_query_time'] = request.context['graphql_count_query_time']
+
+        return JSONResponse(response)
