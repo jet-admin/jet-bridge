@@ -112,8 +112,12 @@ class StatusView(BaseAPIView):
         tunnel = self.map_tunnel(connection.get('tunnel'))
         last_request = connection.get('last_request')
 
+        reflect_memory_usage_approx = connection.get('reflect_memory_usage_approx')
+
         return {
+            'id': connection['id'],
             'name': connection['name'],
+            'params_id': connection['params_id'],
             'project': connection.get('project'),
             'token': connection.get('token'),
             'tables': len(MappedBase.classes),
@@ -124,6 +128,8 @@ class StatusView(BaseAPIView):
             'init_start': connection.get('init_start'),
             'connect_time': connection.get('connect_time'),
             'reflect_time': connection.get('reflect_time'),
+            'reflect_memory_usage_approx': reflect_memory_usage_approx,
+            'reflect_memory_usage_approx_str': format_size(reflect_memory_usage_approx) if reflect_memory_usage_approx else None,
             'tunnel': tunnel,
             'last_request': last_request.isoformat() if last_request else None
         }
@@ -132,6 +138,7 @@ class StatusView(BaseAPIView):
         tunnel = self.map_tunnel(pending_connection.get('tunnel'))
 
         return {
+            'id': pending_connection['id'],
             'name': pending_connection['name'],
             'project': pending_connection.get('project'),
             'token': pending_connection.get('token'),

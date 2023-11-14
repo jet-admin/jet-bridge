@@ -10,6 +10,7 @@ from jet_bridge_base.status import HTTP_400_BAD_REQUEST
 
 class SqlView(APIView):
     permission_classes = (HasProjectPermissions,)
+    track_queries = True
 
     def post(self, request, *args, **kwargs):
         track_database_async(request)

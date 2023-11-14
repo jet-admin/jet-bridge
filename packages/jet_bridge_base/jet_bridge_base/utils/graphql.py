@@ -878,7 +878,11 @@ class GraphQLSchemaGenerator(object):
             queryset = self.search_queryset(queryset, mapper, search)
             queryset = self.sort_queryset(queryset, MappedBase, mapper, sort)
 
+            data_query_start = time.time()
             queryset_page = list(self.paginate_queryset(queryset, pagination))
+            data_query_end = time.time()
+
+            request.context['graphql_data_query_time'] = round(data_query_end - data_query_start, 3)
 
             serializer_class = get_model_serializer(Model)
             serializer_context = {}
@@ -923,13 +927,16 @@ class GraphQLSchemaGenerator(object):
                 }
 
                 if 'count' in pagination_names or 'hasMore' in pagination_names:
+                    count_query_start = time.time()
                     count = queryset_count_optimized(request, queryset)
-                    result['pagination']['count'] = count
+                    count_query_end = time.time()
 
                     if offset is not None:
                         result['pagination']['hasMore'] = offset + limit < count
                     elif page is not None:
                         result['pagination']['hasMore'] = page * limit < count
+
+                    request.context['graphql_count_query_time'] = round(count_query_end - count_query_start, 3)
 
             return result
         except Exception as e:
