@@ -253,10 +253,9 @@ def get_connection_name(conf, schema):
 
 
 def wait_pending_connection(connection_id, connection_name):
-    if connection_id not in pending_connections:
+    pending_connection = pending_connections.get(connection_id)
+    if not pending_connection:
         return
-
-    pending_connection = pending_connections[connection_id]
 
     logger.info('Waiting database connection "{}"...'.format(connection_name))
 
@@ -265,9 +264,10 @@ def wait_pending_connection(connection_id, connection_name):
         timeout = timedelta(minutes=10).total_seconds()
         connected_condition.wait(timeout=timeout)
 
-    if connection_id in connections:
+    connection = connections.get(connection_id)
+    if connection:
         logger.info('Found database connection "{}"'.format(connection_name))
-        return connections[connection_id]
+        return connection
     else:
         logger.info('Not found database connection "{}"'.format(connection_name))
 
@@ -349,16 +349,16 @@ def connect_database(conf):
     connection_name = get_connection_name(conf, schema)
     id_short = connection_id[:4]
 
-    if connection_id in connections:
-        existing_params_id = connections[connection_id]['params_id']
-        if existing_params_id == connection_params_id:
-            return connections[connection_id]
+    existing_connection = connections.get(connection_id)
+    if existing_connection:
+        if existing_connection['params_id'] == connection_params_id:
+            return existing_connection
         else:
             logger.info('[{}] Reconnecting to database "{}" because of different params ({} {})...'.format(
                 id_short,
                 connection_name,
                 connection_params_id,
-                existing_params_id
+                existing_connection['params_id']
             ))
             dispose_connection(conf)
 
