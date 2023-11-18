@@ -258,14 +258,17 @@ def get_connection_name(conf, schema):
 def get_connection_short_name_parts(conf):
     result = []
 
+    if conf.get('engine'):
+        result.append(str(conf.get('engine')))
+
     if conf.get('host'):
-        result.append(conf.get('host'))
+        result.append(str(conf.get('host')))
 
     if conf.get('port'):
-        result.append(conf.get('port'))
+        result.append(str(conf.get('port')))
 
     if conf.get('user'):
-        result.append(conf.get('user'))
+        result.append(str(conf.get('user')))
 
     return result
 
