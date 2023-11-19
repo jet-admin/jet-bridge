@@ -267,8 +267,8 @@ def get_connection_short_name_parts(conf):
     if conf.get('port'):
         result.append(str(conf.get('port')))
 
-    if conf.get('user'):
-        result.append(str(conf.get('user')))
+    if conf.get('name'):
+        result.append(str(conf.get('name')))
 
     return result
 
@@ -503,7 +503,8 @@ def get_metadata_file_path(conf):
     short_name = '_'.join(map(lambda x: clean_alphanumeric(x), get_connection_short_name_parts(conf)))
     id_hash = get_connection_id(conf)
     params_id_hash = get_sha256_hash(get_connection_params_id(conf))[:8]
-    file_name = '{}_{}_{}.dump'.format(short_name[:50], id_hash, params_id_hash)
+    engine_length = len(str(conf.get('engine'))) + 1 if conf.get('engine') else 0
+    file_name = '{}_{}_{}.dump'.format(short_name[:(50 + engine_length)], id_hash, params_id_hash)
 
     return os.path.join(settings.CACHE_METADATA_PATH, file_name)
 
