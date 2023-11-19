@@ -267,8 +267,8 @@ def get_connection_short_name_parts(conf):
     if conf.get('port'):
         result.append(str(conf.get('port')))
 
-    if conf.get('user'):
-        result.append(str(conf.get('user')))
+    if conf.get('name'):
+        result.append(str(conf.get('name')))
 
     return result
 
