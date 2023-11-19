@@ -1,6 +1,9 @@
 import base64
 import contextlib
 import json
+import os
+import pickle
+import re
 import threading
 import time
 from datetime import timedelta, datetime
@@ -252,6 +255,24 @@ def get_connection_name(conf, schema):
     return connection_name
 
 
+def get_connection_short_name_parts(conf):
+    result = []
+
+    if conf.get('engine'):
+        result.append(str(conf.get('engine')))
+
+    if conf.get('host'):
+        result.append(str(conf.get('host')))
+
+    if conf.get('port'):
+        result.append(str(conf.get('port')))
+
+    if conf.get('user'):
+        result.append(str(conf.get('user')))
+
+    return result
+
+
 def wait_pending_connection(connection_id, connection_name):
     pending_connection = pending_connections.get(connection_id)
     if not pending_connection:
@@ -402,19 +423,31 @@ def connect_database(conf):
             logger.info('[{}] Getting db types for "{}"...'.format(id_short, connection_name))
             type_code_to_sql_type = fetch_type_code_to_sql_type(session)
 
-            logger.info('[{}] Getting schema for "{}"...'.format(id_short, connection_name))
+            metadata_dump = load_metadata_file(conf, connection)
 
-            reflect_start_time = time.time()
-            reflect_start_memory_usage = get_memory_usage()
+            if metadata_dump:
+                metadata = metadata_dump['metadata']
 
-            metadata = MetaData(schema=schema, bind=connection)
-            only = get_connection_only_predicate(conf)
-            reflect(id_short, metadata, engine, only=only, pending_connection=pending_connection, views=True)
+                reflect_time = None
+                reflect_memory_usage_approx = None
 
-            reflect_end_time = time.time()
-            reflect_end_memory_usage = get_memory_usage()
-            reflect_time = round(reflect_end_time - reflect_start_time, 3)
-            reflect_memory_usage_approx = reflect_end_memory_usage - reflect_start_memory_usage
+                logger.info('[{}] Loaded schema cache for "{}"'.format(id_short, connection_name))
+            else:
+                logger.info('[{}] Getting schema for "{}"...'.format(id_short, connection_name))
+
+                reflect_start_time = time.time()
+                reflect_start_memory_usage = get_memory_usage()
+
+                metadata = MetaData(schema=schema, bind=connection)
+                only = get_connection_only_predicate(conf)
+                reflect(id_short, metadata, engine, only=only, pending_connection=pending_connection, views=True)
+
+                reflect_end_time = time.time()
+                reflect_end_memory_usage = get_memory_usage()
+                reflect_time = round(reflect_end_time - reflect_start_time, 3)
+                reflect_memory_usage_approx = reflect_end_memory_usage - reflect_start_memory_usage
+
+                dump_metadata_file(conf, metadata)
 
             logger.info('[{}] Connected to "{}" (Mem:{})'.format(id_short, connection_name, get_memory_usage_human()))
 
@@ -442,6 +475,7 @@ def connect_database(conf):
                 'connect_time': connect_time,
                 'reflect_time': reflect_time,
                 'reflect_memory_usage_approx': reflect_memory_usage_approx,
+                'reflect_metadata_dump': metadata_dump['file_path'] if metadata_dump else None,
                 'last_request': datetime.now()
             }
 
@@ -459,6 +493,75 @@ def connect_database(conf):
 
         with connected_condition:
             connected_condition.notify_all()
+
+
+def clean_alphanumeric(str):
+    return re.sub('[^0-9a-zA-Z.]+', '-', str)
+
+
+def get_metadata_file_path(conf):
+    short_name = '_'.join(map(lambda x: clean_alphanumeric(x), get_connection_short_name_parts(conf)))
+    id_hash = get_connection_id(conf)
+    params_id_hash = get_sha256_hash(get_connection_params_id(conf))[:8]
+    file_name = '{}_{}_{}.dump'.format(short_name[:50], id_hash, params_id_hash)
+
+    return os.path.join(settings.CACHE_METADATA_PATH, file_name)
+
+
+def dump_metadata_file(conf, metadata):
+    if not settings.CACHE_METADATA:
+        return
+
+    connection_id = get_connection_id(conf)
+    schema = get_connection_schema(conf)
+    connection_name = get_connection_name(conf, schema)
+    id_short = connection_id[:4]
+
+    file_path = get_metadata_file_path(conf)
+
+    try:
+        dir_path = os.path.dirname(file_path)
+
+        if dir_path and not os.path.exists(dir_path):
+            os.makedirs(dir_path)
+
+        with open(file_path, 'wb') as file:
+            pickle.dump(metadata, file)
+
+        logger.info('[{}] Saved schema cache for "{}"'.format(id_short, connection_name))
+
+        return file_path
+    except Exception as e:
+        logger.error('[{}] Failed dumping schema cache for "{}"'.format(id_short, connection_name), exc_info=e)
+
+
+def load_metadata_file(conf, connection):
+    if not settings.CACHE_METADATA:
+        return
+
+    connection_id = get_connection_id(conf)
+    schema = get_connection_schema(conf)
+    connection_name = get_connection_name(conf, schema)
+    id_short = connection_id[:4]
+
+    file_path = get_metadata_file_path(conf)
+
+    if not os.path.exists(file_path):
+        logger.info('[{}] Schema cache not found for "{}"'.format(id_short, connection_name))
+        return
+
+    try:
+        with open(file_path, 'rb') as file:
+            metadata = pickle.load(file=file)
+
+        metadata.bind = connection
+
+        return {
+            'file_path': file_path,
+            'metadata': metadata
+        }
+    except Exception as e:
+        logger.error('[{}] Failed loading schema cache for "{}"'.format(id_short, connection_name), exc_info=e)
 
 
 def dispose_connection_object(connection):
@@ -639,8 +742,11 @@ def connection_cache_set(request, name, value):
 
 
 def reload_request_mapped_base(request):
+    conf = get_conf(request)
     MappedBase = get_mapped_base(request)
+
     load_mapped_base(MappedBase, True)
+    dump_metadata_file(conf, MappedBase.metadata)
     reload_request_graphql_schema(request)
 
 

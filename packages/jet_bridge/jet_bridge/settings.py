@@ -74,6 +74,9 @@ define('cookie_compress', default=False, type=bool)
 
 define('store_path', default='jet_bridge_store.sqlite3', type=str)
 
+define('cache_metadata', default=False, type=bool)
+define('cache_metadata_path', default='metadata', type=str)
+
 define('sso_applications', default='{}', type=str)
 define('allow_origin', default='*')
 
@@ -183,6 +186,9 @@ COOKIE_DOMAIN = options.cookie_domain
 COOKIE_COMPRESS = options.cookie_compress
 
 STORE_PATH = options.store_path
+
+CACHE_METADATA = options.cache_metadata
+CACHE_METADATA_PATH = options.cache_metadata_path
 
 try:
     SSO_APPLICATIONS = json.loads(options.sso_applications)

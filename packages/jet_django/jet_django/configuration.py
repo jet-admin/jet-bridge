@@ -87,6 +87,8 @@ class JetDjangoConfiguration(Configuration):
             'COOKIE_DOMAIN': settings.JET_COOKIE_DOMAIN,
             'COOKIE_COMPRESS': settings.JET_COOKIE_COMPRESS,
             'STORE_PATH': settings.JET_STORE_PATH,
+            'CACHE_METADATA': settings.JET_CACHE_METADATA,
+            'CACHE_METADATA_PATH': settings.JET_CACHE_METADATA_PATH,
             'SSO_APPLICATIONS': self.clean_sso_applications(settings.JET_SSO_APPLICATIONS),
             'ALLOW_ORIGIN': settings.JET_ALLOW_ORIGIN,
             'TRACK_DATABASES': settings.JET_TRACK_DATABASES,
