@@ -747,8 +747,8 @@ def reload_request_mapped_base(request):
     MappedBase = get_mapped_base(request)
 
     load_mapped_base(MappedBase, True)
-    dump_metadata_file(conf, MappedBase.metadata)
     reload_request_graphql_schema(request)
+    dump_metadata_file(conf, MappedBase.metadata)
 
 
 def reload_connection_graphql_schema(connection, draft=None):
