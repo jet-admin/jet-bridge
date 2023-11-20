@@ -71,6 +71,7 @@ class JetDjangoConfiguration(Configuration):
                 if settings.database_settings.get('NAME') is not None else None,
             'DATABASE_EXTRA': settings.JET_DATABASE_EXTRA,
             'DATABASE_CONNECTIONS': 1,
+            'DATABASE_CONNECTIONS_OVERFLOW': 1,
             'DATABASE_ONLY': settings.JET_DATABASE_ONLY,
             'DATABASE_EXCEPT': settings.JET_DATABASE_EXCEPT,
             'DATABASE_MAX_TABLES': settings.JET_DATABASE_MAX_TABLES,
