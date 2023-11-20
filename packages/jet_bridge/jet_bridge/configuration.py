@@ -41,6 +41,7 @@ class JetBridgeConfiguration(Configuration):
             'DATABASE_NAME': settings.DATABASE_NAME,
             'DATABASE_EXTRA': settings.DATABASE_EXTRA,
             'DATABASE_CONNECTIONS': settings.CONNECTIONS,
+            'DATABASE_CONNECTIONS_OVERFLOW': settings.CONNECTIONS_OVERFLOW,
             'DATABASE_ONLY': settings.DATABASE_ONLY,
             'DATABASE_EXCEPT': settings.DATABASE_EXCEPT,
             'DATABASE_MAX_TABLES': settings.DATABASE_MAX_TABLES,

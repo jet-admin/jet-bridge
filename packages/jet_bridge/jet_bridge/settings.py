@@ -28,7 +28,8 @@ define('use_default_config', default='', help='use default config values')
 define('debug', default=False, help='debug mode', type=bool)
 define('read_only', default=False, help='read only', type=bool)
 define('threads', default=None, help='threads', type=int)
-define('connections', default=50, help='connects', type=int)
+define('connections', default=5, help='connections', type=int)
+define('connections_overflow', default=20, help='connections overflow', type=int)
 define('auto_open_register', default=True, help='open token register automatically', type=bool)
 define('project', help='project', type=str)
 define('token', help='token', type=str)
@@ -140,6 +141,7 @@ DEBUG = options.debug
 READ_ONLY = options.read_only
 THREADS = options.threads
 CONNECTIONS = options.connections
+CONNECTIONS_OVERFLOW = options.connections_overflow
 AUTO_OPEN_REGISTER = options.auto_open_register
 CONFIG = options.config
 USE_DEFAULT_CONFIG = options.use_default_config.lower().split(',')

@@ -141,12 +141,21 @@ def get_connection_id(conf):
     ]))
 
 
+def get_connection_meta_params_id(conf):
+    return get_sha256_hash(json.dumps([
+        conf.get('only'),
+        conf.get('except'),
+        conf.get('extra')
+    ]))
+
+
 def get_connection_params_id(conf):
     return json.dumps([
         conf.get('only'),
         conf.get('except'),
         conf.get('extra'),
-        conf.get('connections')
+        conf.get('connections'),
+        conf.get('connections_overflow')
     ])
 
 
@@ -317,7 +326,7 @@ def create_connection_engine(conf, tunnel):
             engine_url,
             pool_size=conf.get('connections'),
             pool_pre_ping=True,
-            max_overflow=1,
+            max_overflow=conf.get('connections_overflow'),
             pool_recycle=300,
             connect_args={
                 'connect_timeout': 5,
@@ -329,7 +338,7 @@ def create_connection_engine(conf, tunnel):
             engine_url,
             pool_size=conf.get('connections'),
             pool_pre_ping=True,
-            max_overflow=1,
+            max_overflow=conf.get('connections_overflow'),
             pool_recycle=300
         )
     elif conf.get('engine') == 'oracle':
@@ -337,7 +346,7 @@ def create_connection_engine(conf, tunnel):
             engine_url,
             pool_size=conf.get('connections'),
             pool_pre_ping=True,
-            max_overflow=1,
+            max_overflow=conf.get('connections_overflow'),
             pool_recycle=300
         )
     else:
@@ -345,7 +354,7 @@ def create_connection_engine(conf, tunnel):
             engine_url,
             pool_size=conf.get('connections'),
             pool_pre_ping=True,
-            max_overflow=1,
+            max_overflow=conf.get('connections_overflow'),
             pool_recycle=300,
             connect_args={'connect_timeout': 5}
         )
@@ -502,7 +511,7 @@ def clean_alphanumeric(str):
 def get_metadata_file_path(conf):
     short_name = '_'.join(map(lambda x: clean_alphanumeric(x), get_connection_short_name_parts(conf)))
     id_hash = get_connection_id(conf)
-    params_id_hash = get_sha256_hash(get_connection_params_id(conf))[:8]
+    params_id_hash = get_connection_meta_params_id(conf)[:8]
     engine_length = len(str(conf.get('engine'))) + 1 if conf.get('engine') else 0
     file_name = '{}_{}_{}.dump'.format(short_name[:(50 + engine_length)], id_hash, params_id_hash)
 
@@ -628,6 +637,7 @@ def get_settings_conf():
         'password': settings.DATABASE_PASSWORD,
         'extra': settings.DATABASE_EXTRA,
         'connections': settings.DATABASE_CONNECTIONS,
+        'connections_overflow': settings.DATABASE_CONNECTIONS_OVERFLOW,
         'only': settings.DATABASE_ONLY,
         'except': settings.DATABASE_EXCEPT,
         'schema': settings.DATABASE_SCHEMA,
@@ -658,6 +668,7 @@ def get_request_conf(request):
         'password': bridge_settings.get('database_password'),
         'extra': bridge_settings.get('database_extra'),
         'connections': bridge_settings.get('database_connections', settings.DATABASE_CONNECTIONS),
+        'connections_overflow': bridge_settings.get('database_connections_overflow', settings.DATABASE_CONNECTIONS_OVERFLOW),
         'only': bridge_settings.get('database_only'),
         'except': bridge_settings.get('database_except'),
         'schema': bridge_settings.get('database_schema'),
