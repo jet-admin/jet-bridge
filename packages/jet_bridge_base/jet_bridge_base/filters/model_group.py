@@ -1,4 +1,5 @@
 from jet_bridge_base.exceptions.validation_error import ValidationError
+from jet_bridge_base.utils.classes import is_instance_or_subclass
 from sqlalchemy import func, sql, inspect
 from sqlalchemy.sql import sqltypes, text
 
@@ -59,6 +60,13 @@ dateadd_options = {
 
 
 def get_query_lookup_func_by_name(session, lookup_type, lookup_param, column):
+    if lookup_type == 'auto':
+        field_type = column.property.columns[0].type if hasattr(column, 'property') else column.type
+
+        if is_instance_or_subclass(field_type, (sqltypes.DateTime, sqltypes.Date)):
+            lookup_type = 'date'
+            lookup_param = 'day'
+
     try:
         if lookup_type == 'date':
             date_group = lookup_param or 'day'
@@ -76,6 +84,8 @@ def get_query_lookup_func_by_name(session, lookup_type, lookup_param, column):
             else:
                 if date_group in strftime_options:
                     return func.strftime(strftime_options[date_group], column)
+        elif lookup_type == 'plain' or lookup_type == 'auto':
+            return column
     except IndexError:
         pass
 
