@@ -641,7 +641,15 @@ class GraphQLSchemaGenerator(object):
         return queryset
 
     def get_pagination_limit(self, pagination):
-        return pagination.get('limit', 20)
+        default_limit = 20
+        limit = pagination.get('limit', default_limit)
+
+        if limit > 1000:
+            limit = 1000
+        elif limit < 0:
+            limit = default_limit
+
+        return limit
 
     def paginate_queryset(self, queryset, pagination):
         limit = self.get_pagination_limit(pagination)
