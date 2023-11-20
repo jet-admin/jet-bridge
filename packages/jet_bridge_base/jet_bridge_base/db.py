@@ -565,6 +565,30 @@ def load_metadata_file(conf, connection):
         logger.error('[{}] Failed loading schema cache for "{}"'.format(id_short, connection_name), exc_info=e)
 
 
+def remove_metadata_file(conf):
+    if not settings.CACHE_METADATA:
+        return
+
+    connection_id = get_connection_id(conf)
+    schema = get_connection_schema(conf)
+    connection_name = get_connection_name(conf, schema)
+    id_short = connection_id[:4]
+
+    file_path = get_metadata_file_path(conf)
+
+    if not os.path.exists(file_path):
+        logger.info('[{}] Schema cache clear skipped (file not found) for "{}"'.format(id_short, connection_name))
+        return
+
+    try:
+        os.unlink(file_path)
+        logger.info('[{}] Schema cache cleared for "{}"'.format(id_short, connection_name))
+
+        return file_path
+    except Exception as e:
+        logger.error('[{}] Schema cache clear failed for "{}"'.format(id_short, connection_name), exc_info=e)
+
+
 def dispose_connection_object(connection):
     try:
         connection['engine'].dispose()
@@ -747,8 +771,8 @@ def reload_request_mapped_base(request):
     MappedBase = get_mapped_base(request)
 
     load_mapped_base(MappedBase, True)
-    dump_metadata_file(conf, MappedBase.metadata)
     reload_request_graphql_schema(request)
+    dump_metadata_file(conf, MappedBase.metadata)
 
 
 def reload_connection_graphql_schema(connection, draft=None):
