@@ -177,6 +177,7 @@ class ModelViewSet(ModelAPIViewMixin):
             'y_func': y_func,
             'y_column': y_column
         })
+        queryset = queryset.limit(1000)
 
         def map_item(row):
             if isinstance(row, Row):
