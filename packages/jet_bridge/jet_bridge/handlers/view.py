@@ -122,8 +122,12 @@ class BaseViewHandler(tornado.web.RequestHandler):
 
         def execute():
             self.before_dispatch(request)
-            result = self.view.dispatch(action, request, *args, **kwargs)
-            self.after_dispatch(request)
+
+            try:
+                result = self.view.dispatch(action, request, *args, **kwargs)
+            finally:
+                self.after_dispatch(request)
+
             return result
 
         try:
