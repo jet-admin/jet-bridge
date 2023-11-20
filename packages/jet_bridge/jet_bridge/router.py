@@ -43,8 +43,12 @@ class Router(object):
 
                     def execute():
                         inner_self.before_dispatch(request)
-                        result = inner_self.view.dispatch(action, request, *args, **kwargs)
-                        inner_self.after_dispatch(request)
+
+                        try:
+                            result = inner_self.view.dispatch(action, request, *args, **kwargs)
+                        finally:
+                            inner_self.after_dispatch(request)
+
                         return result
 
                     try:
