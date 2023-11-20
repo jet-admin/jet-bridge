@@ -76,6 +76,8 @@ def get_query_lookup_func_by_name(session, lookup_type, lookup_param, column):
             else:
                 if date_group in strftime_options:
                     return func.strftime(strftime_options[date_group], column)
+        elif lookup_type == 'plain' or lookup_type == 'auto':
+            return column
     except IndexError:
         pass
 
