@@ -83,6 +83,12 @@ class SqlSerializer(Serializer):
                 attrs['query'] = attrs['query'].replace('%s', ':param_{}'.format(i), 1)
                 i += 1
 
+        if 'limit' in attrs:
+            if attrs['limit'] > 1000:
+                attrs['limit'] = 1000
+            elif attrs['limit'] < 0:
+                del attrs['limit']
+
         return attrs
 
     def aggregate_queryset(self, subquery, data):
