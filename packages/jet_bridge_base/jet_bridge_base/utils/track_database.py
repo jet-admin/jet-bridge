@@ -49,6 +49,6 @@ def track_database_async(request):
     except:
         return
 
-    loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
-    as_future(lambda: track_database(request))
+    # loop = asyncio.new_event_loop()
+    # asyncio.set_event_loop(loop)
+    # as_future(lambda: track_database(request))

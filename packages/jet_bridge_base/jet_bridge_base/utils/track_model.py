@@ -58,6 +58,6 @@ def track_model_async(request, model, action, uid, data):
     except:
         return
 
-    loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
-    as_future(lambda: track_model(request, model, action, uid, data))
+    # loop = asyncio.new_event_loop()
+    # asyncio.set_event_loop(loop)
+    # as_future(lambda: track_model(request, model, action, uid, data))
