@@ -60,7 +60,7 @@ def main():
         'certfile': settings.SSL_CERT,
         'keyfile': settings.SSL_KEY
     } if ssl else None
-    server = HTTPServer(app, ssl_options=ssl_options)
+    server = HTTPServer(app, ssl_options=ssl_options, idle_connection_timeout=75)
     server.bind(settings.PORT, settings.ADDRESS)
     server.start(workers)
 

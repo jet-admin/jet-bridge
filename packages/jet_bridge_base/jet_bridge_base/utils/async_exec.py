@@ -18,12 +18,15 @@ class _AsyncExecution:
         )  # type: int
         self._pool = None  # type: Optional[Executor]
 
+    def init_pool(self):
+        self._pool = ThreadPoolExecutor(max_workers=self._max_workers)
+
     def set_max_workers(self, count):
         if self._pool:
             self._pool.shutdown(wait=True)
 
         self._max_workers = count
-        self._pool = ThreadPoolExecutor(max_workers=self._max_workers)
+        self.init_pool()
 
     def as_future(self, query):
         # concurrent.futures.Future is not compatible with the "new style"
@@ -35,7 +38,7 @@ class _AsyncExecution:
         # little bit of code here to handle this incompatibility.
 
         if not self._pool:
-            self._pool = ThreadPoolExecutor(max_workers=self._max_workers)
+            self.init_pool()
 
         old_future = self._pool.submit(query)
         new_future = Future()  # type: Future
@@ -46,9 +49,17 @@ class _AsyncExecution:
 
         return new_future
 
+    def submit(self, query, *args, **kwargs):
+        if not self._pool:
+            self.init_pool()
+
+        self._pool.submit(query, *args, **kwargs)
+
 
 _async_exec = _AsyncExecution()
 
 as_future = _async_exec.as_future
 
 set_max_workers = _async_exec.set_max_workers
+
+pool_submit = _async_exec.submit

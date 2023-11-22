@@ -5,15 +5,15 @@ import requests
 from jet_bridge_base import settings
 from jet_bridge_base.encoders import JSONEncoder
 from jet_bridge_base.sentry import sentry_controller
-from jet_bridge_base.utils.async_exec import as_future
+from jet_bridge_base.utils.async_exec import pool_submit
 
 
-def track_model(request, model, action, uid, model_data):
+def track_model(project, environment, resource_token, model, action, uid, model_data):
     if not settings.TRACK_MODELS_ENDPOINT:
         return
 
-    if request.project is None or request.environment is None or request.resource_token is None:
-        error = 'MODEL_CHANGE incorrect request: {} {} {}'.format(request.project, request.environment, request.resource_token)
+    if project is None or environment is None or resource_token is None:
+        error = 'MODEL_CHANGE incorrect request: {} {} {}'.format(project, environment, resource_token)
         sentry_controller.capture_message(error)
         return
 
@@ -22,9 +22,9 @@ def track_model(request, model, action, uid, model_data):
         'Content-Type': 'application/json'
     }
     data = {
-        'project': request.project,
-        'environment': request.environment,
-        'resource_token': request.resource_token,
+        'project': project,
+        'environment': environment,
+        'resource_token': resource_token,
         'model': model,
         'action': action,
         'data': model_data
@@ -53,11 +53,4 @@ def track_model_async(request, model, action, uid, data):
     if not settings.TRACK_MODELS_ENDPOINT:
         return
 
-    try:
-        import asyncio
-    except:
-        return
-
-    loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
-    as_future(lambda: track_model(request, model, action, uid, data))
+    pool_submit(track_model, request.project, request.environment, request.resource_token, model, action, uid, data)
