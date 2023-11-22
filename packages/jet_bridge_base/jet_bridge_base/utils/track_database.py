@@ -4,15 +4,14 @@ import requests
 from jet_bridge_base import settings
 from jet_bridge_base.db import get_conf
 from jet_bridge_base.sentry import sentry_controller
-from jet_bridge_base.utils.async_exec import as_future
+from jet_bridge_base.utils.async_exec import pool_submit
 
 
-def track_database(request):
+def track_database(conf):
     if not settings.TRACK_DATABASES_ENDPOINT:
         return
 
     track_databases = list(filter(lambda x: x != '', map(lambda x: x.lower().strip(), settings.TRACK_DATABASES.split(','))))
-    conf = get_conf(request)
     hostname = '{}:{}'.format(conf.get('host', ''), conf.get('port', '')).lower()
 
     if not any(map(lambda x: fnmatch(hostname, x), track_databases)):
@@ -44,11 +43,5 @@ def track_database_async(request):
     if not settings.TRACK_DATABASES_ENDPOINT:
         return
 
-    try:
-        import asyncio
-    except:
-        return
-
-    loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
-    as_future(lambda: track_database(request))
+    conf = get_conf(request)
+    pool_submit(track_database, conf)
