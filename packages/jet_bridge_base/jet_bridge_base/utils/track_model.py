@@ -53,4 +53,4 @@ def track_model_async(request, model, action, uid, data):
     if not settings.TRACK_MODELS_ENDPOINT:
         return
 
-    pool_submit(lambda: track_model(request, model, action, uid, data))
+    pool_submit(track_model, request, model, action, uid, data)

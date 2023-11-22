@@ -44,4 +44,4 @@ def track_database_async(request):
     if not settings.TRACK_DATABASES_ENDPOINT:
         return
 
-    pool_submit(lambda: track_database(request))
+    pool_submit(track_database, request)
