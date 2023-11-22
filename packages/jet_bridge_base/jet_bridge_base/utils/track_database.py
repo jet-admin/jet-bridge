@@ -4,7 +4,7 @@ import requests
 from jet_bridge_base import settings
 from jet_bridge_base.db import get_conf
 from jet_bridge_base.sentry import sentry_controller
-from jet_bridge_base.utils.async_exec import as_future
+from jet_bridge_base.utils.async_exec import pool_submit
 
 
 def track_database(request):
@@ -44,11 +44,4 @@ def track_database_async(request):
     if not settings.TRACK_DATABASES_ENDPOINT:
         return
 
-    try:
-        import asyncio
-    except:
-        return
-
-    # loop = asyncio.new_event_loop()
-    # asyncio.set_event_loop(loop)
-    # as_future(lambda: track_database(request))
+    pool_submit(lambda: track_database(request))
