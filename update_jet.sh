@@ -4,14 +4,12 @@ set -e
 # Jet Bridge
 # https://github.com/jet-admin/jet-bridge
 #
-# This script is meant for quick & easy install via:
+# This script is meant for updating existing container:
 #
-#   sh <(curl -s https://app-dev.jetadmin.io/install_jet.sh)
+#   sh <(curl -s https://app-dev.jetadmin.io/update_jet.sh)
 
 
-PROJECT=$1
-TOKEN=$2
-ENVIRONMENT=$3
+CONTAINER_NAME=$1
 
 if [ "$(uname)" = "Darwin" ]; then
     MAC=1
@@ -31,17 +29,10 @@ else
 fi
 
 check_arguments() {
-    if [ -z $PROJECT ]; then
+    if [ -z $CONTAINER_NAME ]; then
         echo
         echo "ERROR:"
-        echo "    Pass project as an argument"
-        echo
-        exit 1
-    fi
-    if [ -z $TOKEN ]; then
-        echo
-        echo "ERROR:"
-        echo "    Pass token as an argument"
+        echo "    Pass CONTAINER_NAME as an argument"
         echo
         exit 1
     fi
@@ -82,9 +73,6 @@ check_is_docker_running() {
         if [ "$(id -u)" -ne 0 ]; then
             echo "    [!] Try running this script with sudo:"
             echo
-            echo "    curl -s https://app-dev.jetadmin.io/install_jet.sh -o install_jet.sh"
-            echo "    sudo sh install_jet.sh ${PROJECT} ${TOKEN} ${ENVIRONMENT}"
-            echo
         fi
 
         exit 1
@@ -99,53 +87,10 @@ fetch_latest_jet_bridge() {
     docker pull jetadmin/jetbridge:dev
 }
 
-prepare_container() {
-    echo
-    echo "    Installing Jet Bridge as a Docker container..."
-    echo
-
-    read -p "Enter Docker container name or leave default [jet_bridge]: " CONTAINER_NAME
-    CONTAINER_NAME=${CONTAINER_NAME:-jet_bridge}
-}
-
-create_config() {
-    DATABASE_HOST=''
-    POSSIBLE_HOST=''
-
-    if [ $WIN -eq 1 ] || [ $MAC -eq 1 ]; then
-        remove_container
-        POSSIBLE_HOST=$(docker run \
-            --name=${CONTAINER_NAME} \
-            -it \
-            -v ${PWD}:/jet \
-            --entrypoint=/network-entrypoint.sh \
-            --net=host \
-            jetadmin/jetbridge:dev)
-    fi
-
-    if [ $POSSIBLE_HOST ]; then
-        DATABASE_HOST=" -e DATABASE_HOST=${POSSIBLE_HOST}"
-    fi
-
-    remove_container
-    docker run \
-        --name=${CONTAINER_NAME} \
-        -it \
-        -v ${PWD}:/jet \
-        -e PROJECT=${PROJECT} \
-        -e TOKEN=${TOKEN} \
-        -e ENVIRONMENT=${ENVIRONMENT} \
-        -e ENVIRONMENT_TYPE=docker \
-        -e WEB_BASE_URL=https://app-dev.jetadmin.io \
-        -e API_BASE_URL=https://api-dev.jetadmin.io/api \
-        ${DATABASE_HOST} \
-        -e POSSIBLE_HOST=${POSSIBLE_HOST} \
-        -e ARGS=config \
-        --net=${NET} \
-        jetadmin/jetbridge:dev
-}
-
 run_instance() {
+    PROJECT=$(awk -F "=" '/^PROJECT=/ {print $2}' jet.conf)
+    TOKEN=$(awk -F "=" '/^TOKEN=/ {print $2}' jet.conf)
+    ENVIRONMENT=$(awk -F "=" '/^ENVIRONMENT=/ {print $2}' jet.conf)
     PORT=$(awk -F "=" '/^PORT=/ {print $2}' jet.conf)
     SSL_CERT=$(awk -F "=" '/^SSL_CERT=/ {print $2}' jet.conf)
     SSL_KEY=$(awk -F "=" '/^SSL_KEY=/ {print $2}' jet.conf)
@@ -229,16 +174,10 @@ run_instance() {
     if [ -n "$ENVIRONMENT" ]; then
       echo "    Environment: ${ENVIRONMENT}"
     fi
-
-    echo
-    echo "    Open ${REGISTER_URL} to finish installation"
-    echo
 }
 
 check_arguments
 check_is_docker_installed
 check_is_docker_running
 fetch_latest_jet_bridge
-prepare_container
-create_config
 run_instance
