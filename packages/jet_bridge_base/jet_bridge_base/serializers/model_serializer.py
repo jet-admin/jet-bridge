@@ -10,6 +10,7 @@ from jet_bridge_base.utils.queryset import get_session_engine
 data_types = [
     {'query': 'VARCHAR', 'operator': 'startswith', 'data_type': fields.CharField},
     {'query': 'TEXT', 'operator': 'equals', 'data_type': fields.CharField},
+    {'query': 'BIT', 'operator': 'equals', 'data_type': fields.BooleanField},
     {'query': 'BOOLEAN', 'operator': 'equals', 'data_type': fields.BooleanField},
     {'query': 'INTEGER[]', 'operator': 'startswith', 'data_type': fields.ArrayField},
     {'query': 'INTEGER', 'operator': 'equals', 'data_type': fields.IntegerField},
