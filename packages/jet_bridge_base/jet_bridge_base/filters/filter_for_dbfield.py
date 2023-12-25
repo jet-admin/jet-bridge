@@ -116,6 +116,13 @@ try:
 except ImportError:
     pass
 
+try:
+    from sqlalchemy.dialects.mssql.base import MONEY, SMALLMONEY
+    FILTER_FOR_DBFIELD[MONEY] = {'filter_class': FloatFilter, 'lookups': number_lookups, 'lookups_name': 'number'}
+    FILTER_FOR_DBFIELD[SMALLMONEY] = {'filter_class': FloatFilter, 'lookups': number_lookups, 'lookups_name': 'number'}
+except ImportError:
+    pass
+
 
 def filter_for_data_type(value):
     for data_type, filter_data in FILTER_FOR_DBFIELD.items():
