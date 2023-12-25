@@ -171,8 +171,6 @@ def apply_dynamic_type(func, *arg, **kwargs):
 
 class GraphQLSchemaGenerator(object):
     def __init__(self):
-        self.models_by_name = dict()
-        self.model_serializers_by_name = dict()
         self.relationships_by_name = dict()
         self.relationships_by_clean_name = dict()
         self.model_filters_types = dict()
@@ -207,29 +205,6 @@ class GraphQLSchemaGenerator(object):
             queryset = queryset.group_by(*pks)
 
         return queryset
-
-    def get_models(self, MappedBase):
-        result = {}
-
-        for Model in MappedBase.classes:
-            mapper = inspect(Model)
-            name = get_table_name(MappedBase.metadata, mapper.selectable)
-
-            result[name] = Model
-
-        return result
-
-    def get_model_serializers(self, MappedBase):
-        result = {}
-
-        for Model in MappedBase.classes:
-            mapper = inspect(Model)
-            name = get_table_name(MappedBase.metadata, mapper.selectable)
-
-            serializer_class = get_model_serializer(Model)
-            result[name] = serializer_class
-
-        return result
 
     def get_relationships(self, request, MappedBase, draft):
         result = {}
@@ -888,7 +863,7 @@ class GraphQLSchemaGenerator(object):
 
             i += 1
 
-    def resolve_model_list(self, MappedBase, Model, mapper, serializer_class, info, filters=None, lookups=None, sort=None, pagination=None, search=None):
+    def resolve_model_list(self, MappedBase, Model, mapper,info, filters=None, lookups=None, sort=None, pagination=None, search=None):
         try:
             filters = filters or []
             lookups = lookups or []
@@ -917,6 +892,7 @@ class GraphQLSchemaGenerator(object):
 
             request.context['graphql_data_query_time'] = round(data_query_end - data_query_start, 3)
 
+            serializer_class = get_model_serializer(Model)
             serializer_context = {}
 
             queryset_page_lookups = self.get_models_lookups(request, MappedBase, queryset_page, Model, mapper, lookups)
@@ -975,32 +951,6 @@ class GraphQLSchemaGenerator(object):
         except Exception as e:
             raise e
 
-    def resolve_list(self, parent, info, filters=None, lookups=None, sort=None, pagination=None, search=None, before_resolve=None):
-        request = info.context.get('request')
-        MappedBase = get_mapped_base(request)
-
-        Model = self.models_by_name.get(info.field_name)
-        serializer_class = self.model_serializers_by_name.get(info.field_name)
-        mapper = inspect(Model)
-
-        if before_resolve is not None:
-            before_resolve(request=request, mapper=mapper)
-
-        result = self.resolve_model_list(
-            MappedBase,
-            Model,
-            mapper,
-            serializer_class,
-            info,
-            filters=filters,
-            lookups=lookups,
-            sort=sort,
-            pagination=pagination,
-            search=search
-        )
-
-        return result
-
     def get_query_type(self, request, draft, before_resolve=None, on_progress_updated=None):
         MappedBase = get_mapped_base(request)
 
@@ -1009,8 +959,6 @@ class GraphQLSchemaGenerator(object):
 
         query_attrs = {}
 
-        self.models_by_name = self.get_models(MappedBase)
-        self.model_serializers_by_name = self.get_model_serializers(MappedBase)
         self.relationships_by_name = self.get_relationships(request, MappedBase, draft)
         self.relationships_by_clean_name = self.clean_relationships_by_name(self.relationships_by_name)
 
@@ -1043,6 +991,26 @@ class GraphQLSchemaGenerator(object):
                 'pagination': graphene.Field(PaginationResponseType)
             })
 
+            def create_list_resolver(Model, mapper):
+                def resolver(parent, info, filters=None, lookups=None, sort=None, pagination=None, search=None):
+                    request = info.context.get('request')
+
+                    if before_resolve is not None:
+                        before_resolve(request=request, mapper=mapper)
+
+                    return self.resolve_model_list(
+                        MappedBase,
+                        Model,
+                        mapper,
+                        info,
+                        filters=filters,
+                        lookups=lookups,
+                        sort=sort,
+                        pagination=pagination,
+                        search=search
+                    )
+                return resolver
+
             query_attrs[name] = graphene.Field(
                 ModelListType,
                 filters=FiltersType,
@@ -1051,11 +1019,7 @@ class GraphQLSchemaGenerator(object):
                 pagination=PaginationType(),
                 search=SearchType()
             )
-
-            def resolve_list(*args, **kwargs):
-                return self.resolve_list(*args, **kwargs, before_resolve=before_resolve)
-
-            query_attrs['resolve_{}'.format(name)] = resolve_list
+            query_attrs['resolve_{}'.format(name)] = create_list_resolver(Model, mapper)
 
             i += 1
 
