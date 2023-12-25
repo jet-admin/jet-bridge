@@ -19,6 +19,8 @@ data_types = [
     {'query': 'FLOAT', 'operator': 'equals', 'data_type': fields.FloatField},
     {'query': 'DECIMAL', 'operator': 'equals', 'data_type': fields.FloatField},
     {'query': 'DOUBLE_PRECISION', 'operator': 'equals', 'data_type': fields.FloatField},
+    {'query': 'MONEY', 'operator': 'equals', 'data_type': fields.FloatField},
+    {'query': 'SMALLMONEY', 'operator': 'equals', 'data_type': fields.FloatField},
     {'query': 'NUMERIC', 'operator': 'startswith', 'data_type': fields.CharField},
     {'query': 'VARCHAR', 'operator': 'startswith', 'data_type': fields.CharField},
     {'query': 'TIMESTAMP', 'operator': 'startswith', 'data_type': fields.DateTimeField},
