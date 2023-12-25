@@ -45,6 +45,8 @@ try:
     map_data_types.append({'sql_type': mssql.BIT, 'map_type': data_types.BOOLEAN, 'db_type': data_types.BOOLEAN})
     map_data_types.append({'sql_type': mssql.VARBINARY, 'map_type': data_types.CHAR, 'db_type': data_types.CHAR})
     map_data_types.append({'sql_type': mssql.SMALLDATETIME, 'map_type': data_types.DATE_TIME, 'db_type': data_types.DATE_TIME})
+    map_data_types.append({'sql_type': mssql.MONEY, 'map_type': data_types.FLOAT, 'db_type': data_types.MONEY, 'convert': lambda x: '{}::double precision'.format(x)})
+    map_data_types.append({'sql_type': mssql.SMALLMONEY, 'map_type': data_types.FLOAT, 'db_type': data_types.MONEY, 'convert': lambda x: '{}::double precision'.format(x)})
 except ImportError:
     pass
 
