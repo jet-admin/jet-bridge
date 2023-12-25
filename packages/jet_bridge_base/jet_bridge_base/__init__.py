@@ -1,3 +1,3 @@
 from jet_bridge_base import settings
 
-VERSION = '1.8.31'
+VERSION = '1.8.32'
