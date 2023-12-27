@@ -104,9 +104,10 @@ options.parse_command_line(final=False)
 if options.config:
     try:
         parse_config_file(options, options.config, 'JET', final=False)
-    except IOError as e:
-        if options.config != DEFAULT_CONFIG_PATH:
-            logger.warning(e)
+    except OSError:
+        pass
+    except Exception as e:
+        logger.warning('Failed to parse config file: %s', e)
 
 parse_environment(options, final=True)
 
