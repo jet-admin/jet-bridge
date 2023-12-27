@@ -4,9 +4,11 @@ from django.conf import settings
 from django.db import connection
 
 from jet_bridge_base.logger import logger
+from jet_bridge_base.settings import DEFAULT_CONFIG_PATH
 
 JET_READ_ONLY = getattr(settings, 'JET_READ_ONLY', False)
 JET_AUTO_OPEN_REGISTER = getattr(settings, 'JET_AUTO_OPEN_REGISTER', True)
+JET_CONFIG = getattr(settings, 'JET_CONFIG', DEFAULT_CONFIG_PATH)
 JET_PROJECT = getattr(settings, 'JET_PROJECT', None)
 JET_TOKEN = getattr(settings, 'JET_TOKEN', None)
 JET_ENVIRONMENT = getattr(settings, 'JET_ENVIRONMENT', None)

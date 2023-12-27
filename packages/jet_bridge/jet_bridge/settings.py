@@ -4,6 +4,7 @@ import os
 from tornado.options import define, options
 
 from jet_bridge_base.logger import logger
+from jet_bridge_base.settings import DEFAULT_CONFIG_PATH
 
 from jet_bridge import media
 from jet_bridge.utils.settings import parse_environment, parse_config_file
@@ -11,7 +12,6 @@ from jet_bridge.utils.settings import parse_environment, parse_config_file
 # Constants
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DEFAULT_CONFIG_PATH = os.path.join('jet.conf')
 
 # Options
 

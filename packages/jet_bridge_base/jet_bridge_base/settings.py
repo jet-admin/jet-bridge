@@ -6,10 +6,12 @@ from jet_bridge_base.logger import set_logger_level
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 CURRENT_MODULE = sys.modules[__name__]
+DEFAULT_CONFIG_PATH = os.path.join('jet.conf')
 
 DEBUG = False
 READ_ONLY = False
 AUTO_OPEN_REGISTER = True
+CONFIG = DEFAULT_CONFIG_PATH
 PROJECT = None
 TOKEN = None
 ENVIRONMENT = None

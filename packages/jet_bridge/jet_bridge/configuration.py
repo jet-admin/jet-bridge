@@ -23,6 +23,7 @@ class JetBridgeConfiguration(Configuration):
             'DEBUG': settings.DEBUG,
             'READ_ONLY': settings.READ_ONLY,
             'AUTO_OPEN_REGISTER': settings.AUTO_OPEN_REGISTER,
+            'CONFIG': settings.CONFIG,
             'WEB_BASE_URL': settings.WEB_BASE_URL,
             'API_BASE_URL': settings.API_BASE_URL,
             'PROJECT': settings.PROJECT,
