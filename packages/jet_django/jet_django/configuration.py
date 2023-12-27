@@ -52,6 +52,7 @@ class JetDjangoConfiguration(Configuration):
             'DEBUG': django_settings.DEBUG,
             'READ_ONLY': settings.JET_READ_ONLY,
             'AUTO_OPEN_REGISTER': settings.JET_AUTO_OPEN_REGISTER,
+            'CONFIG': settings.JET_CONFIG,
             'WEB_BASE_URL': settings.JET_BACKEND_WEB_BASE_URL,
             'API_BASE_URL': settings.JET_BACKEND_API_BASE_URL,
             'PROJECT': settings.JET_PROJECT,
