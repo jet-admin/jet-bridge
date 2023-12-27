@@ -370,6 +370,47 @@ def get_connection_only_predicate(conf):
     return only
 
 
+def clean_hostname(hostname):
+    if not isinstance(hostname, str):
+        return
+    hostname = hostname.strip().lower()
+    if hostname == '':
+        return
+    return hostname
+
+
+def get_blacklist_hostnames():
+    try:
+        import configparser
+    except ImportError:
+        import ConfigParser as configparser
+
+    try:
+        config = configparser.RawConfigParser()
+        config.read(settings.CONFIG)
+
+        config_value = config.get('JET', 'BLACKLIST_HOSTS', fallback='')
+
+        return list(filter(
+            lambda x: x is not None,
+            map(lambda x: clean_hostname(x), config_value.split(','))
+        ))
+    except:
+        return []
+
+
+def is_hostname_blacklisted(hostname):
+    hostname = clean_hostname(hostname)
+    if not hostname:
+        return False
+
+    blacklist_hosts = get_blacklist_hostnames()
+    if len(blacklist_hosts) == 0:
+        return False
+
+    return hostname in blacklist_hosts
+
+
 def connect_database(conf):
     global connections, pending_connections
 
@@ -418,6 +459,10 @@ def connect_database(conf):
 
         engine = create_connection_engine(conf, tunnel)
         pending_connection['engine'] = engine
+
+        hostname = conf.get('host')
+        if is_hostname_blacklisted(hostname):
+            raise Exception('Hostname "{}" is blacklisted'.format(hostname))
 
         Session = scoped_session(sessionmaker(bind=engine))
         session = Session()
@@ -713,6 +758,13 @@ def create_session(request):
     connection = get_request_connection(request)
     if not connection:
         return
+
+    conf = get_conf(request)
+    hostname = conf.get('host')
+    if is_hostname_blacklisted(hostname):
+        dispose_connection(conf)
+        raise Exception('Hostname "{}" is blacklisted'.format(hostname))
+
     return connection['Session']()
 
 
