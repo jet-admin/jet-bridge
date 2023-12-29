@@ -40,6 +40,13 @@ try:
     map_data_types.append({'sql_type': postgresql.DOUBLE_PRECISION, 'map_type': data_types.FLOAT, 'db_type': data_types.DOUBLE_PRECISION, 'convert': lambda x: '{}::double precision'.format(x)})
 except ImportError:
     pass
+
+try:
+    from sqlalchemy.dialects import mysql
+    map_data_types.append({'sql_type': mysql.TINYINT, 'map_type': data_types.BOOLEAN, 'db_type': data_types.BOOLEAN})
+except ImportError:
+    pass
+
 try:
     from sqlalchemy.dialects import mssql
     map_data_types.append({'sql_type': mssql.BIT, 'map_type': data_types.BOOLEAN, 'db_type': data_types.BOOLEAN})
