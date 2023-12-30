@@ -1,5 +1,6 @@
 import inspect, re
 from datetime import datetime
+from concurrent.futures import ThreadPoolExecutor
 
 import six
 from django.apps import apps
@@ -34,6 +35,7 @@ class JetDjangoConfiguration(Configuration):
                 self.models[self.model_key(related_model)] = self.serialize_model(related_model)
 
         self.media_storage = get_storage_class(settings.JET_MEDIA_FILE_STORAGE)()
+        self.pool = ThreadPoolExecutor()
 
     def get_type(self):
         return 'jet_django'
@@ -342,3 +344,6 @@ class JetDjangoConfiguration(Configuration):
             url = '{}://{}{}'.format(request.protocol, request.host, url)
 
         return url
+
+    def run_async(self, func, *args, **kwargs):
+        self.pool.submit(func, *args, **kwargs)
