@@ -1,5 +1,6 @@
 import os
 
+from jet_bridge.utils.async_exec import pool_submit
 from jet_bridge_base.configuration import Configuration
 from jet_bridge_base.utils.common import get_random_string
 
@@ -170,3 +171,6 @@ class JetBridgeConfiguration(Configuration):
 
     def session_clear(self, request, name):
         request.original_handler.clear_cookie(name)
+
+    def run_async(self, func, *args, **kwargs):
+        pool_submit(func, *args, **kwargs)

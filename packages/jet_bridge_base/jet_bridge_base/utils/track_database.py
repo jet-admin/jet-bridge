@@ -2,9 +2,9 @@ from fnmatch import fnmatch
 import requests
 
 from jet_bridge_base import settings
+from jet_bridge_base.configuration import configuration
 from jet_bridge_base.db import get_conf
 from jet_bridge_base.sentry import sentry_controller
-from jet_bridge_base.utils.async_exec import pool_submit
 
 
 def track_database(conf):
@@ -44,4 +44,4 @@ def track_database_async(request):
         return
 
     conf = get_conf(request)
-    pool_submit(track_database, conf)
+    configuration.run_async(track_database, conf)
