@@ -2,6 +2,7 @@ import sys
 from datetime import datetime
 
 import tornado.web
+from jet_bridge.utils.async_exec import as_future
 from jet_bridge_base.db import get_connection
 from jet_bridge_base.exceptions.request_error import RequestError
 from jet_bridge_base.sentry import sentry_controller
@@ -12,7 +13,6 @@ from jet_bridge_base.request import Request
 from jet_bridge_base.responses.redirect import RedirectResponse
 from jet_bridge_base.responses.template import TemplateResponse
 from jet_bridge_base.status import HTTP_204_NO_CONTENT
-from jet_bridge_base.utils.async_exec import as_future
 from tornado.iostream import StreamClosedError
 
 

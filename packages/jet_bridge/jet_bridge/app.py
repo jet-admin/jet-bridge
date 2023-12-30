@@ -4,8 +4,8 @@ import tornado.ioloop
 import tornado.web
 
 from jet_bridge.handlers.temporary_redirect import TemporaryRedirectHandler
+from jet_bridge.utils.async_exec import set_max_workers
 from jet_bridge_base.sentry import sentry_controller
-from jet_bridge_base.utils.async_exec import set_max_workers
 from jet_bridge_base import settings as base_settings
 from jet_bridge_base.views.api import ApiView
 from jet_bridge_base.views.discover_connection import DiscoverConnectionView

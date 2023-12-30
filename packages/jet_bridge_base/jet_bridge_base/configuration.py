@@ -80,6 +80,9 @@ class Configuration(object):
     def clean_sso_applications(self, applications):
         return dict(map(lambda x: (self.clean_sso_application_name(x[0]), x[1]), applications.items()))
 
+    def run_async(self, func, *args, **kwargs):
+        func(*args, **kwargs)
+
 
 configuration = Configuration()
 
