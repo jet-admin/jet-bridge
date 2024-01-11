@@ -369,6 +369,10 @@ class SqlSerializer(Serializer):
             if count_rows is not None:
                 response['count'] = count_rows
 
+            limit = queryset._limit
+            if limit:
+                response['limit'] = limit
+
             response['data_query_time'] = data_query_time
 
             if count_rows is not None:
