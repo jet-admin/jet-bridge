@@ -34,6 +34,7 @@ class Router(object):
             def create_action_method(action):
                 def action_method(inner_self, *args, **kwargs):
                     request = inner_self.get_request()
+                    request.action = action
 
                     try:
                         inner_self.view.action = action

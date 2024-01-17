@@ -10,7 +10,7 @@ from jet_bridge_base.utils.exceptions import validation_error_from_database_erro
 
 class DestroyAPIViewMixin(object):
 
-    def delete(self, request, *args, **kwargs):
+    def destroy(self, request, *args, **kwargs):
         track_database_async(request)
 
         self.apply_timezone(request)
