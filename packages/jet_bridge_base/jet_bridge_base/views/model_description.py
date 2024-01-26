@@ -18,8 +18,19 @@ from jet_bridge_base.utils.db_types import sql_to_map_type, sql_to_db_type
 from jet_bridge_base.views.base.api import APIView
 
 
+def is_column_has_default(column):
+    return column.autoincrement or column.default or column.server_default
+
+
 def is_column_optional(column):
-    return column.autoincrement or column.default or column.server_default or column.nullable
+    return is_column_has_default(column) or column.nullable
+
+
+def is_column_required(column, primary_key_auto):
+    if primary_key_auto:
+        return True
+    else:
+        return not is_column_optional(column)
 
 
 def map_column_default(column):
@@ -62,7 +73,7 @@ def map_column_default(column):
                 }
 
 
-def map_column(metadata, column, editable):
+def map_column(metadata, column, editable, primary_key_auto):
     params = {}
     data_source_field = None
     data_source_name = None
@@ -110,7 +121,7 @@ def map_column(metadata, column, editable):
     except ImportError:
         pass
 
-    optional = is_column_optional(column)
+    required = is_column_required(column, primary_key_auto)
 
     if column.comment:
         try:
@@ -144,7 +155,7 @@ def map_column(metadata, column, editable):
         'field': map_type,
         'db_field': db_type,
         'filterable': True,
-        'required': not optional,
+        'required': required,
         'null': column.nullable,
         'editable': editable,
         'params': params,
@@ -285,10 +296,17 @@ def map_table(MappedBase, cls, relationships_overrides, hidden):
         except ValueError:
             pass
 
+    def is_column_primary_key_auto(column):
+        return primary_key is not None and column.name == primary_key.name and primary_key_auto
+
     result = {
         'model': name,
         'db_table': name,
-        'fields': list(map(lambda x: map_column(MappedBase.metadata, x, x.name not in non_editable), mapper.columns)),
+        'fields': list(map(lambda x: map_column(
+            MappedBase.metadata,
+            x, x.name not in non_editable,
+            is_column_primary_key_auto(x)
+        ), mapper.columns)),
         'relations': list(map(lambda x: map_relationship(MappedBase.metadata, x), filter(lambda x: x.direction in [MANYTOONE, ONETOMANY], mapper.relationships))),
         'relation_overrides': list(map(lambda x: map_relationship_override(x), model_relationships_overrides)) if model_relationships_overrides else None,
         'hidden': name in hidden or name in configuration.get_hidden_model_description(),
