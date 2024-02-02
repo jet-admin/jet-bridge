@@ -175,6 +175,22 @@ def map_column(metadata, column, editable, primary_key_auto):
     return result
 
 
+def is_column_primary_key_auto(primary_key, primary_key_auto, column):
+    return primary_key is not None and column.name == primary_key.name and primary_key_auto
+
+
+def map_table_column(metadata, table, column, editable):
+    primary_key = table.primary_key.columns[0]
+    primary_key_auto = getattr(table, '__jet_auto_pk__', False) if table is not None else None
+
+    return map_column(
+        metadata,
+        column,
+        editable,
+        is_column_primary_key_auto(primary_key, primary_key_auto, column)
+    )
+
+
 def map_relationship(metadata, relationship):
     local_field = get_set_first(relationship.local_columns)
     related_field = get_set_first(relationship.remote_side)
@@ -296,16 +312,14 @@ def map_table(MappedBase, cls, relationships_overrides, hidden):
         except ValueError:
             pass
 
-    def is_column_primary_key_auto(column):
-        return primary_key is not None and column.name == primary_key.name and primary_key_auto
-
     result = {
         'model': name,
         'db_table': name,
         'fields': list(map(lambda x: map_column(
             MappedBase.metadata,
-            x, x.name not in non_editable,
-            is_column_primary_key_auto(x)
+            x,
+            x.name not in non_editable,
+            is_column_primary_key_auto(primary_key, primary_key_auto, x)
         ), mapper.columns)),
         'relations': list(map(lambda x: map_relationship(MappedBase.metadata, x), filter(lambda x: x.direction in [MANYTOONE, ONETOMANY], mapper.relationships))),
         'relation_overrides': list(map(lambda x: map_relationship_override(x), model_relationships_overrides)) if model_relationships_overrides else None,
