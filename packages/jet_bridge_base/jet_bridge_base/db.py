@@ -13,6 +13,7 @@ from jet_bridge_base.reflect import reflect
 from jet_bridge_base.ssh_tunnel import SSHTunnel
 from jet_bridge_base.utils.crypt import get_sha256_hash
 from jet_bridge_base.utils.process import get_memory_usage_human, get_memory_usage
+from jet_bridge_base.utils.timezones import fetch_default_timezone
 from jet_bridge_base.utils.type_codes import fetch_type_code_to_sql_type
 from six import StringIO
 from six.moves.urllib_parse import quote_plus
@@ -477,6 +478,12 @@ def connect_database(conf):
             logger.info('[{}] Getting db types for "{}"...'.format(id_short, connection_name))
             type_code_to_sql_type = fetch_type_code_to_sql_type(session)
 
+            default_timezone = fetch_default_timezone(session)
+            if default_timezone is not None:
+                logger.info('[{}] Default timezone detected: "{}"'.format(id_short, default_timezone))
+            else:
+                logger.info('[{}] Failed to detect default timezone'.format(id_short))
+
             metadata_dump = load_metadata_file(conf, connection)
 
             if metadata_dump:
@@ -520,6 +527,7 @@ def connect_database(conf):
                 'MappedBase': MappedBase,
                 'params_id': connection_params_id,
                 'type_code_to_sql_type': type_code_to_sql_type,
+                'default_timezone': default_timezone,
                 'tunnel': tunnel,
                 'cache': {},
                 'lock': threading.Lock(),
@@ -794,6 +802,13 @@ def get_type_code_to_sql_type(request):
     if not connection:
         return
     return connection['type_code_to_sql_type']
+
+
+def get_default_timezone(request):
+    connection = get_request_connection(request)
+    if not connection:
+        return
+    return connection['default_timezone']
 
 
 @contextlib.contextmanager
