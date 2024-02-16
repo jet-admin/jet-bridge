@@ -1,5 +1,7 @@
+import datetime
 import time
 
+from jet_bridge_base.fields.datetime import datetime_apply_default_timezone
 from sqlalchemy import text, select, column, func, desc, or_, cast
 from sqlalchemy import sql
 from sqlalchemy.sql import sqltypes
@@ -338,6 +340,9 @@ class SqlSerializer(Serializer):
                         return x.decode('utf-8')
                     except UnicodeDecodeError:
                         return x.hex()
+                elif isinstance(x, datetime.datetime):
+                    x = datetime_apply_default_timezone(x, request)
+                    return x
                 else:
                     return x
 

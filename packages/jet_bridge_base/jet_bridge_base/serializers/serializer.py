@@ -45,7 +45,6 @@ class Serializer(Field):
         self.data = kwargs.pop('data', None)
         self.meta = getattr(self, 'Meta', None)
         self.partial = kwargs.pop('partial', False)
-        self.context = kwargs.pop('context', {})
         super(Serializer, self).__init__(*args, **kwargs)
         self.update_fields()
 

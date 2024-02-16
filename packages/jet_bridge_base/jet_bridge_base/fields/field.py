@@ -34,6 +34,7 @@ class Field(object):
         self.many = kwargs.pop('many', False)
         self.allow_many = kwargs.pop('allow_many', False)
         self.default = kwargs.pop('default', empty)
+        self.context = kwargs.pop('context', {})
 
         messages = {}
         for cls in reversed(self.__class__.__mro__):
