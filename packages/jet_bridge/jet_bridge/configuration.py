@@ -35,6 +35,7 @@ class JetBridgeConfiguration(Configuration):
             'JWT_VERIFY_KEY': settings.JWT_VERIFY_KEY,
             'BEARER_AUTH_KEY': settings.BEARER_AUTH_KEY,
             'ENVIRONMENT_TYPE': settings.ENVIRONMENT_TYPE,
+            'BLACKLIST_HOSTS': settings.BLACKLIST_HOSTS,
             'DATABASE_ENGINE': settings.DATABASE_ENGINE,
             'DATABASE_HOST': settings.DATABASE_HOST,
             'DATABASE_PORT': settings.DATABASE_PORT,

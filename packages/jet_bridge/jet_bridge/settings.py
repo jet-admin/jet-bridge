@@ -39,6 +39,7 @@ define('base_url', help='base URL', type=str)
 define('jwt_verify_key', help='JWT verify key', type=str, default=None)
 define('bearer_auth_key', help='Bearer auth key', type=str, default=None)
 define('environment_type', help='environment type', type=str, default=None)
+define('blacklist_hosts', help='blacklisted hosts', type=str, default=None)
 
 define('web_base_url', default=DEFAULT_WEB_BASE_URL, help='Jet Admin frontend application base URL')
 define('api_base_url', default=DEFAULT_API_BASE_URL, help='Jet Admin API base URL')
@@ -154,6 +155,7 @@ BASE_URL = options.base_url
 JWT_VERIFY_KEY = options.jwt_verify_key
 BEARER_AUTH_KEY = options.bearer_auth_key
 ENVIRONMENT_TYPE = options.environment_type
+BLACKLIST_HOSTS = options.blacklist_hosts
 
 WEB_BASE_URL = options.web_base_url
 API_BASE_URL = options.api_base_url
