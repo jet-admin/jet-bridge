@@ -4,7 +4,7 @@ import time
 from jet_bridge_base.fields.datetime import datetime_apply_default_timezone
 from sqlalchemy import text, select, column, func, desc, or_, cast
 from sqlalchemy import sql
-from sqlalchemy.sql import sqltypes
+from sqlalchemy.sql import sqltypes, quoted_name
 from sqlalchemy.exc import SQLAlchemyError
 
 from jet_bridge_base import fields
@@ -93,11 +93,11 @@ class SqlSerializer(Serializer):
 
         return attrs
 
-    def aggregate_queryset(self, subquery, data):
+    def aggregate_queryset(self, subquery, data, session):
         func_param = data['aggregate'].get('func').lower()
         column_param = data['aggregate'].get('column')
 
-        y_column = column(column_param) if column_param is not None else None
+        y_column = self.get_column(session, column_param) if column_param is not None else None
         y_func = get_query_func_by_name(func_param, y_column)
 
         if y_func is None:
@@ -109,7 +109,7 @@ class SqlSerializer(Serializer):
         def get_y_func(group):
             y_func_param = group.get('yFunc').lower()
             y_column_param = group.get('yColumn')
-            y_column = column(y_column_param) if y_column_param is not None else None
+            y_column = self.get_column(session, y_column_param) if y_column_param is not None else None
             return get_query_func_by_name(y_func_param, y_column)
 
         if 'groups' in data:
@@ -131,7 +131,7 @@ class SqlSerializer(Serializer):
         def map_group_column(group, i):
             x_lookup_param = group.get('xLookup')
             x_column_param = group.get('xColumn')
-            x_column = column(x_column_param) if x_column_param is not None else None
+            x_column = self.get_column(session, x_column_param) if x_column_param is not None else None
 
             lookup_params = x_lookup_param.split('_') if x_lookup_param else []
             lookup_type = lookup_params[0] if len(lookup_params) >= 1 else None
@@ -163,9 +163,10 @@ class SqlSerializer(Serializer):
             filter_data = filter_for_data_type(query_type)
             for lookup in filter_data['lookups']:
                 for exclude in [False, True]:
+                    column_ = self.get_column(session, item['name'], type_=query_type)
                     instance = filter_data['filter_class'](
                         name=item['name'],
-                        column=column(item['name'], type_=query_type),
+                        column=column_,
                         lookup=lookup,
                         exclude=exclude
                     )
@@ -211,7 +212,7 @@ class SqlSerializer(Serializer):
 
         if search not in EMPTY_VALUES:
             def map_column(item):
-                field = column(item['name'])
+                field = self.get_column(session, item['name'])
                 query_type = map_to_sql_type(item['data_type'])()
 
                 if isinstance(query_type, (sqltypes.Integer, sqltypes.Numeric)):
@@ -238,25 +239,30 @@ class SqlSerializer(Serializer):
 
         return queryset
 
-    def map_order_field(self, name):
+    def map_order_field(self, session, name):
         descending = False
         if name.startswith('-'):
             name = name[1:]
             descending = True
-        field = column(name)
+        field = self.get_column(session, name)
         if descending:
             field = desc(field)
         return field
 
+    def get_column(self, session, name, **kwargs):
+        if get_session_engine(session) == 'oracle':
+            name = quoted_name(name, True)
+        return column(name, **kwargs)
+
     def sort_queryset(self, queryset, data, session):
         if 'order_by' in data:
-            order_by = list(map(lambda x: self.map_order_field(x), data['order_by']))
+            order_by = list(map(lambda x: self.map_order_field(session, x), data['order_by']))
             queryset = queryset.order_by(*order_by)
         else:
             if 'aggregate' not in data and 'group' not in data and 'groups' not in data:
                 if get_session_engine(session) == 'mssql':
                     for item in data.get('columns', []):
-                        field = column(item['name'])
+                        field = self.get_column(session, item['name'])
                         queryset = queryset.order_by(field)
                         break
 
@@ -309,7 +315,7 @@ class SqlSerializer(Serializer):
 
         try:
             if 'aggregate' in data:
-                queryset = self.aggregate_queryset(subquery, data)
+                queryset = self.aggregate_queryset(subquery, data, session)
             elif 'groups' in data or 'group' in data:
                 queryset = self.group_queryset(subquery, data, session)
             else:

@@ -17,6 +17,7 @@ JET_BASE_URL = getattr(settings, 'JET_BASE_URL', None)
 JET_JWT_VERIFY_KEY = getattr(settings, 'JET_JWT_VERIFY_KEY', None)
 JET_BEARER_AUTH_KEY = getattr(settings, 'JET_BEARER_AUTH_KEY', None)
 JET_ENVIRONMENT_TYPE = getattr(settings, 'JET_ENVIRONMENT_TYPE', 'django')
+JET_BLACKLIST_HOSTS = getattr(settings, 'JET_BLACKLIST_HOSTS', None)
 
 JET_BACKEND_API_BASE_URL = getattr(settings, 'JET_BACKEND_API_BASE_URL', 'https://api.jetadmin.io/api')
 JET_BACKEND_WEB_BASE_URL = getattr(settings, 'JET_BACKEND_WEB_BASE_URL', 'https://app.jetadmin.io')
