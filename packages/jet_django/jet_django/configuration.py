@@ -65,6 +65,7 @@ class JetDjangoConfiguration(Configuration):
             'JWT_VERIFY_KEY': settings.JET_JWT_VERIFY_KEY,
             'BEARER_AUTH_KEY': settings.JET_BEARER_AUTH_KEY,
             'ENVIRONMENT_TYPE': settings.JET_ENVIRONMENT_TYPE,
+            'BLACKLIST_HOSTS': settings.JET_BLACKLIST_HOSTS,
             'DATABASE_ENGINE': settings.database_engine,
             'DATABASE_HOST': settings.database_settings.get('HOST'),
             'DATABASE_PORT': settings.database_settings.get('PORT'),

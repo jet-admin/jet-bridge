@@ -381,6 +381,11 @@ def clean_hostname(hostname):
 
 
 def get_blacklist_hostnames():
+    hostnames = []
+
+    if settings.BLACKLIST_HOSTS:
+        hostnames.extend(settings.BLACKLIST_HOSTS.split(','))
+
     try:
         import configparser
     except ImportError:
@@ -391,13 +396,14 @@ def get_blacklist_hostnames():
         config.read(settings.CONFIG)
 
         config_value = config.get('JET', 'BLACKLIST_HOSTS', fallback='')
-
-        return list(filter(
-            lambda x: x is not None,
-            map(lambda x: clean_hostname(x), config_value.split(','))
-        ))
+        hostnames.extend(config_value.split(','))
     except:
-        return []
+        pass
+
+    return list(filter(
+        lambda x: x is not None,
+        map(lambda x: clean_hostname(x), hostnames)
+    ))
 
 
 def is_hostname_blacklisted(hostname):
