@@ -1,15 +1,19 @@
 import json
 import re
+from datetime import timedelta
 
+from jet_bridge_base import status
 from jet_bridge_base.models.model_relation_override import ModelRelationOverrideModel
+from jet_bridge_base.responses.base import Response
 from jet_bridge_base.store import store
+from jet_bridge_base.utils.crypt import get_sha256_hash
 from jet_bridge_base.utils.relations import relationship_direction_to_str
 from sqlalchemy import inspect, String, Enum, Date
 from sqlalchemy.orm import MANYTOONE, ONETOMANY
 from sqlalchemy.sql.elements import TextClause
 
 from jet_bridge_base.db import get_mapped_base, get_request_connection, get_table_name, request_connection_cache, \
-    MODEL_DESCRIPTIONS_RESPONSE_CACHE_KEY
+    MODEL_DESCRIPTIONS_RESPONSE_CACHE_KEY, MODEL_DESCRIPTIONS_HASH_CACHE_KEY
 from jet_bridge_base.models import data_types
 from jet_bridge_base.permissions import HasProjectPermissions
 from jet_bridge_base.responses.json import JSONResponse
@@ -322,8 +326,14 @@ def map_table(MappedBase, cls, relationships_overrides, hidden):
             x.name not in non_editable,
             is_column_primary_key_auto(primary_key, primary_key_auto, x)
         ), mapper.columns)),
-        'relations': list(map(lambda x: map_relationship(MappedBase.metadata, x), filter(lambda x: x.direction in [MANYTOONE, ONETOMANY], mapper.relationships))),
-        'relation_overrides': list(map(lambda x: map_relationship_override(x), model_relationships_overrides)) if model_relationships_overrides else None,
+        'relations': sorted(
+            list(map(lambda x: map_relationship(MappedBase.metadata, x), filter(lambda x: x.direction in [MANYTOONE, ONETOMANY], mapper.relationships))),
+            key=lambda x: x['name']
+        ),
+        'relation_overrides': sorted(
+            list(map(lambda x: map_relationship_override(x), model_relationships_overrides)),
+            key=lambda x: x['name']
+        ) if model_relationships_overrides else None,
         'hidden': name in hidden or name in configuration.get_hidden_model_description(),
         # 'relations': table_relations(mapper) + table_m2m_relations(mapper),
         'primary_key_field': primary_key.name if primary_key is not None else None,
@@ -365,7 +375,10 @@ class ModelDescriptionView(APIView):
                         relationships_overrides[override.model] = []
                     relationships_overrides[override.model].append(override)
 
-        return list(map(lambda x: map_table(MappedBase, x, relationships_overrides, hidden), MappedBase.classes))
+        return sorted(
+            list(map(lambda x: map_table(MappedBase, x, relationships_overrides, hidden), MappedBase.classes)),
+            key=lambda x: x['model']
+        )
 
     def get(self, request, *args, **kwargs):
         queryset = self.get_queryset(request)
@@ -373,10 +386,40 @@ class ModelDescriptionView(APIView):
 
         with request_connection_cache(request) as cache:
             rendered_data = cache.get(MODEL_DESCRIPTIONS_RESPONSE_CACHE_KEY)
+
             if rendered_data is not None:
-                return JSONResponse(rendered_data=rendered_data)
+                rendered_data_hash = cache.get(MODEL_DESCRIPTIONS_HASH_CACHE_KEY, get_sha256_hash(rendered_data))
+
+                not_modified_response = self.get_not_modified_response(request, rendered_data_hash)
+                if not_modified_response:
+                    return not_modified_response
+
+                response = JSONResponse(rendered_data=rendered_data)
+                self.set_response_cache_headers(response, rendered_data_hash)
+
+                return response
             else:
                 response = JSONResponse(serializer.representation_data)
                 rendered_data = response.render()
+                rendered_data_hash = get_sha256_hash(rendered_data)
+
                 cache[MODEL_DESCRIPTIONS_RESPONSE_CACHE_KEY] = rendered_data
+                cache[MODEL_DESCRIPTIONS_HASH_CACHE_KEY] = rendered_data_hash
+
+                not_modified_response = self.get_not_modified_response(request, rendered_data_hash)
+                if not_modified_response:
+                    return not_modified_response
+
+                self.set_response_cache_headers(response, rendered_data_hash)
+
                 return response
+
+    def set_response_cache_headers(self, response, rendered_data_hash):
+        response.headers['Cache-Control'] = 'max-age=%d' % timedelta(days=7).total_seconds()
+        response.headers['ETag'] = rendered_data_hash
+
+    def get_not_modified_response(self, request, rendered_data_hash):
+        if_none_match = request.headers.get('IF_NONE_MATCH')
+
+        if if_none_match is not None and rendered_data_hash == if_none_match:
+            return Response(status=status.HTTP_304_NOT_MODIFIED)

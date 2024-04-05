@@ -34,6 +34,7 @@ from jet_bridge_base.logger import logger
 connections = {}
 pending_connections = {}
 MODEL_DESCRIPTIONS_RESPONSE_CACHE_KEY = 'model_descriptions_response'
+MODEL_DESCRIPTIONS_HASH_CACHE_KEY = 'model_descriptions_hash'
 
 
 def url_encode(value):
@@ -884,6 +885,7 @@ def reload_request_graphql_schema(request, draft=None):
 def reload_request_model_descriptions_cache(request):
     with request_connection_cache(request) as cache:
         cache[MODEL_DESCRIPTIONS_RESPONSE_CACHE_KEY] = None
+        cache[MODEL_DESCRIPTIONS_HASH_CACHE_KEY] = None
 
 
 def release_inactive_graphql_schemas():

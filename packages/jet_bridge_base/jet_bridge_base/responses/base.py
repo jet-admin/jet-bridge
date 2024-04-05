@@ -17,7 +17,4 @@ class Response(object):
         return self.headers.items()
 
     def render(self):
-        if self.data is None:
-            return bytes()
-
         return self.data
