@@ -8,7 +8,8 @@ from sqlalchemy import inspect, String, Enum, Date
 from sqlalchemy.orm import MANYTOONE, ONETOMANY
 from sqlalchemy.sql.elements import TextClause
 
-from jet_bridge_base.db import get_mapped_base, get_request_connection, get_table_name
+from jet_bridge_base.db import get_mapped_base, get_request_connection, get_table_name, request_connection_cache, \
+    MODEL_DESCRIPTIONS_RESPONSE_CACHE_KEY
 from jet_bridge_base.models import data_types
 from jet_bridge_base.permissions import HasProjectPermissions
 from jet_bridge_base.responses.json import JSONResponse
@@ -369,4 +370,13 @@ class ModelDescriptionView(APIView):
     def get(self, request, *args, **kwargs):
         queryset = self.get_queryset(request)
         serializer = self.serializer_class(instance=queryset, many=True)
-        return JSONResponse(serializer.representation_data)
+
+        with request_connection_cache(request) as cache:
+            rendered_data = cache.get(MODEL_DESCRIPTIONS_RESPONSE_CACHE_KEY)
+            if rendered_data is not None:
+                return JSONResponse(rendered_data=rendered_data)
+            else:
+                response = JSONResponse(serializer.representation_data)
+                rendered_data = response.render()
+                cache[MODEL_DESCRIPTIONS_RESPONSE_CACHE_KEY] = rendered_data
+                return response
