@@ -33,6 +33,7 @@ from jet_bridge_base.logger import logger
 
 connections = {}
 pending_connections = {}
+MODEL_DESCRIPTIONS_RESPONSE_CACHE_KEY = 'model_descriptions_response'
 
 
 def url_encode(value):
@@ -855,6 +856,7 @@ def reload_request_mapped_base(request):
     MappedBase = get_mapped_base(request)
 
     load_mapped_base(MappedBase, True)
+    reload_request_model_descriptions_cache(request)
     reload_request_graphql_schema(request)
     dump_metadata_file(conf, MappedBase.metadata)
 
@@ -877,6 +879,11 @@ def reload_request_graphql_schema(request, draft=None):
         else:
             schema_key = 'graphql_schema_draft' if draft else 'graphql_schema'
             cache[schema_key] = None
+
+
+def reload_request_model_descriptions_cache(request):
+    with request_connection_cache(request) as cache:
+        cache[MODEL_DESCRIPTIONS_RESPONSE_CACHE_KEY] = None
 
 
 def release_inactive_graphql_schemas():
