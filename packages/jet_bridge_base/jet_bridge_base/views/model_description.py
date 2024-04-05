@@ -382,34 +382,44 @@ class ModelDescriptionView(APIView):
     def get(self, request, *args, **kwargs):
         queryset = self.get_queryset(request)
         serializer = self.serializer_class(instance=queryset, many=True)
+        cid = request.get_argument('cid', None)
+        client_cache_enabled = cid is not None
 
         with request_connection_cache(request) as cache:
             rendered_data = cache.get(MODEL_DESCRIPTIONS_RESPONSE_CACHE_KEY)
 
             if rendered_data is not None:
-                rendered_data_hash = cache.get(MODEL_DESCRIPTIONS_HASH_CACHE_KEY, get_sha256_hash(rendered_data))
+                if client_cache_enabled:
+                    rendered_data_hash = cache.get(MODEL_DESCRIPTIONS_HASH_CACHE_KEY, get_sha256_hash(rendered_data))
+                else:
+                    rendered_data_hash = None
 
-                not_modified_response = self.get_not_modified_response(request, rendered_data_hash)
-                if not_modified_response:
-                    return not_modified_response
+                if client_cache_enabled:
+                    not_modified_response = self.get_not_modified_response(request, rendered_data_hash)
+                    if not_modified_response:
+                        return not_modified_response
 
                 response = JSONResponse(rendered_data=rendered_data)
-                self.set_response_cache_headers(response, rendered_data_hash)
+
+                if client_cache_enabled:
+                    self.set_response_cache_headers(response, rendered_data_hash)
 
                 return response
             else:
                 response = JSONResponse(serializer.representation_data)
                 rendered_data = response.render()
-                rendered_data_hash = get_sha256_hash(rendered_data)
 
                 cache[MODEL_DESCRIPTIONS_RESPONSE_CACHE_KEY] = rendered_data
-                cache[MODEL_DESCRIPTIONS_HASH_CACHE_KEY] = rendered_data_hash
 
-                not_modified_response = self.get_not_modified_response(request, rendered_data_hash)
-                if not_modified_response:
-                    return not_modified_response
+                if client_cache_enabled:
+                    rendered_data_hash = get_sha256_hash(rendered_data)
+                    cache[MODEL_DESCRIPTIONS_HASH_CACHE_KEY] = rendered_data_hash
 
-                self.set_response_cache_headers(response, rendered_data_hash)
+                    not_modified_response = self.get_not_modified_response(request, rendered_data_hash)
+                    if not_modified_response:
+                        return not_modified_response
+
+                    self.set_response_cache_headers(response, rendered_data_hash)
 
                 return response
 
