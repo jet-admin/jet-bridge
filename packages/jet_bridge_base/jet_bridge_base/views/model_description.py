@@ -1,6 +1,5 @@
 import json
 import re
-from datetime import timedelta
 
 from jet_bridge_base import status
 from jet_bridge_base.models.model_relation_override import ModelRelationOverrideModel
@@ -415,11 +414,11 @@ class ModelDescriptionView(APIView):
                 return response
 
     def set_response_cache_headers(self, response, rendered_data_hash):
-        response.headers['Cache-Control'] = 'max-age=%d' % timedelta(days=7).total_seconds()
-        response.headers['ETag'] = rendered_data_hash
+        response.headers['Cache-Control'] = 'no-cache'
+        response.headers['ETag'] = '"%s"' % rendered_data_hash
 
     def get_not_modified_response(self, request, rendered_data_hash):
         if_none_match = request.headers.get('IF_NONE_MATCH')
 
-        if if_none_match is not None and rendered_data_hash == if_none_match:
+        if if_none_match is not None and '"%s"' % rendered_data_hash == if_none_match:
             return Response(status=status.HTTP_304_NOT_MODIFIED)
