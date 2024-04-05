@@ -1,15 +1,17 @@
 
 class Response(object):
-    headers = {'Content-Type': 'text/html'}
-
     def __init__(self, data=None, status=None, headers=None, exception=False, content_type=None):
         self.data = data
         self.status = status
         self.exception = exception
         self.content_type = content_type
+        self.headers = self.default_headers()
 
         if headers:
             self.headers.update(headers)
+
+    def default_headers(self):
+        return {'Content-Type': 'text/html'}
 
     def header_items(self):
         if not self.headers:
@@ -17,7 +19,4 @@ class Response(object):
         return self.headers.items()
 
     def render(self):
-        if self.data is None:
-            return bytes()
-
         return self.data
