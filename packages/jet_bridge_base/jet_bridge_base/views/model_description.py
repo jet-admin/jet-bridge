@@ -1,7 +1,7 @@
 import json
 import re
 
-from jet_bridge_base import status
+from jet_bridge_base import status, settings
 from jet_bridge_base.models.model_relation_override import ModelRelationOverrideModel
 from jet_bridge_base.responses.base import Response
 from jet_bridge_base.store import store
@@ -386,7 +386,8 @@ class ModelDescriptionView(APIView):
         client_cache_enabled = cid is not None
 
         with request_connection_cache(request) as cache:
-            rendered_data = cache.get(MODEL_DESCRIPTIONS_RESPONSE_CACHE_KEY)
+            rendered_data = cache.get(MODEL_DESCRIPTIONS_RESPONSE_CACHE_KEY) \
+                if settings.CACHE_MODEL_DESCRIPTIONS else None
 
             if rendered_data is not None:
                 if client_cache_enabled:

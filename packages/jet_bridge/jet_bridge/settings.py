@@ -78,6 +78,7 @@ define('store_path', default='jet_bridge_store.sqlite3', type=str)
 
 define('cache_metadata', default=False, type=bool)
 define('cache_metadata_path', default='metadata', type=str)
+define('cache_model_descriptions', default=False, type=bool)
 
 define('sso_applications', default='{}', type=str)
 define('allow_origin', default='*')
@@ -194,6 +195,7 @@ STORE_PATH = options.store_path
 
 CACHE_METADATA = options.cache_metadata
 CACHE_METADATA_PATH = options.cache_metadata_path
+CACHE_MODEL_DESCRIPTIONS = options.cache_model_descriptions
 
 try:
     SSO_APPLICATIONS = json.loads(options.sso_applications)

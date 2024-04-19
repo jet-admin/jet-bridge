@@ -94,6 +94,7 @@ class JetDjangoConfiguration(Configuration):
             'STORE_PATH': settings.JET_STORE_PATH,
             'CACHE_METADATA': settings.JET_CACHE_METADATA,
             'CACHE_METADATA_PATH': settings.JET_CACHE_METADATA_PATH,
+            'CACHE_MODEL_DESCRIPTIONS': settings.JET_CACHE_MODEL_DESCRIPTIONS,
             'SSO_APPLICATIONS': self.clean_sso_applications(settings.JET_SSO_APPLICATIONS),
             'ALLOW_ORIGIN': settings.JET_ALLOW_ORIGIN,
             'TRACK_DATABASES': settings.JET_TRACK_DATABASES,
