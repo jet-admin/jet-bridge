@@ -63,6 +63,7 @@ class JetBridgeConfiguration(Configuration):
             'STORE_PATH': settings.STORE_PATH,
             'CACHE_METADATA': settings.CACHE_METADATA,
             'CACHE_METADATA_PATH': settings.CACHE_METADATA_PATH,
+            'CACHE_MODEL_DESCRIPTIONS': settings.CACHE_MODEL_DESCRIPTIONS,
             'SSO_APPLICATIONS': self.clean_sso_applications(settings.SSO_APPLICATIONS),
             'ALLOW_ORIGIN': settings.ALLOW_ORIGIN,
             'TRACK_DATABASES': settings.TRACK_DATABASES,
