@@ -49,6 +49,7 @@ JET_STORE_PATH = getattr(settings, 'JET_STORE_PATH', 'jet_bridge_store.sqlite3')
 
 JET_CACHE_METADATA = getattr(settings, 'JET_CACHE_METADATA', False)
 JET_CACHE_METADATA_PATH = getattr(settings, 'JET_CACHE_METADATA_PATH', 'metadata')
+JET_CACHE_MODEL_DESCRIPTIONS = getattr(settings, 'JET_CACHE_MODEL_DESCRIPTIONS', False)
 
 JET_SSO_APPLICATIONS = getattr(settings, 'JET_SSO_APPLICATIONS', '{}')
 JET_ALLOW_ORIGIN = getattr(settings, 'JET_ALLOW_ORIGIN', '*')
