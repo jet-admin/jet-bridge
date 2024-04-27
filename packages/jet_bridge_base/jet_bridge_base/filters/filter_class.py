@@ -4,7 +4,6 @@ from jet_bridge_base.filters import lookups
 from jet_bridge_base.filters.filter import Filter, safe_array
 from jet_bridge_base.filters.filter_for_dbfield import filter_for_data_type
 from jet_bridge_base.serializers.model_serializer import get_column_data_type
-from jet_bridge_base.utils.queryset import get_session_engine
 
 
 class FilterClass(object):
@@ -51,12 +50,10 @@ class FilterClass(object):
         self.filters = filters
 
     def filter_queryset(self, request, queryset):
-        session = request.session
-
         def get_filter_value(name, filters_instance=None):
             value = request.get_argument_safe(name, None)
 
-            if filters_instance and value is not None and get_session_engine(session) == 'bigquery':
+            if filters_instance and value is not None:
                 data_type = get_column_data_type(filters_instance.column)
                 field = data_type()
 
