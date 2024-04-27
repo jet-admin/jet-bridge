@@ -28,6 +28,8 @@ data_types = [
     {'query': 'DATETIME', 'operator': 'startswith', 'data_type': fields.DateTimeField},
     {'query': 'JSON', 'operator': 'startswith', 'data_type': fields.JSONField},
     {'query': 'ARRAY', 'operator': 'equals', 'data_type': fields.JSONField},
+    {'query': 'BINARY', 'operator': 'startswith', 'data_type': fields.BinaryField},
+    {'query': 'VARBINARY', 'operator': 'startswith', 'data_type': fields.BinaryField},
     {'query': 'geometry', 'operator': 'startswith', 'data_type': fields.WKTField},
     {'query': 'geography', 'operator': 'startswith', 'data_type': fields.WKTField},
 ]

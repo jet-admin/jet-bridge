@@ -3,7 +3,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from jet_bridge_base.exceptions.not_found import NotFound
 from jet_bridge_base.paginators.page_number import PageNumberPagination
 from jet_bridge_base.serializers.model_serializer import get_column_data_type
-from jet_bridge_base.utils.queryset import get_session_engine, apply_session_timezone
+from jet_bridge_base.utils.queryset import apply_session_timezone
 from jet_bridge_base.views.base.api import APIView
 
 
@@ -32,13 +32,11 @@ class GenericAPIView(APIView):
 
         try:
             field_lookup = getattr(model_field, '__eq__')
+
             lookup_value = request.path_kwargs[lookup_url_kwarg]
-
-            if get_session_engine(request.session) == 'bigquery':
-                data_type = get_column_data_type(model_field)
-                field = data_type()
-
-                lookup_value = field.to_internal_value_item(lookup_value)
+            data_type = get_column_data_type(model_field)
+            field = data_type()
+            lookup_value = field.to_internal_value_item(lookup_value)
 
             obj = queryset.filter(field_lookup(lookup_value)).first()
         except SQLAlchemyError:
