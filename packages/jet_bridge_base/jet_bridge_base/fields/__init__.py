@@ -7,3 +7,4 @@ from jet_bridge_base.fields.datetime import DateTimeField
 from jet_bridge_base.fields.json import JSONField
 from jet_bridge_base.fields.wkt import WKTField
 from jet_bridge_base.fields.array import ArrayField
+from jet_bridge_base.fields.binary import BinaryField

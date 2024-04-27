@@ -22,6 +22,8 @@ map_data_types = [
     {'sql_type': sqltypes.TIMESTAMP, 'map_type': data_types.DATE_TIME, 'db_type': data_types.TIMESTAMP, 'convert': lambda x: '{}::timestamp with time zone'.format(x)},
     {'sql_type': sqltypes.JSON, 'map_type': data_types.JSON, 'db_type': data_types.JSON, 'convert': lambda x: '{}::json'.format(x)},
     {'sql_type': sqltypes.ARRAY, 'map_type': data_types.JSON, 'db_type': data_types.JSON, 'convert': lambda x: '{}::json'.format(x)},
+    {'sql_type': sqltypes.BINARY, 'map_type': data_types.BINARY, 'db_type': data_types.BINARY},
+    {'sql_type': sqltypes.VARBINARY, 'map_type': data_types.BINARY, 'db_type': data_types.BINARY},
 ]
 default_sql_type = sqltypes.VARCHAR
 default_map_type = data_types.CHAR

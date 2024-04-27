@@ -1,3 +1,4 @@
+from jet_bridge_base.filters.binary_filter import BinaryFilter
 from jet_bridge_base.filters.float_filter import FloatFilter
 from sqlalchemy.sql import sqltypes
 
@@ -71,6 +72,13 @@ geography_lookups = [
     lookups.COVEREDBY
 ]
 
+binary_lookups = [
+    lookups.EXACT,
+    lookups.IN,
+    lookups.IS_NULL,
+    lookups.IS_EMPTY,
+]
+
 FILTER_FOR_DBFIELD = {
     sqltypes.VARCHAR: {'filter_class': CharFilter, 'lookups': text_lookups, 'lookups_name': 'text'},
     sqltypes.TEXT: {'filter_class': CharFilter, 'lookups': text_lookups, 'lookups_name': 'text'},
@@ -86,6 +94,7 @@ FILTER_FOR_DBFIELD = {
     sqltypes.TIMESTAMP: {'filter_class': DateTimeFilter, 'lookups': datetime_lookups, 'lookups_name': 'datetime'},
     sqltypes.JSON: {'filter_class': CharFilter, 'lookups': json_lookups, 'lookups_name': 'json'},
     sqltypes.ARRAY: {'filter_class': CharFilter, 'lookups': json_lookups, 'lookups_name': 'json'},
+    sqltypes.BINARY: {'filter_class': BinaryFilter, 'lookups': binary_lookups, 'lookups_name': 'binary'},
     # sqlalchemy.TextField:                   {'filter_class': CharFilter},
     # sqlalchemy.BOOLEAN:                {'filter_class': BooleanFilter},
     # sqlalchemy.DateField:                   {'filter_class': DateFilter},
