@@ -1,5 +1,6 @@
 import json
 
+from jet_bridge_base.serializers.model_serializer import get_column_data_type
 from jet_bridge_base.utils.classes import is_instance_or_subclass
 from jet_bridge_base.utils.queryset import get_session_engine
 from sqlalchemy import Unicode, and_, or_
@@ -7,7 +8,7 @@ from sqlalchemy.dialects.postgresql import ENUM, JSONB, array
 from sqlalchemy.sql import sqltypes
 from six import string_types
 
-from jet_bridge_base.fields import field, BooleanField, RawField
+from jet_bridge_base.fields import field, BooleanField, CharField
 from jet_bridge_base.filters import lookups
 
 EMPTY_VALUES = ([], (), {}, None)
@@ -151,12 +152,12 @@ class Filter(object):
         lookups.LT: {'operator': '__lt__', 'pre_process': lambda x: safe_not_array(x)},
         lookups.LTE: {'operator': '__le__', 'pre_process': lambda x: safe_not_array(x)},
         lookups.ICONTAINS: {'operator': False, 'func': safe_icontains, 'pre_process': lambda x: safe_not_array(x)},
-        lookups.IN: {'operator': False, 'func': safe_in, 'field_class': RawField, 'field_kwargs': {'many': True}, 'pre_process': lambda x: safe_array(x)},
+        lookups.IN: {'operator': False, 'func': safe_in, 'field_kwargs': {'many': True}, 'pre_process': lambda x: safe_array(x)},
         lookups.STARTS_WITH: {'operator': False, 'func': safe_startswith, 'pre_process': lambda x: safe_not_array(x)},
         lookups.ENDS_WITH: {'operator': False, 'func': safe_endswith, 'pre_process': lambda x: safe_not_array(x)},
         lookups.IS_NULL: {'operator': False, 'func': is_null, 'field_class': BooleanField, 'pre_process': lambda x: safe_not_array(x)},
         lookups.IS_EMPTY: {'operator': False, 'func': is_empty, 'field_class': BooleanField, 'pre_process': lambda x: safe_not_array(x)},
-        lookups.JSON_ICONTAINS: {'operator': False, 'func': json_icontains, 'pre_process': lambda x: safe_not_array(x)},
+        lookups.JSON_ICONTAINS: {'operator': False, 'func': json_icontains, 'field_class': CharField, 'pre_process': lambda x: safe_not_array(x)},
         lookups.COVEREDBY: {'operator': False, 'func': coveredby, 'pre_process': lambda x: safe_not_array(x)}
     }
 
@@ -181,7 +182,10 @@ class Filter(object):
         if pre_process:
             value = pre_process(value)
 
-        if field_class:
+        if not field_class:
+            field_class = get_column_data_type(self.column)
+
+        if value is not None:
             value = field_class(**field_kwargs).to_internal_value(value)
 
         if post_process:
