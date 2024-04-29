@@ -51,18 +51,7 @@ class FilterClass(object):
 
     def filter_queryset(self, request, queryset):
         def get_filter_value(name, filters_instance=None):
-            value = request.get_argument_safe(name, None)
-
-            if filters_instance and value is not None:
-                data_type = get_column_data_type(filters_instance.column)
-                field = data_type()
-
-                if filters_instance.lookup == lookups.IN:
-                    value = list(map(lambda x: field.to_internal_value_item(x), safe_array(value)))
-                else:
-                    value = field.to_internal_value_item(value)
-
-            return value
+            return request.get_argument_safe(name, None)
 
         for item in self.filters:
             if item.name:

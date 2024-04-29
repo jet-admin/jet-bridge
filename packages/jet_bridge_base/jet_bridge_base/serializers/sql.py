@@ -178,18 +178,7 @@ class SqlSerializer(Serializer):
             if not len(filter_items):
                 return
 
-            value = filter_items[0]['value']
-
-            if filters_instance and value is not None and get_session_engine(session) == 'bigquery':
-                data_type = get_column_data_type(filters_instance.column)
-                field = data_type()
-
-                if filters_instance.lookup == lookups.IN:
-                    value = list(map(lambda x: field.to_internal_value_item(x), safe_array(value)))
-                else:
-                    value = field.to_internal_value_item(value)
-
-            return value
+            return filter_items[0]['value']
 
         for item in filters_instances:
             if item.name:
