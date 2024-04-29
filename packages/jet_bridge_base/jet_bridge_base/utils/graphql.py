@@ -423,15 +423,6 @@ class GraphQLSchemaGenerator(object):
                                 exclude=False
                             )
 
-                            if get_session_engine(request.session) == 'bigquery':
-                                data_type = get_column_data_type(filters_instance.column)
-                                field = data_type()
-
-                                if filters_instance.lookup == lookups.IN:
-                                    lookup_value = list(map(lambda x: field.to_internal_value_item(x), safe_array(lookup_value)))
-                                else:
-                                    lookup_value = field.to_internal_value_item(lookup_value)
-
                             criterion = filters_instance.get_lookup_criterion(queryset, lookup_value)
                             criterion = ~criterion if exclude else criterion
 
