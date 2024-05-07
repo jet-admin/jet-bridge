@@ -9,7 +9,7 @@ from sqlalchemy.orm import MANYTOONE, ONETOMANY, aliased
 from jet_bridge_base.automap import automap_base
 from jet_bridge_base.db import get_mapped_base, get_engine, load_mapped_base, get_request_connection, get_table_name
 from jet_bridge_base.filters import lookups
-from jet_bridge_base.filters.filter import safe_array
+from jet_bridge_base.filters.filter import safe_array, EMPTY_VALUES
 from jet_bridge_base.filters.filter_for_dbfield import filter_for_data_type
 from jet_bridge_base.filters.model_group import get_query_func_by_name
 from jet_bridge_base.filters.model_search import search_queryset
@@ -423,10 +423,12 @@ class GraphQLSchemaGenerator(object):
                                 exclude=False
                             )
 
-                            criterion = filters_instance.get_lookup_criterion(queryset, lookup_value)
-                            criterion = ~criterion if exclude else criterion
+                            lookup_value = filters_instance.clean_value(lookup_value)
+                            if lookup_value not in EMPTY_VALUES:
+                                criterion = filters_instance.get_lookup_criterion(queryset, lookup_value)
+                                criterion = ~criterion if exclude else criterion
 
-                            queryset = queryset.filter(criterion)
+                                queryset = queryset.filter(criterion)
 
         return queryset
 
