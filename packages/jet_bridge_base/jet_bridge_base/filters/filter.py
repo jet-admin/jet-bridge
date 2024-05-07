@@ -11,7 +11,7 @@ from six import string_types
 from jet_bridge_base.fields import field, BooleanField, CharField
 from jet_bridge_base.filters import lookups
 
-EMPTY_VALUES = ([], (), {}, None)
+EMPTY_VALUES = ([], (), {}, '', None)
 
 
 def safe_is_float(value):
