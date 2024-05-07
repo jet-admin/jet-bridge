@@ -36,7 +36,7 @@ class GenericAPIView(APIView):
             lookup_value = request.path_kwargs[lookup_url_kwarg]
             data_type = get_column_data_type(model_field)
             field = data_type()
-            lookup_value = field.to_internal_value_item(lookup_value)
+            lookup_value = field.to_internal_value(lookup_value)
 
             obj = queryset.filter(field_lookup(lookup_value)).first()
         except SQLAlchemyError:
