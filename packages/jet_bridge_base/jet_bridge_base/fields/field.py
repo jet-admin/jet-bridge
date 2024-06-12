@@ -1,3 +1,5 @@
+import six
+
 try:
     from collections.abc import Mapping
 except ImportError:
@@ -62,12 +64,23 @@ class Field(object):
                 return empty
 
         if not getattr(self, 'many', False) and not getattr(self, 'allow_many', False) and isinstance(field_value, list):
-            field_value = field_value[0]
+            field_value = self.get_non_array_value(field_value)
 
         if isinstance(field_value, bytes):
             field_value = field_value.decode('utf8')
 
         return field_value
+
+    def get_non_array_value(self, array_value):
+        result = []
+
+        for value in array_value:
+            if value is None:
+                continue
+            str_value = six.text_type(value)
+            result.append(str_value)
+
+        return ','.join(result)
 
     def run_validation(self, value):
         if value is empty:
