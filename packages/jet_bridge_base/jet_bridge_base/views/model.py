@@ -28,8 +28,6 @@ class ModelViewSet(ModelAPIViewMixin):
 
     def before_dispatch(self, request):
         super(ModelViewSet, self).before_dispatch(request)
-        mapper = inspect(self.get_model(request))
-        self.lookup_field = mapper.primary_key[0].name
 
     def on_finish(self):
         super(ModelViewSet, self).on_finish()
@@ -65,6 +63,10 @@ class ModelViewSet(ModelAPIViewMixin):
             raise NotFound
 
         return MappedBase.classes[model_name]
+
+    def get_model_lookup_field(self, request):
+        mapper = inspect(self.get_model(request))
+        return mapper.primary_key[0].name
 
     def get_serializer_class(self, request):
         Model = self.get_model(request)
@@ -120,8 +122,9 @@ class ModelViewSet(ModelAPIViewMixin):
         self.apply_timezone(request)
         queryset = self.filter_queryset(request, self.get_queryset(request))
 
+        lookup_field = self.get_model_lookup_field(request)
         y_func = request.get_argument('_y_func').lower()
-        y_column = request.get_argument('_y_column', self.lookup_field)
+        y_column = request.get_argument('_y_column', lookup_field)
 
         model_name = self.get_model_name(request)
         model_serializer = self.get_serializer(request)
@@ -156,10 +159,11 @@ class ModelViewSet(ModelAPIViewMixin):
         self.apply_timezone(request)
         queryset = self.filter_queryset(request, self.get_queryset(request))
 
+        lookup_field = self.get_model_lookup_field(request)
         x_columns = request.get_arguments('_x_column')
         x_lookup_names = request.get_arguments('_x_lookup', None)
         y_func = request.get_argument('_y_func').lower()
-        y_column = request.get_argument('_y_column', self.lookup_field)
+        y_column = request.get_argument('_y_column', lookup_field)
 
         model_serializer = self.get_serializer(request)
 
