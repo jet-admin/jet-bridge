@@ -12,10 +12,12 @@ class GenericAPIView(APIView):
     filter_class = None
     pagination_class = PageNumberPagination
     _paginator = None
-    lookup_field = 'id'
     lookup_url_kwarg = None
 
     def get_model(self, request):
+        raise NotImplementedError
+
+    def get_model_lookup_field(self, request):
         raise NotImplementedError
 
     def get_queryset(self, request):
@@ -28,7 +30,9 @@ class GenericAPIView(APIView):
         if lookup_url_kwarg not in request.path_kwargs:
             raise AssertionError()
 
-        model_field = getattr(self.get_model(request), self.lookup_field)
+        model = self.get_model(request)
+        lookup_field = self.get_model_lookup_field(request)
+        model_field = getattr(model, lookup_field)
 
         try:
             field_lookup = getattr(model_field, '__eq__')
