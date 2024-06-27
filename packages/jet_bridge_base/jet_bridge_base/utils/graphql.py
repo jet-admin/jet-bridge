@@ -856,7 +856,7 @@ class GraphQLSchemaGenerator(object):
 
             i += 1
 
-    def resolve_model_list(self, MappedBase, Model, mapper,info, filters=None, lookups=None, sort=None, pagination=None, search=None):
+    def resolve_model_list(self, MappedBase, Model, mapper, info, filters=None, lookups=None, sort=None, pagination=None, search=None):
         try:
             filters = filters or []
             lookups = lookups or []
@@ -886,7 +886,7 @@ class GraphQLSchemaGenerator(object):
             request.context['graphql_data_query_time'] = round(data_query_end - data_query_start, 3)
 
             serializer_class = get_model_serializer(Model)
-            serializer_context = {}
+            serializer_context = {**info.context}
 
             queryset_page_lookups = self.get_models_lookups(request, MappedBase, queryset_page, Model, mapper, lookups)
 
