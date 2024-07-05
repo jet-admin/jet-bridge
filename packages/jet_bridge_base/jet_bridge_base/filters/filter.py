@@ -170,6 +170,9 @@ class Filter(object):
     def clean_value(self, value):
         return value
 
+    def get_default_lookup_field_class(self):
+        return get_column_data_type(self.column)
+
     def get_lookup_criterion(self, qs, value):
         lookup_operator = self.lookup_operators[self.lookup]
         operator = lookup_operator['operator']
@@ -183,7 +186,7 @@ class Filter(object):
             value = pre_process(value)
 
         if not field_class:
-            field_class = get_column_data_type(self.column)
+            field_class = self.get_default_lookup_field_class()
 
         if value is not None:
             value = field_class(**field_kwargs).to_internal_value(value)
