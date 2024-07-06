@@ -1,8 +1,11 @@
+import datetime
 import six
 from sqlalchemy import inspect
 from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.sql import sqltypes
 
 from jet_bridge_base import fields
+from jet_bridge_base.db import get_default_timezone
 from jet_bridge_base.serializers.serializer import Serializer
 from jet_bridge_base.utils.exceptions import validation_error_from_database_error
 from jet_bridge_base.utils.queryset import get_session_engine
@@ -81,6 +84,32 @@ class ModelSerializer(Serializer):
 
         return result
 
+    def prepare_datetime_timezone_naive(self, column, value, default_timezone):
+        if not isinstance(value, datetime.datetime) or not value.tzinfo:
+            return value
+
+        if not default_timezone:
+            return value
+
+        column_type = column.expression.type
+
+        if isinstance(column_type, sqltypes.DATETIME) and not column_type.timezone:
+            return value.astimezone(default_timezone)
+        else:
+            return value
+
+    def prepare_data_timezone_naive(self, data):
+        request = self.context.get('request')
+        default_timezone = get_default_timezone(request) if request else None
+
+        for key, value in data.items():
+            column = getattr(self.model, key, None)
+
+            if not column:
+                continue
+
+            data[key] = self.prepare_datetime_timezone_naive(column, value, default_timezone)
+
     def create_instance(self, validated_data):
         ModelClass = self.meta.model
         return ModelClass(**validated_data)
@@ -93,6 +122,8 @@ class ModelSerializer(Serializer):
         if primary_key.autoincrement and primary_key_specified and not validated_data.get(primary_key.name):
             primary_key_specified = False
             del validated_data[primary_key.name]
+
+        self.prepare_data_timezone_naive(validated_data)
 
         instance = self.create_instance(validated_data)
         self.session.add(instance)
@@ -125,6 +156,8 @@ class ModelSerializer(Serializer):
         return instance
 
     def update(self, instance, validated_data):
+        self.prepare_data_timezone_naive(validated_data)
+
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
 
