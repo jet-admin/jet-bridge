@@ -209,7 +209,7 @@ class SqlSerializer(Serializer):
                 elif isinstance(query_type, (sqltypes.JSON, sqltypes.ARRAY, sqltypes.Enum)):
                     return cast(field, sqltypes.String).ilike('%{}%'.format(search))
                 elif isinstance(query_type, sqltypes.String):
-                    return field.ilike('%{}%'.format(search))
+                    return cast(field, sqltypes.String).ilike('%{}%'.format(search))
 
             operators = list(filter(lambda x: x is not None, map(map_column, data.get('columns', []))))
             queryset = queryset.filter(or_(*operators))
@@ -360,8 +360,9 @@ class SqlSerializer(Serializer):
                 def map_column_description(column):
                     name = column.name if hasattr(column, 'name') else ''
                     sql_type = type_code_to_sql_type.get(column.type_code) if hasattr(column, 'type_code') else None
+                    field = sql_to_map_type(sql_type) if sql_type else None
                     return name, {
-                        'field': sql_to_map_type(sql_type) if sql_type else None
+                        'field': field
                     }
 
                 response['column_descriptions'] = dict(map(map_column_description, cursor_description))
