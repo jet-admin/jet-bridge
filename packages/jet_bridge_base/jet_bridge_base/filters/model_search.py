@@ -15,7 +15,7 @@ def search_queryset(qs, mapper, search):
         elif isinstance(column.type, (sqlalchemy.JSON, sqlalchemy.Enum)):
             return cast(column, sqlalchemy.String).ilike('%{}%'.format(search))
         elif isinstance(column.type, sqlalchemy.String):
-            return column.ilike('%{}%'.format(search))
+            return cast(column, sqlalchemy.String).ilike('%{}%'.format(search))
 
     operators = list(filter(lambda x: x is not None, map(map_column, mapper.columns)))
 
