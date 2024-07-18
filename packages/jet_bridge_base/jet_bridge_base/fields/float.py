@@ -13,6 +13,11 @@ class FloatField(Field):
             return
         value = six.text_type(value).strip()
 
+        if value.lower() == 'true':
+            return 1
+        elif value.lower() == 'false':
+            return 0
+
         try:
             return float(value)
         except (ValueError, TypeError):
