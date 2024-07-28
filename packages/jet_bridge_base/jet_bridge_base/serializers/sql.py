@@ -178,7 +178,7 @@ class SqlSerializer(Serializer):
             if not len(filter_items):
                 return
 
-            return filter_items[0]['value']
+            return filter_items[0].get('value', None)
 
         for item in filters_instances:
             if item.name:
