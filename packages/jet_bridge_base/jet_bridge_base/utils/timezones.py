@@ -6,10 +6,10 @@ from jet_bridge_base.utils.queryset import get_session_engine
 class FixedOffsetTimezone(tzinfo):
     def __init__(self, offset):
         self.offset = offset
-        self.name = self.__class__.__name__
+        self.name = 'Etc/GMT%+d' % (offset.total_seconds() / 60 / 60)
 
     def tzname(self, dt):
-        return str(self.offset)
+        return self.name
 
     def utcoffset(self, dt):
         return self.offset
@@ -18,8 +18,7 @@ class FixedOffsetTimezone(tzinfo):
         return timedelta(0)
 
     def __repr__(self):
-        total_hours = round(timedelta().total_seconds() / 60)
-        return 'FixedOffsetTimezone(offset={})'.format(total_hours)
+        return 'FixedOffsetTimezone(name={}, offset={})'.format(self.name, self.offset)
 
 
 def fetch_postgresql_default_timezone(session):
