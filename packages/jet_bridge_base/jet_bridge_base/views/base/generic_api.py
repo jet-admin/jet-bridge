@@ -73,10 +73,7 @@ class GenericAPIView(APIView):
     def apply_timezone(self, request):
         timezone = request.get_argument('tz', None)
         if timezone is not None:
-            try:
-                apply_session_timezone(request.session, timezone)
-            except SQLAlchemyError:
-                request.session.rollback()
+            apply_session_timezone(request.session, timezone)
 
     def filter_queryset(self, request, queryset):
         filter_instance = self.get_filter(request)

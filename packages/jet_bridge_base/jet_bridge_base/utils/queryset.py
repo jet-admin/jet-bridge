@@ -45,7 +45,9 @@ def apply_default_ordering(Model, queryset):
 def queryset_count_optimized_for_postgresql(request, db_table):
     try:
         cursor = request.session.execute(text('SELECT reltuples FROM pg_class WHERE relname = :db_table'), {'db_table': db_table})
+        request.session.commit()
         row = cursor.fetchone()
+
         return int(row[0])
     except SQLAlchemyError:
         request.session.rollback()
@@ -55,7 +57,9 @@ def queryset_count_optimized_for_postgresql(request, db_table):
 def queryset_count_optimized_for_mysql(request, db_table):
     try:
         cursor = request.session.execute(text('EXPLAIN SELECT COUNT(*) FROM `{}`'.format(db_table)))
+        request.session.commit()
         row = cursor.fetchone()
+
         return int(row[8])
     except SQLAlchemyError:
         request.session.rollback()
@@ -92,10 +96,19 @@ def get_session_engine(session):
 
 def apply_session_timezone(session, timezone):
     if get_session_engine(session) == 'mysql':
-        session.execute('SET time_zone = :tz', {'tz': timezone})
-        session.info['_queries_timezone'] = timezone
+        try:
+            session.execute('SET time_zone = :tz', {'tz': timezone})
+            session.commit()
+            session.info['_queries_timezone'] = timezone
+        except SQLAlchemyError:
+            session.rollback()
     elif get_session_engine(session) in ['postgresql', 'mssql']:
         offset_hours = dateparser.parse(datetime.now().isoformat() + timezone).utcoffset().total_seconds() / 60 / 60
         offset_hours_str = '{:+}'.format(offset_hours).replace(".0", "")
-        session.execute('SET TIME ZONE :tz', {'tz': offset_hours_str})
-        session.info['_queries_timezone'] = timezone
+
+        try:
+            session.execute('SET TIME ZONE :tz', {'tz': offset_hours_str})
+            session.commit()
+            session.info['_queries_timezone'] = timezone
+        except SQLAlchemyError:
+            session.rollback()
