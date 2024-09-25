@@ -269,12 +269,15 @@ class SqlSerializer(Serializer):
             params = data.get('params', [])
 
         if data.get('timezone') is not None:
-            apply_session_timezone(session, data['timezone'])
+            try:
+                apply_session_timezone(session, data['timezone'])
+            except SQLAlchemyError:
+                session.rollback()
+                pass
 
         if 'schema' in data:
             try:
                 session.execute('SET search_path TO :schema', {'schema': data['schema']})
-                session.commit()
             except SQLAlchemyError:
                 session.rollback()
                 pass
@@ -291,7 +294,6 @@ class SqlSerializer(Serializer):
                 count_query_start = time.time()
                 count_result = session.execute(count_queryset, params)
                 count_rows = count_result.all()[0][0]
-                session.commit()
                 count_query_end = time.time()
 
                 count_query_time = round(count_query_end - count_query_start, 3)
@@ -318,7 +320,6 @@ class SqlSerializer(Serializer):
 
             data_query_start = time.time()
             result = session.execute(queryset, params)
-            session.commit()
             data_query_end = time.time()
 
             data_query_time = round(data_query_end - data_query_start, 3)
