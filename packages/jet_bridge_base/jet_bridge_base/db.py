@@ -509,7 +509,7 @@ def connect_database(conf):
 
                 metadata = MetaData(schema=schema, bind=connection)
                 only = get_connection_only_predicate(conf)
-                reflect(id_short, metadata, engine, only=only, pending_connection=pending_connection, views=True)
+                reflect(id_short, metadata, engine, only=only, pending_connection=pending_connection, foreign=True, views=True)
 
                 reflect_end_time = time.time()
                 reflect_end_memory_usage = get_memory_usage()

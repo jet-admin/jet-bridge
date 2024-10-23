@@ -16,6 +16,7 @@ def get_tables(
     metadata,
     bind=None,
     schema=None,
+    foreign=False,
     views=False,
     only=None,
     extend_existing=False
@@ -23,6 +24,11 @@ def get_tables(
     view_names = []
 
     available = util.OrderedSet(insp.get_table_names(schema))
+
+    if foreign:
+        table_names = insp.get_foreign_table_names()
+        available.update(table_names)
+
     if views:
         view_names = insp.get_view_names(schema)
         available.update(view_names)
@@ -71,6 +77,7 @@ def reflect(
     metadata,
     bind=None,
     schema=None,
+    foreign=False,
     views=False,
     only=None,
     extend_existing=False,
@@ -99,7 +106,7 @@ def reflect(
         if schema is not None:
             reflect_opts["schema"] = schema
 
-        load, view_names = get_tables(insp, metadata, bind, schema, views, only, extend_existing)
+        load, view_names = get_tables(insp, metadata, bind, schema, foreign, views, only, extend_existing)
 
         """
         Modified: Added default PK set and progress display
