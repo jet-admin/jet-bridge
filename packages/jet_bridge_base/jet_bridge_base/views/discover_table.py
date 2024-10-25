@@ -1,14 +1,10 @@
-from sqlalchemy import MetaData, inspection
-from sqlalchemy.orm import scoped_session, sessionmaker
-from sqlalchemy.sql.base import _bind_or_error
-
 from jet_bridge_base import settings
 from jet_bridge_base.db import get_connection_tunnel
-from jet_bridge_base.db_types.sql import sql_create_connection_engine, sql_get_tables
+from jet_bridge_base.db_types import discover_tables
 from jet_bridge_base.exceptions.validation_error import ValidationError
 from jet_bridge_base.permissions import HasProjectPermissions
 from jet_bridge_base.responses.json import JSONResponse
-from jet_bridge_base.utils.conf import get_conf, get_connection_schema
+from jet_bridge_base.utils.conf import get_conf
 from jet_bridge_base.views.base.api import BaseAPIView
 
 
@@ -24,39 +20,14 @@ class DiscoverTableView(BaseAPIView):
 
     def get(self, request, *args, **kwargs):
         conf = get_conf(request)
-        schema = get_connection_schema(conf)
-
-        tunnel = None
-        bind = None
 
         try:
             tunnel = get_connection_tunnel(conf)
-            bind = sql_create_connection_engine(conf, tunnel)
+            tables = discover_tables(conf, tunnel)
 
-            Session = scoped_session(sessionmaker(bind=bind))
-            session = Session()
-
-            with session.connection() as connection:
-                metadata = MetaData(schema=schema, bind=connection)
-
-                if bind is None:
-                    bind = _bind_or_error(metadata)
-
-                with inspection.inspect(bind)._inspection_context() as insp:
-                    if schema is None:
-                        schema = metadata.schema
-
-                    load, view_names = sql_get_tables(insp, metadata, bind, schema, foreign=True, views=True)
-
-                    return JSONResponse({
-                        'tables': load,
-                        'max_tables': settings.DATABASE_MAX_TABLES
-                    })
+            return JSONResponse({
+                'tables': tables,
+                'max_tables': settings.DATABASE_MAX_TABLES
+            })
         except Exception as e:
             raise ValidationError(str(e))
-        finally:
-            if bind:
-                bind.dispose()
-
-            if tunnel:
-                tunnel.close()
