@@ -49,6 +49,7 @@ define('media_root', default='media', help='media root')
 define('media_base_url', default=None, help='media base URL')
 
 define('database_engine', help='database engine (postgresql, mysql, oracle, mssql+pyodbc, bigquery, snowflake, sqlite)')
+define('database_url', default=None, help='database url')
 define('database_host', help='database host')
 define('database_port', help='database port')
 define('database_user', help='database user')
@@ -166,6 +167,7 @@ MEDIA_ROOT = options.media_root
 MEDIA_BASE_URL = options.media_base_url
 
 DATABASE_ENGINE = options.database_engine
+DATABASE_URL = options.database_url
 DATABASE_HOST = options.database_host
 DATABASE_PORT = options.database_port
 DATABASE_USER = options.database_user

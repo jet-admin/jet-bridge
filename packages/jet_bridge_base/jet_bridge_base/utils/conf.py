@@ -1,5 +1,6 @@
 import json
 import os
+import re
 
 from jet_bridge_base import settings
 from jet_bridge_base.utils.common import merge
@@ -10,6 +11,7 @@ from jet_bridge_base.utils.text import clean_alphanumeric
 def get_settings_conf():
     return {
         'engine': settings.DATABASE_ENGINE,
+        'url': settings.DATABASE_URL,
         'host': settings.DATABASE_HOST,
         'port': settings.DATABASE_PORT,
         'name': settings.DATABASE_NAME,
@@ -41,6 +43,7 @@ def get_request_conf(request):
 
     return {
         'engine': bridge_settings.get('database_engine'),
+        'url': bridge_settings.get('database_url'),
         'host': bridge_settings.get('database_host'),
         'port': bridge_settings.get('database_port'),
         'name': bridge_settings.get('database_name'),
@@ -76,6 +79,7 @@ def get_conf(request):
 def get_connection_id(conf):
     return get_sha256_hash(json.dumps([
         conf.get('engine'),
+        conf.get('url'),
         conf.get('host'),
         conf.get('port'),
         conf.get('name'),
@@ -117,15 +121,21 @@ def is_tunnel_connection(conf):
 def get_connection_schema(conf):
     schema = conf.get('schema') if conf.get('schema') and conf.get('schema') != '' else None
 
-    if not schema and conf.get('engine', '').startswith('mssql'):
+    if not schema and str(conf.get('engine', '')).startswith('mssql'):
         schema = 'dbo'
 
     return schema
 
 
+def clean_connection_url(url):
+    if not isinstance(url, str):
+        return url
+    return re.sub(r'//([^:]+):[^@/]+@', r'//\1:********@', url)
+
+
 def get_connection_name(conf, schema):
     if conf.get('engine') == 'mongo':
-        return conf.get('host') + conf.get('name')
+        return clean_connection_url(str(conf.get('url'))) + conf.get('name') or ''
     else:
         from jet_bridge_base.db_types.sql import sql_build_engine_url
 
@@ -146,14 +156,17 @@ def get_connection_name(conf, schema):
 def get_connection_short_name_parts(conf):
     result = []
 
-    if conf.get('engine'):
-        result.append(str(conf.get('engine')))
+    if conf.get('url'):
+        result.append(clean_connection_url(str(conf.get('url'))))
+    else:
+        if conf.get('engine'):
+            result.append(str(conf.get('engine')))
 
-    if conf.get('host'):
-        result.append(str(conf.get('host')))
+        if conf.get('host'):
+            result.append(str(conf.get('host')))
 
-    if conf.get('port'):
-        result.append(str(conf.get('port')))
+        if conf.get('port'):
+            result.append(str(conf.get('port')))
 
     if conf.get('name'):
         result.append(str(conf.get('name')))

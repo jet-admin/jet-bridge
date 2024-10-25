@@ -37,6 +37,7 @@ class JetBridgeConfiguration(Configuration):
             'ENVIRONMENT_TYPE': settings.ENVIRONMENT_TYPE,
             'BLACKLIST_HOSTS': settings.BLACKLIST_HOSTS,
             'DATABASE_ENGINE': settings.DATABASE_ENGINE,
+            'DATABASE_URL': settings.DATABASE_URL,
             'DATABASE_HOST': settings.DATABASE_HOST,
             'DATABASE_PORT': settings.DATABASE_PORT,
             'DATABASE_USER': settings.DATABASE_USER,

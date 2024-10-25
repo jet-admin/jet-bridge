@@ -19,7 +19,7 @@ def mongodb_init_database_connection(conf, tunnel, id_short, connection_name, sc
 
     connect_start = time.time()
 
-    database_url = conf.get('host')
+    database_url = conf.get('url')
     database_name = conf.get('name')
 
     client = MongoClient(database_url)
