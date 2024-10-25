@@ -1,25 +1,46 @@
 import json
 import re
-
-from jet_bridge_base import status, settings
-from jet_bridge_base.models.model_relation_override import ModelRelationOverrideModel
-from jet_bridge_base.responses.base import Response
-from jet_bridge_base.store import store
-from jet_bridge_base.utils.crypt import get_sha256_hash
-from jet_bridge_base.utils.relations import relationship_direction_to_str
-from sqlalchemy import inspect, String, Enum, Date
+from sqlalchemy import String, Enum, Date
 from sqlalchemy.orm import MANYTOONE, ONETOMANY
 from sqlalchemy.sql.elements import TextClause
 
-from jet_bridge_base.db import get_mapped_base, get_request_connection, get_table_name, request_connection_cache, \
-    MODEL_DESCRIPTIONS_RESPONSE_CACHE_KEY, MODEL_DESCRIPTIONS_HASH_CACHE_KEY
+from jet_bridge_base import status, settings
+from jet_bridge_base.db import get_mapped_base, get_request_connection, request_connection_cache, MODEL_DESCRIPTIONS_RESPONSE_CACHE_KEY, MODEL_DESCRIPTIONS_HASH_CACHE_KEY
+from jet_bridge_base.db_types import inspect_uniform
+from jet_bridge_base.db_types.mongo import MongoColumn
+from jet_bridge_base.models.model_relation_override import ModelRelationOverrideModel
+from jet_bridge_base.responses.base import Response
+from jet_bridge_base.store import store
 from jet_bridge_base.models import data_types
 from jet_bridge_base.permissions import HasProjectPermissions
 from jet_bridge_base.responses.json import JSONResponse
 from jet_bridge_base.serializers.model_description import ModelDescriptionSerializer
-from jet_bridge_base.utils.common import merge, get_set_first
-from jet_bridge_base.utils.db_types import sql_to_map_type, sql_to_db_type
 from jet_bridge_base.views.base.api import APIView
+from jet_bridge_base.utils.common import merge, get_set_first
+from jet_bridge_base.utils.crypt import get_sha256_hash
+from jet_bridge_base.utils.db_types import sql_to_map_type, sql_to_db_type
+from jet_bridge_base.utils.relations import relationship_direction_to_str
+from jet_bridge_base.utils.tables import get_table_name
+
+
+def uniform_to_map_type(column):
+    try:
+        if isinstance(column, MongoColumn):
+            return column.type
+        else:
+            return sql_to_map_type(column.type)
+    except:
+        return 'NullType'
+
+
+def uniform_to_db_type(column):
+    try:
+        if isinstance(column, MongoColumn):
+            return column.type
+        else:
+            return sql_to_db_type(column.type)
+    except:
+        return 'NullType'
 
 
 def is_column_has_default(column):
@@ -85,15 +106,8 @@ def map_column(metadata, column, editable, primary_key_auto):
     data_source_order_after = None
     data_source_hidden = None
 
-    try:
-        map_type = sql_to_map_type(column.type)
-    except:
-        map_type = 'NullType'
-
-    try:
-        db_type = sql_to_db_type(column.type)
-    except:
-        db_type = 'NullType'
+    map_type = uniform_to_map_type(column)
+    db_type = uniform_to_db_type(column)
 
     if column.foreign_keys:
         foreign_key = next(iter(column.foreign_keys))
@@ -275,8 +289,9 @@ def map_relationship_override(override):
 #
 #     return result
 
+
 def map_table(MappedBase, cls, relationships_overrides, hidden):
-    mapper = inspect(cls)
+    mapper = inspect_uniform(cls)
     table = mapper.tables[0]
     name = get_table_name(MappedBase.metadata, table)
     primary_key = mapper.primary_key[0]

@@ -9,7 +9,7 @@ from prompt_toolkit.validation import Validator
 from sqlalchemy import create_engine
 
 from jet_bridge import settings
-from jet_bridge_base.db import build_engine_url
+from jet_bridge_base.db_types.sql import sql_build_engine_url
 
 engines = [
     {
@@ -314,7 +314,7 @@ def create_config(config_not_set):
                 default=database_password or settings.DATABASE_PASSWORD or ''
             )
 
-        engine_url = build_engine_url({
+        engine_url = sql_build_engine_url({
             'engine': database_engine,
             'host': database_host,
             'port': database_port,

@@ -2,11 +2,11 @@ import time
 from collections import OrderedDict
 import math
 
+from jet_bridge_base.db_types import queryset_count_optimized
 from jet_bridge_base.exceptions.missing_argument_error import MissingArgumentError
 from jet_bridge_base.paginators.pagination import Pagination
 from jet_bridge_base.responses.json import JSONResponse
 from jet_bridge_base.utils.http import replace_query_param, remove_query_param
-from jet_bridge_base.utils.queryset import queryset_count_optimized
 
 
 class PageNumberPagination(Pagination):
@@ -32,7 +32,7 @@ class PageNumberPagination(Pagination):
             return None
 
         count_query_start = time.time()
-        self.count = queryset_count_optimized(request, queryset)
+        self.count = queryset_count_optimized(request.session, queryset)
         count_query_end = time.time()
 
         self.count_query_time = round(count_query_end - count_query_start, 3)

@@ -1,8 +1,8 @@
 import json
 
+from jet_bridge_base.db_types import get_session_engine
 from jet_bridge_base.serializers.model_serializer import get_column_data_type
 from jet_bridge_base.utils.classes import is_instance_or_subclass
-from jet_bridge_base.utils.queryset import get_session_engine
 from sqlalchemy import Unicode, and_, or_
 from sqlalchemy.dialects.postgresql import ENUM, JSONB, array
 from sqlalchemy.sql import sqltypes

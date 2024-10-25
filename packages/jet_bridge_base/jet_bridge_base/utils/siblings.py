@@ -2,7 +2,7 @@ from sqlalchemy import inspect, func
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import load_only
 
-from jet_bridge_base.utils.queryset import apply_default_ordering, queryset_count_optimized, get_queryset_order_by
+from jet_bridge_base.db_types import apply_default_ordering, queryset_count_optimized, get_queryset_order_by
 
 
 def get_row_number(Model, queryset, instance):
@@ -60,7 +60,7 @@ def get_row_siblings(Model, queryset, row_number):
 
 
 def get_model_siblings(request, Model, instance, queryset):
-    count = queryset_count_optimized(request, queryset)
+    count = queryset_count_optimized(request.session, queryset)
 
     if count > 10000:
         return {}

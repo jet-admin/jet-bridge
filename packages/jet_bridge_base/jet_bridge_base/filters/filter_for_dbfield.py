@@ -1,13 +1,15 @@
-from jet_bridge_base.filters.binary_filter import BinaryFilter
-from jet_bridge_base.filters.float_filter import FloatFilter
 from sqlalchemy.sql import sqltypes
 
+from jet_bridge_base.db_types import MongoColumn
 from jet_bridge_base.filters import lookups
+from jet_bridge_base.filters.binary_filter import BinaryFilter
+from jet_bridge_base.filters.float_filter import FloatFilter
 from jet_bridge_base.filters.boolean_filter import BooleanFilter
 from jet_bridge_base.filters.char_filter import CharFilter
 from jet_bridge_base.filters.datetime_filter import DateTimeFilter
 from jet_bridge_base.filters.wkt_filter import WKTFilter
 from jet_bridge_base.filters.integer_filter import IntegerFilter
+from jet_bridge_base.models import data_types
 
 number_lookups = [
     lookups.EXACT,
@@ -133,8 +135,43 @@ except ImportError:
     pass
 
 
+FILTER_FOR_MAP_TYPE = {
+    data_types.CHAR: {'filter_class': CharFilter, 'lookups': text_lookups, 'lookups_name': 'text'},
+    data_types.FIXED_CHAR: {'filter_class': CharFilter, 'lookups': text_lookups, 'lookups_name': 'text'},
+    data_types.TEXT: {'filter_class': CharFilter, 'lookups': text_lookups, 'lookups_name': 'text'},
+    data_types.UUID: {'filter_class': BinaryFilter, 'lookups': binary_lookups, 'lookups_name': 'binary'},
+    data_types.SELECT: {'filter_class': CharFilter, 'lookups': select_lookups, 'lookups_name': 'select'},
+    data_types.BOOLEAN: {'filter_class': BooleanFilter, 'lookups': boolean_lookups, 'lookups_name': 'boolean'},
+    data_types.INTEGER: {'filter_class': IntegerFilter, 'lookups': number_lookups, 'lookups_name': 'number'},
+    data_types.BIG_INTEGER: {'filter_class': IntegerFilter, 'lookups': number_lookups, 'lookups_name': 'number'},
+    data_types.SMALL_INTEGER: {'filter_class': IntegerFilter, 'lookups': number_lookups, 'lookups_name': 'number'},
+    data_types.FLOAT: {'filter_class': FloatFilter, 'lookups': number_lookups, 'lookups_name': 'number'},
+    data_types.NUMBER: {'filter_class': FloatFilter, 'lookups': number_lookups, 'lookups_name': 'number'},
+    data_types.DECIMAL: {'filter_class': FloatFilter, 'lookups': number_lookups, 'lookups_name': 'number'},
+    data_types.DOUBLE_PRECISION: {'filter_class': FloatFilter, 'lookups': number_lookups, 'lookups_name': 'number'},
+    data_types.MONEY: {'filter_class': FloatFilter, 'lookups': number_lookups, 'lookups_name': 'number'},
+    data_types.DATE: {'filter_class': DateTimeFilter, 'lookups': datetime_lookups, 'lookups_name': 'datetime'},
+    data_types.DATE_TIME: {'filter_class': DateTimeFilter, 'lookups': datetime_lookups, 'lookups_name': 'datetime'},
+    data_types.TIMESTAMP: {'filter_class': DateTimeFilter, 'lookups': datetime_lookups, 'lookups_name': 'datetime'},
+    data_types.FOREIGN_KEY: {'filter_class': CharFilter, 'lookups': text_lookups, 'lookups_name': 'text'},
+    data_types.JSON: {'filter_class': CharFilter, 'lookups': json_lookups, 'lookups_name': 'json'},
+    data_types.GEOMETRY: {'filter_class': WKTFilter, 'lookups': geography_lookups, 'lookups_name': 'geography'},
+    data_types.GEOGRAPHY: {'filter_class': WKTFilter, 'lookups': geography_lookups, 'lookups_name': 'geography'},
+    data_types.BINARY: {'filter_class': BinaryFilter, 'lookups': binary_lookups, 'lookups_name': 'binary'},
+}
+
+FILTER_FOR_MAP_TYPE_DEFAULT = FILTER_FOR_MAP_TYPE[data_types.CHAR]
+
+
 def filter_for_data_type(value):
     for data_type, filter_data in FILTER_FOR_DBFIELD.items():
         if isinstance(value, data_type):
             return filter_data
     return FILTER_FOR_DBFIELD_DEFAULT
+
+
+def filter_for_column(column):
+    if isinstance(column, MongoColumn):
+        return FILTER_FOR_MAP_TYPE.get(column.type, FILTER_FOR_MAP_TYPE_DEFAULT)
+    else:
+        return filter_for_data_type(column.type)

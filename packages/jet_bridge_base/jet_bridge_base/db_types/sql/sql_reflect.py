@@ -11,7 +11,7 @@ from jet_bridge_base.logger import logger
 from jet_bridge_base.utils.process import get_memory_usage_human
 
 
-def get_tables(
+def sql_get_tables(
     insp,
     metadata,
     bind=None,
@@ -52,8 +52,7 @@ def get_tables(
         load = [
             name
             for name, schname in zip(available, available_w_schema)
-            if (extend_existing or schname not in current)
-               and only(name, metadata)
+            if (extend_existing or schname not in current) and only(name)
         ]
     else:
         missing = [name for name in only if name not in available]
@@ -72,7 +71,7 @@ def get_tables(
     return load, view_names
 
 
-def reflect(
+def sql_reflect(
     cid_short,
     metadata,
     bind=None,
@@ -106,7 +105,7 @@ def reflect(
         if schema is not None:
             reflect_opts["schema"] = schema
 
-        load, view_names = get_tables(insp, metadata, bind, schema, foreign, views, only, extend_existing)
+        load, view_names = sql_get_tables(insp, metadata, bind, schema, foreign, views, only, extend_existing)
 
         """
         Modified: Added default PK set and progress display

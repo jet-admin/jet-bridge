@@ -3,11 +3,12 @@ from sqlalchemy.orm import scoped_session, sessionmaker
 from sqlalchemy.sql.base import _bind_or_error
 
 from jet_bridge_base import settings
-from jet_bridge_base.db import get_conf, get_connection_schema, get_connection_tunnel, create_connection_engine
+from jet_bridge_base.db import get_connection_tunnel
+from jet_bridge_base.db_types.sql import sql_create_connection_engine, sql_get_tables
 from jet_bridge_base.exceptions.validation_error import ValidationError
 from jet_bridge_base.permissions import HasProjectPermissions
-from jet_bridge_base.reflect import get_tables
 from jet_bridge_base.responses.json import JSONResponse
+from jet_bridge_base.utils.conf import get_conf, get_connection_schema
 from jet_bridge_base.views.base.api import BaseAPIView
 
 
@@ -30,7 +31,7 @@ class DiscoverTableView(BaseAPIView):
 
         try:
             tunnel = get_connection_tunnel(conf)
-            bind = create_connection_engine(conf, tunnel)
+            bind = sql_create_connection_engine(conf, tunnel)
 
             Session = scoped_session(sessionmaker(bind=bind))
             session = Session()
@@ -45,7 +46,7 @@ class DiscoverTableView(BaseAPIView):
                     if schema is None:
                         schema = metadata.schema
 
-                    load, view_names = get_tables(insp, metadata, bind, schema, foreign=True, views=True)
+                    load, view_names = sql_get_tables(insp, metadata, bind, schema, foreign=True, views=True)
 
                     return JSONResponse({
                         'tables': load,

@@ -1,8 +1,9 @@
-from sqlalchemy import desc, case
+from sqlalchemy import case
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import load_only
 
 from jet_bridge_base import fields
+from jet_bridge_base.db_types import desc_uniform
 from jet_bridge_base.serializers.serializer import Serializer
 
 
@@ -36,7 +37,7 @@ def get_reset_order_serializer(Model, queryset, session):
                         descending = True
                     field = getattr(Model, name)
                     if descending:
-                        field = desc(field)
+                        field = desc_uniform(field)
                     return field
 
                 order_by.extend(map(lambda x: map_field(x), ordering.split(',')))
