@@ -1,11 +1,10 @@
-from jet_bridge_base.models.model_relation_override import ModelRelationOverrideModel
-from jet_bridge_base.store import store
-from sqlalchemy import inspect
-
 from jet_bridge_base import fields
 from jet_bridge_base.db import get_mapped_base, reload_request_graphql_schema, get_request_connection
+from jet_bridge_base.db_types import inspect_uniform
 from jet_bridge_base.exceptions.validation_error import ValidationError
+from jet_bridge_base.models.model_relation_override import ModelRelationOverrideModel
 from jet_bridge_base.serializers.serializer import Serializer
+from jet_bridge_base.store import store
 from jet_bridge_base.logger import logger
 
 
@@ -49,7 +48,7 @@ class ModelDescriptionRelationOverridesSerializer(Serializer):
         if Model is None:
             raise ValidationError('Unknown relation override model: {}'.format(attrs['model']))
 
-        mapper = inspect(Model)
+        mapper = inspect_uniform(Model)
 
         for item in attrs['relations']:
             if item['direction'] == 'MANYTOONE':

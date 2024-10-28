@@ -201,6 +201,9 @@ class MongoQueryset(object):
 
             yield record
 
+    def all(self):
+        return list(self)
+
     def count(self):
         filters = self.get_filters()
         return self.query.count_documents(filters)
