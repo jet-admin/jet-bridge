@@ -33,40 +33,69 @@ class MongoQueryset(object):
         else:
             return value
 
-    def filter(self, arg):
-        result = self.clone()
-        result.whereclause = result.whereclause = {}
+    def get_empty(self):
+        return {
+            '_id': {'$exists': False}
+        }
+
+    def map_operator(self, arg):
+        acc = {}
 
         if isinstance(arg, MongoOperator):
             if arg.operator == '__eq__':
-                result.whereclause[arg.lhs.name] = self.to_internal_value(arg.rhs, arg.lhs)
+                acc[arg.lhs.name] = self.to_internal_value(arg.rhs, arg.lhs)
             elif arg.operator == '__gt__':
-                result.whereclause[arg.lhs.name] = {'$gt': self.to_internal_value(arg.rhs, arg.lhs)}
+                acc[arg.lhs.name] = {'$gt': self.to_internal_value(arg.rhs, arg.lhs)}
             elif arg.operator == '__ge__':
-                result.whereclause[arg.lhs.name] = {'$gte': self.to_internal_value(arg.rhs, arg.lhs)}
+                acc[arg.lhs.name] = {'$gte': self.to_internal_value(arg.rhs, arg.lhs)}
             elif arg.operator == '__lt__':
-                result.whereclause[arg.lhs.name] = {'$lt': self.to_internal_value(arg.rhs, arg.lhs)}
+                acc[arg.lhs.name] = {'$lt': self.to_internal_value(arg.rhs, arg.lhs)}
             elif arg.operator == '__le__':
-                result.whereclause[arg.lhs.name] = {'$lte': self.to_internal_value(arg.rhs, arg.lhs)}
+                acc[arg.lhs.name] = {'$lte': self.to_internal_value(arg.rhs, arg.lhs)}
             elif arg.operator == 'exists':
-                result.whereclause[arg.lhs.name] = {'$exists': self.to_internal_value(arg.rhs, arg.lhs)}
+                acc[arg.lhs.name] = {'$exists': self.to_internal_value(arg.rhs, arg.lhs)}
+            elif arg.operator == 'in':
+                acc[arg.lhs.name] = {'$in': self.to_internal_value(arg.rhs, arg.lhs)}
+            elif arg.operator == 'json_icontains':
+                acc.update(self.get_empty())
+            elif arg.operator == 'not':
+                positive = self.map_operator(arg.lhs)
+                for key, value in positive.items():
+                    if isinstance(value, dict):
+                        acc[key] = {'$not': value}
+                    else:
+                        acc[key] = {'$ne': value}
             elif arg.operator == 'ilike':
                 value = self.to_internal_value(arg.rhs, arg.lhs)
+                acc[arg.lhs.name] = {'$regex': self.get_regex_from_ilike(value)}
 
-                if value.startswith('%'):
-                    value = value[1:]
-                    prefix = ''
-                else:
-                    prefix = '^'
+        return acc
 
-                if value.endswith('%'):
-                    value = value[:-1]
-                    postfix = ''
-                else:
-                    postfix = '$'
+    def get_regex_from_ilike(self, value):
+        if not isinstance(value, str):
+            return None
 
-                regex = re.compile(prefix + re.escape(value) + postfix, re.IGNORECASE)
-                result.whereclause[arg.lhs.name] = {'$regex': regex}
+        if value.startswith('%'):
+            value = value[1:]
+            prefix = ''
+        else:
+            prefix = '^'
+
+        if value.endswith('%'):
+            value = value[:-1]
+            postfix = ''
+        else:
+            postfix = '$'
+
+        return re.compile(prefix + re.escape(value) + postfix, re.IGNORECASE)
+
+    def filter(self, *args):
+        result = self.clone()
+
+        for arg in args:
+            if not result.whereclause:
+                result.whereclause = []
+            result.whereclause.append(self.map_operator(arg))
 
         return result
 
@@ -104,18 +133,24 @@ class MongoQueryset(object):
         return self._sort
 
     def clone(self):
-        return MongoQueryset(self.session, self.name, whereclause=self.whereclause, search=self._search, offset=self._offset,
-                             limit=self._limit, sort=self._sort)
+        return MongoQueryset(self.session, self.name, whereclause=self.whereclause, search=self._search,
+                             offset=self._offset, limit=self._limit, sort=self._sort)
 
     def get_filters(self):
-        filters = {
-            **(self.whereclause if self.whereclause else {})
-        }
+        filters = []
+
+        if self.whereclause:
+            filters.extend(self.whereclause)
 
         if self._search is not None:
-            filters['$text'] = {'$search': self._search}
+            filters.append({'$text': {'$search': self._search}})
 
-        return filters
+        if len(filters) > 1:
+            return {'$and': filters}
+        elif len(filters) == 1:
+            return filters[0]
+        else:
+            return {}
 
     def first(self):
         filters = self.get_filters()
@@ -142,7 +177,13 @@ class MongoQueryset(object):
 
     def __iter__(self):
         filters = self.get_filters()
-        for data in self.query.find(filter=filters, skip=self._offset, limit=self._limit, sort=self._sort):
+        for data in self.query.find(
+                filter=filters,
+                **({'skip': self._offset} if self._offset else {}),
+                **({'limit': self._limit} if self._limit else {}),
+                sort=self._sort,
+                allow_disk_use=True
+        ):
             record = MongoRecord(self.name, **data)
             self.session.bind_record(record)
 

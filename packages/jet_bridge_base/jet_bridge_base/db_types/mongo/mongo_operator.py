@@ -7,6 +7,9 @@ class MongoOperator(object):
         self.lhs = lhs
         self.rhs = rhs
 
+    def __invert__(self):
+        return MongoOperator('not', self)
+
     def __repr__(self):
         return json.dumps({
             'operator': self.operator,

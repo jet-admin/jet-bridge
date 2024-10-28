@@ -52,14 +52,20 @@ class MongoColumn(object):
     def __le__(self, other):
         return MongoOperator('__le__', self, other)
 
-    # def __invert__(self):
-    #     return MongoOperator('not', self)
+    def isnot(self, other):
+        return MongoOperator('not', MongoOperator('__eq__', self, other))
 
     def ilike(self, value):
         return MongoOperator('ilike', self, value)
 
     def exists(self, value):
         return MongoOperator('exists', self, value)
+
+    def in_(self, value):
+        return MongoOperator('in', self, value)
+
+    def json_icontains(self, value):
+        return MongoOperator('json_icontains', self, value)
 
     def __repr__(self):
         return '{}.{}'.format(self.table.name, self.name)
