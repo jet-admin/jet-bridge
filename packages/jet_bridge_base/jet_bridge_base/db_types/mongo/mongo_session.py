@@ -49,12 +49,14 @@ class MongoSession(object):
     def query(self, *args):
         if isinstance(args[0], MongoDeclarativeMeta):
             name = args[0].get_name()
-        elif isinstance(args[0], MongoColumn):
+            select = None
+        elif len(args) > 0 and all(map(lambda x: isinstance(x, MongoColumn), args)):
             name = args[0].table.name
+            select = args
         else:
-            raise Exception('Unknown query table {}'.format(args[0]))
+            raise Exception('Unsupported query args={}'.format(args))
 
-        return MongoQueryset(self, name)
+        return MongoQueryset(self, name, select=select)
 
     def add(self, record):
         self.bind_record(record)

@@ -10,17 +10,19 @@ from .mongo_desc import MongoDesc
 
 
 class MongoQueryset(object):
+    select = None
     whereclause = None
     _search = None
     _offset = None
     _limit = None
     _sort = None
 
-    def __init__(self, session, name, whereclause=None, search=None, offset=None, limit=None, sort=None):
+    def __init__(self, session, name, select=None, whereclause=None, search=None, offset=None, limit=None, sort=None):
         self.session = session
         self.db = session.db
         self.name = name
         self.query = self.db[self.name]
+        self.select = select
         self.whereclause = whereclause
         self._search = search
         self._offset = offset
@@ -133,8 +135,8 @@ class MongoQueryset(object):
         return self._sort
 
     def clone(self):
-        return MongoQueryset(self.session, self.name, whereclause=self.whereclause, search=self._search,
-                             offset=self._offset, limit=self._limit, sort=self._sort)
+        return MongoQueryset(self.session, self.name, select=self.select, whereclause=self.whereclause,
+                             search=self._search, offset=self._offset, limit=self._limit, sort=self._sort)
 
     def get_filters(self):
         filters = []
@@ -154,7 +156,10 @@ class MongoQueryset(object):
 
     def first(self):
         filters = self.get_filters()
-        data = self.query.find_one(filter=filters)
+        data = self.query.find_one(
+            **({'projection': list(map(lambda x: x.name, self.select))} if self.select else {}),
+            filter=filters,
+        )
 
         if data is None:
             return None
@@ -178,6 +183,7 @@ class MongoQueryset(object):
     def __iter__(self):
         filters = self.get_filters()
         for data in self.query.find(
+                **({'projection': list(map(lambda x: x.name, self.select))} if self.select else {}),
                 filter=filters,
                 **({'skip': self._offset} if self._offset else {}),
                 **({'limit': self._limit} if self._limit else {}),
