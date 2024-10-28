@@ -1,5 +1,4 @@
 import time
-from pymongo import MongoClient
 
 from jet_bridge_base.logger import logger
 from jet_bridge_base.utils.conf import get_connection_only_predicate
@@ -9,10 +8,11 @@ from .mongo_session import MongoSession
 from .mongo_metadata_file import mongo_load_metadata_file, mongo_dump_metadata_file
 from .mongo_reflect import reflect_mongodb
 from .mongo_base import MongoBase
+from .mongo_engine import MongoEngine
 
 
 def mongodb_init_database_connection(conf, tunnel, id_short, connection_name, schema, pending_connection):
-    engine = {}
+    engine = MongoEngine()
     pending_connection['engine'] = engine
 
     logger.info('[{}] Connecting to database "{}"...'.format(id_short, connection_name))
@@ -22,8 +22,8 @@ def mongodb_init_database_connection(conf, tunnel, id_short, connection_name, sc
     database_url = conf.get('url')
     database_name = conf.get('name')
 
-    client = MongoClient(database_url)
-    db = client[database_name]
+    engine.connect(database_url)
+    db = engine.get_db(database_name)
     Session = lambda: MongoSession(db)
 
     connect_end = time.time()
