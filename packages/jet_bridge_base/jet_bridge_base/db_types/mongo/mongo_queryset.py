@@ -92,6 +92,9 @@ class MongoQueryset(object):
         return re.compile(prefix + re.escape(value) + postfix, re.IGNORECASE)
 
     def filter(self, *args):
+        if len(args) == 0:
+            return self
+
         result = self.clone()
 
         for arg in args:
@@ -120,15 +123,18 @@ class MongoQueryset(object):
         return self._limit
 
     def order_by(self, *columns):
+        if len(columns) == 0:
+            return self
+
         result = self.clone()
+        result._sort = result._sort or []
 
-        def map_sort(item):
+        for item in columns:
             if isinstance(item, MongoDesc):
-                return (item.column.name, pymongo.DESCENDING)
+                result._sort.append((item.column.name, pymongo.DESCENDING))
             else:
-                return (item.name, pymongo.ASCENDING)
+                result._sort.append((item.name, pymongo.ASCENDING))
 
-        result._sort = list(map(map_sort, columns))
         return result
 
     def get_order_by(self):

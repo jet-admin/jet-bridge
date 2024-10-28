@@ -607,14 +607,16 @@ class GraphQLSchemaGenerator(object):
         return column
 
     def sort_queryset(self, queryset, MappedBase, mapper, sort):
+        total_order_by = []
+
         for item in sort:
             item_dict = dict(item)
 
             order_by = map(lambda x: self.map_sort_order_field(MappedBase, mapper, x[0], x[1]), item_dict.items())
             order_by = filter(lambda x: x is not None, order_by)
-            order_by = list(order_by)
+            total_order_by.extend(order_by)
 
-            queryset = queryset.order_by(*order_by)
+        queryset = queryset.order_by(*total_order_by)
 
         table = mapper.tables[0]
         name = get_table_name(MappedBase.metadata, table)
