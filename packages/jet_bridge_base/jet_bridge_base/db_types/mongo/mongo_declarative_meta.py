@@ -15,3 +15,6 @@ class MongoDeclarativeMeta(object):
     def __call__(self, **kwargs):
         table_name = self._mapper.selectable.name
         return MongoRecord(table_name, **kwargs)
+
+    def __repr__(self):
+        return self.get_name()

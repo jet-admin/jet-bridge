@@ -60,3 +60,6 @@ class MongoColumn(object):
 
     def exists(self, value):
         return MongoOperator('exists', self, value)
+
+    def __repr__(self):
+        return '{}.{}'.format(self.table.name, self.name)

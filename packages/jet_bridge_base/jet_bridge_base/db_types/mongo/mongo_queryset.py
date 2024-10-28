@@ -1,3 +1,4 @@
+import json
 import re
 import pymongo
 from bson import ObjectId
@@ -153,3 +154,12 @@ class MongoQueryset(object):
 
     def estimated_document_count(self):
         return self.query.estimated_document_count()
+
+    def __repr__(self):
+        return json.dumps({
+            'whereclause': list(map(lambda x: repr(x), self.whereclause)) if self.whereclause else None,
+            '_search': self._search,
+            '_offset': self._offset,
+            '_limit': self._limit,
+            '_sort': self._sort,
+        })

@@ -28,3 +28,6 @@ class MongoTable(object):
             'comment': self.comment,
             'schema': self.schema
         }
+
+    def __repr__(self):
+        return self.name

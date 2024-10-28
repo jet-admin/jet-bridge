@@ -8,3 +8,6 @@ class MongoMapper(object):
         self.selectable = table
         self.primary_key = [table.columns['_id']]
         self.columns = table.columns
+
+    def __repr__(self):
+        return self.selectable.name

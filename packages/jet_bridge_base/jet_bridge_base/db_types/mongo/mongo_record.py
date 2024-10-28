@@ -53,3 +53,6 @@ class MongoRecord(object):
         object.__setattr__(self, 'create_pending', False)
         object.__getattribute__(self, 'update_pending').clear()
         object.__setattr__(self, 'delete_pending', False)
+
+    def __repr__(self):
+        return '_id({})'.format(self.get('_id'))

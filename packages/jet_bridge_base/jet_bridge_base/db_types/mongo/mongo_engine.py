@@ -5,6 +5,7 @@ class MongoEngine(object):
     client = None
 
     def connect(self, url):
+        self.url = url
         self.client = MongoClient(url)
 
     def get_db(self, name):
@@ -14,3 +15,6 @@ class MongoEngine(object):
         if self.client:
             self.client.close()
             self.client = None
+
+    def __repr__(self):
+        return self.url
