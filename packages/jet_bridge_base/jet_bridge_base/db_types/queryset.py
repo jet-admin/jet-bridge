@@ -201,6 +201,19 @@ strftime_options = {
     'year': '%Y-01-01'
 }
 
+isoformat_options = {
+    'microseconds': '%Y-%m-%dT%H:%M:%S.%LZ',
+    # 'milliseconds': '%Y-%m-%d %H:%i:%s.%f',
+    'second': '%Y-%m-%dT%H:%M:%S.000Z',
+    'minute': '%Y-%m-%dT%H:%M:00.000Z',
+    'hour': '%Y-%m-%dT%H:00:00.000Z',
+    'day': '%Y-%m-%dT00:00:00.000Z',
+    # 'week': '%Y-%m-%d',
+    'month': '%Y-%m-01T00:00:00.000Z',
+    # 'quarter': '%Y-%m-%d',
+    'year': '%Y-01-01T00:00:00.000Z',
+}
+
 dateadd_options = {
     'millisecond': 'millisecond',
     'second': 'minute',
@@ -260,8 +273,8 @@ def get_mongo_group_func_lookup(lookup_type, lookup_param, column):
         if lookup_type == 'date':
             date_group = lookup_param or 'day'
 
-            if date_group in strftime_options:
-                return {'$dateToString': {'format': strftime_options[date_group], 'date': '${}'.format(column.name)}}
+            if date_group in isoformat_options:
+                return {'$dateToString': {'format': isoformat_options[date_group], 'date': '${}'.format(column.name)}}
         elif lookup_type == 'plain' or lookup_type == 'auto':
             return '${}'.format(column.name)
     except IndexError:
