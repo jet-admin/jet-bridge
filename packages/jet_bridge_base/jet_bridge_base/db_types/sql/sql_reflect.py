@@ -25,7 +25,7 @@ def sql_get_tables(
 
     available = util.OrderedSet(insp.get_table_names(schema))
 
-    if foreign:
+    if foreign and hasattr(insp, 'get_foreign_table_names'):
         table_names = insp.get_foreign_table_names()
         available.update(table_names)
 
