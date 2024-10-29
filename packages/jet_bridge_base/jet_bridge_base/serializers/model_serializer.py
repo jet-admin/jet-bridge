@@ -90,7 +90,7 @@ class ModelSerializer(Serializer):
         return result
 
     def prepare_datetime_timezone_naive(self, column, value, default_timezone):
-        if not isinstance(value, datetime.datetime) or not value.tzinfo:
+        if not isinstance(value, datetime.datetime) or value.tzinfo:
             return value
 
         if not default_timezone:
