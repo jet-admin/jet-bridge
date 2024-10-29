@@ -131,6 +131,7 @@ class StatusView(BaseAPIView):
             'reflect_memory_usage_approx': reflect_memory_usage_approx,
             'reflect_memory_usage_approx_str': format_size(reflect_memory_usage_approx) if reflect_memory_usage_approx else None,
             'reflect_metadata_dump': connection.get('reflect_metadata_dump'),
+            'default_timezone': str(connection['default_timezone']) if connection.get('default_timezone') else None,
             'tunnel': tunnel,
             'last_request': last_request.isoformat() if last_request else None
         }
