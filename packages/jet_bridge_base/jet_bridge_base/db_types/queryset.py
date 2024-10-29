@@ -5,7 +5,9 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import DeclarativeMeta
 from sqlalchemy.sql import operators, sqltypes, text
 from sqlalchemy.sql.elements import AnnotatedColumnElement, UnaryExpression
+from bson import ObjectId
 
+from jet_bridge_base.db_types.mongo import MongoOperator
 from jet_bridge_base.exceptions.validation_error import ValidationError
 from jet_bridge_base.models import data_types
 from jet_bridge_base.utils.classes import is_instance_or_subclass
@@ -385,7 +387,32 @@ def queryset_group(Model, qs, value):
 
 def queryset_search(qs, mapper, search):
     if isinstance(qs, MongoQueryset):
-        return qs.search(search)
+        for index in qs.query.list_indexes():
+            if 'text' in index['key'].values():
+                return qs.search(search)
+
+        def map_column(column):
+            if column.type in [data_types.INTEGER, data_types.FLOAT]:
+                try:
+                    return column.__eq__(int(search))
+                except:
+                    pass
+            elif column.type in [data_types.BINARY]:
+                try:
+                    return column.__eq__(ObjectId(search))
+                except:
+                    pass
+            elif column.type in [data_types.CHAR, data_types.TEXT]:
+                return column.ilike('%{}%'.format(search))
+
+        operators = list(filter(lambda x: x is not None, map(map_column, mapper.columns)))
+
+        if len(operators) > 1:
+            return qs.filter(MongoOperator('or', operators))
+        elif len(operators) == 1:
+            return qs.filter(operators[0])
+        else:
+            return qs.filter(mapper.columns['_id'].exists(False))
     else:
         def map_column(column):
             if isinstance(column.type, (sqlalchemy.Integer, sqlalchemy.Numeric)):
