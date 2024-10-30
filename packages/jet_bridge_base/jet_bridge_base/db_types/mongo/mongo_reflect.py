@@ -42,7 +42,7 @@ def reflect_mongodb(
         )
 
         page = 1
-        limit = min(*(filter(lambda x: x, [10000, max_read_records])))
+        limit = 10000
         table = MongoTable(name)
 
         while True:
