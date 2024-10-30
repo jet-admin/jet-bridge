@@ -240,7 +240,11 @@ class MongoQueryset(object):
 
     def aggregate(self, pipeline):
         filters = self.get_filters()
-        return self.query.aggregate([{'$match': filters}, pipeline]).next()
+
+        try:
+            return self.query.aggregate([{'$match': filters}, pipeline]).next()
+        except StopIteration:
+            return {'aggregation': 0}
 
     def group(self, pipeline, sort):
         filters = self.get_filters()
@@ -258,8 +262,11 @@ class MongoQueryset(object):
         pipeline = self.get_aggregate_pipeline()
         pipeline.append({'$count': 'count'})
 
-        result = self.query.aggregate(pipeline, allowDiskUse=True).next()
-        return result['count']
+        try:
+            result = self.query.aggregate(pipeline, allowDiskUse=True).next()
+            return result['count']
+        except StopIteration:
+            return 0
 
     def estimated_document_count(self):
         return self.query.estimated_document_count()
