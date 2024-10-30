@@ -112,7 +112,8 @@ def reflect_mongodb(
             if column.mixed_types:
                 column.type = data_types.JSON
 
-                logger.info('Field "{}"."{}" has data stored in multiple types ({}), falling back to JSON'.format(
+                logger.info('[{}] Field "{}"."{}" has data stored in multiple types ({}), falling back to JSON'.format(
+                    cid_short,
                     name,
                     column.name,
                     ','.join(column.mixed_types)
