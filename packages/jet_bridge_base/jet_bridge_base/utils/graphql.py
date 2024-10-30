@@ -922,7 +922,12 @@ class GraphQLSchemaGenerator(object):
 
                 if 'count' in pagination_names or 'hasMore' in pagination_names:
                     count_query_start = time.time()
-                    count = queryset_count_optimized(request.session, queryset)
+                    if offset == 0 and len(queryset_page) < limit:
+                        count = len(queryset_page)
+                    elif page == 1 and len(queryset_page) < limit:
+                        count = len(queryset_page)
+                    else:
+                        count = queryset_count_optimized(request.session, queryset)
                     result['pagination']['count'] = count
                     count_query_end = time.time()
 

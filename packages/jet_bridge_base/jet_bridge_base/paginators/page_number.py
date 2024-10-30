@@ -31,8 +31,17 @@ class PageNumberPagination(Pagination):
         if not page_size:
             return None
 
+        data_query_start = time.time()
+        result = list(queryset.offset((page_number - 1) * page_size).limit(page_size))
+        data_query_end = time.time()
+
+        self.data_query_time = round(data_query_end - data_query_start, 3)
+
         count_query_start = time.time()
-        self.count = queryset_count_optimized(request.session, queryset)
+        if page_number == 1 and len(result) < page_size:
+            self.count = len(result)
+        else:
+            self.count = queryset_count_optimized(request.session, queryset)
         count_query_end = time.time()
 
         self.count_query_time = round(count_query_end - count_query_start, 3)
@@ -40,12 +49,6 @@ class PageNumberPagination(Pagination):
         self.page_number = page_number
         self.page_size = page_size
         self.handler = handler
-
-        data_query_start = time.time()
-        result = list(queryset.offset((page_number - 1) * page_size).limit(page_size))
-        data_query_end = time.time()
-
-        self.data_query_time = round(data_query_end - data_query_start, 3)
 
         return result
 
