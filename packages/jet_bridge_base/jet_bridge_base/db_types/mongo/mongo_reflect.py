@@ -15,8 +15,8 @@ def reflect_mongodb(
     cid_short,
     db,
     only=None,
-    max_read_records=1000000,
-    pending_connection=None
+    pending_connection=None,
+    max_read_records=None
 ):
     available = db.list_collection_names()
 
@@ -100,7 +100,7 @@ def reflect_mongodb(
                     if field_params:
                         column.params = field_params
 
-            if has_items and skip + limit < max_read_records:
+            if has_items and (max_read_records is None or skip + limit < max_read_records):
                 page += 1
             else:
                 break

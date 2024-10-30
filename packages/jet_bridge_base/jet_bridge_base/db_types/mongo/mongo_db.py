@@ -1,5 +1,6 @@
 import time
 
+from jet_bridge_base import settings
 from jet_bridge_base.logger import logger
 from jet_bridge_base.utils.conf import get_connection_only_predicate
 from jet_bridge_base.utils.process import get_memory_usage, get_memory_usage_human
@@ -52,7 +53,13 @@ def mongodb_init_database_connection(conf, tunnel, id_short, connection_name, sc
         reflect_start_memory_usage = get_memory_usage()
 
         only = get_connection_only_predicate(conf)
-        metadata = reflect_mongodb(id_short, db, only=only, pending_connection=pending_connection)
+        metadata = reflect_mongodb(
+            id_short,
+            db,
+            only=only,
+            pending_connection=pending_connection,
+            max_read_records=settings.DATABASE_REFLECT_MAX_RECORDS or 1000000
+        )
 
         reflect_end_time = time.time()
         reflect_end_memory_usage = get_memory_usage()

@@ -80,6 +80,7 @@ class JetDjangoConfiguration(Configuration):
             'DATABASE_EXCEPT': settings.JET_DATABASE_EXCEPT,
             'DATABASE_MAX_TABLES': settings.JET_DATABASE_MAX_TABLES,
             'DATABASE_SCHEMA': settings.JET_DATABASE_SCHEMA,
+            'DATABASE_REFLECT_MAX_RECORDS': settings.JET_DATABASE_REFLECT_MAX_RECORDS,
             'DATABASE_SSL_CA': settings.JET_DATABASE_SSL_CA,
             'DATABASE_SSL_CERT': settings.JET_DATABASE_SSL_CERT,
             'DATABASE_SSL_KEY': settings.JET_DATABASE_SSL_KEY,

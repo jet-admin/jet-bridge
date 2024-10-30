@@ -60,6 +60,7 @@ define('database_only', default=None, type=str)
 define('database_except', default=None, type=str)
 define('database_max_tables', default=None, type=int)
 define('database_schema', default=None, type=str)
+define('database_reflect_max_records', default=1000000, type=int)
 
 define('database_ssl_ca', default=None, type=str, help='Path to "CA Certificate" file')
 define('database_ssl_cert', default=None, type=str, help='Path to "Client Certificate" file')
@@ -178,6 +179,7 @@ DATABASE_ONLY = options.database_only.split(',') if options.database_only else N
 DATABASE_EXCEPT = options.database_except.split(',') if options.database_except else None
 DATABASE_MAX_TABLES = options.database_max_tables
 DATABASE_SCHEMA = options.database_schema
+DATABASE_REFLECT_MAX_RECORDS = options.database_reflect_max_records
 
 DATABASE_SSL_CA = options.database_ssl_ca
 DATABASE_SSL_CERT = options.database_ssl_cert
