@@ -1,3 +1,4 @@
+from .common import mongo_inspect
 from .mongo_base import MongoBase, MongoBaseClasses
 from .mongo_column import MongoColumn
 from .mongo_declarative_meta import MongoDeclarativeMeta

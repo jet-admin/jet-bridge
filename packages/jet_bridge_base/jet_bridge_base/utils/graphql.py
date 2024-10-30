@@ -2,11 +2,11 @@ import re
 import time
 import graphene
 from sqlalchemy.engine import Row
-from sqlalchemy.orm import MANYTOONE, ONETOMANY, aliased
+from sqlalchemy.orm import MANYTOONE, ONETOMANY
 
 from jet_bridge_base.db import get_mapped_base, get_engine, get_request_connection
 from jet_bridge_base.db_types import desc_uniform, inspect_uniform, get_session_engine, queryset_count_optimized, \
-    apply_default_ordering, queryset_search, queryset_group
+    apply_default_ordering, queryset_search, queryset_group, aliased_uniform
 from jet_bridge_base.db_types.sql import sql_load_database_table
 from jet_bridge_base.filters import lookups
 from jet_bridge_base.filters.filter import EMPTY_VALUES
@@ -393,7 +393,7 @@ class GraphQLSchemaGenerator(object):
                                 last_related_model = None
 
                                 for relationship in parent_relations:
-                                    related_model = aliased(relationship['related_model'])
+                                    related_model = aliased_uniform(relationship['related_model'])
                                     related_column = getattr(related_model, relationship['related_column'].name)
                                     local_column = getattr(last_related_model, relationship['local_column'].name) if last_related_model else relationship['local_column']
                                     queryset = queryset.join(

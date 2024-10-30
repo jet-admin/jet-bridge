@@ -3,27 +3,29 @@ import re
 import pymongo
 from bson import ObjectId
 
+from .common import mongo_inspect
 from .mongo_operator import MongoOperator
 from .mongo_record import MongoRecord
-
 from .mongo_desc import MongoDesc
 
 
 class MongoQueryset(object):
     select = None
     whereclause = None
+    _joins = None
     _search = None
     _offset = None
     _limit = None
     _sort = None
 
-    def __init__(self, session, name, select=None, whereclause=None, search=None, offset=None, limit=None, sort=None):
+    def __init__(self, session, name, select=None, whereclause=None, joins=None, search=None, offset=None, limit=None, sort=None):
         self.session = session
         self.db = session.db
         self.name = name
         self.query = self.db[self.name]
         self.select = select
         self.whereclause = whereclause
+        self._joins = joins
         self._search = search
         self._offset = offset
         self._limit = limit
@@ -35,6 +37,9 @@ class MongoQueryset(object):
         else:
             return value
 
+    def get_column_path(self, column):
+        return '{}.{}'.format(column.table.name, column.name) if column.table.name != self.name else column.name
+
     def get_empty(self):
         return {
             '_id': {'$exists': False}
@@ -45,19 +50,33 @@ class MongoQueryset(object):
 
         if isinstance(arg, MongoOperator):
             if arg.operator == '__eq__':
-                acc[arg.lhs.name] = self.to_internal_value(arg.rhs, arg.lhs)
+                column_path = self.get_column_path(arg.lhs)
+                value = self.to_internal_value(arg.rhs, arg.lhs)
+                acc[column_path] = value
             elif arg.operator == '__gt__':
-                acc[arg.lhs.name] = {'$gt': self.to_internal_value(arg.rhs, arg.lhs)}
+                column_path = self.get_column_path(arg.lhs)
+                value = self.to_internal_value(arg.rhs, arg.lhs)
+                acc[column_path] = {'$gt': value}
             elif arg.operator == '__ge__':
-                acc[arg.lhs.name] = {'$gte': self.to_internal_value(arg.rhs, arg.lhs)}
+                column_path = self.get_column_path(arg.lhs)
+                value = self.to_internal_value(arg.rhs, arg.lhs)
+                acc[column_path] = {'$gte': value}
             elif arg.operator == '__lt__':
-                acc[arg.lhs.name] = {'$lt': self.to_internal_value(arg.rhs, arg.lhs)}
+                column_path = self.get_column_path(arg.lhs)
+                value = self.to_internal_value(arg.rhs, arg.lhs)
+                acc[column_path] = {'$lt': value}
             elif arg.operator == '__le__':
-                acc[arg.lhs.name] = {'$lte': self.to_internal_value(arg.rhs, arg.lhs)}
+                column_path = self.get_column_path(arg.lhs)
+                value = self.to_internal_value(arg.rhs, arg.lhs)
+                acc[column_path] = {'$lte': value}
             elif arg.operator == 'exists':
-                acc[arg.lhs.name] = {'$exists': self.to_internal_value(arg.rhs, arg.lhs)}
+                column_path = self.get_column_path(arg.lhs)
+                value = self.to_internal_value(arg.rhs, arg.lhs)
+                acc[column_path] = {'$exists': value}
             elif arg.operator == 'in':
-                acc[arg.lhs.name] = {'$in': self.to_internal_value(arg.rhs, arg.lhs)}
+                column_path = self.get_column_path(arg.lhs)
+                value = self.to_internal_value(arg.rhs, arg.lhs)
+                acc[column_path] = {'$in': value}
             elif arg.operator == 'json_icontains':
                 acc.update(self.get_empty())
             elif arg.operator == 'not':
@@ -68,8 +87,9 @@ class MongoQueryset(object):
                     else:
                         acc[key] = {'$ne': value}
             elif arg.operator == 'ilike':
+                column_path = self.get_column_path(arg.lhs)
                 value = self.to_internal_value(arg.rhs, arg.lhs)
-                acc[arg.lhs.name] = {'$regex': self.get_regex_from_ilike(value)}
+                acc[column_path] = {'$regex': self.get_regex_from_ilike(value)}
 
         return acc
 
@@ -101,6 +121,14 @@ class MongoQueryset(object):
             if not result.whereclause:
                 result.whereclause = []
             result.whereclause.append(self.map_operator(arg))
+
+        return result
+
+    def join(self, model, operator):
+        result = self.clone()
+
+        result._joins = result._joins or []
+        result._joins.append((model, operator))
 
         return result
 
@@ -142,7 +170,8 @@ class MongoQueryset(object):
 
     def clone(self):
         return MongoQueryset(self.session, self.name, select=self.select, whereclause=self.whereclause,
-                             search=self._search, offset=self._offset, limit=self._limit, sort=self._sort)
+                             joins=self._joins, search=self._search, offset=self._offset, limit=self._limit,
+                             sort=self._sort)
 
     def get_filters(self):
         filters = []
@@ -160,14 +189,45 @@ class MongoQueryset(object):
         else:
             return {}
 
-    def first(self):
-        filters = self.get_filters()
-        data = self.query.find_one(
-            **({'projection': list(map(lambda x: x.name, self.select))} if self.select else {}),
-            filter=filters,
-        )
+    def get_aggregate_pipeline(self, limit=None):
+        aggregate = []
 
-        if data is None:
+        if self._joins:
+            for model, operator in self._joins:
+                mapper = mongo_inspect(model)
+                aggregate.append({'$lookup': {
+                    'from': mapper.selectable.name,
+                    'localField': operator.rhs.name,
+                    'foreignField': operator.lhs.name,
+                    'as': mapper.selectable.name
+                }})
+
+        filters = self.get_filters()
+        if filters:
+            aggregate.append({'$match': filters})
+
+        if self._sort:
+            aggregate.append({'$sort': dict(self._sort)})
+
+        if self._offset:
+            aggregate.append({'$skip': self._offset})
+
+        if limit is not None:
+            aggregate.append({'$limit': limit})
+        elif self._limit:
+            aggregate.append({'$limit': self._limit})
+
+        if self.select:
+            aggregate.append({'$project': dict(map(lambda x: (x.name, 1), self.select))})
+
+        return aggregate
+
+    def first(self):
+        pipeline = self.get_aggregate_pipeline(limit=1)
+
+        try:
+            data = self.query.aggregate(pipeline, allowDiskUse=True).next()
+        except StopIteration:
             return None
 
         record = MongoRecord(self.name, **data)
@@ -186,30 +246,26 @@ class MongoQueryset(object):
         filters = self.get_filters()
         return list(self.query.aggregate([{'$match': filters}, pipeline, sort]))
 
-    def __iter__(self):
-        filters = self.get_filters()
-        for data in self.query.find(
-                **({'projection': list(map(lambda x: x.name, self.select))} if self.select else {}),
-                filter=filters,
-                **({'skip': self._offset} if self._offset else {}),
-                **({'limit': self._limit} if self._limit else {}),
-                sort=self._sort,
-                allow_disk_use=True
-        ):
+    def all(self):
+        pipeline = self.get_aggregate_pipeline()
+        for data in self.query.aggregate(pipeline, allowDiskUse=True):
             record = MongoRecord(self.name, **data)
             self.session.bind_record(record)
 
             yield record
 
-    def all(self):
-        return list(self)
-
     def count(self):
-        filters = self.get_filters()
-        return self.query.count_documents(filters)
+        pipeline = self.get_aggregate_pipeline()
+        pipeline.append({'$count': 'count'})
+
+        result = self.query.aggregate(pipeline, allowDiskUse=True).next()
+        return result['count']
 
     def estimated_document_count(self):
         return self.query.estimated_document_count()
+
+    def __iter__(self):
+        return self.all()
 
     def __repr__(self):
         return json.dumps({

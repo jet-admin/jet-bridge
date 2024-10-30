@@ -1,4 +1,4 @@
-from .common import inspect_uniform, get_session_engine
+from .common import inspect_uniform, aliased_uniform, get_session_engine
 from .db import init_database_connection, load_mapped_base
 from .discover import discover_connection, discover_tables
 from .metadata_file import dump_metadata_file, remove_metadata_file

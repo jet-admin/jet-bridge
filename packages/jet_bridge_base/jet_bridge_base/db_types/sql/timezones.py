@@ -1,7 +1,8 @@
 from sqlalchemy.exc import SQLAlchemyError
 
-from jet_bridge_base.db_types import get_session_engine
 from jet_bridge_base.utils.timezones import FixedOffsetTimezone
+
+from .common import sql_get_session_engine
 
 
 def sql_fetch_postgresql_default_timezone(session):
@@ -39,11 +40,11 @@ def sql_fetch_mssql_default_timezone(session):
 
 def sql_fetch_default_timezone(session):
     try:
-        if get_session_engine(session) == 'postgresql':
+        if sql_get_session_engine(session) == 'postgresql':
             return sql_fetch_postgresql_default_timezone(session)
-        elif get_session_engine(session) == 'mssql':
+        elif sql_get_session_engine(session) == 'mssql':
             return sql_fetch_mssql_default_timezone(session)
-        elif get_session_engine(session) == 'mysql':
+        elif sql_get_session_engine(session) == 'mysql':
             return sql_fetch_mysql_default_timezone(session)
     except:
         pass
