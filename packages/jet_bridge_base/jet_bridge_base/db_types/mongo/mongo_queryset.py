@@ -222,6 +222,27 @@ class MongoQueryset(object):
 
         return aggregate
 
+    def all(self):
+        pipeline = self.get_aggregate_pipeline()
+        for data in self.query.aggregate(pipeline, allowDiskUse=True):
+            record = MongoRecord(self.name, **data)
+            self.session.bind_record(record)
+
+            yield record
+
+    def count(self):
+        pipeline = self.get_aggregate_pipeline()
+        pipeline.append({'$count': 'count'})
+
+        try:
+            result = self.query.aggregate(pipeline, allowDiskUse=True).next()
+            return result['count']
+        except StopIteration:
+            return 0
+
+    def estimated_document_count(self):
+        return self.query.estimated_document_count()
+
     def first(self):
         pipeline = self.get_aggregate_pipeline(limit=1)
 
@@ -249,27 +270,6 @@ class MongoQueryset(object):
     def group(self, pipeline, sort):
         filters = self.get_filters()
         return list(self.query.aggregate([{'$match': filters}, pipeline, sort]))
-
-    def all(self):
-        pipeline = self.get_aggregate_pipeline()
-        for data in self.query.aggregate(pipeline, allowDiskUse=True):
-            record = MongoRecord(self.name, **data)
-            self.session.bind_record(record)
-
-            yield record
-
-    def count(self):
-        pipeline = self.get_aggregate_pipeline()
-        pipeline.append({'$count': 'count'})
-
-        try:
-            result = self.query.aggregate(pipeline, allowDiskUse=True).next()
-            return result['count']
-        except StopIteration:
-            return 0
-
-    def estimated_document_count(self):
-        return self.query.estimated_document_count()
 
     def __iter__(self):
         return self.all()
