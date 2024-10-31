@@ -175,7 +175,7 @@ def queryset_aggregate(Model, qs, value):
         if whereclause is not None:
             qs = qs.filter(whereclause)
 
-        return qs.first()
+        return qs.first()[0]
 
 date_trunc_options = {
     'microsecond': 'microseconds',
