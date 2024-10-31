@@ -1,5 +1,5 @@
 import time
-from datetime import datetime
+from datetime import date
 from bson import ObjectId
 
 from jet_bridge_base.logger import logger
@@ -63,16 +63,16 @@ def reflect_mongodb(
                     if value is None and key not in table.columns:
                         # field_type = None
                         pass
-                    if isinstance(value, int):
+                    if isinstance(value, bool):
+                        field_type = data_types.BOOLEAN
+                    elif isinstance(value, int):
                         field_type = data_types.INTEGER
                     elif isinstance(value, str):
                         # field_type = data_types.TEXT
                         field_type = data_types.CHAR
                     elif isinstance(value, float):
                         field_type = data_types.FLOAT
-                    elif isinstance(value, bool):
-                        field_type = data_types.BOOLEAN
-                    elif isinstance(value, datetime):
+                    elif isinstance(value, date):
                         field_type = data_types.DATE_TIME
                     elif isinstance(value, dict):
                         field_type = data_types.JSON
