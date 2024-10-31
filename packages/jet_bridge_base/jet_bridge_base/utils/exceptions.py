@@ -1,8 +1,7 @@
 import re
-
 import six
-from sqlalchemy import inspect
 
+from jet_bridge_base.db_types import inspect_uniform
 from jet_bridge_base.exceptions.validation_error import ValidationError
 
 
@@ -42,7 +41,7 @@ def validation_error_from_database_error(e, model):
                 match = re.search(r, message, re.IGNORECASE | re.MULTILINE)
 
                 if match:
-                    mapper = inspect(model)
+                    mapper = inspect_uniform(model)
                     columns = dict(map(lambda x: (x.key, x), mapper.columns))
                     column_name = match.group(field_index)
 

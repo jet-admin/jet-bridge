@@ -1,7 +1,7 @@
 import re
-
-from jet_bridge_base.utils.queryset import get_session_engine
 from sqlalchemy.exc import SQLAlchemyError
+
+from .common import sql_get_session_engine
 
 
 def fetch_postgresql_type_code_to_sql_type(session):
@@ -56,5 +56,5 @@ def fetch_postgresql_type_code_to_sql_type(session):
 
 
 def fetch_type_code_to_sql_type(session):
-    if get_session_engine(session) == 'postgresql':
+    if sql_get_session_engine(session) == 'postgresql':
         return fetch_postgresql_type_code_to_sql_type(session)

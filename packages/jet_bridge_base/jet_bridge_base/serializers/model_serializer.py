@@ -1,55 +1,60 @@
 import datetime
 import six
-from sqlalchemy import inspect
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.sql import sqltypes
 
 from jet_bridge_base import fields
 from jet_bridge_base.db import get_default_timezone
+from jet_bridge_base.db_types import inspect_uniform, MongoColumn, get_session_engine
 from jet_bridge_base.serializers.serializer import Serializer
 from jet_bridge_base.utils.exceptions import validation_error_from_database_error
-from jet_bridge_base.utils.queryset import get_session_engine
+from jet_bridge_base.models import data_types
 
 data_types = [
-    {'query': 'VARCHAR', 'operator': 'startswith', 'data_type': fields.CharField},
-    {'query': 'TEXT', 'operator': 'equals', 'data_type': fields.CharField},
-    {'query': 'BIT', 'operator': 'equals', 'data_type': fields.BooleanField},
-    {'query': 'TINYINT', 'operator': 'equals', 'data_type': fields.BooleanField},
-    {'query': 'BOOLEAN', 'operator': 'equals', 'data_type': fields.BooleanField},
-    {'query': 'INTEGER[]', 'operator': 'startswith', 'data_type': fields.ArrayField},
-    {'query': 'INTEGER', 'operator': 'equals', 'data_type': fields.IntegerField},
-    {'query': 'SMALLINT', 'operator': 'equals', 'data_type': fields.IntegerField},
-    {'query': 'BIGINT', 'operator': 'equals', 'data_type': fields.IntegerField},
-    {'query': 'FLOAT', 'operator': 'equals', 'data_type': fields.FloatField},
-    {'query': 'DECIMAL', 'operator': 'equals', 'data_type': fields.FloatField},
-    {'query': 'DOUBLE_PRECISION', 'operator': 'equals', 'data_type': fields.FloatField},
-    {'query': 'MONEY', 'operator': 'equals', 'data_type': fields.FloatField},
-    {'query': 'SMALLMONEY', 'operator': 'equals', 'data_type': fields.FloatField},
-    {'query': 'NUMERIC', 'operator': 'startswith', 'data_type': fields.CharField},
-    {'query': 'VARCHAR', 'operator': 'startswith', 'data_type': fields.CharField},
-    {'query': 'TIMESTAMP', 'operator': 'startswith', 'data_type': fields.DateTimeField},
-    {'query': 'DATETIME', 'operator': 'startswith', 'data_type': fields.DateTimeField},
-    {'query': 'JSON', 'operator': 'startswith', 'data_type': fields.JSONField},
-    {'query': 'ARRAY', 'operator': 'equals', 'data_type': fields.JSONField},
-    {'query': 'BINARY', 'operator': 'startswith', 'data_type': fields.BinaryField},
-    {'query': 'VARBINARY', 'operator': 'startswith', 'data_type': fields.BinaryField},
-    {'query': 'geometry', 'operator': 'startswith', 'data_type': fields.WKTField},
-    {'query': 'geography', 'operator': 'startswith', 'data_type': fields.WKTField},
+    {'query': 'VARCHAR', 'operator': 'startswith', 'map_type': data_types.CHAR, 'data_type': fields.CharField},
+    {'query': 'TEXT', 'operator': 'equals', 'map_type': data_types.TEXT, 'data_type': fields.CharField},
+    {'query': 'BIT', 'operator': 'equals', 'map_type': data_types.BOOLEAN, 'data_type': fields.BooleanField},
+    {'query': 'TINYINT', 'operator': 'equals', 'map_type': data_types.SMALL_INTEGER, 'data_type': fields.BooleanField},
+    {'query': 'BOOLEAN', 'operator': 'equals', 'map_type': data_types.BOOLEAN, 'data_type': fields.BooleanField},
+    {'query': 'INTEGER[]', 'operator': 'startswith', 'map_type': data_types.JSON, 'data_type': fields.ArrayField},
+    {'query': 'INTEGER', 'operator': 'equals', 'map_type': data_types.INTEGER, 'data_type': fields.IntegerField},
+    {'query': 'SMALLINT', 'operator': 'equals', 'map_type': data_types.SMALL_INTEGER, 'data_type': fields.IntegerField},
+    {'query': 'BIGINT', 'operator': 'equals', 'map_type': data_types.BIG_INTEGER, 'data_type': fields.IntegerField},
+    {'query': 'FLOAT', 'operator': 'equals', 'map_type': data_types.FLOAT, 'data_type': fields.FloatField},
+    {'query': 'DECIMAL', 'operator': 'equals', 'map_type': data_types.DECIMAL, 'data_type': fields.FloatField},
+    {'query': 'DOUBLE_PRECISION', 'operator': 'equals', 'map_type': data_types.DOUBLE_PRECISION, 'data_type': fields.FloatField},
+    {'query': 'MONEY', 'operator': 'equals', 'map_type': data_types.MONEY, 'data_type': fields.FloatField},
+    {'query': 'SMALLMONEY', 'operator': 'equals', 'map_type': data_types.MONEY, 'data_type': fields.FloatField},
+    {'query': 'NUMERIC', 'operator': 'startswith', 'map_type': data_types.NUMBER, 'data_type': fields.CharField},
+    {'query': 'VARCHAR', 'operator': 'startswith', 'map_type': data_types.CHAR, 'data_type': fields.CharField},
+    {'query': 'TIMESTAMP', 'operator': 'startswith', 'map_type': data_types.DATE_TIME, 'data_type': fields.DateTimeField},
+    {'query': 'DATETIME', 'operator': 'startswith', 'map_type': data_types.DATE_TIME, 'data_type': fields.DateTimeField},
+    {'query': 'JSON', 'operator': 'startswith', 'map_type': data_types.JSON, 'data_type': fields.JSONField},
+    {'query': 'ARRAY', 'operator': 'equals', 'map_type': data_types.JSON, 'data_type': fields.JSONField},
+    {'query': 'BINARY', 'operator': 'startswith', 'map_type': data_types.BINARY, 'data_type': fields.BinaryField},
+    {'query': 'VARBINARY', 'operator': 'startswith', 'map_type': data_types.BINARY, 'data_type': fields.BinaryField},
+    {'query': 'geometry', 'operator': 'startswith', 'map_type': data_types.GEOMETRY, 'data_type': fields.WKTField},
+    {'query': 'geography', 'operator': 'startswith', 'map_type': data_types.GEOGRAPHY, 'data_type': fields.WKTField},
 ]
 default_data_type = fields.CharField
 
 
 def get_column_data_type(column):
-    try:
-        data_type = six.text_type(column.type)
-    except:
-        data_type = 'NullType'
+    if isinstance(column, MongoColumn):
+        for rule in reversed(data_types):
+            if rule['map_type'] == column.type:
+                return rule['data_type']
+    else:
+        try:
+            data_type = six.text_type(column.type)
+        except:
+            data_type = 'NullType'
 
-    for rule in data_types:
-        if rule['operator'] == 'equals' and data_type == rule['query']:
-            return rule['data_type']
-        elif rule['operator'] == 'startswith' and data_type[:len(rule['query'])] == rule['query']:
-            return rule['data_type']
+        for rule in data_types:
+            if rule['operator'] == 'equals' and data_type == rule['query']:
+                return rule['data_type']
+            elif rule['operator'] == 'startswith' and data_type[:len(rule['query'])] == rule['query']:
+                return rule['data_type']
 
     return default_data_type
 
@@ -65,7 +70,7 @@ class ModelSerializer(Serializer):
         result = super(ModelSerializer, self).get_fields()
 
         if hasattr(self.meta, 'model_fields'):
-            mapper = inspect(self.meta.model)
+            mapper = inspect_uniform(self.meta.model)
             columns = dict(map(lambda x: (x.key, x), mapper.columns))
 
             for field_name in self.meta.model_fields:
@@ -115,7 +120,7 @@ class ModelSerializer(Serializer):
         return ModelClass(**validated_data)
 
     def create(self, validated_data):
-        mapper = inspect(self.meta.model)
+        mapper = inspect_uniform(self.meta.model)
         primary_key = mapper.primary_key[0]
         primary_key_specified = primary_key.name in validated_data
 

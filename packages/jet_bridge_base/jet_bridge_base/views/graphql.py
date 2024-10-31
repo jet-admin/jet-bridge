@@ -4,7 +4,7 @@ from datetime import timedelta
 
 from graphql import GraphQLError
 
-from jet_bridge_base.db import request_connection_cache, get_table_name, get_mapped_base, get_connection_id_short
+from jet_bridge_base.db import request_connection_cache, get_mapped_base, get_connection_id_short
 from jet_bridge_base.exceptions.permission_denied import PermissionDenied
 from jet_bridge_base.logger import logger
 from jet_bridge_base.permissions import HasProjectPermissions
@@ -12,6 +12,7 @@ from jet_bridge_base.responses.json import JSONResponse
 from jet_bridge_base.utils.common import get_random_string
 from jet_bridge_base.utils.graphql import GraphQLSchemaGenerator
 from jet_bridge_base.utils.process import get_memory_usage_human, get_memory_usage
+from jet_bridge_base.utils.tables import get_table_name
 from jet_bridge_base.utils.track_database import track_database_async
 from jet_bridge_base.views.base.api import APIView
 

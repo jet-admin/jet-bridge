@@ -1,26 +1,23 @@
 import re
 import time
-
 import graphene
-from sqlalchemy import inspect, desc, MetaData
 from sqlalchemy.engine import Row
-from sqlalchemy.orm import MANYTOONE, ONETOMANY, aliased
+from sqlalchemy.orm import MANYTOONE, ONETOMANY
 
-from jet_bridge_base.automap import automap_base
-from jet_bridge_base.db import get_mapped_base, get_engine, load_mapped_base, get_request_connection, get_table_name
+from jet_bridge_base.db import get_mapped_base, get_engine, get_request_connection
+from jet_bridge_base.db_types import desc_uniform, inspect_uniform, get_session_engine, queryset_count_optimized, \
+    apply_default_ordering, queryset_search, queryset_group, aliased_uniform
+from jet_bridge_base.db_types.sql import sql_load_database_table
 from jet_bridge_base.filters import lookups
-from jet_bridge_base.filters.filter import safe_array, EMPTY_VALUES
-from jet_bridge_base.filters.filter_for_dbfield import filter_for_data_type
-from jet_bridge_base.filters.model_group import get_query_func_by_name
-from jet_bridge_base.filters.model_search import search_queryset
+from jet_bridge_base.filters.filter import EMPTY_VALUES
+from jet_bridge_base.filters.filter_for_dbfield import filter_for_column
 from jet_bridge_base.models.model_relation_override import ModelRelationOverrideModel
 from jet_bridge_base.serializers.model import get_model_serializer
-from jet_bridge_base.serializers.model_serializer import get_column_data_type
 from jet_bridge_base.store import store
 from jet_bridge_base.utils.common import get_set_first, any_type_sorter, unique, flatten
 from jet_bridge_base.utils.gql import RawScalar
-from jet_bridge_base.utils.queryset import queryset_count_optimized, apply_default_ordering, get_session_engine
 from jet_bridge_base.utils.relations import parse_relationship_direction
+from jet_bridge_base.utils.tables import get_table_name
 
 
 class ModelFiltersType(graphene.InputObjectType):
@@ -182,7 +179,7 @@ class GraphQLSchemaGenerator(object):
         self.model_sort_types = dict()
 
     def get_queryset(self, request, Model, only_columns=None):
-        mapper = inspect(Model)
+        mapper = inspect_uniform(Model)
         pks = mapper.primary_key
 
         if only_columns:
@@ -196,7 +193,7 @@ class GraphQLSchemaGenerator(object):
         else:
             queryset = request.session.query(Model)
 
-        mapper = inspect(Model)
+        mapper = inspect_uniform(Model)
         auto_pk = getattr(mapper.tables[0], '__jet_auto_pk__', False) if len(mapper.tables) else None
         if auto_pk:
             queryset = queryset.filter(mapper.primary_key[0].isnot(None))
@@ -227,7 +224,7 @@ class GraphQLSchemaGenerator(object):
         for Model in MappedBase.classes:
             model_relationships = {}
 
-            mapper = inspect(Model)
+            mapper = inspect_uniform(Model)
             name = get_table_name(MappedBase.metadata, mapper.selectable)
 
             model_relationships_overrides = relationships_overrides.get(name, [])
@@ -245,19 +242,12 @@ class GraphQLSchemaGenerator(object):
                 if not related_model and '.' in related_name:
                     schema, table = related_name.split('.', 1)
                     engine = get_engine(request)
-                    bind = MappedBase.metadata.bind
-
-                    related_metadata = MetaData(schema=schema, bind=bind)
-                    related_metadata.reflect(bind=engine, schema=schema, only=[table])
-                    related_base = automap_base(metadata=related_metadata)
-                    load_mapped_base(related_base)
-
-                    related_model = related_base.classes.get(table)
+                    related_model = sql_load_database_table(engine, MappedBase, schema, table)
 
                 if not related_model:
                     continue
 
-                related_mapper = inspect(related_model)
+                related_mapper = inspect_uniform(related_model)
                 related_column = getattr(related_model, override.related_field, None)
 
                 if related_column is None:
@@ -403,7 +393,7 @@ class GraphQLSchemaGenerator(object):
                                 last_related_model = None
 
                                 for relationship in parent_relations:
-                                    related_model = aliased(relationship['related_model'])
+                                    related_model = aliased_uniform(relationship['related_model'])
                                     related_column = getattr(related_model, relationship['related_column'].name)
                                     local_column = getattr(last_related_model, relationship['local_column'].name) if last_related_model else relationship['local_column']
                                     queryset = queryset.join(
@@ -414,7 +404,7 @@ class GraphQLSchemaGenerator(object):
 
                                 column = getattr(last_related_model, column.name)
 
-                            item = filter_for_data_type(column.type)
+                            item = filter_for_column(column)
                             lookup = lookups.by_gql.get(lookup_name)
                             filters_instance = item['filter_class'](
                                 name=column.key,
@@ -435,7 +425,7 @@ class GraphQLSchemaGenerator(object):
     def search_queryset(self, queryset, mapper, search):
         if search is not None:
             query = search['query']
-            queryset = search_queryset(queryset, mapper, query)
+            queryset = queryset_search(queryset, mapper, query)
 
         return queryset
 
@@ -489,13 +479,14 @@ class GraphQLSchemaGenerator(object):
 
                     aggregate_column = getattr(relation_model, aggregate_column_name, None)
                     if aggregate_column is not None:
-                        aggregate_func = get_query_func_by_name(lookup_data['aggregate']['func'], aggregate_column)
-
-                        groups = request.session\
-                            .query(relation_column, aggregate_func)\
-                            .filter(relation_column.in_(lookup_values))\
-                            .group_by(relation_column)
-                        groups_dict = dict(groups)
+                        queryset = request.session.query(relation_model).filter(relation_column.in_(lookup_values))
+                        groups = queryset_group(relation_model, queryset, {
+                            'y_func': lookup_data['aggregate']['func'],
+                            'y_column': aggregate_column.name,
+                            'x_columns': [relation_column.name],
+                            'x_lookups': ['plain']
+                        })
+                        groups_dict = dict(map(lambda x: (x['group'], x['y_func']), groups))
 
                         lookup_result['aggregated_values'] = list(map(lambda x: {
                             'instance': x,
@@ -612,19 +603,21 @@ class GraphQLSchemaGenerator(object):
             return
 
         if descending:
-            column = desc(column)
+            column = desc_uniform(column)
 
         return column
 
     def sort_queryset(self, queryset, MappedBase, mapper, sort):
+        total_order_by = []
+
         for item in sort:
             item_dict = dict(item)
 
             order_by = map(lambda x: self.map_sort_order_field(MappedBase, mapper, x[0], x[1]), item_dict.items())
             order_by = filter(lambda x: x is not None, order_by)
-            order_by = list(order_by)
+            total_order_by.extend(order_by)
 
-            queryset = queryset.order_by(*order_by)
+        queryset = queryset.order_by(*total_order_by)
 
         table = mapper.tables[0]
         name = get_table_name(MappedBase.metadata, table)
@@ -696,7 +689,7 @@ class GraphQLSchemaGenerator(object):
         table_name = get_table_name(MappedBase.metadata, mapper.selectable)
         model_name = clean_name(table_name)
         column_name = clean_name(column.name)
-        dbfield_filter = filter_for_data_type(column.type)
+        dbfield_filter = filter_for_column(column)
         relationship = self.get_model_field_filters_type_relationship(MappedBase, mapper, column_name) if with_relations else None
         cls_name = 'Model{}Column{}FiltersType'.format(model_name, column_name) if relationship \
             else 'Lookups{}FiltersType'.format(dbfield_filter['lookups_name'])
@@ -929,7 +922,12 @@ class GraphQLSchemaGenerator(object):
 
                 if 'count' in pagination_names or 'hasMore' in pagination_names:
                     count_query_start = time.time()
-                    count = queryset_count_optimized(request, queryset)
+                    if offset == 0 and len(queryset_page) < limit:
+                        count = len(queryset_page)
+                    elif page == 1 and len(queryset_page) < limit:
+                        count = len(queryset_page)
+                    else:
+                        count = queryset_count_optimized(request.session, queryset)
                     result['pagination']['count'] = count
                     count_query_end = time.time()
 
@@ -962,7 +960,7 @@ class GraphQLSchemaGenerator(object):
             # Wait to allow other threads execution
             time.sleep(0.01)
 
-            mapper = inspect(Model)
+            mapper = inspect_uniform(Model)
             table = mapper.tables[0]
             name = get_table_name(MappedBase.metadata, table)
             name = clean_name(name)

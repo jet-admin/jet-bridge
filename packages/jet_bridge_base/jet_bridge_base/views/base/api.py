@@ -6,8 +6,7 @@ import six
 
 from jet_bridge_base import settings
 from jet_bridge_base.configuration import configuration
-from jet_bridge_base.db import create_session, get_connection_name, get_connection, get_conf, get_connection_schema, \
-    get_connection_id
+from jet_bridge_base.db import create_session
 from jet_bridge_base.exceptions.api import APIException
 from jet_bridge_base.exceptions.not_found import NotFound
 from jet_bridge_base.exceptions.permission_denied import PermissionDenied
@@ -16,6 +15,7 @@ from jet_bridge_base.responses.json import JSONResponse
 from jet_bridge_base.responses.template import TemplateResponse
 from jet_bridge_base.logger import logger
 from jet_bridge_base.utils.common import format_size
+from jet_bridge_base.utils.conf import get_connection_name, get_conf, get_connection_schema, get_connection_id
 from jet_bridge_base.utils.exceptions import serialize_validation_error
 
 
@@ -212,6 +212,6 @@ class APIView(BaseAPIView):
     def after_dispatch(self, request):
         super(APIView, self).after_dispatch(request)
 
-        if request.session:
+        if request.session is not None:
             request.session.close()
             request.session = None

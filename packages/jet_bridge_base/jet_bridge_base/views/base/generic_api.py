@@ -1,9 +1,10 @@
 from sqlalchemy.exc import SQLAlchemyError
 
+from jet_bridge_base.db_types import apply_session_timezone
+from jet_bridge_base.db_types.mongo import MongoSession
 from jet_bridge_base.exceptions.not_found import NotFound
 from jet_bridge_base.paginators.page_number import PageNumberPagination
 from jet_bridge_base.serializers.model_serializer import get_column_data_type
-from jet_bridge_base.utils.queryset import apply_session_timezone
 from jet_bridge_base.views.base.api import APIView
 
 
@@ -39,7 +40,7 @@ class GenericAPIView(APIView):
 
             lookup_value = request.path_kwargs[lookup_url_kwarg]
             data_type = get_column_data_type(model_field)
-            field = data_type()
+            field = data_type(context={'model_field': model_field})
             lookup_value = field.to_internal_value(lookup_value)
 
             obj = queryset.filter(field_lookup(lookup_value)).first()
@@ -73,10 +74,11 @@ class GenericAPIView(APIView):
     def apply_timezone(self, request):
         timezone = request.get_argument('tz', None)
         if timezone is not None:
-            try:
-                apply_session_timezone(request.session, timezone)
-            except SQLAlchemyError:
-                request.session.rollback()
+            if not isinstance(request.session, MongoSession):
+                try:
+                    apply_session_timezone(request.session, timezone)
+                except SQLAlchemyError:
+                    request.session.rollback()
 
     def filter_queryset(self, request, queryset):
         filter_instance = self.get_filter(request)

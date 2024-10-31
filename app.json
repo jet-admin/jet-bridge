@@ -31,6 +31,10 @@
     "DATABASE_ENGINE": {
       "description": "Database engine, one of: postgresql, mysql, oracle, mssql+pyodbc, bigquery, snowflake, sqlite"
     },
+    "DATABASE_URL": {
+      "description": "database url",
+      "required": false
+    },
     "DATABASE_HOST": {
       "description": "database host"
     },

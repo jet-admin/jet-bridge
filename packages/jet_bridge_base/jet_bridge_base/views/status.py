@@ -1,8 +1,8 @@
 import time
-from sqlalchemy import inspect
 
 from jet_bridge_base.configuration import configuration
 from jet_bridge_base.db import connections, pending_connections
+from jet_bridge_base.db_types import inspect_uniform
 from jet_bridge_base.permissions import AdministratorPermissions
 from jet_bridge_base.responses.json import JSONResponse
 from jet_bridge_base.sentry import sentry_controller
@@ -101,7 +101,7 @@ class StatusView(BaseAPIView):
 
         for Model in MappedBase.classes:
             try:
-                mapper = inspect(Model)
+                mapper = inspect_uniform(Model)
                 column_count += len(mapper.columns)
                 relationships_count += len(mapper.relationships)
             except Exception as e:

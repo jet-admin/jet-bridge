@@ -1,169 +1,24 @@
-import base64
 import contextlib
-import json
-import os
-import pickle
-import re
 import threading
-import time
 from datetime import timedelta, datetime
 
-from jet_bridge_base.automap import automap_base
-from jet_bridge_base.reflect import reflect
+from jet_bridge_base import settings
+from jet_bridge_base.db_types import dump_metadata_file, load_mapped_base, init_database_connection
+from jet_bridge_base.logger import logger
 from jet_bridge_base.ssh_tunnel import SSHTunnel
-from jet_bridge_base.utils.crypt import get_sha256_hash
-from jet_bridge_base.utils.process import get_memory_usage_human, get_memory_usage
-from jet_bridge_base.utils.timezones import fetch_default_timezone
-from jet_bridge_base.utils.type_codes import fetch_type_code_to_sql_type
-from six import StringIO
-from six.moves.urllib_parse import quote_plus
-
-from sqlalchemy import create_engine, MetaData
-from sqlalchemy.orm import sessionmaker, scoped_session
-
-from jet_bridge_base.utils.common import get_random_string, merge, format_size
+from jet_bridge_base.utils.common import get_random_string, format_size
+from jet_bridge_base.utils.conf import get_connection_id, get_connection_schema, get_connection_name, \
+    get_connection_params_id, is_tunnel_connection, get_conf, get_settings_conf
 
 try:
     from geoalchemy2 import types
 except ImportError:
     pass
 
-from jet_bridge_base import settings
-from jet_bridge_base.logger import logger
-
 connections = {}
 pending_connections = {}
 MODEL_DESCRIPTIONS_RESPONSE_CACHE_KEY = 'model_descriptions_response'
 MODEL_DESCRIPTIONS_HASH_CACHE_KEY = 'model_descriptions_hash'
-
-
-def url_encode(value):
-    return quote_plus(value)
-
-
-def build_engine_url(conf, tunnel=None):
-    if not conf.get('engine') or not conf.get('name'):
-        return
-
-    url = [
-        str(conf.get('engine')),
-        '://'
-    ]
-
-    if conf.get('engine') == 'sqlite':
-        url.append('/')
-        url.append(str(conf.get('name')))
-
-        if conf.get('extra'):
-            url.append('?')
-            url.append(str(conf.get('extra')))
-    elif conf.get('engine') == 'bigquery':
-        url.append(str(conf.get('name')))
-
-        try:
-            base64.b64decode(conf.get('password'))
-            url.append('?credentials_base64={}'.format(conf.get('password')))
-
-            if conf.get('extra'):
-                url.append('&')
-                url.append(str(conf.get('extra')))
-        except:
-            pass
-    elif conf.get('engine') == 'snowflake':
-        url.append(url_encode(str(conf.get('user'))))
-
-        if conf.get('password'):
-            url.append(':')
-            url.append(url_encode(str(conf.get('password'))))
-
-        url.append('@')
-
-        url.append(str(conf.get('host')))
-        url.append('/')
-
-        url.append(str(conf.get('name')))
-
-        if conf.get('extra'):
-            url.append('?')
-            url.append(str(conf.get('extra')))
-    else:
-        host = '127.0.0.1' if tunnel else conf.get('host')
-        port = tunnel.local_bind_port if tunnel else conf.get('port')
-
-        if conf.get('user'):
-            url.append(url_encode(str(conf.get('user'))))
-
-            if conf.get('password'):
-                url.append(':')
-                url.append(url_encode(str(conf.get('password'))))
-
-            if host:
-                url.append('@')
-
-        if host:
-            url.append(str(host))
-
-            if port:
-                url.append(':')
-                url.append(str(port))
-
-            url.append('/')
-
-        if conf.get('engine') != 'oracle':
-            url.append(str(conf.get('name')))
-
-        if conf.get('extra'):
-            url.append('?')
-            url.append(str(conf.get('extra')))
-        elif conf.get('engine') == 'mysql':
-            url.append('?charset=utf8')
-        elif conf.get('engine') == 'mssql+pyodbc':
-            url.append('?driver=FreeTDS')
-        elif conf.get('engine') == 'oracle':
-            url.append('?service_name={}'.format(url_encode(conf.get('name'))))
-
-    return ''.join(url)
-
-
-def get_connection_id(conf):
-    return get_sha256_hash(json.dumps([
-        conf.get('engine'),
-        conf.get('host'),
-        conf.get('port'),
-        conf.get('name'),
-        conf.get('user'),
-        conf.get('password'),
-        conf.get('schema'),
-        conf.get('ssl_ca'),
-        conf.get('ssl_cert'),
-        conf.get('ssl_key'),
-        conf.get('ssh_host'),
-        conf.get('ssh_port'),
-        conf.get('ssh_user'),
-        conf.get('ssh_private_key')
-    ]))
-
-
-def get_connection_meta_params_id(conf):
-    return get_sha256_hash(json.dumps([
-        conf.get('only'),
-        conf.get('except'),
-        conf.get('extra')
-    ]))
-
-
-def get_connection_params_id(conf):
-    return json.dumps([
-        conf.get('only'),
-        conf.get('except'),
-        conf.get('extra'),
-        conf.get('connections'),
-        conf.get('connections_overflow')
-    ])
-
-
-def is_tunnel_connection(conf):
-    return all(map(lambda x: conf.get(x), ['ssh_host', 'ssh_port', 'ssh_user', 'ssh_private_key']))
 
 
 def get_connection_tunnel(conf):
@@ -243,48 +98,6 @@ def get_connection_tunnel(conf):
     return tunnel
 
 
-def get_connection_schema(conf):
-    schema = conf.get('schema') if conf.get('schema') and conf.get('schema') != '' else None
-
-    if not schema and conf.get('engine', '').startswith('mssql'):
-        schema = 'dbo'
-
-    return schema
-
-
-def get_connection_name(conf, schema):
-    password_token = '__JET_DB_PASS__'
-    log_conf = merge(merge({}, conf), {'password': password_token})
-
-    connection_name = build_engine_url(log_conf)
-    if connection_name:
-        connection_name = connection_name.replace(password_token, '********')
-    if schema:
-        connection_name += ':{}'.format(schema)
-    if is_tunnel_connection(conf):
-        connection_name += ' (via {}@{}:{})'.format(conf.get('ssh_user'), conf.get('ssh_host'), conf.get('ssh_port'))
-
-    return connection_name
-
-
-def get_connection_short_name_parts(conf):
-    result = []
-
-    if conf.get('engine'):
-        result.append(str(conf.get('engine')))
-
-    if conf.get('host'):
-        result.append(str(conf.get('host')))
-
-    if conf.get('port'):
-        result.append(str(conf.get('port')))
-
-    if conf.get('name'):
-        result.append(str(conf.get('name')))
-
-    return result
-
-
 def wait_pending_connection(connection_id, connection_name):
     pending_connection = pending_connections.get(connection_id)
     if not pending_connection:
@@ -303,74 +116,6 @@ def wait_pending_connection(connection_id, connection_name):
         return connection
     else:
         logger.info('Not found database connection "{}"'.format(connection_name))
-
-
-def create_connection_engine(conf, tunnel):
-    engine_url = build_engine_url(conf, tunnel)
-
-    if not engine_url:
-        raise Exception('Database configuration is not set')
-
-    if conf.get('engine') == 'sqlite':
-        return create_engine(engine_url)
-    elif conf.get('engine') == 'mysql':
-        connect_args = {}
-        ssl = {
-            'ca': conf.get('ssl_ca'),
-            'cert': conf.get('ssl_cert'),
-            'key': conf.get('ssl_key')
-        }
-        ssl_set = dict(list(filter(lambda x: x[1], ssl.items())))
-
-        if len(ssl_set):
-            connect_args['ssl'] = ssl_set
-
-        return create_engine(
-            engine_url,
-            pool_size=conf.get('connections'),
-            pool_pre_ping=True,
-            max_overflow=conf.get('connections_overflow'),
-            pool_recycle=300,
-            connect_args={
-                'connect_timeout': 5,
-                **connect_args
-            }
-        )
-    elif conf.get('engine') == 'bigquery':
-        return create_engine(
-            engine_url,
-            pool_size=conf.get('connections'),
-            pool_pre_ping=True,
-            max_overflow=conf.get('connections_overflow'),
-            pool_recycle=300
-        )
-    elif conf.get('engine') == 'oracle':
-        return create_engine(
-            engine_url,
-            pool_size=conf.get('connections'),
-            pool_pre_ping=True,
-            max_overflow=conf.get('connections_overflow'),
-            pool_recycle=300
-        )
-    else:
-        return create_engine(
-            engine_url,
-            pool_size=conf.get('connections'),
-            pool_pre_ping=True,
-            max_overflow=conf.get('connections_overflow'),
-            pool_recycle=300,
-            connect_args={'connect_timeout': 5}
-        )
-
-
-def get_connection_only_predicate(conf):
-    def only(table, meta):
-        if conf.get('only') is not None and table not in conf.get('only'):
-            return False
-        if conf.get('except') is not None and table in conf.get('except'):
-            return False
-        return True
-    return only
 
 
 def clean_hostname(hostname):
@@ -423,6 +168,10 @@ def is_hostname_blacklisted(hostname):
 def connect_database(conf):
     global connections, pending_connections
 
+    hostname = conf.get('host')
+    if is_hostname_blacklisted(hostname):
+        raise Exception('Hostname "{}" is blacklisted'.format(hostname))
+
     connection_id = get_connection_id(conf)
     connection_params_id = get_connection_params_id(conf)
     schema = get_connection_schema(conf)
@@ -466,90 +215,28 @@ def connect_database(conf):
         tunnel = get_connection_tunnel(conf)
         pending_connection['tunnel'] = tunnel
 
-        engine = create_connection_engine(conf, tunnel)
-        pending_connection['engine'] = engine
+        database_connection = init_database_connection(
+            conf,
+            tunnel,
+            id_short,
+            connection_name,
+            schema,
+            pending_connection
+        )
 
-        hostname = conf.get('host')
-        if is_hostname_blacklisted(hostname):
-            raise Exception('Hostname "{}" is blacklisted'.format(hostname))
-
-        Session = scoped_session(sessionmaker(bind=engine))
-        session = Session()
-
-        logger.info('[{}] Connecting to database "{}"...'.format(id_short, connection_name))
-
-        connect_start = time.time()
-        with session.connection() as connection:
-            connect_end = time.time()
-            connect_time = round(connect_end - connect_start, 3)
-
-            logger.info('[{}] Getting db types for "{}"...'.format(id_short, connection_name))
-            type_code_to_sql_type = fetch_type_code_to_sql_type(session)
-
-            default_timezone = fetch_default_timezone(session)
-            if default_timezone is not None:
-                logger.info('[{}] Default timezone detected: "{}"'.format(id_short, default_timezone))
-            else:
-                logger.info('[{}] Failed to detect default timezone'.format(id_short))
-
-            metadata_dump = load_metadata_file(conf, connection)
-
-            if metadata_dump:
-                metadata = metadata_dump['metadata']
-
-                reflect_time = None
-                reflect_memory_usage_approx = None
-
-                logger.info('[{}] Loaded schema cache for "{}"'.format(id_short, connection_name))
-            else:
-                logger.info('[{}] Getting schema for "{}"...'.format(id_short, connection_name))
-
-                reflect_start_time = time.time()
-                reflect_start_memory_usage = get_memory_usage()
-
-                metadata = MetaData(schema=schema, bind=connection)
-                only = get_connection_only_predicate(conf)
-                reflect(id_short, metadata, engine, only=only, pending_connection=pending_connection, views=True)
-
-                reflect_end_time = time.time()
-                reflect_end_memory_usage = get_memory_usage()
-                reflect_time = round(reflect_end_time - reflect_start_time, 3)
-                reflect_memory_usage_approx = reflect_end_memory_usage - reflect_start_memory_usage
-
-                dump_metadata_file(conf, metadata)
-
-            logger.info('[{}] Connected to "{}" (Mem:{})'.format(id_short, connection_name, get_memory_usage_human()))
-
-            MappedBase = automap_base(metadata=metadata)
-            load_mapped_base(MappedBase)
-
-            for table_name, table in MappedBase.metadata.tables.items():
-                if len(table.primary_key.columns) == 0 and table_name not in MappedBase.classes:
-                    logger.warning('[{}] Table "{}" does not have primary key and will be ignored'.format(id_short, table_name))
-
-            connections[connection_id] = {
-                'id': connection_id,
-                'name': connection_name,
-                'engine': engine,
-                'Session': Session,
-                'MappedBase': MappedBase,
-                'params_id': connection_params_id,
-                'type_code_to_sql_type': type_code_to_sql_type,
-                'default_timezone': default_timezone,
-                'tunnel': tunnel,
-                'cache': {},
-                'lock': threading.Lock(),
-                'project': conf.get('project'),
-                'token': conf.get('token'),
-                'init_start': init_start.isoformat(),
-                'connect_time': connect_time,
-                'reflect_time': reflect_time,
-                'reflect_memory_usage_approx': reflect_memory_usage_approx,
-                'reflect_metadata_dump': metadata_dump['file_path'] if metadata_dump else None,
-                'last_request': datetime.now()
-            }
-
-        session.close()
+        connections[connection_id] = {
+            'id': connection_id,
+            'name': connection_name,
+            'params_id': connection_params_id,
+            'tunnel': tunnel,
+            'cache': {},
+            'lock': threading.Lock(),
+            'project': conf.get('project'),
+            'token': conf.get('token'),
+            'init_start': init_start.isoformat(),
+            'last_request': datetime.now(),
+            **database_connection
+        }
 
         return connections[connection_id]
     except Exception as e:
@@ -563,100 +250,6 @@ def connect_database(conf):
 
         with connected_condition:
             connected_condition.notify_all()
-
-
-def clean_alphanumeric(str):
-    return re.sub('[^0-9a-zA-Z.]+', '-', str)
-
-
-def get_metadata_file_path(conf):
-    short_name = '_'.join(map(lambda x: clean_alphanumeric(x), get_connection_short_name_parts(conf)))
-    id_hash = get_connection_id(conf)
-    params_id_hash = get_connection_meta_params_id(conf)[:8]
-    engine_length = len(str(conf.get('engine'))) + 1 if conf.get('engine') else 0
-    file_name = '{}_{}_{}.dump'.format(short_name[:(50 + engine_length)], id_hash, params_id_hash)
-
-    return os.path.join(settings.CACHE_METADATA_PATH, file_name)
-
-
-def dump_metadata_file(conf, metadata):
-    if not settings.CACHE_METADATA:
-        return
-
-    connection_id = get_connection_id(conf)
-    schema = get_connection_schema(conf)
-    connection_name = get_connection_name(conf, schema)
-    id_short = connection_id[:4]
-
-    file_path = get_metadata_file_path(conf)
-
-    try:
-        dir_path = os.path.dirname(file_path)
-
-        if dir_path and not os.path.exists(dir_path):
-            os.makedirs(dir_path)
-
-        with open(file_path, 'wb') as file:
-            pickle.dump(metadata, file)
-
-        logger.info('[{}] Saved schema cache for "{}"'.format(id_short, connection_name))
-
-        return file_path
-    except Exception as e:
-        logger.error('[{}] Failed dumping schema cache for "{}"'.format(id_short, connection_name), exc_info=e)
-
-
-def load_metadata_file(conf, connection):
-    if not settings.CACHE_METADATA:
-        return
-
-    connection_id = get_connection_id(conf)
-    schema = get_connection_schema(conf)
-    connection_name = get_connection_name(conf, schema)
-    id_short = connection_id[:4]
-
-    file_path = get_metadata_file_path(conf)
-
-    if not os.path.exists(file_path):
-        logger.info('[{}] Schema cache not found for "{}"'.format(id_short, connection_name))
-        return
-
-    try:
-        with open(file_path, 'rb') as file:
-            metadata = pickle.load(file=file)
-
-        metadata.bind = connection
-
-        return {
-            'file_path': file_path,
-            'metadata': metadata
-        }
-    except Exception as e:
-        logger.error('[{}] Failed loading schema cache for "{}"'.format(id_short, connection_name), exc_info=e)
-
-
-def remove_metadata_file(conf):
-    if not settings.CACHE_METADATA:
-        return
-
-    connection_id = get_connection_id(conf)
-    schema = get_connection_schema(conf)
-    connection_name = get_connection_name(conf, schema)
-    id_short = connection_id[:4]
-
-    file_path = get_metadata_file_path(conf)
-
-    if not os.path.exists(file_path):
-        logger.info('[{}] Schema cache clear skipped (file not found) for "{}"'.format(id_short, connection_name))
-        return
-
-    try:
-        os.unlink(file_path)
-        logger.info('[{}] Schema cache cleared for "{}"'.format(id_short, connection_name))
-
-        return file_path
-    except Exception as e:
-        logger.error('[{}] Schema cache clear failed for "{}"'.format(id_short, connection_name), exc_info=e)
 
 
 def dispose_connection_object(connection):
@@ -688,72 +281,6 @@ def dispose_request_connection(request):
     return dispose_connection(get_conf(request))
 
 
-def get_settings_conf():
-    return {
-        'engine': settings.DATABASE_ENGINE,
-        'host': settings.DATABASE_HOST,
-        'port': settings.DATABASE_PORT,
-        'name': settings.DATABASE_NAME,
-        'user': settings.DATABASE_USER,
-        'password': settings.DATABASE_PASSWORD,
-        'extra': settings.DATABASE_EXTRA,
-        'connections': settings.DATABASE_CONNECTIONS,
-        'connections_overflow': settings.DATABASE_CONNECTIONS_OVERFLOW,
-        'only': settings.DATABASE_ONLY,
-        'except': settings.DATABASE_EXCEPT,
-        'schema': settings.DATABASE_SCHEMA,
-        'ssl_ca': settings.DATABASE_SSL_CA,
-        'ssl_cert': settings.DATABASE_SSL_CERT,
-        'ssl_key': settings.DATABASE_SSL_KEY,
-        'ssh_host': settings.DATABASE_SSH_HOST,
-        'ssh_port': settings.DATABASE_SSH_PORT,
-        'ssh_user': settings.DATABASE_SSH_USER,
-        'ssh_private_key': settings.DATABASE_SSH_PRIVATE_KEY,
-        'project': settings.PROJECT,
-        'token': settings.TOKEN
-    }
-
-
-def get_request_conf(request):
-    bridge_settings = request.get_bridge_settings()
-
-    if not bridge_settings:
-        return
-
-    return {
-        'engine': bridge_settings.get('database_engine'),
-        'host': bridge_settings.get('database_host'),
-        'port': bridge_settings.get('database_port'),
-        'name': bridge_settings.get('database_name'),
-        'user': bridge_settings.get('database_user'),
-        'password': bridge_settings.get('database_password'),
-        'extra': bridge_settings.get('database_extra'),
-        'connections': bridge_settings.get('database_connections', settings.DATABASE_CONNECTIONS),
-        'connections_overflow': bridge_settings.get('database_connections_overflow', settings.DATABASE_CONNECTIONS_OVERFLOW),
-        'only': bridge_settings.get('database_only'),
-        'except': bridge_settings.get('database_except'),
-        'schema': bridge_settings.get('database_schema'),
-        'ssl_ca': bridge_settings.get('database_ssl_ca'),
-        'ssl_cert': bridge_settings.get('database_ssl_cert'),
-        'ssl_key': bridge_settings.get('database_ssl_key'),
-        'ssh_host': bridge_settings.get('database_ssh_host'),
-        'ssh_port': bridge_settings.get('database_ssh_port'),
-        'ssh_user': bridge_settings.get('database_ssh_user'),
-        'ssh_private_key': bridge_settings.get('database_ssh_private_key'),
-        'project': bridge_settings.get('project'),
-        'token': bridge_settings.get('token'),
-    }
-
-
-def get_conf(request):
-    request_conf = get_request_conf(request)
-
-    if request_conf:
-        return request_conf
-    else:
-        return get_settings_conf()
-
-
 def get_connection(request):
     conf = get_conf(request)
     connection_id = get_connection_id(conf)
@@ -777,6 +304,7 @@ def create_session(request):
 
     conf = get_conf(request)
     hostname = conf.get('host')
+
     if is_hostname_blacklisted(hostname):
         dispose_connection(conf)
         raise Exception('Hostname "{}" is blacklisted'.format(hostname))
@@ -916,52 +444,3 @@ def release_inactive_graphql_schemas():
         ))
 
         reload_connection_graphql_schema(connection)
-
-
-def get_table_name(metadata, table):
-    if table.schema and table.schema != metadata.schema:
-        return '{}.{}'.format(table.schema, table.name)
-    else:
-        return str(table.name)
-
-
-def load_mapped_base(MappedBase, clear=False):
-    def classname_for_table(base, tablename, table):
-        return get_table_name(MappedBase.metadata, table)
-
-    def name_for_scalar_relationship(base, local_cls, referred_cls, constraint):
-        foreign_key = constraint.elements[0] if len(constraint.elements) else None
-        if foreign_key:
-            name = '__'.join([foreign_key.parent.name, 'to', foreign_key.column.table.name, foreign_key.column.name])
-        else:
-            name = referred_cls.__name__.lower()
-
-        if name in constraint.parent.columns:
-            name = name + '_relation'
-            logger.warning('Already detected column name, using {}'.format(name))
-
-        return name
-
-    def name_for_collection_relationship(base, local_cls, referred_cls, constraint):
-        foreign_key = constraint.elements[0] if len(constraint.elements) else None
-        if foreign_key:
-            name = '__'.join([foreign_key.parent.table.name, foreign_key.parent.name, 'to', foreign_key.column.name])
-        else:
-            name = referred_cls.__name__.lower()
-
-        if name in constraint.parent.columns:
-            name = name + '_relation'
-            logger.warning('Already detected column name, using {}'.format(name))
-
-        return name
-
-    if clear:
-        MappedBase.registry.dispose()
-        MappedBase.classes.clear()
-
-    MappedBase.prepare(
-        classname_for_table=classname_for_table,
-        name_for_scalar_relationship=name_for_scalar_relationship,
-        name_for_collection_relationship=name_for_collection_relationship
-    )
-

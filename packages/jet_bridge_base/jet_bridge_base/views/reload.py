@@ -1,6 +1,8 @@
-from jet_bridge_base.db import dispose_request_connection, get_request_connection, get_conf, remove_metadata_file
+from jet_bridge_base.db import dispose_request_connection, get_request_connection
+from jet_bridge_base.db_types import remove_metadata_file
 from jet_bridge_base.permissions import HasProjectPermissions
 from jet_bridge_base.responses.json import JSONResponse
+from jet_bridge_base.utils.conf import get_conf
 from jet_bridge_base.views.base.api import APIView
 
 

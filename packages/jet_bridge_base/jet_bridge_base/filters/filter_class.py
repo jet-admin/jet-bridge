@@ -1,9 +1,7 @@
-from sqlalchemy import inspect
-
+from jet_bridge_base.db_types import inspect_uniform
 from jet_bridge_base.filters import lookups
-from jet_bridge_base.filters.filter import Filter, safe_array
-from jet_bridge_base.filters.filter_for_dbfield import filter_for_data_type
-from jet_bridge_base.serializers.model_serializer import get_column_data_type
+from jet_bridge_base.filters.filter import Filter
+from jet_bridge_base.filters.filter_for_dbfield import filter_for_column
 
 
 class FilterClass(object):
@@ -21,14 +19,14 @@ class FilterClass(object):
         if self.meta:
             if hasattr(self.meta, 'model'):
                 Model = self.meta.model
-                mapper = inspect(Model)
+                mapper = inspect_uniform(Model)
                 columns = mapper.columns
 
                 if hasattr(self.meta, 'fields'):
                     columns = filter(lambda x: x.name in self.meta.fields, columns)
 
                 for column in columns:
-                    item = filter_for_data_type(column.type)
+                    item = filter_for_column(column)
                     for lookup in item['lookups']:
                         for exclude in [False, True]:
                             instance = item['filter_class'](

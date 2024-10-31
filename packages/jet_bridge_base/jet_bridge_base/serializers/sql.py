@@ -1,25 +1,24 @@
 import datetime
 import time
 
-from jet_bridge_base.fields.datetime import datetime_apply_default_timezone
 from sqlalchemy import text, select, column, func, desc, or_, cast
 from sqlalchemy import sql
 from sqlalchemy.sql import sqltypes, quoted_name
 from sqlalchemy.exc import SQLAlchemyError
 
 from jet_bridge_base import fields
-from jet_bridge_base.db import create_session, get_type_code_to_sql_type
+from jet_bridge_base.db import get_type_code_to_sql_type
+from jet_bridge_base.db_types import get_session_engine, apply_session_timezone, get_sql_aggregate_func_by_name, \
+    get_sql_group_func_lookup
+from jet_bridge_base.fields.datetime import datetime_apply_default_timezone
 from jet_bridge_base.exceptions.sql import SqlError
 from jet_bridge_base.exceptions.validation_error import ValidationError
 from jet_bridge_base.fields.sql_params import SqlParamsSerializers
 from jet_bridge_base.filters import lookups
-from jet_bridge_base.filters.filter import EMPTY_VALUES, safe_array
-from jet_bridge_base.filters.model_group import get_query_func_by_name, get_query_lookup_func_by_name
+from jet_bridge_base.filters.filter import EMPTY_VALUES
 from jet_bridge_base.filters.filter_for_dbfield import filter_for_data_type
-from jet_bridge_base.serializers.model_serializer import get_column_data_type
 from jet_bridge_base.serializers.serializer import Serializer
 from jet_bridge_base.utils.db_types import map_to_sql_type, sql_to_map_type
-from jet_bridge_base.utils.queryset import get_session_engine, apply_session_timezone
 
 
 class ColumnSerializer(Serializer):
@@ -98,7 +97,7 @@ class SqlSerializer(Serializer):
         column_param = data['aggregate'].get('column')
 
         y_column = self.get_column(session, column_param) if column_param is not None else None
-        y_func = get_query_func_by_name(func_param, y_column)
+        y_func = get_sql_aggregate_func_by_name(func_param, y_column)
 
         if y_func is None:
             return subquery.filter(sql.false())
@@ -110,7 +109,7 @@ class SqlSerializer(Serializer):
             y_func_param = group.get('yFunc').lower()
             y_column_param = group.get('yColumn')
             y_column = self.get_column(session, y_column_param) if y_column_param is not None else None
-            return get_query_func_by_name(y_func_param, y_column)
+            return get_sql_aggregate_func_by_name(y_func_param, y_column)
 
         if 'groups' in data:
             y_func = get_y_func(data['groups'])
@@ -137,7 +136,7 @@ class SqlSerializer(Serializer):
             lookup_type = lookup_params[0] if len(lookup_params) >= 1 else None
             lookup_param = lookup_params[1] if len(lookup_params) >= 2 else None
 
-            return get_query_lookup_func_by_name(session, lookup_type, lookup_param, x_column).label(group_name(i))
+            return get_sql_group_func_lookup(session, lookup_type, lookup_param, x_column).label(group_name(i))
 
         if 'groups' in data:
             x_lookups = list(map(lambda x: map_group_column(x[1], x[0]), enumerate(data['groups']['xColumns'])))
