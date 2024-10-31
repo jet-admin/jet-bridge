@@ -1,11 +1,13 @@
-from jet_bridge_base import status
+from jet_bridge_base import status, fields
 from jet_bridge_base.exceptions.validation_error import ValidationError
 from jet_bridge_base.utils.exceptions import serialize_validation_error
+from jet_bridge_base.views.model_description import inspect_uniform
 from sqlalchemy import inspect
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.engine import Row
 
 from jet_bridge_base.db import get_mapped_base
+from jet_bridge_base.db_types import apply_default_ordering
 from jet_bridge_base.exceptions.not_found import NotFound
 from jet_bridge_base.filters.model import get_model_filter_class
 from jet_bridge_base.filters.model_aggregate import ModelAggregateFilter
@@ -17,7 +19,6 @@ from jet_bridge_base.serializers.model import get_model_serializer
 from jet_bridge_base.serializers.model_group import ModelGroupSerializer
 from jet_bridge_base.serializers.reorder import get_reorder_serializer
 from jet_bridge_base.serializers.reset_order import get_reset_order_serializer
-from jet_bridge_base.utils.queryset import apply_default_ordering
 from jet_bridge_base.utils.siblings import get_model_siblings
 from jet_bridge_base.views.mixins.model import ModelAPIViewMixin
 
@@ -65,7 +66,7 @@ class ModelViewSet(ModelAPIViewMixin):
         return MappedBase.classes[model_name]
 
     def get_model_lookup_field(self, request):
-        mapper = inspect(self.get_model(request))
+        mapper = inspect_uniform(self.get_model(request))
         return mapper.primary_key[0].name
 
     def get_serializer_class(self, request):
@@ -80,7 +81,7 @@ class ModelViewSet(ModelAPIViewMixin):
         Model = self.get_model(request)
         queryset = request.session.query(Model)
 
-        mapper = inspect(Model)
+        mapper = inspect_uniform(Model)
         auto_pk = getattr(mapper.tables[0], '__jet_auto_pk__', False) if len(mapper.tables) else None
         if auto_pk:
             queryset = queryset.filter(mapper.primary_key[0].isnot(None))
@@ -129,26 +130,29 @@ class ModelViewSet(ModelAPIViewMixin):
         model_name = self.get_model_name(request)
         model_serializer = self.get_serializer(request)
 
-        y_serializers = list(filter(lambda x: x.field_name == y_column, model_serializer.fields))
+        if y_func == 'count':
+            y_serializer = fields.IntegerField()
+        else:
+            y_serializers = list(filter(lambda x: x.field_name == y_column, model_serializer.fields))
 
-        if len(y_serializers) == 0:
-            raise ValidationError('Table "{}" does not have column "{}"'.format(model_name, y_column))
+            if len(y_serializers) == 0:
+                raise ValidationError('Table "{}" does not have column "{}"'.format(model_name, y_column))
 
-        y_serializer = y_serializers[0]
+            y_serializer = y_serializers[0]
 
         filter_instance = ModelAggregateFilter()
         filter_instance.model = self.get_model(request)
 
         try:
-            queryset = filter_instance.filter(queryset, {
+            data = filter_instance.filter(queryset, {
                 'y_func': y_func,
                 'y_column': y_column
-            }).one()
+            })
         except SQLAlchemyError:
             queryset.session.rollback()
             raise
 
-        result = y_serializer.to_representation(queryset[0])  # TODO: Refactor serializer
+        result = y_serializer.to_representation(data)  # TODO: Refactor serializer
 
         return JSONResponse({
             'y_func': result
@@ -165,7 +169,7 @@ class ModelViewSet(ModelAPIViewMixin):
         y_func = request.get_argument('_y_func').lower()
         y_column = request.get_argument('_y_column', lookup_field)
 
-        model_serializer = self.get_serializer(request)
+        # model_serializer = self.get_serializer(request)
 
         # x_serializers = list(filter(lambda x: x.field_name == x_column, model_serializer.fields))
         # x_serializer = x_serializers[0]
@@ -181,7 +185,6 @@ class ModelViewSet(ModelAPIViewMixin):
             'y_func': y_func,
             'y_column': y_column
         })
-        queryset = queryset.limit(1000)
 
         def map_item(row):
             if isinstance(row, Row):

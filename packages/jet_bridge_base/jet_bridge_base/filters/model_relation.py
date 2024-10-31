@@ -1,9 +1,9 @@
 import sqlalchemy
-from jet_bridge_base.filters.filter import EMPTY_VALUES
-from sqlalchemy import inspect
 
 from jet_bridge_base.db import get_mapped_base
+from jet_bridge_base.db_types import inspect_uniform
 from jet_bridge_base.filters.char_filter import CharFilter
+from jet_bridge_base.filters.filter import EMPTY_VALUES
 
 
 def filter_search_field(field):
@@ -16,7 +16,7 @@ def filter_search_field(field):
 
 
 def get_model_relation_filter(request, Model):
-    mapper = inspect(Model)
+    mapper = inspect_uniform(Model)
     MappedBase = get_mapped_base(request)
 
     class ModelRelationFilter(CharFilter):

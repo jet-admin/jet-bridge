@@ -1,8 +1,8 @@
 import json
 
+from jet_bridge_base.db_types import get_session_engine, MongoColumn
 from jet_bridge_base.serializers.model_serializer import get_column_data_type
 from jet_bridge_base.utils.classes import is_instance_or_subclass
-from jet_bridge_base.utils.queryset import get_session_engine
 from sqlalchemy import Unicode, and_, or_
 from sqlalchemy.dialects.postgresql import ENUM, JSONB, array
 from sqlalchemy.sql import sqltypes
@@ -23,79 +23,97 @@ def safe_is_float(value):
 
 
 def safe_equals(queryset, column, value):
-    field_type = column.property.columns[0].type if hasattr(column, 'property') else column.type
-
-    if is_instance_or_subclass(field_type, (sqltypes.JSON,)):
-        if get_session_engine(queryset.session) == 'postgresql':
-            value_str = json.dumps(str(value))
-            operators = [column.cast(JSONB).op('@>')(value_str)]
-
-            if safe_is_float(value):
-                operators.append(column.cast(JSONB).op('@>')(value))
-
-            return or_(*operators)
-        else:
-            return column.cast(Unicode).ilike('%{}%'.format(value))
-    else:
+    if isinstance(column, MongoColumn):
         return column.__eq__(value)
+    else:
+        field_type = column.property.columns[0].type if hasattr(column, 'property') else column.type
+
+        if is_instance_or_subclass(field_type, (sqltypes.JSON,)):
+            if get_session_engine(queryset.session) == 'postgresql':
+                value_str = json.dumps(str(value))
+                operators = [column.cast(JSONB).op('@>')(value_str)]
+
+                if safe_is_float(value):
+                    operators.append(column.cast(JSONB).op('@>')(value))
+
+                return or_(*operators)
+            else:
+                return column.cast(Unicode).ilike('%{}%'.format(value))
+        else:
+            return column.__eq__(value)
 
 
 def safe_in(queryset, column, value):
-    field_type = column.property.columns[0].type if hasattr(column, 'property') else column.type
-
-    if is_instance_or_subclass(field_type, (sqltypes.JSON,)):
-        if get_session_engine(queryset.session) == 'postgresql':
-            operators = []
-
-            for value_item in value:
-                value_item_str = json.dumps(value_item)
-                operators.append(column.cast(JSONB).op('@>')(value_item_str))
-
-                if safe_is_float(value_item):
-                    operators.append(column.cast(JSONB).op('@>')(value_item))
-
-            return or_(*operators)
-        else:
-            operators = list(map(lambda x: column.cast(Unicode).ilike('%{}%'.format(x)), value))
-            return or_(*operators)
-    else:
+    if isinstance(column, MongoColumn):
         return column.in_(value)
+    else:
+        field_type = column.property.columns[0].type if hasattr(column, 'property') else column.type
+
+        if is_instance_or_subclass(field_type, (sqltypes.JSON,)):
+            if get_session_engine(queryset.session) == 'postgresql':
+                operators = []
+
+                for value_item in value:
+                    value_item_str = json.dumps(value_item)
+                    operators.append(column.cast(JSONB).op('@>')(value_item_str))
+
+                    if safe_is_float(value_item):
+                        operators.append(column.cast(JSONB).op('@>')(value_item))
+
+                return or_(*operators)
+            else:
+                operators = list(map(lambda x: column.cast(Unicode).ilike('%{}%'.format(x)), value))
+                return or_(*operators)
+        else:
+            return column.in_(value)
 
 
 def safe_startswith(queryset, column, value):
-    field_type = column.property.columns[0].type if hasattr(column, 'property') else column.type
-
-    if is_instance_or_subclass(field_type, (ENUM, sqltypes.NullType)):
-        return column.cast(Unicode).ilike('{}%'.format(value))
-    else:
+    if isinstance(column, MongoColumn):
         return column.ilike('{}%'.format(value))
+    else:
+        field_type = column.property.columns[0].type if hasattr(column, 'property') else column.type
+
+        if is_instance_or_subclass(field_type, (ENUM, sqltypes.NullType)):
+            return column.cast(Unicode).ilike('{}%'.format(value))
+        else:
+            return column.ilike('{}%'.format(value))
 
 
 def safe_endswith(queryset, column, value):
-    field_type = column.property.columns[0].type if hasattr(column, 'property') else column.type
-
-    if is_instance_or_subclass(field_type, (ENUM, sqltypes.NullType)):
-        return column.cast(Unicode).ilike('%{}'.format(value))
-    else:
+    if isinstance(column, MongoColumn):
         return column.ilike('%{}'.format(value))
+    else:
+        field_type = column.property.columns[0].type if hasattr(column, 'property') else column.type
+
+        if is_instance_or_subclass(field_type, (ENUM, sqltypes.NullType)):
+            return column.cast(Unicode).ilike('%{}'.format(value))
+        else:
+            return column.ilike('%{}'.format(value))
 
 
 def safe_icontains(queryset, column, value):
-    field_type = column.property.columns[0].type if hasattr(column, 'property') else column.type
-
-    if is_instance_or_subclass(field_type, (ENUM, sqltypes.NullType)):
-        return column.cast(Unicode).ilike('%{}%'.format(value))
-    else:
+    if isinstance(column, MongoColumn):
         return column.ilike('%{}%'.format(value))
+    else:
+        field_type = column.property.columns[0].type if hasattr(column, 'property') else column.type
+
+        if is_instance_or_subclass(field_type, (ENUM, sqltypes.NullType)):
+            return column.cast(Unicode).ilike('%{}%'.format(value))
+        else:
+            return column.ilike('%{}%'.format(value))
 
 
 def json_icontains(queryset, column, value):
-    field_type = column.property.columns[0].type if hasattr(column, 'property') else column.type
-
-    if is_instance_or_subclass(field_type, (sqltypes.JSON, sqltypes.NullType)) or not hasattr(column, 'astext'):
-        return column.cast(Unicode).ilike('%{}%'.format(value))
+    if isinstance(column, MongoColumn):
+        return column.json_icontains(value)
     else:
-        return column.astext.ilike('%{}%'.format(value))
+        field_type = column.property.columns[0].type if hasattr(column, 'property') else column.type
+
+        if is_instance_or_subclass(field_type, (sqltypes.JSON, sqltypes.NullType)) or not hasattr(column, 'astext'):
+            return column.cast(Unicode).ilike('%{}%'.format(value))
+        else:
+            return column.astext.ilike('%{}%'.format(value))
 
 
 def is_null(queryset, column, value):

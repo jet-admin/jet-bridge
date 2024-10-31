@@ -1,9 +1,9 @@
-from sqlalchemy.orm import scoped_session, sessionmaker
-
-from jet_bridge_base.db import get_conf, get_connection_tunnel, create_connection_engine
+from jet_bridge_base.db import get_connection_tunnel
+from jet_bridge_base.db_types import discover_connection
 from jet_bridge_base.exceptions.validation_error import ValidationError
 from jet_bridge_base.permissions import HasProjectPermissions
 from jet_bridge_base.responses.json import JSONResponse
+from jet_bridge_base.utils.conf import get_conf
 from jet_bridge_base.views.base.api import BaseAPIView
 
 
@@ -20,25 +20,12 @@ class DiscoverConnectionView(BaseAPIView):
     def get(self, request, *args, **kwargs):
         conf = get_conf(request)
 
-        tunnel = None
-        bind = None
-
         try:
             tunnel = get_connection_tunnel(conf)
-            bind = create_connection_engine(conf, tunnel)
+            status = discover_connection(conf, tunnel)
 
-            Session = scoped_session(sessionmaker(bind=bind))
-            session = Session()
-
-            with session.connection():
-                return JSONResponse({
-                    'status': True
-                })
+            return JSONResponse({
+                'status': status
+            })
         except Exception as e:
             raise ValidationError(str(e))
-        finally:
-            if bind:
-                bind.dispose()
-
-            if tunnel:
-                tunnel.close()

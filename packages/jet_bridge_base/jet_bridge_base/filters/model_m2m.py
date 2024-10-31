@@ -1,11 +1,10 @@
-from sqlalchemy import inspect, sql
-
+from jet_bridge_base.db_types import empty_filter, inspect_uniform
 from jet_bridge_base.filters.char_filter import CharFilter
 from jet_bridge_base.filters.filter import EMPTY_VALUES
 
 
 def get_model_m2m_filter(Model):
-    mapper = inspect(Model)
+    mapper = inspect_uniform(Model)
 
     class ModelM2MFilter(CharFilter):
 
@@ -16,7 +15,7 @@ def get_model_m2m_filter(Model):
             params = value.split(',', 2)
 
             if len(params) < 2:
-                return qs.filter(sql.false())
+                return qs.filter(empty_filter(Model))
 
             relation_name, value = params
 
@@ -33,7 +32,7 @@ def get_model_m2m_filter(Model):
                     })
 
             if len(relations) == 0:
-                return qs.filter(sql.false())
+                return qs.filter(empty_filter(Model))
 
             relation = relations[0]
             relationship_entity = relation['relationship'].mapper.entity

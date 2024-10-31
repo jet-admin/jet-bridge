@@ -3,8 +3,8 @@ import requests
 
 from jet_bridge_base import settings
 from jet_bridge_base.configuration import configuration
-from jet_bridge_base.db import get_conf
 from jet_bridge_base.sentry import sentry_controller
+from jet_bridge_base.utils.conf import get_conf
 
 
 def track_database(conf):
