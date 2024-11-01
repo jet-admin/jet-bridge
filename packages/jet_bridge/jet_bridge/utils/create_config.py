@@ -35,6 +35,9 @@ engines = [
         'name': 'snowflake'
     },
     {
+        'name': 'awsathena+rest'
+    },
+    {
         'name': 'sqlite'
     },
     {

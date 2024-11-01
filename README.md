@@ -135,6 +135,7 @@ Requirements
   - Snowflake
   - Firebird
   - Sybase
+  - AWS Athena
 
 Installation
 ============

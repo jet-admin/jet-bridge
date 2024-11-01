@@ -30,8 +30,11 @@ def sql_get_tables(
         available.update(table_names)
 
     if views:
-        view_names = insp.get_view_names(schema)
-        available.update(view_names)
+        try:
+            view_names = insp.get_view_names(schema)
+            available.update(view_names)
+        except NotImplementedError:
+            pass
 
     if schema is not None:
         available_w_schema = util.OrderedSet(
