@@ -29,7 +29,7 @@
       "description": "Jet Bridge token from app.jetadmin.io"
     },
     "DATABASE_ENGINE": {
-      "description": "Database engine, one of: postgresql, mysql, oracle, mssql+pyodbc, bigquery, snowflake, awsathena+rest, sqlite"
+      "description": "Database engine, one of: postgresql, mysql, oracle, mssql+pyodbc, bigquery, snowflake, cockroachdb, awsathena+rest, sqlite"
     },
     "DATABASE_URL": {
       "description": "database url",

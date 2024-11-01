@@ -35,6 +35,9 @@ engines = [
         'name': 'snowflake'
     },
     {
+        'name': 'cockroachdb'
+    },
+    {
         'name': 'awsathena+rest'
     },
     {
