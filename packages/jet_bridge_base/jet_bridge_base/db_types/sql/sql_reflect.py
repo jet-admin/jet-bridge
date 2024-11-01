@@ -129,6 +129,9 @@ def sql_reflect(
                 logger.info('[{}] Analyzing table "{}" ({} / {})" (Mem:{})...'.format(cid_short, name, i + 1, len(load), get_memory_usage_human()))
                 table = Table(name, metadata, **reflect_opts)
 
+                if bind.engine.name == 'clickhouse':
+                    table = metadata.tables[table.key]
+
                 if view_names and name in view_names:
                     setattr(table, '__jet_is_view__', True)
 

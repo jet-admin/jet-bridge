@@ -172,6 +172,8 @@ def sql_build_engine_url(conf, tunnel=None):
             url.append('?driver=FreeTDS')
         elif conf.get('engine') == 'oracle':
             url.append('?service_name={}'.format(url_encode(conf.get('name'))))
+        elif conf.get('engine') == 'clickhouse+native':
+            url.append('?secure=True')
 
     return ''.join(url)
 
