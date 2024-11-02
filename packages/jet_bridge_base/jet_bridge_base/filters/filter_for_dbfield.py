@@ -134,6 +134,15 @@ try:
 except ImportError:
     pass
 
+try:
+    from databricks.sqlalchemy.dialect import DatabricksDecimal, DatabricksDate, DatabricksTimestamp
+
+    FILTER_FOR_DBFIELD[DatabricksDecimal] = {'filter_class': FloatFilter, 'lookups': number_lookups, 'lookups_name': 'number'}
+    FILTER_FOR_DBFIELD[DatabricksDate] = {'filter_class': DateTimeFilter, 'lookups': datetime_lookups, 'lookups_name': 'datetime'}
+    FILTER_FOR_DBFIELD[DatabricksTimestamp] = {'filter_class': DateTimeFilter, 'lookups': datetime_lookups, 'lookups_name': 'datetime'}
+except ImportError:
+    pass
+
 
 FILTER_FOR_MAP_TYPE = {
     data_types.CHAR: {'filter_class': CharFilter, 'lookups': text_lookups, 'lookups_name': 'text'},

@@ -8,6 +8,7 @@ map_data_types = [
     {'sql_type': sqltypes.VARCHAR, 'map_type': data_types.CHAR, 'db_type': data_types.CHAR},
     {'sql_type': sqltypes.CHAR, 'map_type': data_types.CHAR, 'db_type': data_types.FIXED_CHAR},
     {'sql_type': sqltypes.Unicode, 'map_type': data_types.CHAR, 'db_type': data_types.CHAR},
+    {'sql_type': sqltypes.String, 'map_type': data_types.CHAR, 'db_type': data_types.CHAR},
     {'sql_type': sqltypes.Text, 'map_type': data_types.TEXT, 'db_type': data_types.TEXT},
     {'sql_type': sqltypes.Enum, 'map_type': data_types.SELECT, 'db_type': data_types.SELECT},
     {'sql_type': sqltypes.Boolean, 'map_type': data_types.BOOLEAN, 'db_type': data_types.BOOLEAN, 'convert': lambda x: '{}::boolean'.format(x)},
@@ -56,6 +57,14 @@ try:
     map_data_types.append({'sql_type': mssql.SMALLDATETIME, 'map_type': data_types.DATE_TIME, 'db_type': data_types.DATE_TIME})
     map_data_types.append({'sql_type': mssql.MONEY, 'map_type': data_types.FLOAT, 'db_type': data_types.MONEY, 'convert': lambda x: '{}::double precision'.format(x)})
     map_data_types.append({'sql_type': mssql.SMALLMONEY, 'map_type': data_types.FLOAT, 'db_type': data_types.MONEY, 'convert': lambda x: '{}::double precision'.format(x)})
+except ImportError:
+    pass
+
+try:
+    from databricks.sqlalchemy.dialect import DatabricksDecimal, DatabricksDate, DatabricksTimestamp
+    map_data_types.append({'sql_type': DatabricksDecimal, 'map_type': data_types.FLOAT, 'db_type': data_types.DECIMAL, 'convert': lambda x: '{}::double precision'.format(x)})
+    map_data_types.append({'sql_type': DatabricksDate, 'map_type': data_types.DATE, 'db_type': data_types.DATE, 'convert': lambda x: '{}::text::date'.format(x)})
+    map_data_types.append({'sql_type': DatabricksTimestamp, 'map_type': data_types.DATE_TIME, 'db_type': data_types.DATE_TIME, 'convert': lambda x: '{}::timestamp with time zone'.format(x)})
 except ImportError:
     pass
 
