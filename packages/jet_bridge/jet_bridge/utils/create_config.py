@@ -41,6 +41,12 @@ engines = [
         'name': 'awsathena+rest'
     },
     {
+        'name': 'clickhouse+native'
+    },
+    {
+        'name': 'databricks'
+    },
+    {
         'name': 'sqlite'
     },
     {

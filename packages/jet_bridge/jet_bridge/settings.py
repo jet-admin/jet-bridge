@@ -48,7 +48,7 @@ define('media_storage', default=media.MEDIA_STORAGE_FILE, help='media storage ty
 define('media_root', default='media', help='media root')
 define('media_base_url', default=None, help='media base URL')
 
-define('database_engine', help='database engine (postgresql, mysql, oracle, mssql+pyodbc, bigquery, snowflake, cockroachdb, awsathena+rest, sqlite)')
+define('database_engine', help='database engine (postgresql, mysql, oracle, mssql+pyodbc, bigquery, snowflake, cockroachdb, awsathena+rest, clickhouse+native, databricks, sqlite)')
 define('database_url', default=None, help='database url')
 define('database_host', help='database host')
 define('database_port', help='database port')

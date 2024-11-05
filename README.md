@@ -137,6 +137,8 @@ Requirements
   - Sybase
   - CockroachDB
   - AWS Athena
+  - ClickHouse
+  - Databricks
 
 Installation
 ============
