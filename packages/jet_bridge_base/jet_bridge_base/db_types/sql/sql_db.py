@@ -1,6 +1,6 @@
 import base64
 import time
-from six.moves.urllib_parse import quote_plus
+from six.moves.urllib_parse import parse_qsl, quote_plus
 from sqlalchemy import MetaData, create_engine
 from sqlalchemy.orm import sessionmaker, scoped_session
 
@@ -137,6 +137,36 @@ def sql_build_engine_url(conf, tunnel=None):
         if conf.get('extra'):
             url.append('?')
             url.append(str(conf.get('extra')))
+    elif conf.get('engine') == 'databricks':
+        url.append(url_encode(str(conf.get('user'))))
+
+        if conf.get('password'):
+            url.append(':')
+            url.append(url_encode(str(conf.get('password'))))
+
+        url.append('@')
+
+        url.append(str(conf.get('host')))
+
+        if conf.get('port'):
+            url.append(':')
+            url.append(str(conf.get('port')))
+
+        extra_dict = dict(parse_qsl(conf.get('extra'), keep_blank_values=True))
+
+        url.append('?http_path={}'.format(url_encode(extra_dict.get('http_path'))))
+        url.append('&catalog={}'.format(url_encode(extra_dict.get('catalog'))))
+        url.append('&schema={}'.format(url_encode(conf.get('name'))))
+
+        if 'http_path' in extra_dict:
+            extra_dict.pop('http_path')
+
+        if 'catalog' in extra_dict:
+            extra_dict.pop('catalog')
+
+        for key, value in extra_dict.items():
+            url.append('&')
+            url.append('&{}={}'.format(url_encode(key), url_encode(value)))
     else:
         host = '127.0.0.1' if tunnel else conf.get('host')
         port = tunnel.local_bind_port if tunnel else conf.get('port')
@@ -172,6 +202,8 @@ def sql_build_engine_url(conf, tunnel=None):
             url.append('?driver=FreeTDS')
         elif conf.get('engine') == 'oracle':
             url.append('?service_name={}'.format(url_encode(conf.get('name'))))
+        elif conf.get('engine') == 'clickhouse+native':
+            url.append('?secure=True')
 
     return ''.join(url)
 
