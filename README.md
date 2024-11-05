@@ -135,6 +135,10 @@ Requirements
   - Snowflake
   - Firebird
   - Sybase
+  - CockroachDB
+  - AWS Athena
+  - ClickHouse
+  - Databricks
 
 Installation
 ============

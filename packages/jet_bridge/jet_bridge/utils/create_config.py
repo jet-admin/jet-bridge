@@ -35,6 +35,18 @@ engines = [
         'name': 'snowflake'
     },
     {
+        'name': 'cockroachdb'
+    },
+    {
+        'name': 'awsathena+rest'
+    },
+    {
+        'name': 'clickhouse+native'
+    },
+    {
+        'name': 'databricks'
+    },
+    {
         'name': 'sqlite'
     },
     {
