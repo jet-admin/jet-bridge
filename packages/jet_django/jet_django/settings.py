@@ -22,7 +22,13 @@ JET_BLACKLIST_HOSTS = getattr(settings, 'JET_BLACKLIST_HOSTS', None)
 JET_BACKEND_API_BASE_URL = getattr(settings, 'JET_BACKEND_API_BASE_URL', 'https://api.jetadmin.io/api')
 JET_BACKEND_WEB_BASE_URL = getattr(settings, 'JET_BACKEND_WEB_BASE_URL', 'https://app.jetadmin.io')
 
-JET_MEDIA_FILE_STORAGE = getattr(settings, 'JET_MEDIA_FILE_STORAGE', settings.DEFAULT_FILE_STORAGE)
+try:
+    from django.conf import DEFAULT_STORAGE_ALIAS
+    DJANGO_DEFAULT_FILE_STORAGE = DEFAULT_STORAGE_ALIAS
+except ImportError:
+    DJANGO_DEFAULT_FILE_STORAGE = settings.DEFAULT_FILE_STORAGE
+
+JET_MEDIA_FILE_STORAGE = getattr(settings, 'JET_MEDIA_FILE_STORAGE', DJANGO_DEFAULT_FILE_STORAGE)
 
 JET_DJANGO_DATABASE = getattr(settings, 'JET_DJANGO_DATABASE', 'default')
 JET_DATABASE_EXTRA = getattr(settings, 'JET_DATABASE_EXTRA', None)
