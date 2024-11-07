@@ -135,21 +135,24 @@ class ModelSerializer(Serializer):
 
         if primary_key.autoincrement and primary_key_specified:
             if get_session_engine(self.session) == 'postgresql':
+                if mapper.selectable.schema:
+                    table_name = '"{}"."{}"'.format(mapper.selectable.schema, mapper.selectable.name)
+                else:
+                    table_name = '"{}"'.format(mapper.selectable.name)
+
                 self.session.execute('''
                     SELECT 
                         pg_catalog.setval(
-                            pg_catalog.pg_get_serial_sequence('"{}"."{}"', '{}'), 
+                            pg_catalog.pg_get_serial_sequence('{}', '{}'), 
                             max("{}")
                         ) 
                     FROM 
-                        "{}"."{}"
+                        {}
                 '''.format(
-                    mapper.selectable.schema,
-                    mapper.selectable.name,
+                    table_name,
                     primary_key.name,
                     primary_key.name,
-                    mapper.selectable.schema,
-                    mapper.selectable.name,
+                    table_name,
                 ))
 
         try:
