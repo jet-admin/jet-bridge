@@ -1,5 +1,7 @@
 import base64
 import time
+from datetime import datetime
+
 from six.moves.urllib_parse import parse_qsl, quote_plus
 from sqlalchemy import MetaData, create_engine
 from sqlalchemy.orm import sessionmaker, scoped_session
@@ -34,6 +36,8 @@ def sql_init_database_connection(conf, tunnel, id_short, connection_name, schema
         type_code_to_sql_type = fetch_type_code_to_sql_type(session)
 
         default_timezone = sql_fetch_default_timezone(session)
+        default_timezone_updated = datetime.now()
+
         if default_timezone is not None:
             logger.info('[{}] Default timezone detected: "{}"'.format(id_short, default_timezone))
         else:
@@ -81,6 +85,7 @@ def sql_init_database_connection(conf, tunnel, id_short, connection_name, schema
             'MappedBase': MappedBase,
             'type_code_to_sql_type': type_code_to_sql_type,
             'default_timezone': default_timezone,
+            'default_timezone_updated': default_timezone_updated,
             'connect_time': connect_time,
             'reflect_time': reflect_time,
             'reflect_memory_usage_approx': reflect_memory_usage_approx,
