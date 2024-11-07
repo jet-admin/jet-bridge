@@ -6,7 +6,6 @@ import six
 from django.apps import apps
 from django.conf import settings as django_settings
 from django.contrib.contenttypes.fields import GenericRel, GenericForeignKey, GenericRelation
-from django.core.files.storage import get_storage_class
 from django.db import models
 from django.db.models.signals import post_save, post_delete, pre_save, pre_delete
 from django.utils import timezone
@@ -34,7 +33,13 @@ class JetDjangoConfiguration(Configuration):
                     continue
                 self.models[self.model_key(related_model)] = self.serialize_model(related_model)
 
-        self.media_storage = get_storage_class(settings.JET_MEDIA_FILE_STORAGE)()
+        try:
+            from django.core.files.storage import storages
+            self.media_storage = storages[settings.JET_MEDIA_FILE_STORAGE]
+        except ImportError:
+            from django.core.files.storage import get_storage_class
+            self.media_storage = get_storage_class(settings.JET_MEDIA_FILE_STORAGE)()
+
         self.pool = ThreadPoolExecutor()
 
     def get_type(self):
