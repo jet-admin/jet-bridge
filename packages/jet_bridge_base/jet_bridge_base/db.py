@@ -3,12 +3,14 @@ import threading
 from datetime import timedelta, datetime
 
 from jet_bridge_base import settings
-from jet_bridge_base.db_types import dump_metadata_file, load_mapped_base, init_database_connection
+from jet_bridge_base.db_types import dump_metadata_file, load_mapped_base, init_database_connection, \
+    fetch_default_timezone
 from jet_bridge_base.logger import logger
 from jet_bridge_base.ssh_tunnel import SSHTunnel
 from jet_bridge_base.utils.common import get_random_string, format_size
 from jet_bridge_base.utils.conf import get_connection_id, get_connection_schema, get_connection_name, \
     get_connection_params_id, is_tunnel_connection, get_conf, get_settings_conf
+from jet_bridge_base.utils.datetime import date_trunc_minutes
 
 try:
     from geoalchemy2 import types
@@ -342,9 +344,38 @@ def get_type_code_to_sql_type(request):
 
 def get_default_timezone(request):
     connection = get_request_connection(request)
+
     if not connection:
         return
-    return connection['default_timezone']
+
+    default_timezone = connection.get('default_timezone')
+    default_timezone_updated = connection.get('default_timezone_updated')
+
+    if not default_timezone:
+        return
+
+    hour_now = date_trunc_minutes(datetime.now())
+    hour_timezone_updated = date_trunc_minutes(default_timezone_updated)
+
+    if hour_now.timestamp() != hour_timezone_updated.timestamp():
+        conf = get_conf(request)
+        connection_id = get_connection_id(conf)
+        id_short = connection_id[:4]
+
+        new_default_timezone = fetch_default_timezone(request.session)
+        new_default_timezone_updated = datetime.now()
+
+        if new_default_timezone is not None:
+            connection['default_timezone'] = new_default_timezone
+            connection['default_timezone_updated'] = new_default_timezone_updated
+
+            logger.info('[{}] Default timezone updated: "{}"'.format(id_short, default_timezone))
+
+            return new_default_timezone
+        else:
+            logger.info('[{}] Failed to update default timezone'.format(id_short))
+
+    return default_timezone
 
 
 @contextlib.contextmanager

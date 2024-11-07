@@ -111,6 +111,7 @@ class StatusView(BaseAPIView):
         graphql_schema_draft = self.map_connection_graphql_schema(cache.get('graphql_schema_draft'))
         tunnel = self.map_tunnel(connection.get('tunnel'))
         last_request = connection.get('last_request')
+        default_timezone_updated = connection.get('default_timezone_updated')
 
         reflect_memory_usage_approx = connection.get('reflect_memory_usage_approx')
 
@@ -132,6 +133,7 @@ class StatusView(BaseAPIView):
             'reflect_memory_usage_approx_str': format_size(reflect_memory_usage_approx) if reflect_memory_usage_approx else None,
             'reflect_metadata_dump': connection.get('reflect_metadata_dump'),
             'default_timezone': str(connection['default_timezone']) if connection.get('default_timezone') else None,
+            'default_timezone_updated': default_timezone_updated.isoformat() if default_timezone_updated else None,
             'tunnel': tunnel,
             'last_request': last_request.isoformat() if last_request else None
         }
