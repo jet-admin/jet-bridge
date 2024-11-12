@@ -77,8 +77,8 @@ class MongoQueryset(object):
                 column_path = self.get_column_path(arg.lhs)
                 value = self.to_internal_value(arg.rhs, arg.lhs)
                 acc[column_path] = {'$in': value}
-            elif arg.operator == 'json_icontains':
-                acc.update(self.get_empty())
+            elif arg.operator == 'or':
+                acc['$or'] = list(map(lambda x: self.map_operator(x), arg.lhs))
             elif arg.operator == 'not':
                 positive = self.map_operator(arg.lhs)
                 for key, value in positive.items():
@@ -86,6 +86,8 @@ class MongoQueryset(object):
                         acc[key] = {'$not': value}
                     else:
                         acc[key] = {'$ne': value}
+            elif arg.operator == 'json_icontains':
+                acc.update(self.get_empty())
             elif arg.operator == 'ilike':
                 column_path = self.get_column_path(arg.lhs)
                 value = self.to_internal_value(arg.rhs, arg.lhs)
