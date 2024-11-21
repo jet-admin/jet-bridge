@@ -11,6 +11,12 @@ class IntegerField(Field):
     def to_internal_value_item(self, value):
         if value is None:
             return
+
+        if value is True:
+            return 1
+        elif value is False:
+            return 0
+
         value = six.text_type(value).strip()
 
         try:
