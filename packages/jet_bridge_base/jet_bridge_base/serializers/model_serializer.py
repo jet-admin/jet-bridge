@@ -14,7 +14,7 @@ data_types = [
     {'query': 'VARCHAR', 'operator': 'startswith', 'map_type': data_types.CHAR, 'data_type': fields.CharField},
     {'query': 'TEXT', 'operator': 'equals', 'map_type': data_types.TEXT, 'data_type': fields.CharField},
     {'query': 'BIT', 'operator': 'equals', 'map_type': data_types.BOOLEAN, 'data_type': fields.BooleanField},
-    {'query': 'TINYINT', 'operator': 'equals', 'map_type': data_types.SMALL_INTEGER, 'data_type': fields.BooleanField},
+    {'query': 'TINYINT', 'operator': 'equals', 'map_type': data_types.SMALL_INTEGER, 'data_type': fields.IntegerField},
     {'query': 'BOOLEAN', 'operator': 'equals', 'map_type': data_types.BOOLEAN, 'data_type': fields.BooleanField},
     {'query': 'INTEGER[]', 'operator': 'startswith', 'map_type': data_types.JSON, 'data_type': fields.ArrayField},
     {'query': 'INTEGER', 'operator': 'equals', 'map_type': data_types.INTEGER, 'data_type': fields.IntegerField},
