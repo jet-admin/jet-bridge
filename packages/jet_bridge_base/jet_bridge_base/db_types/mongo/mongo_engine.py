@@ -4,9 +4,9 @@ from pymongo import MongoClient
 class MongoEngine(object):
     client = None
 
-    def connect(self, url):
+    def connect(self, url, database_name):
         self.url = url
-        self.client = MongoClient(url)
+        self.client = MongoClient(url, authSource=database_name)
 
     def get_db(self, name):
         return self.client[name]
