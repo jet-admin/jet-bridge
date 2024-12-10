@@ -135,7 +135,16 @@ def clean_connection_url(url):
 
 def get_connection_name(conf, schema):
     if conf.get('engine') == 'mongo':
-        return clean_connection_url(str(conf.get('url'))) + conf.get('name') or ''
+        url = str(conf.get('url'))
+
+        connection_name = [url]
+
+        if not url.endswith('/'):
+            connection_name.append('/')
+
+        connection_name.append(conf.get('name') or '')
+
+        return ''.join(connection_name)
     else:
         from jet_bridge_base.db_types.sql import sql_build_engine_url
 
