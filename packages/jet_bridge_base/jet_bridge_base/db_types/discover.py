@@ -16,7 +16,7 @@ def discover_connection(conf, tunnel):
             database_url = conf.get('url')
             database_name = conf.get('name')
 
-            client = MongoClient(database_url, authSource=database_name)
+            client = MongoClient(database_url)
 
             if database_name not in client.list_database_names():
                 raise Exception('No such database found or database is empty: {}'.format(database_name))
@@ -55,7 +55,7 @@ def discover_tables(conf, tunnel):
             database_url = conf.get('url')
             database_name = conf.get('name')
 
-            client = MongoClient(database_url, authSource=database_name)
+            client = MongoClient(database_url)
 
             if database_name not in client.list_database_names():
                 raise Exception('No such database found or database is empty: {}'.format(database_name))
