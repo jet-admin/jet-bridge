@@ -23,7 +23,7 @@ def mongodb_init_database_connection(conf, tunnel, id_short, connection_name, sc
     database_url = conf.get('url')
     database_name = conf.get('name')
 
-    engine.connect(database_url, database_name)
+    engine.connect(database_url)
     db = engine.get_db(database_name)
     Session = lambda: MongoSession(db)
 
