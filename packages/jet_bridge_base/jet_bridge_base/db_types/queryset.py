@@ -229,6 +229,29 @@ dateadd_options = {
 }
 
 
+def date_trunc_column_clickhouse(column, date_group):
+    if date_group == 'microsecond':
+        return func.toStartOfMicrosecond(column)
+    elif date_group == 'millisecond':
+        return func.toStartOfMillisecond(column)
+    elif date_group == 'second':
+        return func.toStartOfSecond(column)
+    elif date_group == 'minute':
+        return func.toStartOfMinute(column)
+    elif date_group == 'hour':
+        return func.toStartOfHour(column)
+    elif date_group == 'day':
+        return func.toStartOfDay(column)
+    elif date_group == 'week':
+        return func.toStartOfWeek(column)
+    elif date_group == 'month':
+        return func.toStartOfMonth(column)
+    elif date_group == 'quarter':
+        return func.toStartOfQuarter(column)
+    elif date_group == 'year':
+        return func.toStartOfYear(column)
+
+
 def get_sql_group_func_lookup(session, lookup_type, lookup_param, column):
     if lookup_type == 'auto':
         field_type = column.property.columns[0].type if hasattr(column, 'property') else column.type
@@ -251,6 +274,10 @@ def get_sql_group_func_lookup(session, lookup_type, lookup_param, column):
                 if date_group in dateadd_options:
                     interval = dateadd_options[date_group]
                     return func.dateadd(text(interval), func.datediff(text(interval), text('0'), column), text('0'))
+            elif get_session_engine(session) == 'clickhouse':
+                date_trunc = date_trunc_column_clickhouse(column, date_group)
+                if date_trunc is not None:
+                    return date_trunc
             else:
                 if date_group in strftime_options:
                     return func.strftime(strftime_options[date_group], column)
