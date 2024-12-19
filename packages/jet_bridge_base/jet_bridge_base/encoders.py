@@ -5,6 +5,7 @@ import decimal
 import json  # noqa
 import uuid
 import six
+from bson import ObjectId
 
 
 class JSONEncoder(json.JSONEncoder):
@@ -30,6 +31,8 @@ class JSONEncoder(json.JSONEncoder):
         elif isinstance(obj, decimal.Decimal):
             return float(obj)
         elif isinstance(obj, uuid.UUID):
+            return six.text_type(obj)
+        elif isinstance(obj, ObjectId) or type(obj) is ObjectId:
             return six.text_type(obj)
         elif isinstance(obj, six.binary_type):
             return obj.decode('utf-8')

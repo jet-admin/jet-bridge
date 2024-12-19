@@ -47,6 +47,7 @@ def reflect_mongodb(
 
         while True:
             skip = (page - 1) * limit
+            query_page = page
             items = db[name].find(skip=skip, limit=limit)
             has_items = False
 
@@ -105,21 +106,27 @@ def reflect_mongodb(
             else:
                 break
 
-        for column in table.columns:
-            if column.type is None:
-                column.type = data_types.CHAR
+        if query_page == 1 and not has_items:
+            logger.info('[{}] Collection "{}" does not have any data to analyze, skipping'.format(
+                cid_short,
+                name
+            ))
+        else:
+            for column in table.columns:
+                if column.type is None:
+                    column.type = data_types.CHAR
 
-            if column.mixed_types:
-                column.type = data_types.JSON
+                if column.mixed_types:
+                    column.type = data_types.JSON
 
-                logger.info('[{}] Field "{}"."{}" has data stored in multiple types ({}), falling back to JSON'.format(
-                    cid_short,
-                    name,
-                    column.name,
-                    ','.join(column.mixed_types)
-                ))
+                    logger.info('[{}] Field "{}"."{}" has data stored in multiple types ({}), falling back to JSON'.format(
+                        cid_short,
+                        name,
+                        column.name,
+                        ','.join(column.mixed_types)
+                    ))
 
-        metadata.append_table(table)
+            metadata.append_table(table)
 
         i += 1
 
