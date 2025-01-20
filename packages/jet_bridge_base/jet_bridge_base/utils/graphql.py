@@ -88,7 +88,7 @@ class PaginationResponseType(graphene.ObjectType):
 
 
 def clean_name(name):
-    if name == '_meta':
+    if name == '_meta' or name == 'Meta':
         return '__meta'
     name = re.sub(r'[^_a-zA-Z0-9]', r'_', name)
     name = re.sub(r'^(\d)', r'_\1', name)
