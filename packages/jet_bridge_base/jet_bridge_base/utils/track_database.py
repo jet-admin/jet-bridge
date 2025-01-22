@@ -1,14 +1,24 @@
+from datetime import datetime
 from fnmatch import fnmatch
 import requests
 
 from jet_bridge_base import settings
 from jet_bridge_base.configuration import configuration
+from jet_bridge_base.db import get_request_connection
 from jet_bridge_base.sentry import sentry_controller
 from jet_bridge_base.utils.conf import get_conf
 
+TRACK_DATABASES_THROTTLE = 60 * 15
 
-def track_database(conf):
+
+def track_database(conf, connection):
     if not settings.TRACK_DATABASES_ENDPOINT:
+        return
+
+    current_track_date = datetime.now()
+    latest_track_date = connection.get('tracked')
+
+    if latest_track_date and (current_track_date - latest_track_date).total_seconds() < TRACK_DATABASES_THROTTLE:
         return
 
     track_databases = list(filter(lambda x: x != '', map(lambda x: x.lower().strip(), settings.TRACK_DATABASES.split(','))))
@@ -32,7 +42,9 @@ def track_database(conf):
         r = requests.post(settings.TRACK_DATABASES_ENDPOINT, headers=headers, json=data)
         success = 200 <= r.status_code < 300
 
-        if not success:
+        if success:
+            connection['tracked'] = current_track_date
+        else:
             error = 'TRACK_DATABASE request error: {} {} {}'.format(r.status_code, r.reason, r.text)
             sentry_controller.capture_message(error)
     except Exception as e:
@@ -44,4 +56,5 @@ def track_database_async(request):
         return
 
     conf = get_conf(request)
-    configuration.run_async(track_database, conf)
+    connection = get_request_connection(request)
+    configuration.run_async(track_database, conf, connection)
