@@ -94,6 +94,8 @@ def queryset_count_optimized_for_mysql(session, db_table):
 
 
 def queryset_count_optimized(session, queryset):
+    queryset = queryset.order_by(None)
+
     if queryset.whereclause is None:
         count_optimized = None
 
