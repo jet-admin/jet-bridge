@@ -157,9 +157,17 @@ class MongoQueryset(object):
             return self
 
         result = self.clone()
+
+        if len(columns) == 1 and columns[0] is None:
+            result._sort = None
+            return result
+
         result._sort = result._sort or []
 
         for item in columns:
+            if item is None:
+                continue
+
             if isinstance(item, MongoDesc):
                 result._sort.append((item.column.name, pymongo.DESCENDING))
             else:
