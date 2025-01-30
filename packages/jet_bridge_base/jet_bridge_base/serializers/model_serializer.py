@@ -33,8 +33,8 @@ data_types = [
     {'query': 'ARRAY', 'operator': 'equals', 'map_type': data_types.JSON, 'data_type': fields.JSONField},
     {'query': 'BINARY', 'operator': 'startswith', 'map_type': data_types.BINARY, 'data_type': fields.BinaryField},
     {'query': 'VARBINARY', 'operator': 'startswith', 'map_type': data_types.BINARY, 'data_type': fields.BinaryField},
-    {'query': 'geometry', 'operator': 'startswith', 'map_type': data_types.GEOMETRY, 'data_type': fields.WKTField},
-    {'query': 'geography', 'operator': 'startswith', 'map_type': data_types.GEOGRAPHY, 'data_type': fields.WKTField},
+    {'query': 'GEOMETRY', 'operator': 'startswith', 'map_type': data_types.GEOMETRY, 'data_type': fields.WKTField},
+    {'query': 'GEOGRAPHY', 'operator': 'startswith', 'map_type': data_types.GEOGRAPHY, 'data_type': fields.WKTField},
 ]
 default_data_type = fields.CharField
 
@@ -46,9 +46,9 @@ def get_column_data_type(column):
                 return rule['data_type']
     else:
         try:
-            data_type = six.text_type(column.type)
+            data_type = six.text_type(column.type).upper()
         except:
-            data_type = 'NullType'
+            data_type = 'NULLTYPE'
 
         for rule in data_types:
             if rule['operator'] == 'equals' and data_type == rule['query']:
