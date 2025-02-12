@@ -7,7 +7,10 @@ from jet_bridge_base.fields.field import Field
 class BinaryField(Field):
     def to_internal_value_item(self, value):
         column = self.context.get('model_field')
-        if column and column.params.get('type') == 'object_id':
+        if column is not None \
+                and hasattr(column, 'params') \
+                and hasattr(column.params, 'get') \
+                and column.params.get('type') == 'object_id':
             return ObjectId(value)
         else:
             return binascii.unhexlify(value)
