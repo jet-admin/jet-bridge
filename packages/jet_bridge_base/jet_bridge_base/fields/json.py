@@ -21,7 +21,7 @@ class JSONField(Field):
             try:
                 return json.loads(value)
             except ValueError:
-                self.error('invalid')
+                return value
         else:
             return value
 
