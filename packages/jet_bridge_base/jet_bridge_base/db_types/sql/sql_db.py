@@ -35,7 +35,7 @@ def sql_init_database_connection(conf, tunnel, id_short, connection_name, schema
         logger.info('[{}] Getting db types for "{}"...'.format(id_short, connection_name))
         type_code_to_sql_type = fetch_type_code_to_sql_type(session)
 
-        default_timezone = sql_fetch_default_timezone(session)
+        default_timezone = sql_fetch_default_timezone(conf, session)
         default_timezone_updated = datetime.now()
 
         if default_timezone is not None:
