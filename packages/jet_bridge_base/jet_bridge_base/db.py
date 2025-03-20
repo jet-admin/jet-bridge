@@ -362,7 +362,7 @@ def get_default_timezone(request):
         connection_id = get_connection_id(conf)
         id_short = connection_id[:4]
 
-        new_default_timezone = fetch_default_timezone(request.session)
+        new_default_timezone = fetch_default_timezone(conf, request.session)
         new_default_timezone_updated = datetime.now()
 
         if new_default_timezone is not None:

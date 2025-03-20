@@ -50,6 +50,7 @@ class JetBridgeConfiguration(Configuration):
             'DATABASE_EXCEPT': settings.DATABASE_EXCEPT,
             'DATABASE_MAX_TABLES': settings.DATABASE_MAX_TABLES,
             'DATABASE_SCHEMA': settings.DATABASE_SCHEMA,
+            'DATABASE_TIMEZONE': settings.DATABASE_TIMEZONE,
             'DATABASE_REFLECT_MAX_RECORDS': settings.DATABASE_REFLECT_MAX_RECORDS,
             'DATABASE_SSL_CA': settings.DATABASE_SSL_CA,
             'DATABASE_SSL_CERT': settings.DATABASE_SSL_CERT,
