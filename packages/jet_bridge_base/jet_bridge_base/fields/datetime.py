@@ -17,14 +17,6 @@ def datetime_apply_default_timezone(value, request):
     if value.tzinfo is not None:
         return value
 
-    session_timezone = request.session.info.get('_queries_timezone')
-    if session_timezone:
-        try:
-            request_timezone = get_timezone_from_str(session_timezone)
-            return value.replace(tzinfo=request_timezone)
-        except:
-            pass
-
     default_timezone = get_default_timezone(request) if request else None
     if default_timezone:
         return value.replace(tzinfo=default_timezone)

@@ -6,11 +6,11 @@ from .mongo import MongoSession
 from .sql import sql_fetch_default_timezone
 
 
-def fetch_default_timezone(session):
+def fetch_default_timezone(conf, session):
     if isinstance(session, MongoSession):
         pass
     else:
-        return sql_fetch_default_timezone(session)
+        return sql_fetch_default_timezone(conf, session)
 
 
 def apply_session_timezone(session, timezone):
