@@ -88,6 +88,7 @@ def get_connection_id(conf):
         conf.get('user'),
         conf.get('password'),
         conf.get('schema'),
+        conf.get('timezone'),
         conf.get('ssl_ca'),
         conf.get('ssl_cert'),
         conf.get('ssl_key'),

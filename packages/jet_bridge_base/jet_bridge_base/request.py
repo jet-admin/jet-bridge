@@ -99,7 +99,7 @@ class Request(object):
     def get_argument(self, name, default=_ARG_DEFAULT, strip=True):
         return self._get_argument(name, default, self.query_arguments, strip)
 
-    def get_arguments(self, name, strip=True):
+    def get_arguments(self, name, strip=False):
         return self._get_arguments(name, self.query_arguments, strip)
 
     def get_argument_safe(self, name, default=_ARG_DEFAULT):
