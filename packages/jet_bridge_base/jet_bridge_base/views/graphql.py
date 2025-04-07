@@ -73,7 +73,7 @@ class GraphQLView(APIView):
             'generated': new_schema_generated
         }
 
-    def create_schema(self, request, schema_key, new_schema, draft):
+    def create_schema(self, request, schema_key, new_schema, draft, base62):
         id_short = get_connection_id_short(request)
         memory_usage_before = get_memory_usage()
 
@@ -103,7 +103,7 @@ class GraphQLView(APIView):
                         cache[schema_key] = new_schema
 
             get_schema_start = time.time()
-            schema = GraphQLSchemaGenerator().get_schema(
+            schema = GraphQLSchemaGenerator(base62=base62).get_schema(
                 request,
                 draft,
                 before_resolve=before_resolve,
@@ -151,8 +151,12 @@ class GraphQLView(APIView):
             with generated_condition:
                 generated_condition.notify_all()
 
-    def get_schema(self, request, draft):
-        schema_key = 'graphql_schema_draft' if draft else 'graphql_schema'
+    def get_schema(self, request, draft, base62):
+        if base62:
+            schema_key = 'graphql_schema_base62_draft' if draft else 'graphql_schema_base62'
+        else:
+            schema_key = 'graphql_schema_draft' if draft else 'graphql_schema'
+
         wait_schema = None
 
         with request_connection_cache(request) as cache:
@@ -175,7 +179,7 @@ class GraphQLView(APIView):
                     new_schema = self.create_schema_object()
                     cache[schema_key] = new_schema
 
-        return self.create_schema(request, schema_key, new_schema, draft)
+        return self.create_schema(request, schema_key, new_schema, draft, base62)
 
     def get(self, request, *args, **kwargs):
         return self.post(request, *args, **kwargs)
@@ -185,12 +189,13 @@ class GraphQLView(APIView):
 
         draft = bool(request.get_argument('draft', False))
         validate = bool(request.data.get('validate', True))
+        base62 = bool(request.data.get('base62', False))
 
         if 'query' not in request.data:
             return JSONResponse({})
 
         try:
-            schema = self.get_schema(request, draft)
+            schema = self.get_schema(request, draft, base62)
         except Exception as e:
             return JSONResponse({'errors': ['Failed to get table schema: {}'.format(e)]})
 
