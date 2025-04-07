@@ -1,6 +1,7 @@
 import re
 import time
 import graphene
+from jet_bridge_base.utils.base62 import utf8_to_base62
 from sqlalchemy.engine import Row
 from sqlalchemy.orm import MANYTOONE, ONETOMANY
 
@@ -87,19 +88,6 @@ class PaginationResponseType(graphene.ObjectType):
     hasMore = graphene.Boolean(required=False)
 
 
-def clean_name(name):
-    if name == '_meta' or name == 'Meta':
-        return '__meta'
-    name = re.sub(r'[^_a-zA-Z0-9]', r'_', name)
-    name = re.sub(r'^(\d)', r'_\1', name)
-    return name
-
-
-def clean_keys(obj):
-    pairs = map(lambda x: [clean_name(x[0]), x[1]], obj.items())
-    return dict(pairs)
-
-
 def get_model_filters_type_relationship_type(self, MappedBase, mapper, relationship, with_relations, depth):
     if not with_relations:
         return
@@ -167,7 +155,8 @@ def apply_dynamic_type(func, *arg, **kwargs):
 
 
 class GraphQLSchemaGenerator(object):
-    def __init__(self):
+    def __init__(self, base62=False):
+        self.base62 = base62
         self.relationships_by_name = dict()
         self.relationships_by_clean_name = dict()
         self.model_filters_types = dict()
@@ -177,6 +166,26 @@ class GraphQLSchemaGenerator(object):
         self.model_lookups_field_types = dict()
         self.model_lookups_relationship_types = dict()
         self.model_sort_types = dict()
+
+    def clean_name(self, name):
+        if self.base62:
+            if name == '':
+                return ''
+            elif re.match(r'^[_a-zA-Z][_a-zA-Z0-9]*$', name) and name not in ['_meta', 'Meta']:
+                return name
+            else:
+                name_base62 = utf8_to_base62(name)
+                return '__BASE62__{}'.format(name_base62)
+        else:
+            if name == '_meta' or name == 'Meta':
+                return '__meta'
+            name = re.sub(r'[^_a-zA-Z0-9]', r'_', name)
+            name = re.sub(r'^(\d)', r'_\1', name)
+            return name
+
+    def clean_keys(self, obj):
+        pairs = map(lambda x: [self.clean_name(x[0]), x[1]], obj.items())
+        return dict(pairs)
 
     def get_queryset(self, request, Model, only_columns=None):
         mapper = inspect_uniform(Model)
@@ -305,7 +314,7 @@ class GraphQLSchemaGenerator(object):
 
     def clean_relationships_by_name(self, relationships):
         def map_model_relations(x):
-            return clean_name(x[0]), x[1]
+            return self.clean_name(x[0]), x[1]
 
         def map_models(x):
             return x[0], dict(map(lambda r: map_model_relations(r), x[1].items()))
@@ -316,7 +325,7 @@ class GraphQLSchemaGenerator(object):
         table = mapper.tables[0]
         name = get_table_name(MappedBase.metadata, table)
         Model = MappedBase.classes.get(name)
-        return dict(map(lambda x: (clean_name(x), getattr(Model, x)), mapper.columns.keys()))
+        return dict(map(lambda x: (self.clean_name(x), getattr(Model, x)), mapper.columns.keys()))
 
     def get_model_relationships(self, MappedBase, mapper):
         name = get_table_name(MappedBase.metadata, mapper.selectable)
@@ -652,7 +661,7 @@ class GraphQLSchemaGenerator(object):
     def get_model_filters_type(self, MappedBase, mapper, depth=1):
         with_relations = depth <= 4
         table_name = get_table_name(MappedBase.metadata, mapper.selectable)
-        model_name = clean_name(table_name)
+        model_name = self.clean_name(table_name)
         cls_name = 'Model{}FiltersType'.format(model_name)
 
         if cls_name in self.model_filters_types:
@@ -662,14 +671,14 @@ class GraphQLSchemaGenerator(object):
 
         for column in mapper.columns:
             column_filters_type = self.get_model_field_filters_type(MappedBase, mapper, column, with_relations, depth)
-            attr_name = clean_name(column.name)
+            attr_name = self.clean_name(column.name)
             attrs[attr_name] = column_filters_type()
 
         for relationship in self.get_model_relationships(MappedBase, mapper):
             if relationship['direction'] != ONETOMANY:
                 continue
 
-            attr_name = clean_name(relationship['name'])
+            attr_name = self.clean_name(relationship['name'])
             attrs[attr_name] = apply_dynamic_type(get_model_filters_type_relationship_type, self, MappedBase, mapper, relationship, with_relations, depth)
 
         attrs['_not_'] = apply_dynamic_type(get_model_filters_type_not_type, self, MappedBase, mapper, with_relations, depth)
@@ -687,8 +696,8 @@ class GraphQLSchemaGenerator(object):
 
     def get_model_field_filters_type(self, MappedBase, mapper, column, with_relations, depth=1):
         table_name = get_table_name(MappedBase.metadata, mapper.selectable)
-        model_name = clean_name(table_name)
-        column_name = clean_name(column.name)
+        model_name = self.clean_name(table_name)
+        column_name = self.clean_name(column.name)
         dbfield_filter = filter_for_column(column)
         relationship = self.get_model_field_filters_type_relationship(MappedBase, mapper, column_name) if with_relations else None
         cls_name = 'Model{}Column{}FiltersType'.format(model_name, column_name) if relationship \
@@ -713,8 +722,8 @@ class GraphQLSchemaGenerator(object):
 
     def get_model_relationship_filters_type(self, MappedBase, mapper, relationship, with_relations, depth=1):
         table_name = get_table_name(MappedBase.metadata, mapper.selectable)
-        model_name = clean_name(table_name)
-        relationship_key = clean_name(relationship['name'])
+        model_name = self.clean_name(table_name)
+        relationship_key = self.clean_name(relationship['name'])
         cls_name = 'Model{}Relation{}RelationshipType'.format(model_name, relationship_key)
 
         if cls_name in self.model_filters_relationship_types:
@@ -732,7 +741,7 @@ class GraphQLSchemaGenerator(object):
     def get_model_lookups_type(self, MappedBase, mapper, depth=1):
         with_relations = depth <= 4
         table_name = get_table_name(MappedBase.metadata, mapper.selectable)
-        model_name = clean_name(table_name)
+        model_name = self.clean_name(table_name)
         cls_name = 'Model{}LookupsType'.format(model_name)
 
         if cls_name in self.model_lookups_types:
@@ -742,14 +751,14 @@ class GraphQLSchemaGenerator(object):
 
         for column in mapper.columns:
             column_lookups_type = self.get_model_field_lookups_type(MappedBase, mapper, column, with_relations, depth)
-            attr_name = clean_name(column.name)
+            attr_name = self.clean_name(column.name)
             attrs[attr_name] = column_lookups_type()
 
         for relationship in self.get_model_relationships(MappedBase, mapper):
             if relationship['direction'] != ONETOMANY:
                 continue
 
-            attr_name = clean_name(relationship['name'])
+            attr_name = self.clean_name(relationship['name'])
             attrs[attr_name] = apply_dynamic_type(get_model_lookups_type_relation_type, self, MappedBase, mapper, relationship, with_relations, depth)
 
         cls = type(cls_name, (ModelLookupsType,), attrs)
@@ -765,8 +774,8 @@ class GraphQLSchemaGenerator(object):
 
     def get_model_field_lookups_type(self, MappedBase, mapper, column, with_relations, depth=1):
         table_name = get_table_name(MappedBase.metadata, mapper.selectable)
-        model_name = clean_name(table_name)
-        column_name = clean_name(column.name)
+        model_name = self.clean_name(table_name)
+        column_name = self.clean_name(column.name)
         relationship = self.get_model_field_lookups_type_relationship(MappedBase, mapper, column_name) if with_relations else None
         cls_name = 'Model{}Column{}LookupsFieldType'.format(model_name, column_name) if relationship \
             else 'LookupsFieldType'
@@ -788,8 +797,8 @@ class GraphQLSchemaGenerator(object):
 
     def get_model_relationship_lookups_type(self, MappedBase, mapper, relationship, with_relations, depth=1):
         table_name = get_table_name(MappedBase.metadata, mapper.selectable)
-        model_name = clean_name(table_name)
-        relationship_key = clean_name(relationship['name'])
+        model_name = self.clean_name(table_name)
+        relationship_key = self.clean_name(relationship['name'])
         cls_name = 'Model{}Relation{}LookupsRelationshipType'.format(model_name, relationship_key)
 
         if cls_name in self.model_lookups_relationship_types:
@@ -807,7 +816,7 @@ class GraphQLSchemaGenerator(object):
 
     def get_model_sort_type(self, MappedBase, mapper):
         table_name = get_table_name(MappedBase.metadata, mapper.selectable)
-        model_name = clean_name(table_name)
+        model_name = self.clean_name(table_name)
         cls_name = 'Model{}SortType'.format(model_name)
 
         if cls_name in self.model_sort_types:
@@ -816,7 +825,7 @@ class GraphQLSchemaGenerator(object):
         attrs = {}
 
         for column in mapper.columns:
-            attr_name = clean_name(column.name)
+            attr_name = self.clean_name(column.name)
             attrs[attr_name] = FieldSortType()
 
         cls = type(cls_name, (ModelSortType,), attrs)
@@ -825,11 +834,11 @@ class GraphQLSchemaGenerator(object):
 
     def get_model_attrs_type(self, MappedBase, mapper):
         table_name = get_table_name(MappedBase.metadata, mapper.selectable)
-        name = clean_name(table_name)
+        name = self.clean_name(table_name)
         attrs = {}
 
         for column in mapper.columns:
-            attr_name = clean_name(column.name)
+            attr_name = self.clean_name(column.name)
             attrs[attr_name] = RawScalar()
 
         return type('Model{}RecordAttrsType'.format(name), (ModelAttrsType,), attrs)
@@ -862,7 +871,7 @@ class GraphQLSchemaGenerator(object):
             field_names = list(map(lambda x: x.name.value, field_selections))
             data_selections = self.get_selections(info, ['data']) or []
             data_names = list(map(lambda x: x.name.value, data_selections))
-            model_attrs = dict(map(lambda x: [clean_name(x), getattr(Model, x)], dir(Model)))
+            model_attrs = dict(map(lambda x: [self.clean_name(x), getattr(Model, x)], dir(Model)))
             only_columns = list(filter(lambda x: x is not None, map(lambda x: model_attrs.get(x), field_names))) \
                 if len(field_names) and 'allAttrs' not in data_names else None
 
@@ -887,11 +896,11 @@ class GraphQLSchemaGenerator(object):
                 if isinstance(row, Row):
                     data = dict(row)
                 else:
-                    data = dict(map(lambda x: (clean_name(x.name), getattr(row, x.name)), mapper.columns))
+                    data = dict(map(lambda x: (self.clean_name(x.name), getattr(row, x.name)), mapper.columns))
 
                 serializer = serializer_class(instance=data, context=serializer_context)
                 serialized = serializer.representation_data
-                serialized = clean_keys(serialized)
+                serialized = self.clean_keys(serialized)
 
                 return {
                     'attrs': serialized,
@@ -963,7 +972,7 @@ class GraphQLSchemaGenerator(object):
             mapper = inspect_uniform(Model)
             table = mapper.tables[0]
             name = get_table_name(MappedBase.metadata, table)
-            name = clean_name(name)
+            name = self.clean_name(name)
 
             if on_progress_updated:
                 on_progress_updated(name, i, total)
