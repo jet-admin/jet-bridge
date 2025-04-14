@@ -109,6 +109,8 @@ class StatusView(BaseAPIView):
 
         graphql_schema = self.map_connection_graphql_schema(cache.get('graphql_schema'))
         graphql_schema_draft = self.map_connection_graphql_schema(cache.get('graphql_schema_draft'))
+        graphql_schema_base62 = self.map_connection_graphql_schema(cache.get('graphql_schema_base62'))
+        graphql_schema_base62_draft = self.map_connection_graphql_schema(cache.get('graphql_schema_base62_draft'))
         tunnel = self.map_tunnel(connection.get('tunnel'))
         last_request = connection.get('last_request')
         default_timezone_updated = connection.get('default_timezone_updated')
@@ -126,6 +128,8 @@ class StatusView(BaseAPIView):
             'relationships': relationships_count,
             'graphql_schema': graphql_schema,
             'graphql_schema_draft': graphql_schema_draft,
+            'graphql_schema_base62': graphql_schema_base62,
+            'graphql_schema_base62_draft': graphql_schema_base62_draft,
             'init_start': connection.get('init_start'),
             'connect_time': connection.get('connect_time'),
             'reflect_time': connection.get('reflect_time'),
@@ -164,10 +168,16 @@ class StatusView(BaseAPIView):
             cache = connection['cache']
             graphql_schema = cache.get('graphql_schema')
             graphql_schema_draft = cache.get('graphql_schema_draft')
+            graphql_schema_base62 = cache.get('graphql_schema_base62')
+            graphql_schema_base62_draft = cache.get('graphql_schema_base62_draft')
 
             if graphql_schema and not graphql_schema.get('instance'):
                 schema_generating_connections.append(connection)
             elif graphql_schema_draft and not graphql_schema_draft.get('instance'):
+                schema_generating_connections.append(connection)
+            elif graphql_schema_base62 and not graphql_schema_base62.get('instance'):
+                schema_generating_connections.append(connection)
+            elif graphql_schema_base62_draft and not graphql_schema_base62_draft.get('instance'):
                 schema_generating_connections.append(connection)
             else:
                 active_connections.append(connection)
