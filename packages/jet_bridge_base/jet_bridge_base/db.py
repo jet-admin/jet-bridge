@@ -426,9 +426,14 @@ def reload_connection_graphql_schema(connection, draft=None):
         if draft is None:
             cache['graphql_schema'] = None
             cache['graphql_schema_draft'] = None
-        else:
-            schema_key = 'graphql_schema_draft' if draft else 'graphql_schema'
-            cache[schema_key] = None
+            cache['graphql_schema_base62'] = None
+            cache['graphql_schema_base62_draft'] = None
+        elif draft:
+            cache['graphql_schema_draft'] = None
+            cache['graphql_schema_base62_draft'] = None
+        elif not draft:
+            cache['graphql_schema'] = None
+            cache['graphql_schema_base62'] = None
 
 
 def reload_request_graphql_schema(request, draft=None):
@@ -436,9 +441,14 @@ def reload_request_graphql_schema(request, draft=None):
         if draft is None:
             cache['graphql_schema'] = None
             cache['graphql_schema_draft'] = None
-        else:
-            schema_key = 'graphql_schema_draft' if draft else 'graphql_schema'
-            cache[schema_key] = None
+            cache['graphql_schema_base62'] = None
+            cache['graphql_schema_base62_draft'] = None
+        elif draft:
+            cache['graphql_schema_draft'] = None
+            cache['graphql_schema_base62_draft'] = None
+        elif not draft:
+            cache['graphql_schema'] = None
+            cache['graphql_schema_base62'] = None
 
 
 def reload_request_model_descriptions_cache(request):
@@ -455,8 +465,10 @@ def release_inactive_graphql_schemas():
         cache = connection['cache']
         graphql_schema = cache.get('graphql_schema')
         graphql_schema_draft = cache.get('graphql_schema_draft')
+        graphql_schema_base62 = cache.get('graphql_schema_base62')
+        graphql_schema_base62_draft = cache.get('graphql_schema_base62_draft')
 
-        if not graphql_schema and not graphql_schema_draft:
+        if not graphql_schema and not graphql_schema_draft and not graphql_schema_base62 and not graphql_schema_base62_draft:
             continue
 
         time_elapsed = (datetime.now() - connection['last_request']).total_seconds()
@@ -466,7 +478,9 @@ def release_inactive_graphql_schemas():
 
         graphql_schema_memory = graphql_schema.get('memory_usage_approx') if graphql_schema else 0
         graphql_schema_draft_memory = graphql_schema_draft.get('memory_usage_approx') if graphql_schema_draft else 0
-        memory_usage_approx = graphql_schema_memory + graphql_schema_draft_memory
+        graphql_schema_base62_memory = graphql_schema_base62.get('memory_usage_approx') if graphql_schema_base62 else 0
+        graphql_schema_base62_draft_memory = graphql_schema_base62_draft.get('memory_usage_approx') if graphql_schema_base62_draft else 0
+        memory_usage_approx = graphql_schema_memory + graphql_schema_draft_memory + graphql_schema_base62_memory + graphql_schema_base62_draft_memory
 
         logger.info('Release inactive GraphQL schema "{}" (MEM:{}, ELAPSED:{})...'.format(
             connection['name'],
