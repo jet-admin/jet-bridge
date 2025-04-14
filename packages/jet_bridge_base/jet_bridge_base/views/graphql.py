@@ -223,10 +223,10 @@ class GraphQLView(APIView):
             'data': result.data
         }
 
-        if'graphql_data_query_time' in request.context:
+        if 'graphql_data_query_time' in request.context:
             response['data_query_time'] = request.context['graphql_data_query_time']
 
-        if'graphql_count_query_time' in request.context:
+        if 'graphql_count_query_time' in request.context:
             response['count_query_time'] = request.context['graphql_count_query_time']
 
         return JSONResponse(response)
