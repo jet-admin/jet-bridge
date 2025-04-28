@@ -1,7 +1,7 @@
 import json
 
 from jet_bridge_base.encoders import JSONEncoder
-from jet_bridge_base.utils.classes import issubclass_safe
+from jet_bridge_base.utils.classes import issubclass_safe, is_instance_or_subclass
 from sqlalchemy import Column, text, ForeignKey
 from sqlalchemy.exc import DBAPIError, SQLAlchemyError
 from sqlalchemy.sql.ddl import AddConstraint, DropConstraint
@@ -273,8 +273,10 @@ class TableColumnView(APIView):
 
         column_name = ddl_compiler.preparer.format_column(column)
         column_type = column.type.compile(engine.dialect)
+        column_iterable = is_instance_or_subclass(column.type, sqltypes.Indexable)
         existing_column_name = ddl_compiler.preparer.format_column(existing_column)
         existing_column_type = existing_column.type.compile(engine.dialect)
+        existing_column_iterable = is_instance_or_subclass(existing_column.type, sqltypes.Indexable)
 
         preserve_column_index = None
 
@@ -298,7 +300,13 @@ class TableColumnView(APIView):
         column_type_stmt = column_type
         sql_type_convert = get_sql_type_convert(column.type)
 
-        if sql_type_convert:
+        if not existing_column_iterable and column_iterable:
+            column_type_stmt += ''' USING 
+                CASE 
+                    WHEN {0} IS NULL THEN '[]'::jsonb 
+                    ELSE to_jsonb(ARRAY[{0}]) 
+                END'''.format(existing_column_name)
+        elif sql_type_convert:
             column_type_stmt += ' USING {0}'.format(sql_type_convert(existing_column_name))
 
         with request.session.begin():
