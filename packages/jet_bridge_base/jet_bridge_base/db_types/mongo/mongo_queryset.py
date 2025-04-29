@@ -34,6 +34,8 @@ class MongoQueryset(object):
     def to_internal_value(self, value, column):
         if isinstance(value, bytes) and column.params.get('type') == 'object_id':
             return ObjectId(value)
+        elif isinstance(value, list) and all(map(lambda x: isinstance(x, bytes), value)) and column.params.get('type') == 'object_id':
+            return list(map(lambda x: ObjectId(x), value))
         else:
             return value
 
