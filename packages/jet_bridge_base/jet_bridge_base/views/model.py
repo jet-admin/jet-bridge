@@ -152,6 +152,9 @@ class ModelViewSet(ModelAPIViewMixin):
             queryset.session.rollback()
             raise
 
+        if y_func in ['count', 'sum', 'avg'] and data is None:
+            data = 0
+
         result = y_serializer.to_representation(data)  # TODO: Refactor serializer
 
         return JSONResponse({
@@ -191,6 +194,9 @@ class ModelViewSet(ModelAPIViewMixin):
                 row = dict(row)
 
             if isinstance(row, dict):
+                if y_func in ['count', 'sum', 'avg'] and 'y_func' in row and row['y_func'] is None:
+                    row['y_func'] = 0
+
                 if 'group_1' in row:
                     row['group'] = row['group_1']
                     del row['group_1']
