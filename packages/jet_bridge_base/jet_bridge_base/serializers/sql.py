@@ -281,6 +281,8 @@ class SqlSerializer(Serializer):
                 session.rollback()
                 pass
 
+        request.apply_rls_if_enabled()
+
         subquery = text(query).columns().subquery('__jet_q2')
         count_rows = None
         count_query_time = None
