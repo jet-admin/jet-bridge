@@ -11,6 +11,7 @@ class UpdateAPIViewMixin(object):
 
         partial = kwargs.pop('partial', False)
         self.apply_timezone(request)
+        request.apply_rls_if_enabled()
         instance = self.get_object(request)
         serializer = self.get_serializer(request, instance=instance, data=request.data, partial=partial)
         serializer.is_valid(raise_exception=True)

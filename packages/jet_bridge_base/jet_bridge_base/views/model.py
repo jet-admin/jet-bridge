@@ -101,6 +101,7 @@ class ModelViewSet(ModelAPIViewMixin):
             return JSONResponse({'error': 'Request body should be an array'}, status=status.HTTP_400_BAD_REQUEST)
 
         self.apply_timezone(request)
+        request.apply_rls_if_enabled()
 
         result = []
 
@@ -121,6 +122,8 @@ class ModelViewSet(ModelAPIViewMixin):
     @action(methods=['get'], detail=False)
     def aggregate(self, request, *args, **kwargs):
         self.apply_timezone(request)
+        request.apply_rls_if_enabled()
+
         queryset = self.filter_queryset(request, self.get_queryset(request))
 
         lookup_field = self.get_model_lookup_field(request)
@@ -164,6 +167,8 @@ class ModelViewSet(ModelAPIViewMixin):
     @action(methods=['get'], detail=False)
     def group(self, request, *args, **kwargs):
         self.apply_timezone(request)
+        request.apply_rls_if_enabled()
+
         queryset = self.filter_queryset(request, self.get_queryset(request))
 
         lookup_field = self.get_model_lookup_field(request)
@@ -225,6 +230,8 @@ class ModelViewSet(ModelAPIViewMixin):
     @action(methods=['post'], detail=False)
     def reorder(self, request, *args, **kwargs):
         self.apply_timezone(request)
+        request.apply_rls_if_enabled()
+
         queryset = self.filter_queryset(request, self.get_queryset(request))
         Model = self.get_model(request)
         ReorderSerializer = get_reorder_serializer(Model, queryset, request.session)
@@ -238,6 +245,8 @@ class ModelViewSet(ModelAPIViewMixin):
     @action(methods=['post'], detail=False)
     def reset_order(self, request, *args, **kwargs):
         self.apply_timezone(request)
+        request.apply_rls_if_enabled()
+
         queryset = self.filter_queryset(request, self.get_queryset(request))
         Model = self.get_model(request)
         ResetOrderSerializer = get_reset_order_serializer(Model, queryset, request.session)
@@ -251,6 +260,8 @@ class ModelViewSet(ModelAPIViewMixin):
     @action(methods=['get'], detail=True)
     def get_siblings(self, request, *args, **kwargs):
         self.apply_timezone(request)
+        request.apply_rls_if_enabled()
+
         queryset = self.filter_queryset(request, self.get_queryset(request))
         obj = self.get_object(request)
         Model = self.get_model(request)

@@ -11,6 +11,8 @@ class CreateAPIViewMixin(object):
         track_database_async(request)
 
         self.apply_timezone(request)
+        request.apply_rls_if_enabled()
+
         serializer = self.get_serializer(request, data=request.data)
         serializer.is_valid(raise_exception=True)
         self.perform_create(request, serializer)

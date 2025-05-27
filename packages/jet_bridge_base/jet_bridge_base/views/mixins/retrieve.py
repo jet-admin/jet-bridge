@@ -8,6 +8,7 @@ class RetrieveAPIViewMixin(object):
         track_database_async(request)
 
         self.apply_timezone(request)
+        request.apply_rls_if_enabled()
         instance = self.get_object(request)
         serializer = self.get_serializer(request, instance=instance)
         return JSONResponse(serializer.representation_data)

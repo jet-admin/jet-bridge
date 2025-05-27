@@ -11,6 +11,8 @@ class ListAPIViewMixin(object):
         track_database_async(request)
 
         self.apply_timezone(request)
+        request.apply_rls_if_enabled()
+
         queryset = self.filter_queryset(request, self.get_queryset(request))
 
         paginate = not request.get_argument('_no_pagination', False)

@@ -14,6 +14,8 @@ class DestroyAPIViewMixin(object):
         track_database_async(request)
 
         self.apply_timezone(request)
+        request.apply_rls_if_enabled()
+
         instance = self.get_object(request)
         self.perform_destroy(request, instance)
 
