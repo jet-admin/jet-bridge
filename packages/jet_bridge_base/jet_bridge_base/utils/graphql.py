@@ -866,6 +866,7 @@ class GraphQLSchemaGenerator(object):
             pagination = pagination or {}
 
             request = info.context.get('request')
+            request.apply_rls_if_enabled()
 
             field_selections = self.get_selections(info, ['data', 'attrs']) or []
             field_names = list(map(lambda x: x.name.value, field_selections))

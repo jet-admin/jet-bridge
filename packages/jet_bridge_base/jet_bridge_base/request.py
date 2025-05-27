@@ -6,6 +6,7 @@ from json import JSONDecodeError
 
 from jet_bridge_base.exceptions.request_error import RequestError
 from jet_bridge_base.exceptions.validation_error import ValidationError
+from jet_bridge_base.utils.conf import get_conf
 from jet_bridge_base.utils.crypt import get_sha256_hash
 from jet_bridge_base.utils.process import get_memory_usage
 from six import string_types
@@ -23,6 +24,7 @@ class Request(object):
     project = None
     environment = None
     resource_token = None
+    sso_shared_data = None
     context = {}
 
     track_start_time = None
@@ -215,3 +217,13 @@ class Request(object):
         if self.track_start_memory_usage is None:
             return
         return get_memory_usage() - self.track_start_memory_usage
+
+    def apply_rls_if_enabled(self):
+        conf = get_conf(self)
+
+        if conf.get('rls_type') == 'supabase' and conf.get('rls_sso'):
+            shared_data = (self.sso_shared_data or {}).get(conf['rls_sso'], {})
+            user_id = shared_data.get('user_id')
+
+            self.session.execute('SET ROLE authenticated')
+            self.session.execute('SELECT set_config(\'request.jwt.claim.sub\', :uid, TRUE)', {'uid': user_id})
