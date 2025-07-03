@@ -43,6 +43,16 @@ def uniform_to_db_type(column):
         return 'NullType'
 
 
+def uniform_to_str(column):
+    try:
+        if isinstance(column, MongoColumn):
+            return column.type
+        else:
+            return str(column.type)
+    except:
+        return
+
+
 def is_column_has_default(column):
     return column.autoincrement or column.default or column.server_default
 
@@ -108,6 +118,7 @@ def map_column(metadata, column, editable, primary_key_auto):
 
     map_type = uniform_to_map_type(column)
     db_type = uniform_to_db_type(column)
+    db_internal_type = uniform_to_str(column)
 
     if column.foreign_keys:
         foreign_key = next(iter(column.foreign_keys))
@@ -166,6 +177,8 @@ def map_column(metadata, column, editable, primary_key_auto):
                 data_source_hidden = meta_hidden
         except ValueError:
             pass
+
+    params['db_internal_type'] = db_internal_type
 
     result = {
         'name': column.name,
