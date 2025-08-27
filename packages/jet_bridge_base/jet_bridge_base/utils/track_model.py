@@ -8,7 +8,7 @@ from jet_bridge_base.encoders import JSONEncoder
 from jet_bridge_base.sentry import sentry_controller
 
 
-def track_model(project, environment, resource_token, model, action, uid, model_data):
+def track_model(project, environment, resource_token, model, action, uid, model_data, fields=None, invoker=None):
     if not settings.TRACK_MODELS_ENDPOINT:
         return
 
@@ -33,6 +33,12 @@ def track_model(project, environment, resource_token, model, action, uid, model_
     if uid is not None:
         data['id'] = uid
 
+    if fields is not None:
+        data['fields'] = fields
+
+    if invoker is not None:
+        data['invoker'] = invoker
+
     if settings.TRACK_MODELS_AUTH:
         headers['Authorization'] = settings.TRACK_MODELS_AUTH
 
@@ -49,8 +55,8 @@ def track_model(project, environment, resource_token, model, action, uid, model_
         sentry_controller.capture_exception(e)
 
 
-def track_model_async(request, model, action, uid, data):
+def track_model_async(request, model, action, uid, data, fields=None, invoker=None):
     if not settings.TRACK_MODELS_ENDPOINT:
         return
 
-    configuration.run_async(track_model, request.project, request.environment, request.resource_token, model, action, uid, data)
+    configuration.run_async(track_model, request.project, request.environment, request.resource_token, model, action, uid, data, fields, invoker)
