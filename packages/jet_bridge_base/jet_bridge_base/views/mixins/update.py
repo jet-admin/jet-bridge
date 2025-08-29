@@ -18,7 +18,7 @@ class UpdateAPIViewMixin(object):
         self.perform_update(request, serializer)
 
         representation_data = serializer.representation_data
-        track_model_async(request, kwargs.get('model'), 'update', kwargs.get('pk'), representation_data)
+        track_model_async(request, kwargs.get('model'), 'update', kwargs.get('pk'), representation_data, request.data.keys(), request.get_argument('invoker', None))
 
         return JSONResponse(representation_data)
 

@@ -3,20 +3,19 @@ import six
 
 from jet_bridge_base.db_types import inspect_uniform
 from jet_bridge_base.exceptions.validation_error import ValidationError
+from jet_bridge_base.utils.common import force_array
 
 
 def serialize_validation_error(exc):
-    def process(e, root=False):
-        if isinstance(e.detail, dict):
-            return dict(map(lambda x: (x[0], process(x[1])), e.detail.items()))
-        elif isinstance(e.detail, list):
-            return list(map(lambda x: process(x), e.detail))
-        elif root:
-            return {'non_field_errors': [e.detail]}
-        else:
-            return e.detail
+    def map_error(value):
+        return list(map(lambda x: str(x), force_array(value)))
 
-    return process(exc, root=True)
+    if isinstance(exc.detail, dict):
+        return dict(map(lambda x: (x[0], map_error(x[1])), exc.detail.items()))
+    elif isinstance(exc.detail, list):
+        return {'non_field_errors': map_error(exc.detail)}
+    else:
+        return {'non_field_errors': [str(exc.detail)]}
 
 
 def validation_error_from_database_error(e, model):
