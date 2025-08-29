@@ -109,6 +109,15 @@ def format_size(num, suffix='B'):
     return f'{num:.1f}Yi{suffix}'
 
 
+def force_array(value):
+    if value is None:
+        return []
+    elif isinstance(value, list):
+        return value
+    else:
+        return [value]
+
+
 class CollectionDict(dict):
     def __iter__(self):
         for column in self.values():

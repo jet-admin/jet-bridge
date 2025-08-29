@@ -3,6 +3,7 @@ from __future__ import absolute_import, unicode_literals
 import datetime
 import decimal
 import json  # noqa
+import math
 import uuid
 import six
 from bson import ObjectId
@@ -12,6 +13,18 @@ class JSONEncoder(json.JSONEncoder):
 
     def is_aware(self, value):
         return value.utcoffset() is not None
+
+    def encode(self, o):
+        def clean_obj(obj):
+            if isinstance(obj, float) and (math.isnan(obj) or math.isinf(obj)):
+                return None
+            elif isinstance(obj, dict):
+                return {k: clean_obj(v) for k, v in obj.items()}
+            elif isinstance(obj, (list, tuple, set)):
+                return [clean_obj(v) for v in obj]
+            return obj
+
+        return super(JSONEncoder, self).encode(clean_obj(o))
 
     def default(self, obj):
         if isinstance(obj, datetime.datetime):

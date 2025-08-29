@@ -10,6 +10,7 @@ from jet_bridge_base.db import create_session
 from jet_bridge_base.exceptions.api import APIException
 from jet_bridge_base.exceptions.not_found import NotFound
 from jet_bridge_base.exceptions.permission_denied import PermissionDenied
+from jet_bridge_base.exceptions.sql import SqlError
 from jet_bridge_base.exceptions.validation_error import ValidationError
 from jet_bridge_base.responses.json import JSONResponse
 from jet_bridge_base.responses.template import TemplateResponse
@@ -138,6 +139,9 @@ class BaseAPIView(object):
                 'path': request.path,
             })
         elif isinstance(exc, ValidationError):
+            response = serialize_validation_error(exc)
+            return JSONResponse(response, status=exc.status_code)
+        elif isinstance(exc, SqlError):
             response = serialize_validation_error(exc)
             return JSONResponse(response, status=exc.status_code)
         elif isinstance(exc, APIException):
