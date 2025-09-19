@@ -43,10 +43,15 @@ class MongoSession(object):
             record.clear_pending()
 
     def rollback(self):
-        pass
+        self.clear()
 
     def close(self):
-        pass
+        self.clear()
+
+    def clear(self):
+        for record in self.records:
+            record.clear_pending()
+        self.records.clear()
 
     def query(self, *args):
         if isinstance(args[0], MongoDeclarativeMeta):
