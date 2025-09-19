@@ -4,11 +4,13 @@ from .mongo_declarative_meta import MongoDeclarativeMeta
 
 
 class MongoSession(object):
-    info = {}
-    records = []
+    info = None
+    records = None
 
     def __init__(self, db):
         self.db = db
+        self.info = dict()
+        self.records = list()
 
     def commit(self):
         for record in self.records:
@@ -41,10 +43,15 @@ class MongoSession(object):
             record.clear_pending()
 
     def rollback(self):
-        pass
+        self.clear()
 
     def close(self):
-        pass
+        self.clear()
+
+    def clear(self):
+        for record in self.records:
+            record.clear_pending()
+        self.records.clear()
 
     def query(self, *args):
         if isinstance(args[0], MongoDeclarativeMeta):
