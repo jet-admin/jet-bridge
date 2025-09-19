@@ -4,11 +4,13 @@ from .mongo_declarative_meta import MongoDeclarativeMeta
 
 
 class MongoSession(object):
-    info = {}
-    records = []
+    info = None
+    records = None
 
     def __init__(self, db):
         self.db = db
+        self.info = dict()
+        self.records = list()
 
     def commit(self):
         for record in self.records:
