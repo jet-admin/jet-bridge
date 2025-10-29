@@ -12,17 +12,26 @@ class MongoRecord(object):
         object.__setattr__(self, 'data', dict(kwargs))
         object.__setattr__(self, 'update_pending', set())
 
+    def __getattribute__(self, name):
+        if name in ['meta', 'data']:
+            data = super().__getattribute__('data')
+            return data.get(name, None)
+        else:
+            return super().__getattribute__(name)
+
     def __getattr__(self, name):
         return self.get(name)
 
     def get(self, name, default=None):
-        return self.data.get(name, default)
+        data = super().__getattribute__('data')
+        return data.get(name, default)
 
     def __setattr__(self, name, value):
         self.set(name, value)
 
     def set(self, name, value):
-        self.data[name] = value
+        data = super().__getattribute__('data')
+        data[name] = value
         self.mark_update(name)
 
     def get_data(self):
