@@ -15,7 +15,7 @@ def get_install_requires():
     install_requires = [
         'tornado==5.1.1',
         'six',
-        'jet-bridge-base==1.12.3',
+        'jet-bridge-base==1.12.4',
         'paramiko==2.8.1',
         'sshtunnel',
     ]
