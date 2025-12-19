@@ -313,10 +313,13 @@ class TableColumnView(APIView):
             try:
                 for foreign_key in existing_column.foreign_keys:
                     if foreign_key.constraint:
-                        foreign_key_should_exist = any(map(lambda x: x.target_fullname == foreign_key.target_fullname, column.foreign_keys))
+                        foreign_key_should_exist = any(map(lambda x: x.name == foreign_key.name and x.target_fullname == foreign_key.target_fullname, column.foreign_keys))
                         if foreign_key_should_exist:
                             continue
                         request.session.execute(DropConstraint(foreign_key.constraint))
+                        table.foreign_keys.discard(foreign_key)
+                        if foreign_key.constraint in table.constraints:
+                            table.constraints.remove(foreign_key.constraint)
 
                 if column_type != existing_column_type:
                     request.session.execute('''ALTER TABLE {0} ALTER COLUMN {1} DROP DEFAULT'''.format(table_name, existing_column_name))
@@ -341,7 +344,7 @@ class TableColumnView(APIView):
 
                 for foreign_key in column.foreign_keys:
                     if not foreign_key.constraint:
-                        foreign_key_exists = any(map(lambda x: x.target_fullname == foreign_key.target_fullname, existing_column.foreign_keys))
+                        foreign_key_exists = any(map(lambda x: x.name == foreign_key.name and x.target_fullname == foreign_key.target_fullname, existing_column.foreign_keys))
                         if foreign_key_exists:
                             continue
                         foreign_key._set_table(column, table)
