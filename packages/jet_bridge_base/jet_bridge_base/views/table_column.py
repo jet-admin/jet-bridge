@@ -287,7 +287,10 @@ class TableColumnView(APIView):
             except ValueError:
                 pass
 
-        column._set_parent(table)
+        if column_name != existing_column_name:
+            column._set_parent(table)
+        else:
+            table.append_column(column, replace_existing=True)
 
         if preserve_column_index is not None:
             try:
