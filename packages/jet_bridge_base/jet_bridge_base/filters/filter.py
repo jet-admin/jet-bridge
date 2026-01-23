@@ -39,6 +39,11 @@ def safe_equals(queryset, column, value):
                 return or_(*operators)
             else:
                 return column.cast(Unicode).ilike('%{}%'.format(value))
+        elif is_instance_or_subclass(field_type, (sqltypes.ARRAY,)):
+            if get_session_engine(queryset.session) == 'postgresql':
+                return column.contains([value])
+            else:
+                return column.cast(Unicode).ilike('%{}%'.format(value))
         else:
             return column.__eq__(value)
 
@@ -61,6 +66,12 @@ def safe_in(queryset, column, value):
                         operators.append(column.cast(JSONB).op('@>')(value_item))
 
                 return or_(*operators)
+            else:
+                operators = list(map(lambda x: column.cast(Unicode).ilike('%{}%'.format(x)), value))
+                return or_(*operators)
+        elif is_instance_or_subclass(field_type, (sqltypes.ARRAY,)):
+            if get_session_engine(queryset.session) == 'postgresql':
+                return column.overlap(value)
             else:
                 operators = list(map(lambda x: column.cast(Unicode).ilike('%{}%'.format(x)), value))
                 return or_(*operators)
