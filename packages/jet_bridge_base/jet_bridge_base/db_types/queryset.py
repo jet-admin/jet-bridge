@@ -280,6 +280,14 @@ def get_sql_group_func_lookup(session, lookup_type, lookup_param, column):
                 date_trunc = date_trunc_column_clickhouse(column, date_group)
                 if date_trunc is not None:
                     return date_trunc
+            elif get_session_engine(session) == 'bigquery':
+                if date_group in strftime_options:
+                    if is_instance_or_subclass(column.type, (sqltypes.TIMESTAMP,)):
+                        return func.format_timestamp(strftime_options[date_group], column)
+                    elif is_instance_or_subclass(column.type, (sqltypes.DateTime,)):
+                        return func.format_datetime(strftime_options[date_group], column)
+                    else:
+                        return func.format_date(strftime_options[date_group], column)
             else:
                 if date_group in strftime_options:
                     return func.strftime(strftime_options[date_group], column)
