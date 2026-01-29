@@ -494,7 +494,7 @@ class GraphQLSchemaGenerator(object):
                             'y_column': aggregate_column.name,
                             'x_columns': [relation_column.name],
                             'x_lookups': ['plain']
-                        })
+                        }).limit(1000)
                         groups_dict = dict(map(lambda x: (x['group'], x['y_func']), groups))
 
                         lookup_result['aggregated_values'] = list(map(lambda x: {
