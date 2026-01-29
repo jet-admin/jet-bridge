@@ -1,4 +1,5 @@
 from jet_bridge_base import status, fields
+from jet_bridge_base.exceptions.missing_argument_error import MissingArgumentError
 from jet_bridge_base.exceptions.validation_error import ValidationError
 from jet_bridge_base.utils.exceptions import serialize_validation_error
 from jet_bridge_base.views.model_description import inspect_uniform
@@ -177,6 +178,13 @@ class ModelViewSet(ModelAPIViewMixin):
         y_func = request.get_argument('_y_func').lower()
         y_column = request.get_argument('_y_column', lookup_field)
 
+        try:
+            page_size = int(request.get_argument('_per_page'))
+            page_size = max(page_size, 1)
+            page_size = min(page_size, 100000)
+        except (MissingArgumentError, ValueError):
+            page_size = 10000
+
         # model_serializer = self.get_serializer(request)
 
         # x_serializers = list(filter(lambda x: x.field_name == x_column, model_serializer.fields))
@@ -192,7 +200,7 @@ class ModelViewSet(ModelAPIViewMixin):
             'x_lookups': x_lookup_names,
             'y_func': y_func,
             'y_column': y_column
-        })
+        }).limit(page_size)
 
         def map_item(row):
             if isinstance(row, Row):

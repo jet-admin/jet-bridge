@@ -1,4 +1,7 @@
 import json
+from datetime import datetime
+
+import dateparser
 
 from jet_bridge_base.db_types import get_session_engine, MongoColumn
 from jet_bridge_base.serializers.model_serializer import get_column_data_type
@@ -171,23 +174,35 @@ def safe_array(value):
     else:
         return [value]
 
+def safe_date(value, column):
+    if is_instance_or_subclass(column.type, (sqltypes.Date,)):
+        if isinstance(value, str):
+            try:
+                date = dateparser.parse(value)
+                return date.strftime('%Y-%m-%d')
+            except ValueError:
+                pass
+        elif isinstance(value, datetime):
+            return value.strftime('%Y-%m-%d')
+    return value
+
 
 class Filter(object):
     field_class = field
     lookup_operators = {
-        lookups.EXACT: {'operator': False, 'func': safe_equals, 'pre_process': lambda x: safe_not_array(x)},
-        lookups.GT: {'operator': '__gt__', 'pre_process': lambda x: safe_not_array(x)},
-        lookups.GTE: {'operator': '__ge__', 'pre_process': lambda x: safe_not_array(x)},
-        lookups.LT: {'operator': '__lt__', 'pre_process': lambda x: safe_not_array(x)},
-        lookups.LTE: {'operator': '__le__', 'pre_process': lambda x: safe_not_array(x)},
-        lookups.ICONTAINS: {'operator': False, 'func': safe_icontains, 'pre_process': lambda x: safe_not_array(x)},
-        lookups.IN: {'operator': False, 'func': safe_in, 'field_kwargs': {'many': True}, 'pre_process': lambda x: safe_array(x)},
-        lookups.STARTS_WITH: {'operator': False, 'func': safe_startswith, 'pre_process': lambda x: safe_not_array(x)},
-        lookups.ENDS_WITH: {'operator': False, 'func': safe_endswith, 'pre_process': lambda x: safe_not_array(x)},
-        lookups.IS_NULL: {'operator': False, 'func': is_null, 'field_class': BooleanField, 'pre_process': lambda x: safe_not_array(x)},
-        lookups.IS_EMPTY: {'operator': False, 'func': is_empty, 'field_class': BooleanField, 'pre_process': lambda x: safe_not_array(x)},
-        lookups.JSON_ICONTAINS: {'operator': False, 'func': json_icontains, 'field_class': CharField, 'pre_process': lambda x: safe_not_array(x)},
-        lookups.COVEREDBY: {'operator': False, 'func': coveredby, 'pre_process': lambda x: safe_not_array(x)}
+        lookups.EXACT: {'operator': False, 'func': safe_equals, 'pre_process': lambda x, column: safe_date(safe_not_array(x), column)},
+        lookups.GT: {'operator': '__gt__', 'pre_process': lambda x, column: safe_date(safe_not_array(x), column)},
+        lookups.GTE: {'operator': '__ge__', 'pre_process': lambda x, column: safe_date(safe_not_array(x), column)},
+        lookups.LT: {'operator': '__lt__', 'pre_process': lambda x, column: safe_date(safe_not_array(x), column)},
+        lookups.LTE: {'operator': '__le__', 'pre_process': lambda x, column: safe_date(safe_not_array(x), column)},
+        lookups.ICONTAINS: {'operator': False, 'func': safe_icontains, 'pre_process': lambda x, column: safe_not_array(x)},
+        lookups.IN: {'operator': False, 'func': safe_in, 'field_kwargs': {'many': True}, 'pre_process': lambda x, column: safe_array(x)},
+        lookups.STARTS_WITH: {'operator': False, 'func': safe_startswith, 'pre_process': lambda x, column: safe_not_array(x)},
+        lookups.ENDS_WITH: {'operator': False, 'func': safe_endswith, 'pre_process': lambda x, column: safe_not_array(x)},
+        lookups.IS_NULL: {'operator': False, 'func': is_null, 'field_class': BooleanField, 'pre_process': lambda x, column: safe_not_array(x)},
+        lookups.IS_EMPTY: {'operator': False, 'func': is_empty, 'field_class': BooleanField, 'pre_process': lambda x, column: safe_not_array(x)},
+        lookups.JSON_ICONTAINS: {'operator': False, 'func': json_icontains, 'field_class': CharField, 'pre_process': lambda x, column: safe_not_array(x)},
+        lookups.COVEREDBY: {'operator': False, 'func': coveredby, 'pre_process': lambda x, column: safe_not_array(x)}
     }
 
     def __init__(self, name=None, column=None, lookup=lookups.DEFAULT_LOOKUP, exclude=False):
@@ -212,7 +227,7 @@ class Filter(object):
         func = lookup_operator.get('func')
 
         if pre_process:
-            value = pre_process(value)
+            value = pre_process(value, self.column)
 
         if not field_class:
             field_class = self.get_default_lookup_field_class()
