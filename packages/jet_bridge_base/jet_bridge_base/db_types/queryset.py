@@ -419,7 +419,7 @@ def queryset_group(Model, qs, value):
         else:
             qs = qs.group_by(*x_lookup_names).order_by(*x_lookup_names)
 
-        return qs.limit(1000)
+        return qs
 
 
 def queryset_search(qs, mapper, search):
