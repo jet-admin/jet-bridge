@@ -1,3 +1,5 @@
+from sqlalchemy.orm import Query
+
 from jet_bridge_base import status, fields
 from jet_bridge_base.exceptions.missing_argument_error import MissingArgumentError
 from jet_bridge_base.exceptions.validation_error import ValidationError
@@ -8,7 +10,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.engine import Row
 
 from jet_bridge_base.db import get_mapped_base
-from jet_bridge_base.db_types import apply_default_ordering
+from jet_bridge_base.db_types import apply_default_ordering, MongoQueryset
 from jet_bridge_base.exceptions.not_found import NotFound
 from jet_bridge_base.filters.model import get_model_filter_class
 from jet_bridge_base.filters.model_aggregate import ModelAggregateFilter
@@ -200,7 +202,12 @@ class ModelViewSet(ModelAPIViewMixin):
             'x_lookups': x_lookup_names,
             'y_func': y_func,
             'y_column': y_column
-        }).limit(page_size)
+        })
+
+        if isinstance(queryset, (Query, MongoQueryset)):
+            queryset = queryset.limit(page_size)
+        else:
+            queryset = queryset[:page_size]
 
         def map_item(row):
             if isinstance(row, Row):

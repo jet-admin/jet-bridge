@@ -3,11 +3,11 @@ import time
 import graphene
 from jet_bridge_base.utils.base62 import utf8_to_base62
 from sqlalchemy.engine import Row
-from sqlalchemy.orm import MANYTOONE, ONETOMANY
+from sqlalchemy.orm import MANYTOONE, ONETOMANY, Query
 
 from jet_bridge_base.db import get_mapped_base, get_engine, get_request_connection
 from jet_bridge_base.db_types import desc_uniform, inspect_uniform, get_session_engine, queryset_count_optimized, \
-    apply_default_ordering, queryset_search, queryset_group, aliased_uniform
+    apply_default_ordering, queryset_search, queryset_group, aliased_uniform, MongoQueryset
 from jet_bridge_base.db_types.sql import sql_load_database_table
 from jet_bridge_base.filters import lookups
 from jet_bridge_base.filters.filter import EMPTY_VALUES
@@ -494,7 +494,13 @@ class GraphQLSchemaGenerator(object):
                             'y_column': aggregate_column.name,
                             'x_columns': [relation_column.name],
                             'x_lookups': ['plain']
-                        }).limit(1000)
+                        })
+
+                        if isinstance(groups, (Query, MongoQueryset)):
+                            groups = groups.limit(1000)
+                        else:
+                            groups = groups[:1000]
+
                         groups_dict = dict(map(lambda x: (x['group'], x['y_func']), groups))
 
                         lookup_result['aggregated_values'] = list(map(lambda x: {
