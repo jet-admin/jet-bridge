@@ -12,16 +12,6 @@ from jet_bridge_base.utils.conf import get_connection_id, get_connection_schema,
     get_connection_params_id, is_tunnel_connection, get_conf, get_settings_conf
 from jet_bridge_base.utils.datetime import date_trunc_minutes
 
-try:
-    from geoalchemy2 import types
-except ImportError:
-    pass
-
-try:
-    from pgvector.sqlalchemy import Vector
-except ImportError:
-    pass
-
 connections = {}
 pending_connections = {}
 MODEL_DESCRIPTIONS_RESPONSE_CACHE_KEY = 'model_descriptions_response'

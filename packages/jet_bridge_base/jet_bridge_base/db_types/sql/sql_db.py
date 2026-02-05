@@ -17,6 +17,18 @@ from .sql_reflect import sql_reflect
 from .timezones import sql_fetch_default_timezone
 from .type_codes import fetch_type_code_to_sql_type
 
+try:
+    from geoalchemy2 import types
+except ImportError:
+    pass
+
+try:
+    from pgvector.sqlalchemy import Vector
+    from sqlalchemy.dialects.postgresql.base import ischema_names
+    ischema_names['vector'] = Vector
+except ImportError:
+    pass
+
 
 def sql_init_database_connection(conf, tunnel, id_short, connection_name, schema, pending_connection):
     engine = sql_create_connection_engine(conf, tunnel)
