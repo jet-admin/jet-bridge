@@ -17,6 +17,11 @@ try:
 except ImportError:
     pass
 
+try:
+    from pgvector.sqlalchemy import Vector
+except ImportError:
+    pass
+
 connections = {}
 pending_connections = {}
 MODEL_DESCRIPTIONS_RESPONSE_CACHE_KEY = 'model_descriptions_response'

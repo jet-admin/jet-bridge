@@ -68,6 +68,12 @@ try:
 except ImportError:
     pass
 
+try:
+    from pgvector.sqlalchemy import Vector
+    map_data_types.append({'sql_type': Vector, 'map_type': data_types.VECTOR, 'db_type': data_types.VECTOR, 'convert': lambda x: '{}::vector'.format(x)})
+except ImportError:
+    pass
+
 
 def sql_to_map_type(value):
     for rule in reversed(map_data_types):
