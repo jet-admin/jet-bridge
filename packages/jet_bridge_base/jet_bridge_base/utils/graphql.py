@@ -67,6 +67,13 @@ class SearchType(graphene.InputObjectType):
     query = graphene.String()
 
 
+class SemanticSearchType(graphene.InputObjectType):
+    field = graphene.String()
+    embedding = graphene.List(graphene.Float)
+    similarity_gte = graphene.Int(required=False)
+    distance_alg = graphene.String(required=False)
+
+
 class AggregateFuncType(graphene.Enum):
     Count = 'count'
     Sum = 'sum'
@@ -435,6 +442,22 @@ class GraphQLSchemaGenerator(object):
         if search is not None:
             query = search['query']
             queryset = queryset_search(queryset, mapper, query)
+
+        return queryset
+
+    def semantic_search_queryset(self, queryset, mapper, semantic_search):
+        if semantic_search is not None:
+            field_name = semantic_search['field']
+            embedding = semantic_search['embedding']
+            similarity_gte = semantic_search.get('similarity_gte')
+
+            column = mapper.columns[field_name]
+            expr = column.cosine_distance(embedding)
+
+            if similarity_gte is not None:
+                queryset = queryset.where((1 - expr) >= similarity_gte)
+
+            return queryset.order_by(expr)
 
         return queryset
 
@@ -864,7 +887,7 @@ class GraphQLSchemaGenerator(object):
 
             i += 1
 
-    def resolve_model_list(self, MappedBase, Model, mapper, info, filters=None, lookups=None, sort=None, pagination=None, search=None):
+    def resolve_model_list(self, MappedBase, Model, mapper, info, filters=None, lookups=None, sort=None, pagination=None, search=None, semantic_search=None):
         try:
             filters = filters or []
             lookups = lookups or []
@@ -886,6 +909,7 @@ class GraphQLSchemaGenerator(object):
 
             queryset = self.filter_queryset(request, MappedBase, queryset, mapper, filters)
             queryset = self.search_queryset(queryset, mapper, search)
+            queryset = self.semantic_search_queryset(queryset, mapper, semantic_search)
             queryset = self.sort_queryset(queryset, MappedBase, mapper, sort)
 
             data_query_start = time.time()
@@ -999,7 +1023,7 @@ class GraphQLSchemaGenerator(object):
             })
 
             def create_list_resolver(Model, mapper):
-                def resolver(parent, info, filters=None, lookups=None, sort=None, pagination=None, search=None):
+                def resolver(parent, info, filters=None, lookups=None, sort=None, pagination=None, search=None, semantic_search=None):
                     request = info.context.get('request')
 
                     if before_resolve is not None:
@@ -1014,7 +1038,8 @@ class GraphQLSchemaGenerator(object):
                         lookups=lookups,
                         sort=sort,
                         pagination=pagination,
-                        search=search
+                        search=search,
+                        semantic_search=semantic_search,
                     )
                 return resolver
 
@@ -1024,7 +1049,8 @@ class GraphQLSchemaGenerator(object):
                 lookups=graphene.List(LookupsType),
                 sort=SortType,
                 pagination=PaginationType(),
-                search=SearchType()
+                search=SearchType(),
+                semantic_search=SemanticSearchType()
             )
             query_attrs['resolve_{}'.format(name)] = create_list_resolver(Model, mapper)
 

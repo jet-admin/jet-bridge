@@ -4,10 +4,12 @@ from jet_bridge_base.filters.model_relation import get_model_relation_filter
 from jet_bridge_base.filters.model_search import get_model_search_filter
 from jet_bridge_base.filters.model_segment import get_model_segment_filter
 from jet_bridge_base.filters.order_by import OrderFilter
+from jet_bridge_base.filters.semantic_search import get_model_semantic_search
 
 
 def get_model_filter_class(request, Model):
     search_filter = get_model_search_filter(Model)
+    semantic_search = get_model_semantic_search(Model)
     model_m2m_filter = get_model_m2m_filter(Model)
     model_segment_filter = get_model_segment_filter(request, Model)
     model_relation_filter = get_model_relation_filter(request, Model)
@@ -15,6 +17,7 @@ def get_model_filter_class(request, Model):
     class ModelFilterClass(FilterClass):
         _order_by = OrderFilter()
         _search = search_filter()
+        _semantic_search = semantic_search()
         _m2m = model_m2m_filter()
         _segment = model_segment_filter()
         _relation = model_relation_filter()
