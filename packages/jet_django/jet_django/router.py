@@ -4,6 +4,14 @@ import sys
 class Router(object):
     routes = [
         {
+            'path': 'get_records',
+            'regex': 'get_records',
+            'method_mapping': {
+                'post': 'list',
+            },
+            'detail': False
+        },
+        {
             'path': '<pk>/',
             'regex': '(?P<pk>[^/]+)/',
             'method_mapping': {

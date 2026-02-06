@@ -49,6 +49,10 @@ class FilterClass(object):
 
     def filter_queryset(self, request, queryset):
         def get_filter_value(name, filters_instance=None):
+            if request.method == 'POST':
+                body_argument = request.data.get(name)
+                if body_argument is not None:
+                    return body_argument
             return request.get_argument_safe(name, None)
 
         for item in self.filters:

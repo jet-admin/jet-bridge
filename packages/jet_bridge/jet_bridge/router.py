@@ -15,6 +15,13 @@ class Router(object):
             'detail': False
         },
         {
+            'path': 'get_records/',
+            'method_mapping': {
+                'post': 'list',
+            },
+            'detail': False
+        },
+        {
             'path': '(?P<pk>[^/]+)/',
             'method_mapping': {
                 'get': 'retrieve',
