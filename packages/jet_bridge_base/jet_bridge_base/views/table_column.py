@@ -51,6 +51,9 @@ def map_dto_column(table_name, column, metadata):
         if 'length' in params:
             column_kwargs['length'] = params['length']
 
+        if 'dimensions' in params:
+            column_kwargs['dim'] = params['dimensions']
+
     try:
         from geoalchemy2 import types
         if column_type is types.Geography:
@@ -261,6 +264,9 @@ class TableColumnView(APIView):
 
         if 'length' in existing_data:
             existing_dto['length'] = existing_data['length']
+
+        if 'dimensions' in existing_data:
+            existing_dto['dimensions'] = existing_data['dimensions']
 
         column_data = {
             **existing_dto,

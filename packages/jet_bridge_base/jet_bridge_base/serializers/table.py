@@ -9,6 +9,7 @@ class TableColumnParamsRelatedModelSerializer(Serializer):
 
 class TableColumnParamsSerializer(Serializer):
     length = fields.IntegerField(required=False)
+    dimensions = fields.IntegerField(required=False)
     related_model = TableColumnParamsRelatedModelSerializer(required=False)
     custom_primary_key = fields.CharField(required=False)
 

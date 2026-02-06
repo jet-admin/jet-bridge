@@ -150,6 +150,13 @@ def map_column(metadata, column, editable, primary_key_auto):
     except ImportError:
         pass
 
+    try:
+        from pgvector.sqlalchemy import Vector
+        if isinstance(column.type, Vector):
+            params['dimensions'] = column.type.dim
+    except ImportError:
+        pass
+
     required = is_column_required(column, primary_key_auto)
 
     if column.comment:
