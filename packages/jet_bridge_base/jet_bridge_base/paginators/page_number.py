@@ -96,7 +96,10 @@ class PageNumberPagination(Pagination):
 
     def has_next_potential(self, data):
         has_next = self.has_next()
-        if has_next is False:
+        if has_next is False and len(data) == self.page_size:
+            # count may be inaccurate
+            return True
+        elif has_next is False:
             return has_next
         elif has_next is None and len(data) == 0:
             return False

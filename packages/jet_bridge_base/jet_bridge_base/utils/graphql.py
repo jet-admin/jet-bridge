@@ -952,6 +952,10 @@ class GraphQLSchemaGenerator(object):
                     elif page is not None:
                         result['pagination']['hasMore'] = page * limit < count
 
+                    if result['pagination']['hasMore'] is False and len(result['data']) == limit:
+                        # count may be inaccurate
+                        result['pagination']['hasMore'] = True
+
                     request.context['graphql_count_query_time'] = round(count_query_end - count_query_start, 3)
 
             return result
