@@ -161,6 +161,20 @@ def apply_dynamic_type(func, *arg, **kwargs):
     return DynamicInstance()
 
 
+def loose_in(value, values):
+    for item in values:
+        try:
+            if value == item:
+                return True
+            elif str(value) == str(item):
+                return True
+            elif float(value) == float(item):
+                return True
+        except (ValueError, TypeError):
+            pass
+    return False
+
+
 class GraphQLSchemaGenerator(object):
     def __init__(self, base62=False):
         self.base62 = base62
@@ -617,12 +631,12 @@ class GraphQLSchemaGenerator(object):
             if 'related' in lookup_data:
                 item_result['related'] = self.filter_lookup_models(
                     lookup_data['related'],
-                    lambda x: getattr(x, lookup_data['related_column'], None) in values
+                    lambda x: loose_in(getattr(x, lookup_data['related_column'], None), values)
                 )
 
             if 'aggregated_values' in lookup_data:
                 model_values = list(filter(
-                    lambda x: getattr(x['instance'], lookup_data['source_column'], None) in values,
+                    lambda x: loose_in(getattr(x['instance'], lookup_data['source_column'], None), values),
                     lookup_data['aggregated_values']
                 ))
                 item_result['aggregated'] = model_values[0]['value'] if len(model_values) else 0
