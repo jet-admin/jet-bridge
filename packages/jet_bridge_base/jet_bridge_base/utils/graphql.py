@@ -952,7 +952,7 @@ class GraphQLSchemaGenerator(object):
                     elif page is not None:
                         result['pagination']['hasMore'] = page * limit < count
 
-                    if result['pagination']['hasMore'] is False and len(result['data']) == limit:
+                    if result['pagination'].get('hasMore') is False and len(result['data']) == limit:
                         # count may be inaccurate
                         result['pagination']['hasMore'] = True
 
