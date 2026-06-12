@@ -101,6 +101,7 @@ class HasProjectPermissions(BasePermission):
             request.environment = result.get('environment')
             request.resource_token = project_token
             request.sso_shared_data = result.get('sso_shared_data')
+            request.admin = result.get('admin', False)
 
             user_id = result.get('user')
             if user_id is not None:

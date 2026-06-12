@@ -69,14 +69,20 @@ class SqlSerializer(Serializer):
     schema = fields.CharField(required=False)
     params = SqlParamsSerializers(required=False)
     params_obj = fields.JSONField(required=False)
+    admin = fields.BooleanField(required=False)
     v = fields.IntegerField(default=1)
 
     def validate(self, attrs):
-        forbidden = ['insert', 'update', 'delete', 'grant', 'show']
-        for i in range(len(forbidden)):
-            forbidden.append('({}'.format(forbidden[i]))
-        if any(map(lambda x: ' {} '.format(attrs['query'].lower()).find(' {} '.format(x)) != -1, forbidden)):
-            raise ValidationError({'query': 'forbidden query'})
+        if attrs.get('admin'):
+            request = self.context.get('request')
+            if not request or not request.admin:
+                raise ValidationError({'query': 'admin access missing'})
+        else:
+            forbidden = ['insert', 'update', 'delete', 'grant', 'show']
+            for i in range(len(forbidden)):
+                forbidden.append('({}'.format(forbidden[i]))
+            if any(map(lambda x: ' {} '.format(attrs['query'].lower()).find(' {} '.format(x)) != -1, forbidden)):
+                raise ValidationError({'query': 'forbidden query'})
 
         if attrs['v'] < 2:
             i = 0
