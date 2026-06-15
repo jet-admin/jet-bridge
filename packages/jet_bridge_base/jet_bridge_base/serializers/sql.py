@@ -222,14 +222,15 @@ class SqlSerializer(Serializer):
         return queryset
 
     def paginate_queryset(self, queryset, data):
-        if 'offset' in data:
+        if hasattr(queryset, 'offset') and 'offset' in data:
             queryset = queryset.offset(data['offset'])
 
-        if 'limit' in data:
-            if data['limit']:
-                queryset = queryset.limit(data['limit'])
-        elif data['v'] >= 2:
-            queryset = queryset.limit(100)
+        if hasattr(queryset, 'limit'):
+            if 'limit' in data:
+                if data['limit']:
+                    queryset = queryset.limit(data['limit'])
+            elif data['v'] >= 2:
+                queryset = queryset.limit(100)
 
         return queryset
 
@@ -249,16 +250,17 @@ class SqlSerializer(Serializer):
         return column(name, **kwargs)
 
     def sort_queryset(self, queryset, data, session):
-        if 'order_by' in data:
-            order_by = list(map(lambda x: self.map_order_field(session, x), data['order_by']))
-            queryset = queryset.order_by(*order_by)
-        else:
-            if 'aggregate' not in data and 'group' not in data and 'groups' not in data:
-                if get_session_engine(session) == 'mssql':
-                    for item in data.get('columns', []):
-                        field = self.get_column(session, item['name'])
-                        queryset = queryset.order_by(field)
-                        break
+        if hasattr(queryset, 'order_by'):
+            if 'order_by' in data:
+                order_by = list(map(lambda x: self.map_order_field(session, x), data['order_by']))
+                queryset = queryset.order_by(*order_by)
+            else:
+                if 'aggregate' not in data and 'group' not in data and 'groups' not in data:
+                    if get_session_engine(session) == 'mssql':
+                        for item in data.get('columns', []):
+                            field = self.get_column(session, item['name'])
+                            queryset = queryset.order_by(field)
+                            break
 
         return queryset
 
