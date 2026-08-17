@@ -78,7 +78,7 @@ class SqlSerializer(Serializer):
             if not request or not request.admin:
                 raise ValidationError({'query': 'admin access missing'})
         else:
-            forbidden = ['insert', 'update', 'delete', 'grant', 'show', 'alter', 'create table']
+            forbidden = ['insert', 'update', 'delete', 'grant', 'show', 'alter', 'create table', 'drop table']
             for i in range(len(forbidden)):
                 forbidden.append('({}'.format(forbidden[i]))
             if any(map(lambda x: ' {} '.format(attrs['query'].lower()).find(' {} '.format(x)) != -1, forbidden)):
