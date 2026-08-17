@@ -25,6 +25,7 @@ class Request(object):
     environment = None
     resource_token = None
     sso_shared_data = None
+    admin = False
     context = {}
 
     track_start_time = None

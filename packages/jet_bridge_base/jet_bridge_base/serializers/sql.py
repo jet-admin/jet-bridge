@@ -69,14 +69,20 @@ class SqlSerializer(Serializer):
     schema = fields.CharField(required=False)
     params = SqlParamsSerializers(required=False)
     params_obj = fields.JSONField(required=False)
+    admin = fields.BooleanField(required=False)
     v = fields.IntegerField(default=1)
 
     def validate(self, attrs):
-        forbidden = ['insert', 'update', 'delete', 'grant', 'show']
-        for i in range(len(forbidden)):
-            forbidden.append('({}'.format(forbidden[i]))
-        if any(map(lambda x: ' {} '.format(attrs['query'].lower()).find(' {} '.format(x)) != -1, forbidden)):
-            raise ValidationError({'query': 'forbidden query'})
+        if attrs.get('admin'):
+            request = self.context.get('request')
+            if not request or not request.admin:
+                raise ValidationError({'query': 'admin access missing'})
+        else:
+            forbidden = ['insert', 'update', 'delete', 'grant', 'show', 'alter', 'create table', 'drop table']
+            for i in range(len(forbidden)):
+                forbidden.append('({}'.format(forbidden[i]))
+            if any(map(lambda x: ' {} '.format(attrs['query'].lower()).find(' {} '.format(x)) != -1, forbidden)):
+                raise ValidationError({'query': 'forbidden query'})
 
         if attrs['v'] < 2:
             i = 0
@@ -216,14 +222,15 @@ class SqlSerializer(Serializer):
         return queryset
 
     def paginate_queryset(self, queryset, data):
-        if 'offset' in data:
+        if hasattr(queryset, 'offset') and 'offset' in data:
             queryset = queryset.offset(data['offset'])
 
-        if 'limit' in data:
-            if data['limit']:
-                queryset = queryset.limit(data['limit'])
-        elif data['v'] >= 2:
-            queryset = queryset.limit(100)
+        if hasattr(queryset, 'limit'):
+            if 'limit' in data:
+                if data['limit']:
+                    queryset = queryset.limit(data['limit'])
+            elif data['v'] >= 2:
+                queryset = queryset.limit(100)
 
         return queryset
 
@@ -243,16 +250,17 @@ class SqlSerializer(Serializer):
         return column(name, **kwargs)
 
     def sort_queryset(self, queryset, data, session):
-        if 'order_by' in data:
-            order_by = list(map(lambda x: self.map_order_field(session, x), data['order_by']))
-            queryset = queryset.order_by(*order_by)
-        else:
-            if 'aggregate' not in data and 'group' not in data and 'groups' not in data:
-                if get_session_engine(session) == 'mssql':
-                    for item in data.get('columns', []):
-                        field = self.get_column(session, item['name'])
-                        queryset = queryset.order_by(field)
-                        break
+        if hasattr(queryset, 'order_by'):
+            if 'order_by' in data:
+                order_by = list(map(lambda x: self.map_order_field(session, x), data['order_by']))
+                queryset = queryset.order_by(*order_by)
+            else:
+                if 'aggregate' not in data and 'group' not in data and 'groups' not in data:
+                    if get_session_engine(session) == 'mssql':
+                        for item in data.get('columns', []):
+                            field = self.get_column(session, item['name'])
+                            queryset = queryset.order_by(field)
+                            break
 
         return queryset
 
@@ -309,7 +317,7 @@ class SqlSerializer(Serializer):
             elif 'groups' in data or 'group' in data:
                 queryset = self.group_queryset(subquery, data, session)
             else:
-                queryset = select(['*']).select_from(subquery)
+                queryset = text(query)
 
             queryset = self.filter_queryset(queryset, data)
 
@@ -325,55 +333,64 @@ class SqlSerializer(Serializer):
 
             data_query_time = round(data_query_end - data_query_start, 3)
 
-            def map_column(x):
-                if x == '?column?':
-                    return
-                return x
+            if not result.returns_rows:
+                session.commit()
 
-            def map_row_column(x):
-                if isinstance(x, bytes):
-                    try:
-                        return x.decode('utf-8')
-                    except UnicodeDecodeError:
-                        return x.hex()
-                elif isinstance(x, datetime.datetime):
-                    x = datetime_apply_default_timezone(x, request)
-                    return x
-                else:
+                response = {
+                    "row_count": result.rowcount,
+                    "data": [],
+                    "columns": []
+                }
+            else:
+                def map_column(x):
+                    if x == '?column?':
+                        return
                     return x
 
-            def map_row(row):
-                return list(map(lambda x: map_row_column(row[x]), row.keys()))
+                def map_row_column(x):
+                    if isinstance(x, bytes):
+                        try:
+                            return x.decode('utf-8')
+                        except UnicodeDecodeError:
+                            return x.hex()
+                    elif isinstance(x, datetime.datetime):
+                        x = datetime_apply_default_timezone(x, request)
+                        return x
+                    else:
+                        return x
 
-            column_names = result.keys()
+                def map_row(row):
+                    return list(map(lambda x: map_row_column(row[x]), row.keys()))
 
-            if 'groups' in data or 'group' in data:
-                column_names = list(map(lambda x: 'group' if x == 'group_1' else x, column_names))
+                column_names = result.keys()
 
-            cursor_description = result.cursor.description
-            response = {
-                'data': list(map(map_row, result)),
-                'columns': list(map(map_column, column_names))
-            }
+                if 'groups' in data or 'group' in data:
+                    column_names = list(map(lambda x: 'group' if x == 'group_1' else x, column_names))
 
-            type_code_to_sql_type = get_type_code_to_sql_type(request)
-            if type_code_to_sql_type:
-                def map_column_description(column):
-                    name = column.name if hasattr(column, 'name') else ''
-                    sql_type = type_code_to_sql_type.get(column.type_code) if hasattr(column, 'type_code') else None
-                    field = sql_to_map_type(sql_type) if sql_type else None
-                    return name, {
-                        'field': field
-                    }
+                cursor_description = result.cursor.description
+                response = {
+                    "row_count": result.rowcount,
+                    'data': list(map(map_row, result)),
+                    'columns': list(map(map_column, column_names))
+                }
 
-                response['column_descriptions'] = dict(map(map_column_description, cursor_description))
+                type_code_to_sql_type = get_type_code_to_sql_type(request)
+                if type_code_to_sql_type:
+                    def map_column_description(column):
+                        name = column.name if hasattr(column, 'name') else ''
+                        sql_type = type_code_to_sql_type.get(column.type_code) if hasattr(column, 'type_code') else None
+                        field = sql_to_map_type(sql_type) if sql_type else None
+                        return name, {
+                            'field': field
+                        }
+
+                    response['column_descriptions'] = dict(map(map_column_description, cursor_description))
 
             if count_rows is not None:
                 response['count'] = count_rows
 
-            limit = queryset._limit
-            if limit:
-                response['limit'] = limit
+            if hasattr(queryset, '_limit'):
+                response['limit'] = queryset._limit
 
             response['data_query_time'] = data_query_time
 
