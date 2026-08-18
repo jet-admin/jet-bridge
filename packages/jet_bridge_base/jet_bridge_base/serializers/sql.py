@@ -316,6 +316,8 @@ class SqlSerializer(Serializer):
                 queryset = self.aggregate_queryset(subquery, data, session)
             elif 'groups' in data or 'group' in data:
                 queryset = self.group_queryset(subquery, data, session)
+            elif 'offset' in data or 'limit' in data or 'order_by' in data or data.get('count') or 'filters' in data:
+                queryset = select(['*']).select_from(subquery)
             else:
                 queryset = text(query)
 
