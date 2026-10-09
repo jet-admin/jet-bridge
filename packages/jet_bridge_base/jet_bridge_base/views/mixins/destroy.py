@@ -1,3 +1,4 @@
+from jet_bridge_base.exceptions.sql import SqlError
 from jet_bridge_base.utils.track_database import track_database_async
 from jet_bridge_base.utils.track_model import track_model_async
 from sqlalchemy.exc import SQLAlchemyError
@@ -13,17 +14,20 @@ class DestroyAPIViewMixin(object):
     def destroy(self, request, *args, **kwargs):
         track_database_async(request)
 
-        self.apply_timezone(request)
-        request.apply_rls_if_enabled()
+        try:
+            self.apply_timezone(request)
+            request.apply_rls_if_enabled()
 
-        instance = self.get_object(request)
-        self.perform_destroy(request, instance)
+            instance = self.get_object(request)
+            self.perform_destroy(request, instance)
 
-        serializer = self.get_serializer(request, instance=instance)
-        representation_data = serializer.representation_data
-        track_model_async(request, kwargs.get('model'), 'delete', kwargs.get('pk'), representation_data)
+            serializer = self.get_serializer(request, instance=instance)
+            representation_data = serializer.representation_data
+            track_model_async(request, kwargs.get('model'), 'delete', kwargs.get('pk'), representation_data)
 
-        return JSONResponse(status=status.HTTP_204_NO_CONTENT)
+            return JSONResponse(status=status.HTTP_204_NO_CONTENT)
+        except SQLAlchemyError as e:
+            raise SqlError(e)
 
     def perform_destroy(self, request, instance):
         configuration.on_model_pre_delete(request.path_kwargs['model'], instance)
