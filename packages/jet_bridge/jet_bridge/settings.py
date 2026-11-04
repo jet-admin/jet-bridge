@@ -103,6 +103,8 @@ define('release_inactive_graphql_schemas_timeout', default=None, type=int)
 
 define('disable_auth', default=False, type=bool)
 
+define('proxy_request_enabled', default=False, type=bool)
+
 define('sentry_dsn', default='')
 
 # Parse
@@ -230,6 +232,8 @@ TRACK_QUERY_HIGH_MEMORY = options.track_query_high_memory
 RELEASE_INACTIVE_GRAPHQL_SCHEMAS_TIMEOUT = options.release_inactive_graphql_schemas_timeout
 
 DISABLE_AUTH = options.disable_auth
+
+PROXY_REQUEST_ENABLED = options.proxy_request_enabled
 
 SENTRY_DSN = options.sentry_dsn
 
