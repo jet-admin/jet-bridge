@@ -114,7 +114,8 @@ class JetDjangoConfiguration(Configuration):
             'TRACK_MODELS_AUTH': settings.JET_TRACK_MODELS_AUTH,
             'TRACK_QUERY_SLOW_TIME': settings.JET_TRACK_QUERY_SLOW_TIME,
             'TRACK_QUERY_HIGH_MEMORY': settings.JET_TRACK_QUERY_HIGH_MEMORY,
-            'DISABLE_AUTH': settings.JET_DISABLE_AUTH
+            'DISABLE_AUTH': settings.JET_DISABLE_AUTH,
+            'PROXY_REQUEST_ENABLED': settings.JET_PROXY_REQUEST_ENABLED
         }
 
     def get_django_instance(self, model, instance):
