@@ -83,6 +83,8 @@ RELEASE_INACTIVE_GRAPHQL_SCHEMAS_TIMEOUT = None
 
 DISABLE_AUTH = None
 
+PROXY_REQUEST_ENABLED = False
+
 
 def set_settings(settings):
     for key, value in settings.items():

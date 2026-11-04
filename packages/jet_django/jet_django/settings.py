@@ -77,6 +77,8 @@ JET_TRACK_QUERY_HIGH_MEMORY = getattr(settings, 'JET_TRACK_QUERY_HIGH_MEMORY', N
 
 JET_DISABLE_AUTH = getattr(settings, 'JET_DISABLE_AUTH', False)
 
+JET_PROXY_REQUEST_ENABLED = getattr(settings, 'JET_PROXY_REQUEST_ENABLED', False)
+
 try:
     JET_SSO_APPLICATIONS = json.loads(JET_SSO_APPLICATIONS)
 except Exception as e:
