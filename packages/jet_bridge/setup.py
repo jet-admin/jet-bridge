@@ -13,7 +13,7 @@ def read(fname):
 
 def get_install_requires():
     install_requires = [
-        'tornado==5.1.1',
+        'tornado==6.6',
         'six',
         'jet-bridge-base==1.13.5',
         'paramiko==2.8.1',
