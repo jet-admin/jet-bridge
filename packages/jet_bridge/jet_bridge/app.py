@@ -58,7 +58,6 @@ def make_app():
         (r'/api/proxy_request/', view_handler(ProxyRequestView)),
         (r'/api/discover/connection/', view_handler(DiscoverConnectionView)),
         (r'/api/discover/tables/', view_handler(DiscoverTableView)),
-        (r'/media/(.*)', tornado.web.StaticFileHandler, {'path': settings.MEDIA_ROOT}),
         (r'/api/external_auth/login/(?P<app>[^/]+)/', view_handler(ExternalAuthLoginView)),
         (r'/api/external_auth/complete/(?P<app>[^/]+)/', view_handler(ExternalAuthCompleteView)),
         (r'/api/status/', view_handler(StatusView)),
