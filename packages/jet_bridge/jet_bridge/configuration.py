@@ -81,7 +81,8 @@ class JetBridgeConfiguration(Configuration):
             'TRACK_QUERY_HIGH_MEMORY': settings.TRACK_QUERY_HIGH_MEMORY,
             'RELEASE_INACTIVE_GRAPHQL_SCHEMAS_TIMEOUT': settings.RELEASE_INACTIVE_GRAPHQL_SCHEMAS_TIMEOUT,
             'DISABLE_AUTH': settings.DISABLE_AUTH,
-            'PROXY_REQUEST_ENABLED': settings.PROXY_REQUEST_ENABLED
+            'PROXY_REQUEST_ENABLED': settings.PROXY_REQUEST_ENABLED,
+            'FILE_UPLOAD_ENABLED': settings.FILE_UPLOAD_ENABLED
         }
 
     def media_get_available_name(self, path):
