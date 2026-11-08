@@ -1,6 +1,8 @@
 import os
 
+from jet_bridge_base import settings
 from jet_bridge_base.configuration import configuration
+from jet_bridge_base.exceptions.not_found import NotFound
 from jet_bridge_base.permissions import HasProjectPermissions
 from jet_bridge_base.responses.json import JSONResponse
 from jet_bridge_base.views.base.api import APIView
@@ -10,6 +12,9 @@ class FileUploadView(APIView):
     permission_classes = (HasProjectPermissions,)
 
     def post(self, request, *args, **kwargs):
+        if not settings.FILE_UPLOAD_ENABLED:
+            raise NotFound
+
         # TODO: Move to serializer
         original_filename, file = request.files.get('file', None)
         path = request.get_body_argument('path')
