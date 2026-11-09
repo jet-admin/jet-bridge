@@ -2,6 +2,7 @@ import os
 
 from jet_bridge.utils.async_exec import pool_submit
 from jet_bridge_base.configuration import Configuration
+from jet_bridge_base.exceptions.validation_error import ValidationError
 from jet_bridge_base.utils.common import get_random_string
 
 from jet_bridge import settings, VERSION
@@ -85,21 +86,32 @@ class JetBridgeConfiguration(Configuration):
             'FILE_UPLOAD_ENABLED': settings.FILE_UPLOAD_ENABLED
         }
 
+    def media_safe_path(self, path):
+        root = os.path.realpath(settings.MEDIA_ROOT)
+        absolute_path = os.path.realpath(os.path.join(root, str(path)))
+
+        if os.path.commonpath([root, absolute_path]) != root:
+            raise ValidationError('Path is not allowed: {}'.format(path))
+
+        return absolute_path
+
     def media_get_available_name(self, path):
+        self.media_safe_path(path)
+
         dir_name, file_name = os.path.split(path)
         file_root, file_ext = os.path.splitext(file_name)
 
-        while os.path.exists(os.path.join(settings.MEDIA_ROOT, path)):
+        while os.path.exists(self.media_safe_path(path)):
             path = os.path.join(dir_name, '%s_%s%s' % (file_root, get_random_string(7), file_ext))
 
         return path
 
     def media_exists(self, path):
-        absolute_path = os.path.join(settings.MEDIA_ROOT, path)
+        absolute_path = self.media_safe_path(path)
         return os.path.exists(absolute_path)
 
     def media_listdir(self, path):
-        absolute_path = os.path.join(settings.MEDIA_ROOT, path)
+        absolute_path = self.media_safe_path(path)
         directories = []
         files = []
 
@@ -110,18 +122,19 @@ class JetBridgeConfiguration(Configuration):
         return directories, files
 
     def media_get_modified_time(self, path):
-        absolute_path = os.path.join(settings.MEDIA_ROOT, path)
+        absolute_path = self.media_safe_path(path)
         return os.path.getmtime(absolute_path)
 
     def media_size(self, path):
-        absolute_path = os.path.join(settings.MEDIA_ROOT, path)
+        absolute_path = self.media_safe_path(path)
         return os.path.getsize(absolute_path)
 
     def media_open(self, path, mode='rb'):
-        return open(path, mode)
+        absolute_path = self.media_safe_path(path)
+        return open(absolute_path, mode)
 
     def media_save(self, path, content):
-        absolute_path = os.path.join(settings.MEDIA_ROOT, path)
+        absolute_path = self.media_safe_path(path)
 
         if not os.path.exists(os.path.dirname(absolute_path)):
             try:
@@ -135,7 +148,7 @@ class JetBridgeConfiguration(Configuration):
         return path
 
     def media_delete(self, path):
-        absolute_path = os.path.join(settings.MEDIA_ROOT, path)
+        absolute_path = self.media_safe_path(path)
         os.remove(absolute_path)
 
     def media_url(self, path, request):
