@@ -14,7 +14,7 @@ def read(fname):
 def get_install_requires():
     install_requires = [
         'sqlalchemy<2.0',
-        'pymongo[srv]==4.3.3',
+        'pymongo[srv]==4.18.3',
         'six',
         'requests',
         'Pillow',
