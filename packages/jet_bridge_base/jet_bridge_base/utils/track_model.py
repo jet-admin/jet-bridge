@@ -62,5 +62,9 @@ def track_model_async(request, model, action, uid, data, fields=None, invoker=No
     if not settings.TRACK_MODELS_ENDPOINT:
         return
 
+    silent = bool(request.get_argument('silent', False))
+    if silent:
+        return
+
     draft = bool(request.get_argument('draft', False))
     configuration.run_async(track_model, request.project, request.environment, request.resource_token, model, action, uid, data, fields, invoker, draft)
